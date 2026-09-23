@@ -1,0 +1,12 @@
+
+[feynman]  expected 100 tasks per model
+model                           done empty-d1 judge-fail hash-bad  billed $  status
+gpt-5.6-sol                      100        0          0        0      0.00  COMPLETE
+gpt-6-astra                      100        0          0        0      0.00  COMPLETE
+
+[scilaws]  expected 118 tasks per model
+model                           done empty-d1 judge-fail hash-bad  billed $  status
+gpt-5.6-sol                      118        0          0        0      0.00  COMPLETE
+gpt-6-astra                      118        0          0        0      0.00  COMPLETE
+
+RESULT: all legs complete, prompts verified

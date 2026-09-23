@@ -1,0 +1,72 @@
+{
+  "checked_at": "2026-09-23T09:28:41.193917+00:00",
+  "records": [
+    {
+      "model": "gpt-5.6-sol",
+      "request": {
+        "model": "gpt-5.6-sol",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with OK."
+          }
+        ],
+        "n": 5,
+        "max_completion_tokens": 16
+      },
+      "status": "choice_count_mismatch",
+      "choice_count": 1,
+      "expected_choices": 5,
+      "finish_reasons": [
+        "stop"
+      ],
+      "returned_model": "gpt-5.6-sol",
+      "response_id": "resp_097189d3425d39ff016ab39bc7c81887d0af5d1035f26abd60"
+    },
+    {
+      "model": "gpt-6-astra",
+      "request": {
+        "model": "gpt-6-astra",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with OK."
+          }
+        ],
+        "n": 5,
+        "max_completion_tokens": 16
+      },
+      "status": "choice_count_mismatch",
+      "choice_count": 1,
+      "expected_choices": 5,
+      "finish_reasons": [
+        "stop"
+      ],
+      "returned_model": "gpt-6-astra",
+      "response_id": "chatcmpl-ERDZHkpn4v6WdrVnZTDOPXFaoaCVT"
+    },
+    {
+      "model": "gpt-4.1",
+      "request": {
+        "model": "gpt-4.1",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply with OK."
+          }
+        ],
+        "n": 1,
+        "max_tokens": 16,
+        "temperature": 0
+      },
+      "status": "ok",
+      "choice_count": 1,
+      "expected_choices": 1,
+      "finish_reasons": [
+        "stop"
+      ],
+      "returned_model": "gpt-4.1",
+      "response_id": "chatcmpl-ERDZH4AYRpPa2WCoLqFK0ejONel8t"
+    }
+  ]
+}

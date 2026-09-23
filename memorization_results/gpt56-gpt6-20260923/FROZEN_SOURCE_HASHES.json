@@ -1,0 +1,9 @@
+{
+  "client.py": "12df082ab6f1509cdc26e1e0f6b88c6694c7837fc3bf4dcb6680a42f77a29c5e",
+  "probe.py": "5d9549d903f0b839a07062466915eea0633668cc2435444b1a95bfeb7be3dc3a",
+  "run_mem.py": "853e9bbaea95cf3d446c1cac08d0f895e5272b4be88265de5f9a36e6a293da14",
+  "check_run.py": "0afe65dde3f1ab976b08baf7c8a7e89a8cc8470c780750566cb165b38cce1d5e",
+  "PROTOCOL.md": "9052d7eeea73a8a0906c9f2d3a2bcb07902a337789338ee1d298d79c01d71110",
+  "prompts_frozen.json": "14d68ada334da2cd2db26a35629a8b0a016448ce27a84ad2875f3aa8072130d5",
+  "models.json": "52133dd8f83ff911fd8634d6b93018ce9f2bd92ee3bc3af0e9fd4df083c29e88"
+}

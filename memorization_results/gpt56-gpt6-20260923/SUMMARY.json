@@ -1,0 +1,101 @@
+{
+  "run_id": "gpt56-gpt6-20260923",
+  "complete": true,
+  "completed_at": "2026-09-23T10:54:38.301445+00:00",
+  "rule": "At least 3 of 5 samples match the task best-baseline functional form.",
+  "subject_models": [
+    "gpt-5.6-sol",
+    "gpt-6-astra"
+  ],
+  "judge_model": "gpt-4.1",
+  "source_commit": "f036d101a08b4554dc2f99e7e7da7c5d4b2be6d9",
+  "scientific_cells": 436,
+  "subject_completions": 2180,
+  "judge_calls": 3790,
+  "empty_subject_samples": 0,
+  "transport_retry_errors": 49,
+  "subject_finish_reasons": {
+    "stop": 2180
+  },
+  "subject_usage": {
+    "prompt_tokens": 1784921,
+    "completion_tokens": 1275767,
+    "total_tokens": 3060688
+  },
+  "judge_usage": {
+    "prompt_tokens": 2681507,
+    "completion_tokens": 193675,
+    "total_tokens": 2875182
+  },
+  "billed_cost_usd": null,
+  "results": [
+    {
+      "bench": "scilaws",
+      "model": "gpt-5.6-sol",
+      "tasks": 118,
+      "cold_recalled": 41,
+      "cold_recall_rate": 0.3474576271186441,
+      "best_formula_sample_hits": 205,
+      "samples": 590,
+      "hit_histogram": {
+        "0": 60,
+        "1": 12,
+        "2": 5,
+        "3": 6,
+        "4": 10,
+        "5": 25
+      }
+    },
+    {
+      "bench": "scilaws",
+      "model": "gpt-6-astra",
+      "tasks": 118,
+      "cold_recalled": 40,
+      "cold_recall_rate": 0.3389830508474576,
+      "best_formula_sample_hits": 211,
+      "samples": 590,
+      "hit_histogram": {
+        "0": 63,
+        "1": 7,
+        "2": 8,
+        "3": 4,
+        "4": 4,
+        "5": 32
+      }
+    },
+    {
+      "bench": "feynman",
+      "model": "gpt-5.6-sol",
+      "tasks": 100,
+      "cold_recalled": 65,
+      "cold_recall_rate": 0.65,
+      "best_formula_sample_hits": 321,
+      "samples": 500,
+      "hit_histogram": {
+        "0": 29,
+        "1": 2,
+        "2": 4,
+        "3": 3,
+        "4": 8,
+        "5": 54
+      }
+    },
+    {
+      "bench": "feynman",
+      "model": "gpt-6-astra",
+      "tasks": 100,
+      "cold_recalled": 76,
+      "cold_recall_rate": 0.76,
+      "best_formula_sample_hits": 379,
+      "samples": 500,
+      "hit_histogram": {
+        "0": 16,
+        "1": 5,
+        "2": 3,
+        "3": 5,
+        "4": 2,
+        "5": 69
+      }
+    }
+  ]
+}

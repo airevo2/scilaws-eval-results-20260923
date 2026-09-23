@@ -1,0 +1,27 @@
+{
+  "python": "/data/SciLaws-Bench/.venv/bin/python",
+  "python_version": "3.12.3",
+  "packages": {
+    "openai": "3.14.1",
+    "PyYAML": "6.0.3"
+  },
+  "mode": "local API evaluation",
+  "gpus": 0,
+  "api_models": [
+    "gpt-5.6-sol",
+    "gpt-6-astra"
+  ],
+  "judge": "gpt-4.1",
+  "benches": {
+    "scilaws": 118,
+    "feynman": 100
+  },
+  "workers": 12,
+  "protocol_commit": "f036d101a08b4554dc2f99e7e7da7c5d4b2be6d9",
+  "reasoning_effort": "omitted in native request; medium provider default",
+  "reasoning_max_completion_tokens": 28800,
+  "samples_per_task": 5,
+  "openai_credentials": "OPENAI_API_KEY inherits STEPCODE_API_KEY; not persisted",
+  "backend": "custom: five independent n=1 requests because MP returns one choice for n=5",
+  "adapter_sha256": "4ee68fabd5eee8ea10960bf92b9402a39ddbe061c702401e7d7b713ff98a0a59"
+}
