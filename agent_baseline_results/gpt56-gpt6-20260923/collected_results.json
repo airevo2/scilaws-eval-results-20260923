@@ -1,0 +1,197 @@
+{
+  "checked_at": 1790109419.326994,
+  "complete": true,
+  "source_commit": "9239f66b921cb89c7a9d14061f782fdce49dcfb5",
+  "dataset_revision": "f97c105a111439ce44ce3c61686b541c41d86fa4",
+  "n_cells": 472,
+  "missing_cells": [],
+  "incomplete_agent_runs": [],
+  "incomplete_judgments": [],
+  "table": [
+    {
+      "model": "gpt-5.6-sol",
+      "mode": "real",
+      "type": "ALL",
+      "expected": 118,
+      "terminal": 118,
+      "submitted": 118,
+      "judgments_with_score": 118,
+      "S_N": 0.4010796965054722,
+      "S_V": 0.8093626947440508,
+      "status_counts": {
+        "completed": 118
+      }
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "mode": "parallel",
+      "type": "ALL",
+      "expected": 118,
+      "terminal": 118,
+      "submitted": 118,
+      "judgments_with_score": 118,
+      "S_N": null,
+      "S_S": 0.4809322033898305,
+      "status_counts": {
+        "completed": 118
+      }
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "mode": "real",
+      "type": "typeI",
+      "expected": 66,
+      "terminal": 66,
+      "submitted": 66,
+      "judgments_with_score": 66,
+      "S_N": 0.3724084177960225,
+      "S_V": 0.8490134024224933,
+      "status_counts": {
+        "completed": 66
+      }
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "mode": "parallel",
+      "type": "typeI",
+      "expected": 66,
+      "terminal": 66,
+      "submitted": 66,
+      "judgments_with_score": 66,
+      "S_N": null,
+      "S_S": 0.4810606060606061,
+      "status_counts": {
+        "completed": 66
+      }
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "mode": "real",
+      "type": "typeII",
+      "expected": 52,
+      "terminal": 52,
+      "submitted": 52,
+      "judgments_with_score": 52,
+      "S_N": 0.43747016563669683,
+      "S_V": 0.7590367965367965,
+      "status_counts": {
+        "completed": 52
+      }
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "mode": "parallel",
+      "type": "typeII",
+      "expected": 52,
+      "terminal": 52,
+      "submitted": 52,
+      "judgments_with_score": 52,
+      "S_N": null,
+      "S_S": 0.4807692307692308,
+      "status_counts": {
+        "completed": 52
+      }
+    },
+    {
+      "model": "gpt-6-astra",
+      "mode": "real",
+      "type": "ALL",
+      "expected": 118,
+      "terminal": 118,
+      "submitted": 118,
+      "judgments_with_score": 118,
+      "S_N": 0.5132939335199878,
+      "S_V": 0.8291287573067234,
+      "status_counts": {
+        "completed": 118
+      }
+    },
+    {
+      "model": "gpt-6-astra",
+      "mode": "parallel",
+      "type": "ALL",
+      "expected": 118,
+      "terminal": 118,
+      "submitted": 118,
+      "judgments_with_score": 118,
+      "S_N": null,
+      "S_S": 0.7245762711864406,
+      "status_counts": {
+        "completed": 118
+      }
+    },
+    {
+      "model": "gpt-6-astra",
+      "mode": "real",
+      "type": "typeI",
+      "expected": 66,
+      "terminal": 66,
+      "submitted": 66,
+      "judgments_with_score": 66,
+      "S_N": 0.5267412185744585,
+      "S_V": 0.8820701604792514,
+      "status_counts": {
+        "completed": 66
+      }
+    },
+    {
+      "model": "gpt-6-astra",
+      "mode": "parallel",
+      "type": "typeI",
+      "expected": 66,
+      "terminal": 66,
+      "submitted": 66,
+      "judgments_with_score": 66,
+      "S_N": null,
+      "S_S": 0.7083333333333334,
+      "status_counts": {
+        "completed": 66
+      }
+    },
+    {
+      "model": "gpt-6-astra",
+      "mode": "real",
+      "type": "typeII",
+      "expected": 52,
+      "terminal": 52,
+      "submitted": 52,
+      "judgments_with_score": 52,
+      "S_N": 0.49622622556623686,
+      "S_V": 0.7619338994338994,
+      "status_counts": {
+        "completed": 52
+      }
+    },
+    {
+      "model": "gpt-6-astra",
+      "mode": "parallel",
+      "type": "typeII",
+      "expected": 52,
+      "terminal": 52,
+      "submitted": 52,
+      "judgments_with_score": 52,
+      "S_N": null,
+      "S_S": 0.7451923076923077,
+      "status_counts": {
+        "completed": 52
+      }
+    }
+  ],
+  "judge": {
+    "model": "gpt-5.4-mini",
+    "reasoning_effort": "xhigh",
+    "runtime_version": "codex-cli 0.153.4",
+    "runtime": "/data/delta-bank/.aris/codex-runtime/bin/codex.js",
+    "transport": "MP responses API via environment credential",
+    "sandbox": "workspace-write",
+    "chunk_size": 3,
+    "max_workers": 4,
+    "upstream_judge_model": "not specified by repository",
+    "comparability_note": "Same judge for both requested models. Published leaderboard judge configuration is not specified in checked source; do not assert exact cross-run comparability.",
+    "concurrent_campaigns": 4,
+    "max_workers_total": 16,
+    "scheduling": "Four disjoint model/mode campaigns concurrently; each original official CLI keeps four workers and three tasks/chunk.",
+    "scheduling_reviewed_at": 1790105512.2214632
+  },
+  "aggregation": "Official per-task scores; full 118-task (or 66/52 split) denominator; missing submissions contribute zero. Incomplete judge outputs flagged; never treated as complete evidence."
+}

@@ -1,0 +1,24 @@
+{
+  "created_at_unix": 1790104327.9375608,
+  "include_range": true,
+  "job_order": "mode_task_model",
+  "max_turns": 30,
+  "models": [
+    "gpt-5.6-sol",
+    "gpt-6-astra"
+  ],
+  "modes": [
+    "real",
+    "parallel"
+  ],
+  "n_jobs": 464,
+  "reasoning_effort": "",
+  "run_dir": "/data/SciLaws-Bench/results/gpt56-gpt6-20260923",
+  "run_id": "gpt56-gpt6-20260923",
+  "skip_existing": false,
+  "task_types": [
+    "typeI",
+    "typeII"
+  ],
+  "workers": 128
+}

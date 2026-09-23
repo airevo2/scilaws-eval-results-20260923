@@ -1,0 +1,185 @@
+{
+  "by_model_mode_type": [
+    {
+      "completion_rate": 1.0,
+      "mode": "parallel",
+      "model": "gpt-5.6-sol",
+      "n": 118,
+      "numeric_mean_scored": null,
+      "numeric_scored": 0,
+      "numeric_strict_mean": 0.0,
+      "qualified": 118,
+      "status_counts": {
+        "completed": 118
+      },
+      "submitted": 118,
+      "type": "ALL"
+    },
+    {
+      "completion_rate": 1.0,
+      "mode": "parallel",
+      "model": "gpt-5.6-sol",
+      "n": 66,
+      "numeric_mean_scored": null,
+      "numeric_scored": 0,
+      "numeric_strict_mean": 0.0,
+      "qualified": 66,
+      "status_counts": {
+        "completed": 66
+      },
+      "submitted": 66,
+      "type": "typeI"
+    },
+    {
+      "completion_rate": 1.0,
+      "mode": "parallel",
+      "model": "gpt-5.6-sol",
+      "n": 52,
+      "numeric_mean_scored": null,
+      "numeric_scored": 0,
+      "numeric_strict_mean": 0.0,
+      "qualified": 52,
+      "status_counts": {
+        "completed": 52
+      },
+      "submitted": 52,
+      "type": "typeII"
+    },
+    {
+      "completion_rate": 0.9830508474576272,
+      "mode": "real",
+      "model": "gpt-5.6-sol",
+      "n": 118,
+      "numeric_mean_scored": 0.4010796965054722,
+      "numeric_scored": 118,
+      "numeric_strict_mean": 0.4010796965054722,
+      "qualified": 116,
+      "status_counts": {
+        "completed": 118
+      },
+      "submitted": 118,
+      "type": "ALL"
+    },
+    {
+      "completion_rate": 1.0,
+      "mode": "real",
+      "model": "gpt-5.6-sol",
+      "n": 66,
+      "numeric_mean_scored": 0.37240841779602246,
+      "numeric_scored": 66,
+      "numeric_strict_mean": 0.37240841779602246,
+      "qualified": 66,
+      "status_counts": {
+        "completed": 66
+      },
+      "submitted": 66,
+      "type": "typeI"
+    },
+    {
+      "completion_rate": 0.9615384615384616,
+      "mode": "real",
+      "model": "gpt-5.6-sol",
+      "n": 52,
+      "numeric_mean_scored": 0.43747016563669683,
+      "numeric_scored": 52,
+      "numeric_strict_mean": 0.43747016563669683,
+      "qualified": 50,
+      "status_counts": {
+        "completed": 52
+      },
+      "submitted": 52,
+      "type": "typeII"
+    },
+    {
+      "completion_rate": 1.0,
+      "mode": "parallel",
+      "model": "gpt-6-astra",
+      "n": 118,
+      "numeric_mean_scored": null,
+      "numeric_scored": 0,
+      "numeric_strict_mean": 0.0,
+      "qualified": 118,
+      "status_counts": {
+        "completed": 118
+      },
+      "submitted": 118,
+      "type": "ALL"
+    },
+    {
+      "completion_rate": 1.0,
+      "mode": "parallel",
+      "model": "gpt-6-astra",
+      "n": 66,
+      "numeric_mean_scored": null,
+      "numeric_scored": 0,
+      "numeric_strict_mean": 0.0,
+      "qualified": 66,
+      "status_counts": {
+        "completed": 66
+      },
+      "submitted": 66,
+      "type": "typeI"
+    },
+    {
+      "completion_rate": 1.0,
+      "mode": "parallel",
+      "model": "gpt-6-astra",
+      "n": 52,
+      "numeric_mean_scored": null,
+      "numeric_scored": 0,
+      "numeric_strict_mean": 0.0,
+      "qualified": 52,
+      "status_counts": {
+        "completed": 52
+      },
+      "submitted": 52,
+      "type": "typeII"
+    },
+    {
+      "completion_rate": 0.9745762711864406,
+      "mode": "real",
+      "model": "gpt-6-astra",
+      "n": 118,
+      "numeric_mean_scored": 0.513293933519988,
+      "numeric_scored": 118,
+      "numeric_strict_mean": 0.513293933519988,
+      "qualified": 115,
+      "status_counts": {
+        "completed": 118
+      },
+      "submitted": 118,
+      "type": "ALL"
+    },
+    {
+      "completion_rate": 1.0,
+      "mode": "real",
+      "model": "gpt-6-astra",
+      "n": 66,
+      "numeric_mean_scored": 0.5267412185744585,
+      "numeric_scored": 66,
+      "numeric_strict_mean": 0.5267412185744585,
+      "qualified": 66,
+      "status_counts": {
+        "completed": 66
+      },
+      "submitted": 66,
+      "type": "typeI"
+    },
+    {
+      "completion_rate": 0.9423076923076923,
+      "mode": "real",
+      "model": "gpt-6-astra",
+      "n": 52,
+      "numeric_mean_scored": 0.4962262255662368,
+      "numeric_scored": 52,
+      "numeric_strict_mean": 0.4962262255662368,
+      "qualified": 49,
+      "status_counts": {
+        "completed": 52
+      },
+      "submitted": 52,
+      "type": "typeII"
+    }
+  ],
+  "rows": 472
+}
