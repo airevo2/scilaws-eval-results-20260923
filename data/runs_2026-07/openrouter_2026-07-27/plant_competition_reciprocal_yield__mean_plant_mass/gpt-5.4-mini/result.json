@@ -1,0 +1,44 @@
+{
+  "task": "plant_competition_reciprocal_yield__mean_plant_mass",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "bleasdale_1960",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "weiner_2010_bleasdale_nelder",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "weiner_2010_vandermeer",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "weiner_2010_watkinson",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Standard Gompertz growth model for tumor volume
+    # V(t) = K * exp(-b * exp(-c * t))
+    K = 2000.0  # Carrying capacity (mm^3)
+    b = 6.0     # Dimensionless parameter related to initial volume
+    c = 0.15    # Growth rate constant (1/day)
+    
+    V = K * np.exp(-b * np.exp(-c * t))
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Gompertz tumor growth model (closed-form solution):
+    #   V(t) = K * exp( -exp( -alpha * (t - tau) ) )
+    # K     : asymptotic carrying-capacity volume [mm^3]
+    # alpha : specific growth rate [1/day]
+    # tau   : inflection time [day]
+    K = 3000.0
+    alpha = 0.2
+    tau = 8.0
+    V = K * np.exp(-np.exp(-alpha * (t - tau)))
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Gompertz growth model: V(t) = K * exp( ln(V0 / K) * exp(-alpha * t) )
+    # Using representative oncological parameters for subcutaneous xenografts
+    V0 = 1.0        # Initial tumor volume [mm^3]
+    K = 3000.0      # Carrying capacity (asymptotic max volume) [mm^3]
+    alpha = 0.15    # Gompertz growth rate constant [1/day]
+    
+    V = K * np.exp(np.log(V0 / K) * np.exp(-alpha * t))
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Standard Gompertz growth model: V(t) = V0 * exp( (a / b) * (1 - exp(-b * t)) )
+    # V0: initial tumor volume (mm^3)
+    # a: intrinsic growth rate constant (1/day)
+    # b: growth deceleration constant (1/day)
+    V0 = 1.0
+    a = 0.5
+    b = 0.05
+    
+    V = V0 * np.exp((a / b) * (1.0 - np.exp(-b * t)))
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard exponential tumor growth model:
+        V(t) = V0 * exp(k * t)
+
+    The exponential growth law is the most commonly cited closed-form
+    relationship for untreated tumor volume as a function of time in
+    preclinical oncology.
+    """
+    t = X[:, 0]
+    V0 = 5.0    # initial volume at implantation [mm^3]
+    k = 0.15    # specific growth rate [1/day]
+    V = V0 * np.exp(k * t)
+    return V

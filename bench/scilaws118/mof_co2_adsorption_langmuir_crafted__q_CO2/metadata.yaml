@@ -1,0 +1,90 @@
+task_id: mof_co2_adsorption_langmuir_crafted__q_CO2
+domain: materials_science / adsorption
+license: CDLA-Sharing-1.0 (isotherm CSVs) + CC-BY-4.0 (CoRE-MOF-2014 CIFs)
+
+# Type II -- cluster = (MOF, T_K) pair.
+# Each cluster has 13 GCMC-simulated pressure points from one isotherm
+# at one fixed temperature for one MOF (DDEC charge, UFF force field).
+type: typeII
+has_group_id: true
+
+# Background knowledge -- the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  Metal-organic frameworks (MOFs) are porous crystalline solids with
+  exceptionally high surface areas. When CO2 gas contacts a MOF at
+  equilibrium, CO2 molecules adsorb onto available surface sites until
+  a balance is reached between adsorption and desorption. As the CO2
+  partial pressure increases, the amount of CO2 adsorbed per gram of MOF
+  rises from near zero toward an asymptotic saturation limit set by the
+  accessible pore volume and the density of adsorption sites. Different
+  MOFs have different total capacities and different affinities for CO2,
+  so the shape of the adsorption isotherm varies from material to material.
+  Temperature also matters: higher temperatures weaken the adsorption
+  interaction, reducing both the initial slope at low pressure and the
+  effective working capacity. The quantitative relationship between pressure
+  and uptake encodes fundamental information about a material's surface
+  chemistry and pore architecture.
+
+target:
+  name: q_CO2_mmol_per_g
+  symbol: q
+  unit: mmol/g
+  description: Equilibrium CO2 adsorbed amount per gram of MOF (GCMC simulation, DDEC charge, UFF force field, from CRAFTED v2.0.1).
+  range: [0.0001, 30.0]
+
+inputs:
+  - name: P_bar
+    symbol: P
+    unit: bar
+    description: CO2 equilibrium partial pressure.
+    range: [0.001, 10.0]
+
+# Priors -- the `priors` prompt slot. Empty: OTHER_CONSTANTS is empty (the single-
+# site Langmuir form has no given/derived/structural constant to expose) and
+# LAW_CONSTANTS is empty (this is a form-discovery Type II task; q_m and b are
+# per-cluster LOCAL params). Present for schema symmetry with the GOLD exemplar.
+priors: []
+
+# Dataset -- three-file v2 Type II layout, cluster holdout.
+# Cluster = (MOF_name, T_K). Each cluster = one GCMC isotherm from CRAFTED v2.0.1.
+# Cluster holdout at MOF level: lexicographic sort of MOF names; every 4th MOF
+# (0-indexed) -> test. 20 test MOFs x 3 T = 60 test clusters.
+# 60 train MOFs x 3 T = 180 train clusters. Total: 80 MOFs / 240 clusters.
+# Within-cluster interleaved split: 13 points (sorted by P_bar) with indices
+# 3, 7, 11 (0-based) -> test_test (~P=0.01, 0.2, 5 bar; 3 pts per cluster);
+# remaining 10 indices -> test_fit. Interleaving distributes held-out points
+# evenly across the full P range, ensuring Langmuir q_m identifiability.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 2340
+n_test_fit: 600
+n_test_test: 180
+n_clusters_train: 180
+n_clusters_test: 60
+
+# Reference-baseline bank
+references:
+  - id: swenson_stadie_2019
+    label: Swenson-Stadie 2019 -- Langmuir 2-parameter isotherm (q_m, b per MOF/T)
+    formula_file: formulas/swenson_stadie_2019.py
+    reference_pdf: reference/swenson_stadie_2019_langmuir_centennial.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # q_m, b
+    measured:
+      rmse: 0.3668
+      r2: 0.9893
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         2
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.3668          # swenson_stadie_2019 pooled rmse -- 0.5 score anchor

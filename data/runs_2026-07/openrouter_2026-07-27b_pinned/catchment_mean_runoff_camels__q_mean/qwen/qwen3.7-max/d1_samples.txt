@@ -1,0 +1,124 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    
+    # Budyko (1974) equation for long-term actual evapotranspiration
+    E = np.sqrt(P * Ep * np.tanh(P / Ep))
+    
+    # Runoff is precipitation minus actual evapotranspiration
+    Q = P - E
+    
+    # Bound below by zero to ensure physical limits
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    
+    # Aridity index
+    phi = Ep / np.maximum(P, 1e-12)
+    
+    # Schreiber (1904) formulation
+    f_schreiber = 1.0 - np.exp(-phi)
+    
+    # Ol'dekop (1911) formulation
+    f_oldekop = phi * np.tanh(1.0 / np.maximum(phi, 1e-12))
+    
+    # Budyko (1974) curve: geometric mean of Schreiber and Ol'dekop
+    E_P_ratio = np.sqrt(f_schreiber * f_oldekop)
+    
+    # Mean daily runoff
+    Q = P * (1.0 - E_P_ratio)
+    
+    # Bound below by zero
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    
+    Q = np.zeros_like(P)
+    mask = P > 0
+    P_m = P[mask]
+    Ep_m = Ep[mask]
+    
+    # Aridity index
+    phi = Ep_m / P_m
+    
+    # Safely compute 1/phi to avoid division by zero warnings
+    inv_phi = np.zeros_like(phi)
+    safe = phi > 0
+    inv_phi[safe] = 1.0 / phi[safe]
+    
+    # Budyko (1948) parameter-free curve components
+    term2 = np.tanh(inv_phi)
+    term2[~safe] = 1.0  # limit of tanh(1/phi) as phi -> 0 is tanh(inf) = 1.0
+    
+    term3 = 1.0 - np.exp(-phi)
+    
+    # Evaporation ratio E/P
+    E_ratio = np.sqrt(phi * term2 * term3)
+    
+    # Runoff Q = P - E
+    Q[mask] = P_m * (1.0 - E_ratio)
+    
+    # Bound below by zero
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    PET = X[:, 1]
+    
+    # Fu's equation (1981) is the most widely cited analytical closed-form 
+    # representation of the Budyko curve. 
+    # We use omega = 2.67, the theoretical global-mean value derived by 
+    # Yang et al. (2007) from thermodynamic principles.
+    omega = 2.67
+    
+    # Aridity index (phi), handling potential zero-precipitation safely
+    phi = np.zeros_like(P, dtype=float)
+    mask = P > 0
+    phi[mask] = PET[mask] / P[mask]
+    
+    # Calculate mean daily runoff Q = P - E
+    # From Fu's equation: E/P = 1 + phi - (1 + phi^omega)^(1/omega)
+    # Therefore: Q = P * [ (1 + phi^omega)^(1/omega) - phi ]
+    Q = P * ((1.0 + phi**omega)**(1.0/omega) - phi)
+    
+    # Bound below by zero to satisfy physical limits
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    
+    # Avoid division by zero for safe computation
+    safe_Ep = np.where(Ep == 0, 1e-12, Ep)
+    safe_P = np.where(P == 0, 1e-12, P)
+    
+    # Budyko (1974) parameter-free curve (geometric mean of Schreiber and Ol'dekop)
+    E = np.sqrt(P * Ep * np.tanh(P / safe_Ep) * (1.0 - np.exp(-Ep / safe_P)))
+    
+    # Runoff is Precipitation minus Evapotranspiration
+    Q = P - E
+    
+    # Bound below by zero
+    return np.maximum(Q, 0.0)

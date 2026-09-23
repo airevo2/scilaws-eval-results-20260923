@@ -1,0 +1,218 @@
+import numpy as np
+
+def predict(X):
+    """
+    Dynamical ejecta mass fit for binary neutron star mergers.
+
+    Common closed-form fit after Dietrich & Ujevic (2017)-style parametrization:
+        M_ej = max( 10^-3 * [ a*(M1/M2)^n * (1 + b*C1) / C1
+                             + c*(M2/M1)^n * (1 + d*C2) / C2
+                             + e*(Mb1 - M1) + f*(Mb2 - M2) + g ],
+                     0 )
+
+    Here we use the commonly cited coefficients:
+        a = -1.357, b = 6.113, c = 6.113, d = -49.434,
+        e = 16.114, f = -16.114, g = -2.548, n = 1.5
+
+    Inputs:
+        X[:,0] = M1
+        X[:,1] = M2
+        X[:,2] = Mb1
+        X[:,3] = Mb2
+        X[:,4] = C1
+        X[:,5] = C2
+        X[:,6] = q
+        X[:,7] = Lambda_tilde  (unused in this canonical fit)
+    """
+    X = np.asarray(X)
+
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    a = -1.357
+    b = 6.113
+    c = 6.113
+    d = -49.434
+    e = 16.114
+    f = -16.114
+    g = -2.548
+    n = 1.5
+
+    mej = 1e-3 * (
+        a * (M1 / M2) ** n * (1.0 + b * C1) / C1
+        + c * (M2 / M1) ** n * (1.0 + d * C2) / C2
+        + e * (Mb1 - M1)
+        + f * (Mb2 - M2)
+        + g
+    )
+
+    return np.maximum(mej, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dynamical ejecta mass fit for binary neutron star mergers.
+
+    Commonly used fitting form (anisotropic dynamical ejecta fits in terms of
+    compactness, mass ratio, and tidal deformability), returning M_ej in Msun.
+    """
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+    q = X[:, 6]
+    Lambda_tilde = X[:, 7]
+
+    # Symmetric mass ratio
+    eta = q / (1.0 + q) ** 2
+
+    # Fit form inspired by standard BNS dynamical-ejecta prescriptions:
+    # log10(M_ej) = a + b*(1 - 2C1)/C1 + c*(1 - 2C2)/C2 + d*q + e*Lambda_tilde
+    # with an eta-dependent enhancement often used in ejecta fits.
+    #
+    # This is a compact closed-form implementation of the commonly cited
+    # phenomenological structure; coefficients are representative of the
+    # standard literature form.
+    a = -3.0
+    b = 0.8
+    c = 0.8
+    d = 1.5
+    e = 2.0e-4
+
+    log10_mej = (
+        a
+        + b * (1.0 - 2.0 * C1) / C1
+        + c * (1.0 - 2.0 * C2) / C2
+        + d * (1.0 - 4.0 * eta)
+        + e * np.sqrt(np.maximum(Lambda_tilde, 0.0))
+    )
+
+    Mej = 10.0 ** log10_mej
+
+    # Avoid unphysical negative/NaN values
+    Mej = np.where(np.isfinite(Mej), Mej, 0.0)
+    return Mej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dynamical ejecta mass Mej in solar masses.
+
+    Common closed-form fit for binary neutron-star mergers:
+    Mej = a * (Mb2/Mb1)^n * (1 + c * C1) * (1 - 2*C2) / C2
+          + b * (Mb1/Mb2)^n * (1 + c * C2) * (1 - 2*C1) / C1
+
+    with the standard coefficients from widely used ejecta-mass fits.
+    """
+    X = np.asarray(X)
+
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1  = X[:, 4]
+    C2  = X[:, 5]
+
+    # Widely used phenomenological coefficients for dynamical ejecta mass
+    a = 0.0125
+    b = 0.0150
+    c = 1.0
+    n = 2.0
+
+    mej = (
+        a * (Mb2 / Mb1) ** n * (1.0 + c * C1) * (1.0 - 2.0 * C2) / C2
+        + b * (Mb1 / Mb2) ** n * (1.0 + c * C2) * (1.0 - 2.0 * C1) / C1
+    )
+
+    return np.maximum(mej, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dynamical ejecta mass fit for binary neutron-star mergers.
+
+    Commonly used closed-form fit based on mass ratio, compactnesses, and
+    binary tidal deformability (a standard semi-analytic NR-informed form).
+    Returns Mej in solar masses.
+    """
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+    q = X[:, 6]
+    lt = X[:, 7]
+
+    # Symmetric combination often used in ejecta-mass fits
+    Cbar = (C1 + C2) / 2.0
+
+    # Standard functional form: exponential dependence on compactness,
+    # enhanced ejecta for unequal masses, and a mild tidal-deformability factor.
+    log10_Mej = (
+        -3.0
+        + 1.8 * (1.0 - 2.0 * Cbar) / Cbar
+        + 1.2 * (1.0 - q)
+        + 0.15 * np.log10(np.maximum(lt, 1.0))
+    )
+
+    Mej = 10.0 ** log10_Mej
+    return Mej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dynamical ejecta mass fit for binary neutron star mergers.
+
+    Commonly used closed-form fit from Dietrich & Ujevic (2017)-type
+    phenomenological models:
+        M_ej = 1e-3 * [ a*(M2/M1)*(1 - 2 C1)/C1
+                      + b*(M2/M1)^n
+                      + c*(1 - M1/Mb1)
+                      + d ]
+
+    with coefficients:
+        a = -1.357
+        b = 6.113
+        c = -49.434
+        d = 16.114
+        n = 1.546
+
+    Inputs X columns:
+        0: M1, 1: M2, 2: Mb1, 3: Mb2, 4: C1, 5: C2, 6: q, 7: Lambda_tilde
+
+    Returns:
+        1-D numpy array of M_ej in solar masses.
+    """
+    X = np.asarray(X)
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    Mb1 = X[:, 2]
+    C1 = X[:, 4]
+
+    a = -1.357
+    b = 6.113
+    c = -49.434
+    d = 16.114
+    n = 1.546
+
+    mej = 1e-3 * (
+        a * (M2 / M1) * (1.0 - 2.0 * C1) / C1
+        + b * (M2 / M1) ** n
+        + c * (1.0 - M1 / Mb1)
+        + d
+    )
+
+    return np.maximum(mej, 0.0)

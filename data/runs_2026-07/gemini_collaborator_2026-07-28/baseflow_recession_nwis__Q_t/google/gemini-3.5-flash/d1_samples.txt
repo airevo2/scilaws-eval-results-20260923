@@ -1,0 +1,138 @@
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the daily-mean streamflow discharge Q(t) during a recession event
+    using the classic Maillet (1905) exponential recession model.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = t (elapsed time in days since the start of recession)
+        - X[:, 1] = Q_0 (observed discharge at the start of the recession, t=0)
+
+    Returns:
+    - 1-D numpy array of predicted streamflow discharge Q_t [ft3/s]
+    """
+    t = X[:, 0]
+    Q_0 = X[:, 1]
+
+    # k is the daily recession depletion coefficient (typical range: 0.01 to 0.2 day^-1)
+    # A standard median value of 0.1 day^-1 is used here.
+    k = 0.1
+
+    Q_t = Q_0 * np.exp(-k * t)
+
+    return Q_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the daily-mean streamflow discharge Q_t at elapsed time t
+    using the classical Maillet exponential recession model:
+        Q(t) = Q_0 * exp(-k * t)
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = t (elapsed time in days since recession start)
+        - X[:, 1] = Q_0 (initial streamflow discharge at t=0, in ft3/s)
+
+    Outputs:
+    - Q_t: 1-D numpy array of predicted streamflow discharge (in ft3/s)
+    """
+    t = X[:, 0]
+    Q_0 = X[:, 1]
+
+    # Typical baseflow recession rate constant (k) in day^-1.
+    # Value chosen in the typical range of 0.05 to 0.20 day^-1.
+    k = 0.10
+
+    # Maillet equation for streamflow recession
+    Q_t = Q_0 * np.exp(-k * t)
+
+    return Q_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the daily-mean streamflow discharge Q(t) during a recession event
+    using the classical Maillet exponential recession model: Q(t) = Q_0 * exp(-alpha * t).
+    
+    Parameters:
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] = t (elapsed time in days since the start of the recession)
+        - X[:, 1] = Q_0 (initial streamflow discharge at t=0 in ft3/s)
+        
+    Returns:
+    np.ndarray
+        1-D array of predicted streamflow discharge Q(t) in ft3/s.
+    """
+    t = X[:, 0]
+    Q_0 = X[:, 1]
+    
+    # alpha is the daily recession coefficient. A value of 0.1 day^-1 is highly 
+    # representative for typical catchments (corresponding to a daily recession 
+    # constant K = exp(-alpha) approx 0.90).
+    alpha = 0.10
+    
+    # Calculate the streamflow at time t
+    Q_t = Q_0 * np.exp(-alpha * t)
+    
+    return Q_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = t (days since the start of the recession)
+    # X[:, 1] = Q_0 (initial streamflow at t=0)
+    t = X[:, 0]
+    Q_0 = X[:, 1]
+
+    # Maillet (1905) exponential recession equation: Q(t) = Q_0 * e^(-k * t)
+    # k is the daily recession constant. A typical representative value
+    # for daily streamflow recession is k = 0.1 day^-1 (corresponding to
+    # a daily recession cohort of approximately 0.9).
+    k = 0.1
+
+    return Q_0 * np.exp(-k * t)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the daily-mean streamflow discharge Q(t) during a recession event
+
+    using the classical Maillet exponential recession model.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = t [days], elapsed time since the start of the recession
+        - X[:, 1] = Q_0 [ft3/s], initial discharge at the start of the recession
+
+    Returns:
+    - Q_t: 1-D numpy array of predicted streamflow discharge [ft3/s]
+    """
+    t = X[:, 0]
+    Q_0 = X[:, 1]
+
+    # k is the daily recession constant (dimension day^-1).
+    # A value of 0.1 is highly representative of typical basin recession rates.
+    k = 0.1
+
+    # Maillet equation: Q(t) = Q_0 * exp(-k * t)
+    Q_t = Q_0 * np.exp(-k * t)
+
+    return Q_t

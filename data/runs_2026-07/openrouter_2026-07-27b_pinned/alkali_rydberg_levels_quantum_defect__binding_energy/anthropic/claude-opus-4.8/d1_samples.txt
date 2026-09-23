@@ -1,0 +1,151 @@
+import numpy as np
+
+def predict(X):
+    # Rydberg constant in cm^-1 (for infinite nuclear mass)
+    R = 109737.31568
+
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(float)
+
+    # Typical l-dependent quantum defects (decrease rapidly with l).
+    # For high-l (non-penetrating) orbitals the defect is ~0.
+    delta_by_l = {
+        0: 1.35,   # s
+        1: 0.85,   # p
+        2: 0.15,   # d
+        3: 0.02,   # f
+        4: 0.005,  # g
+        5: 0.001,  # h
+    }
+
+    delta = np.array([delta_by_l.get(int(li), 0.0) for li in l])
+
+    n_eff = n - delta
+    E_bind = R / n_eff**2
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rydberg formula with quantum defect
+    # E_bind = R * Z^2 / (n - delta)^2
+    # For a neutral alkali-like Rydberg series, Z_eff = 1
+    R = 109737.31568  # Rydberg constant in cm^-1
+    Z = 1.0           # net charge seen by outer electron (neutral atom)
+
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(float)
+
+    # Typical quantum defects decreasing with l (sodium-like example values)
+    # delta ~ large for low l, ~0 for high l
+    delta = np.where(l == 0, 1.35,
+             np.where(l == 1, 0.85,
+             np.where(l == 2, 0.01,
+             np.where(l == 3, 0.001,
+             0.0))))
+
+    n_eff = n - delta
+    E_bind = R * Z**2 / n_eff**2
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rydberg formula for binding (term) energy:
+    #   E_bind = R / (n - delta_l)^2
+    # where delta_l is the quantum defect (l-dependent).
+    R = 109737.31568  # Rydberg constant in cm^-1 (approx. for infinite mass)
+
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(float)
+
+    # Typical quantum defects by orbital angular momentum.
+    # (Alkali-like ordering: large for low l, ~0 for high l.)
+    delta_table = {
+        0: 1.35,  # s
+        1: 0.85,  # p
+        2: 0.10,  # d
+        3: 0.02,  # f
+        4: 0.005, # g
+        5: 0.001, # h
+    }
+
+    delta = np.zeros_like(l)
+    for lv, dv in delta_table.items():
+        delta[l == lv] = dv
+    # high-l default ~0
+    delta[l > 5] = 0.0
+
+    n_eff = n - delta
+    E_bind = R / (n_eff ** 2)
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rydberg formula for binding (term) energy of a Rydberg level:
+    #   E_bind = R / (n - delta_l)^2
+    # where R is the Rydberg constant and delta_l is the (l-dependent)
+    # quantum defect. Lower-l electrons penetrate the core more and have
+    # larger quantum defects; high-l states are nearly hydrogenic.
+
+    R = 109737.31568  # Rydberg constant [cm^-1]
+
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(float)
+
+    # Typical quantum defects by orbital angular momentum
+    # (representative values; decrease rapidly with l)
+    delta_table = {
+        0: 1.35,  # s
+        1: 0.85,  # p
+        2: 0.10,  # d
+        3: 0.02,  # f
+        4: 0.005, # g
+        5: 0.001, # h
+    }
+
+    delta = np.zeros_like(l)
+    for lk, dv in delta_table.items():
+        delta[l == lk] = dv
+    # high l -> hydrogenic (negligible defect)
+    delta[l > 5] = 0.0
+
+    n_eff = n - delta
+    E_bind = R / n_eff**2
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rydberg formula with quantum defect
+    # E_bind = R * Z_eff^2 / (n - delta)^2
+    # Rydberg constant in cm^-1
+    R = 109737.31568  # cm^-1
+
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(float)
+
+    # Effective core charge (neutral-atom Rydberg series -> Z=1)
+    Z = 1.0
+
+    # Quantum defect decreasing with l (typical alkali-like values)
+    # delta ~ large for low l (penetrating orbits), ~0 for high l
+    delta = np.where(l == 0, 1.35,
+             np.where(l == 1, 0.85,
+             np.where(l == 2, 0.30,
+             np.where(l == 3, 0.02,
+             0.00))))
+
+    n_eff = n - delta
+
+    E_bind = R * Z**2 / n_eff**2
+    return E_bind

@@ -1,0 +1,26 @@
+{
+  "task": "pp_total_cross_section_donnachie_landshoff__sigma_tot",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeI",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "block_halzen_2005",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "donnachie_1992",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

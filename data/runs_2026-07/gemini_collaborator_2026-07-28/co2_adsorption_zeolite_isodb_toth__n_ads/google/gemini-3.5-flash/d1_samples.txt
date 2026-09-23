@@ -1,0 +1,118 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract pressure P in bar
+    P = X[:, 0]
+
+    # Standard Langmuir isotherm parameters for CO2 adsorption
+    # q_m: Maximum adsorption capacity (mmol/g)
+    # K: Langmuir affinity constant (bar^-1)
+    q_m = 4.5
+    K = 1.5
+
+    # Langmuir equation: n = (q_m * K * P) / (1 + K * P)
+    n_ads = (q_m * K * P) / (1.0 + K * P)
+
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the amount of CO2 adsorbed (n_ads) in mmol/g using the canonical 
+    Langmuir adsorption isotherm model.
+    
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the equilibrium pressure P in bar.
+    
+    Returns:
+    - 1-D numpy array of predicted n_ads (mmol/g).
+    """
+    # Extract equilibrium pressure P (bar)
+    P = X[:, 0]
+    
+    # Representative Langmuir parameters for CO2 adsorption on a typical 
+    # porous material (e.g., activated carbon) at ambient temperature:
+    # q_max: Maximum adsorption capacity (mmol/g)
+    # b: Langmuir affinity constant (1/bar)
+    q_max = 5.0
+    b = 2.0
+    
+    # Langmuir Isotherm equation
+    n_ads = (q_max * b * P) / (1.0 + b * P)
+    
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the amount of CO2 adsorbed (n_ads, mmol/g) as a function of 
+    equilibrium pressure (P, bar) using the canonical Langmuir adsorption isotherm.
+    
+    Parameters:
+    X : ndarray of shape (N, 1) or (N, M)
+        X[:, 0] represents the equilibrium CO2 pressure (P) in bar.
+        
+    Returns:
+    n : ndarray of shape (N,)
+        Amount of CO2 adsorbed in mmol/g.
+    """
+    # Extract pressure (P) in bar
+    P = X[:, 0]
+    
+    # Standard Langmuir parameters for a benchmark CO2 adsorbent (e.g., Zeolite 13X at 298 K)
+    q_max = 5.5  # Saturation capacity (mmol/g)
+    b = 3.5      # Langmuir affinity coefficient (1/bar)
+    
+    # Langmuir Isotherm equation: n = (q_max * b * P) / (1 + b * P)
+    n = (q_max * b * P) / (1.0 + b * P)
+    
+    return n
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract the equilibrium CO2 pressure P (bar)
+    P = X[:, 0]
+
+    # Langmuir isotherm parameters for CO2 adsorption
+    # q_max: Maximum adsorption capacity in mmol/g
+    # K: Langmuir affinity parameter in bar^-1
+    q_max = 6.0
+    K = 1.5
+
+    # Langmuir adsorption isotherm equation
+    n_ads = (q_max * K * P) / (1.0 + K * P)
+
+    return n_ads
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the amount of CO2 adsorbed (n_ads) in mmol/g using the Langmuir isotherm model.
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the equilibrium pressure P in bar.
+    """
+    P = X[:, 0]
+
+    # Typical Langmuir parameters for CO2 adsorption on a standard adsorbent (e.g., activated carbon) at 298 K
+    q_max = 8.0  # Maximum adsorption capacity (mmol/g)
+    K = 0.5  # Langmuir affinity constant (bar^-1)
+
+    # Langmuir isotherm equation
+    n_ads = (q_max * K * P) / (1.0 + K * P)
+
+    return n_ads

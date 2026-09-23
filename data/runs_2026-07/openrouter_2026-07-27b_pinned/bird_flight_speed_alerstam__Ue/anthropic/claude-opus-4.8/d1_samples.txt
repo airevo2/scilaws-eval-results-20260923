@@ -1,0 +1,89 @@
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]          # body mass [kg]
+    S = X[:, 1]          # wing area [m^2]
+    g = 9.81             # gravitational acceleration [m/s^2]
+    rho0 = 1.225         # sea-level air density [kg/m^3]
+    CL = 1.0             # characteristic (effective) lift coefficient ~ O(1)
+
+    # Equivalent airspeed from the lift = weight balance at a characteristic CL:
+    #   0.5 * rho0 * Ue^2 * S * CL = m * g
+    #   Ue = sqrt(2 * m * g / (rho0 * S * CL))
+    # i.e. Ue scales with the square root of the wing loading (mg/S).
+    Ue = np.sqrt(2.0 * m * g / (rho0 * S * CL))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]          # body mass [kg]
+    S = X[:, 1]          # wing area [m^2]
+
+    g   = 9.81           # gravitational acceleration [m/s^2]
+    rho0 = 1.225         # sea-level air density [kg/m^3]
+    CL  = 0.60           # characteristic lift coefficient in cruising flapping flight
+
+    # Equivalent airspeed from steady-level flight lift balance:
+    # L = W  ->  0.5 * rho0 * Ue^2 * S * CL = m * g
+    Ue = np.sqrt(2.0 * m * g / (rho0 * S * CL))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]        # body mass [kg]
+    S = X[:, 1]        # wing area [m^2]
+
+    g = 9.81           # gravitational acceleration [m/s^2]
+    rho0 = 1.225       # sea-level air density [kg/m^3]
+    CL = 1.0           # representative lift coefficient for cruising flight
+
+    # Equivalent airspeed from steady-level flight: L = W  ->
+    # Ue = sqrt( 2 * m * g / (rho0 * S * CL) )
+    Ue = np.sqrt(2.0 * m * g / (rho0 * S * CL))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]          # body mass [kg]
+    S = X[:, 1]          # wing area [m^2]
+    g = 9.81             # gravitational acceleration [m/s^2]
+    rho0 = 1.225         # sea-level air density [kg/m^3]
+
+    # Equivalent airspeed scales with the square root of wing loading,
+    # V_e ∝ sqrt(2 m g / (rho0 S)).  The proportionality constant folds
+    # in the (roughly constant) lift coefficient during cruising flapping
+    # flight; a value near 1.0 reproduces observed radar speeds.
+    C = 1.0
+    Ue = C * np.sqrt(2.0 * m * g / (rho0 * S))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]          # body mass [kg]
+    S = X[:, 1]          # wing area [m^2]
+
+    g = 9.81             # gravitational acceleration [m/s^2]
+    rho0 = 1.225         # sea-level air density [kg/m^3]
+
+    # Wing loading (N/m^2)
+    Q = m * g / S
+
+    # Equivalent airspeed scales as the square root of wing loading:
+    #   Ue = sqrt( 2 * Q / (rho0 * CL) )
+    # with an effective lift coefficient absorbed into the constant.
+    CL_eff = 0.63        # effective lift coefficient (cruise/min-power)
+    Ue = np.sqrt(2.0 * Q / (rho0 * CL_eff))
+
+    return Ue

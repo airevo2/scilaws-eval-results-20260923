@@ -1,0 +1,93 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    # Power-law model: v = A * d^B * (1 + gamma * s_M)
+    # Derived from Riegel's formula T ~ d^k => v = d/T ~ d^(1-k)
+    # B ~ -0.097 corresponds to Riegel exponent k ~ 1.097 for full sprint-to-ultra range
+    # gamma ~ 0.11 captures the ~11% male velocity advantage in world records
+    A = 14.1
+    B = -0.097
+    gamma = 0.11
+    v_bar = A * np.power(d, B) * (1.0 + gamma * s_M)
+    return v_bar
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Power-law (Riegel/Hill-type) world-record velocity model
+    # v = a * d^b * c^s_M
+    # where a is the base coefficient (women), b is the distance
+    # exponent, and c is the multiplicative men/women ratio.
+    a = 15.3      # base speed coefficient (women)
+    b = -0.106    # distance exponent (negative: speed declines with distance)
+    c = 1.11      # men-to-women velocity ratio (~11% faster)
+    
+    v = a * (d ** b) * (c ** s_M)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Power-law (Riegel-type) velocity–distance relationship:
+    #   v = A * d^b * (1 + delta * s_M)
+    # Fitted to world-record average speeds from 800 m to marathon.
+    A     = 11.0    # base velocity coefficient  [m/s]
+    b     = -0.07   # distance scaling exponent   (≈ 1 − k, where k ≈ 1.07)
+    delta = 0.11    # fractional male speed advantage (~11 %)
+    
+    v = A * d**b * (1.0 + delta * s_M)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    sex_M = X[:, 1]
+    
+    # Power-law model (canonical in sports science for world-record velocities):
+    #   v_bar = A * d^B * C^sex_M
+    # Equivalently in log-space:
+    #   ln(v) = b0 + b1 * ln(d) + b2 * sex_M
+    #
+    # Fitted across sprint to ultra-marathon world records:
+    #   b1 ~ -0.10  (velocity decreases ~20% per 10x distance increase)
+    #   b2 ~  0.11  (men's records ~10.4% faster than women's)
+    b0 = 2.65
+    b1 = -0.10
+    b2 = 0.11
+    
+    log_v = b0 + b1 * np.log(d) + b2 * sex_M
+    return np.exp(log_v)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Power-law velocity-distance relationship (Hill / Riegel model)
+    # ln(v) = beta0 + beta1 * ln(d) + beta2 * sex
+    # Equivalent to: v = a * d^b * exp(c * s_M)
+    # Fitted to world record data across standard track/road events
+    beta0 = 2.732   # log-scale intercept
+    beta1 = -0.106  # distance exponent (consistent with t ~ d^1.106)
+    beta2 = 0.103   # sex effect (~10.9% faster for men, exp(0.103) ≈ 1.108)
+    
+    v = np.exp(beta0 + beta1 * np.log(d) + beta2 * s_M)
+    return v

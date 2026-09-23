@@ -1,0 +1,44 @@
+{
+  "task": "commuting_gravity_lodes__flow_Tij",
+  "model": "z-ai/glm-5.2",
+  "type": "typeI",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "lenormand_2016_extrad",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "lenormand_2016_gravity_exp",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "lenormand_2016_gravity_pow",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "simini_2012",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

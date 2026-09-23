@@ -1,0 +1,117 @@
+import numpy as np
+
+def predict(X):
+    # Standard closed-form description of the solar (Schwabe) cycle:
+    # sunspot number varies quasi-periodically with a ~11-year period.
+    # R_I(t) ~ mean amplitude modulated by a sinusoid of the solar cycle.
+    t = X[:, 0]
+
+    # Canonical solar-cycle parameters (ISN v2.0 scale)
+    P = 11.0               # mean solar-cycle period [yr]
+    t_min = 1755.0         # reference cycle minimum epoch (start of Cycle 1)
+    R_mean = 80.0          # mean sunspot number level
+    R_amp = 80.0           # amplitude of the cycle
+
+    phase = 2.0 * np.pi * (t - t_min) / P
+
+    # Solar cycles are asymmetric (fast rise, slow decay); the simplest
+    # canonical form is a rectified sinusoid bounded at zero.
+    R = R_mean + R_amp * (-np.cos(phase))
+    R = np.clip(R, 0.0, None)
+
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Closed-form model of the monthly International Sunspot Number (R_I, v2.0).
+
+    The Sun's magnetic activity follows the ~11-year Schwabe cycle.  The most
+    commonly cited closed-form description is a rectified/positive sinusoid:
+
+        R_I(t) = R_mean + R_amp * cos( 2*pi*(t - t0) / P )
+
+    clipped at zero (the sunspot number cannot be negative), where
+        P     = 11.0 yr   (mean Schwabe period)
+        t0    ~ 1755.5 yr  (approximate epoch of a Cycle-1 maximum reference)
+    and the mean level / amplitude are set to typical v2.0-scale values
+    (long-term average ~ 80, cycle amplitude ~ 80).
+    """
+    t = X[:, 0]
+
+    P      = 11.0     # mean solar-cycle period [yr]
+    t0     = 1755.5   # reference epoch near a solar maximum [yr]
+    R_mean = 80.0     # mean level (ISN v2.0 scale)
+    R_amp  = 80.0     # cycle amplitude (ISN v2.0 scale)
+
+    R = R_mean + R_amp * np.cos(2.0 * np.pi * (t - t0) / P)
+
+    return np.clip(R, 0.0, None)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard Schwabe-cycle representation of the sunspot number:
+    # a mean level plus an ~11-year sinusoidal modulation.
+    t = X[:, 0]
+
+    # Canonical solar-cycle constants
+    P = 11.0        # mean solar (Schwabe) cycle length [yr]
+    t0 = 1755.5     # epoch of a solar-cycle minimum (start of Cycle 1)
+    R_mean = 80.0   # mean level of ISN v2.0 over a cycle
+    A = 80.0        # amplitude (so R swings roughly 0 -> 160)
+
+    phase = 2.0 * np.pi * (t - t0) / P
+    R_I = R_mean - A * np.cos(phase)
+
+    # Sunspot number cannot be negative
+    return np.clip(R_I, 0.0, None)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard 11-year solar-cycle (Schwabe) sinusoidal model for the
+    # monthly International Sunspot Number (ISN v2.0 scale).
+    #
+    # Canonical form: a rectified/offset sinusoid with the ~11 yr period.
+    # Solar Cycle 1 minimum is conventionally placed near 1755.0, so the
+    # phase is referenced to that epoch.
+    t = np.asarray(X[:, 0], dtype=float)
+
+    P = 11.0          # mean solar-cycle period [yr]
+    t0 = 1755.0       # epoch of a cycle minimum (start of Cycle 1)
+
+    mean_level = 80.0   # long-term mean of ISN v2.0 monthly values
+    amplitude = 80.0    # half-range of the cycle
+
+    phase = 2.0 * np.pi * (t - t0) / P
+
+    # cosine referenced so that t0 is a minimum (R ~ 0 there)
+    R = mean_level - amplitude * np.cos(phase)
+
+    # sunspot number is non-negative
+    R = np.clip(R, 0.0, None)
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Schwabe solar cycle model: quasi-periodic ~11-year sunspot variation.
+    # R_I(t) = mean + amplitude * cos(2*pi*(t - t_min)/P)
+    # Canonical constants (ISN v2.0 scale):
+    P = 11.0          # mean solar cycle period [yr]
+    t_min = 1755.0    # reference epoch of a solar minimum (start of Cycle 1)
+    R_mean = 80.0     # long-term mean monthly sunspot number
+    A = 80.0          # cycle amplitude
+    t = X[:, 0]
+    R = R_mean - A * np.cos(2.0 * np.pi * (t - t_min) / P)
+    return np.clip(R, 0.0, None)

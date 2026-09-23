@@ -1,0 +1,163 @@
+import numpy as np
+
+def predict(X):
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Standard 2D Fung-type orthotropic exponential model for soft tissue/skin
+    # W = (C / 2) * (exp(Q) - 1)
+    # Q = c1 * E11^2 + c2 * E22^2 + 2 * c12 * E11 * E22
+    # E_ii = 0.5 * (lambda_ii^2 - 1)
+    # sigma_22 = lambda22 * dW/dlambda22 = lambda22 * (dW/dE22) * (dE22/dlambda22)
+    
+    C = 0.1       # Scale parameter [MPa]
+    c1 = 1.0      # Stiffness in direction 1
+    c2 = 1.5      # Stiffness in direction 2
+    c12 = 0.5     # Coupling parameter
+    
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    Q = c1 * E11**2 + c2 * E22**2 + 2.0 * c12 * E11 * E22
+    
+    # Cauchy stress in the 2-direction (assuming plane stress, p=0 in 2D formulation)
+    sigma22 = C * lambda22**2 * np.exp(Q) * (c2 * E22 + c12 * E11)
+    
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts sigma22 (Cauchy stress in the cranial-caudal direction) for a 
+    planar mouse-skin specimen under biaxial loading using a standard 
+    Fung-type hyperelastic model.
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Standard Fung-type exponential strain energy function parameters
+    # W = (c / 2) * (exp(Q) - 1)
+    c = 0.02       # MPa
+    c11 = 8.0
+    c22 = 10.0
+    c12 = 1.5
+    
+    Q = c11 * E11**2 + c22 * E22**2 + 2.0 * c12 * E11 * E22
+    
+    # 2nd Piola-Kirchhoff stress S22
+    S22 = c * np.exp(Q) * (c22 * E22 + c12 * E11)
+    
+    # Cauchy stress sigma22 assuming incompressibility (J=1) and plane stress
+    sigma22 = lambda22**2 * S22
+    
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Fung-type orthotropic parameters (representative for skin tissue)
+    c = 0.01
+    c1 = 1.0
+    c2 = 1.0
+    c3 = 0.2
+    
+    # Exponential argument
+    Q = c1 * E11**2 + c2 * E22**2 + 2.0 * c3 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress in the 22-direction
+    S22 = c * np.exp(Q) * (c2 * E22 + c3 * E11)
+    
+    # Cauchy stress (assuming incompressibility, J=1)
+    sigma22 = lambda22**2 * S22
+    
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress sigma_22 [MPa] for a planar mouse-skin specimen 
+    under biaxial loading using a standard Fung-type orthotropic hyperelastic model.
+    
+    Inputs:
+    X[:, 0] = lambda11 (lateral stretch ratio)
+    X[:, 1] = lambda22 (cranial-caudal stretch ratio)
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Standard Fung-type constitutive parameters (typical approximate values for skin)
+    c = 0.1   # MPa
+    b1 = 10.0
+    b2 = 10.0
+    b3 = 5.0
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Exponential strain energy argument
+    Q = b1 * E11**2 + b2 * E22**2 + 2.0 * b3 * E11 * E22
+    
+    # 2nd Piola-Kirchhoff stress S_22 = dW/dE_22
+    S22 = 2.0 * c * (b2 * E22 + b3 * E11) * np.exp(Q)
+    
+    # Cauchy stress sigma_22 (assuming incompressible planar biaxial state)
+    sigma22 = lambda22**2 * S22
+    
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress sigma_22 [MPa] for a planar mouse-skin specimen 
+    under biaxial loading using a standard Fung-type exponential hyperelastic model.
+    
+    Inputs:
+    X[:, 0] = lambda_11 (lateral stretch)
+    X[:, 1] = lambda_22 (cranial-caudal stretch)
+    """
+    lambda_11 = X[:, 0]
+    lambda_22 = X[:, 1]
+    
+    # Representative material constants for skin (can be fitted to specific data)
+    c = 0.01   # MPa
+    b1 = 10.0  # lateral stiffness parameter
+    b2 = 10.0  # cranial-caudal stiffness parameter
+    b3 = 2.0   # coupling parameter
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda_11**2 - 1.0)
+    E22 = 0.5 * (lambda_22**2 - 1.0)
+    
+    # Exponential strain energy term Q
+    Q = b1 * E11**2 + b2 * E22**2 + 2.0 * b3 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S22
+    S22 = c * (b2 * E22 + b3 * E11) * np.exp(Q)
+    
+    # Cauchy stress sigma_22 (assuming incompressibility J=1 and plane stress sigma_33=0)
+    sigma_22 = lambda_22**2 * S22
+    
+    return sigma_22

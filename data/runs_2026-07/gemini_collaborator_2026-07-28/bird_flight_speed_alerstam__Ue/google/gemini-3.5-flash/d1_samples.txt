@@ -1,0 +1,150 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mean equivalent airspeed corrected to sea-level air density (Ue)
+
+    for birds in migratory flapping flight.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] = mass_kg (m) [kg]
+        - X[:, 1] = wing_area_m2 (S) [m^2]
+
+    Returns:
+    np.ndarray
+        1-D array of equivalent airspeeds (Ue) [m/s]
+    """
+    mass_kg = X[:, 0]
+    wing_area_m2 = X[:, 1]
+
+    # Standard physical and aerodynamic constants
+    g = 9.80665  # Acceleration due to gravity (m/s^2)
+    rho_0 = 1.225  # Sea-level air density (kg/m^3)
+    C_L = 0.5  # Typical mean lift coefficient during migratory cruising flight
+
+    # Canonical aerodynamic relationship for equivalent airspeed
+    Ue = np.sqrt((2 * mass_kg * g) / (rho_0 * wing_area_m2 * C_L))
+
+    return Ue
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    mass_kg = X[:, 0]
+    wing_area_m2 = X[:, 1]
+
+    # Physical constants
+    g = 9.81  # acceleration due to gravity (m/s^2)
+    rho_0 = 1.225  # international standard atmosphere sea-level air density (kg/m^3)
+
+    # Aerodynamic constant
+    # C_L is the lift coefficient. For migrating birds in flapping flight,
+    # the mean lift coefficient at cruising speed is typically around 0.45.
+    C_L = 0.45
+
+    # Standard aerodynamic relationship for equivalent airspeed (Ue)
+    Ue_ms = np.sqrt((2 * mass_kg * g) / (rho_0 * C_L * wing_area_m2))
+
+    return Ue_ms
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mean equivalent airspeed corrected to sea-level air density (Ue)
+
+    for migrating birds in flapping flight using the standard aerodynamic
+    relationship.
+
+    Parameters:
+    X : ndarray of shape (n_samples, 2)
+        X[:, 0] = mass_kg (m) [kg]
+        X[:, 1] = wing_area_m2 (S) [m^2]
+
+    Returns:
+    Ue : ndarray of shape (n_samples,)
+        Mean equivalent airspeed (Ue) [m/s]
+    """
+    mass_kg = X[:, 0]
+    wing_area_m2 = X[:, 1]
+
+    # Physical constants
+    g = 9.80665  # Acceleration due to gravity (m/s^2)
+    rho_0 = 1.225  # Sea-level air density (kg/m^3)
+
+    # Standard cruise lift coefficient (C_L) for migrating birds
+    # Typically ranges between 0.4 and 0.6; 0.5 is the standard canonical assumption.
+    C_L = 0.5
+
+    # Standard closed-form aerodynamic lift equation solved for velocity:
+    # Ue = sqrt( (2 * m * g) / (rho_0 * S * C_L) )
+    Ue = np.sqrt((2 * mass_kg * g) / (rho_0 * wing_area_m2 * C_L))
+
+    return Ue
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mean equivalent airspeed (Ue) in m/s corrected to sea-level
+
+    air density using the canonical aerodynamic relationship for flapping flight.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = mass_kg (m) [kg]
+        - X[:, 1] = wing_area_m2 (S) [m^2]
+
+    Returns:
+    - 1-D numpy array of equivalent airspeed Ue [m/s]
+    """
+    m = X[:, 0]
+    S = X[:, 1]
+
+    # Standard physical constants
+    g = 9.81  # Acceleration due to gravity (m/s^2)
+    rho_0 = 1.225  # Sea-level air density (kg/m^3)
+
+    # Canonical lift coefficient (C_L) for migrating birds in flapping flight.
+    # A value of 0.6 is widely cited as the typical lift coefficient at
+    # characteristic flight speeds (e.g., maximum range speed).
+    C_L = 0.6
+
+    # Aerodynamic relationship: Ue = sqrt( (2 * m * g) / (rho_0 * S * C_L) )
+    Ue = np.sqrt((2 * m * g) / (rho_0 * S * C_L))
+
+    return Ue
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mean equivalent airspeed (Ue_ms) in m/s corrected to sea-level
+
+    air density, based on body mass and wing area, using the canonical empirical
+    allometric scaling relationship for avian flight.
+
+    Inputs:
+    - X[:, 0] = mass_kg (m) [kg]
+    - X[:, 1] = wing_area_m2 (S) [m^2]
+    """
+    mass_kg = X[:, 0]
+    wing_area_m2 = X[:, 1]
+
+    # Standard allometric relationship derived from radar tracking of migrating birds
+    # (e.g., Alerstam et al. 2007)
+    Ue = 13.0 * np.power(mass_kg, 0.30) * np.power(wing_area_m2, -0.15)
+
+    return Ue

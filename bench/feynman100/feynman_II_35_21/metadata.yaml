@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Magnetisation"
+  symbol: "M"
+  unit: ""
+  description: "Magnetisation"
+inputs:
+  - name: "Inverse volume"
+    symbol: "n_rho"
+    unit: ""
+    description: "Inverse volume"
+  - name: "Magnetic moment"
+    symbol: "mom"
+    unit: ""
+    description: "Magnetic moment"
+  - name: "Magnetic field"
+    symbol: "B"
+    unit: ""
+    description: "Magnetic field"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"

@@ -1,0 +1,74 @@
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    V_max = 100.0  # Maximum reaction rate (nmol g^-1 h^-1)
+    K_m = 50.0     # Michaelis-Menten constant (uM)
+    v = (V_max * S) / (K_m + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    # Standard Michaelis-Menten kinetics parameters
+    Vmax = 1000.0  # Maximum reaction rate (nmol g^-1 h^-1)
+    Km = 200.0     # Half-saturation constant (uM)
+    
+    # Michaelis-Menten equation
+    v = (Vmax * S) / (Km + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts fluorometric enzyme activity rate (v) using the standard 
+    Michaelis-Menten kinetic equation.
+    
+    v = (Vmax * S) / (Km + S)
+    
+    where:
+    - S is the substrate concentration (uM)
+    - Vmax is the maximum reaction rate (nmol g^-1 h^-1)
+    - Km is the Michaelis constant (uM)
+    """
+    S = X[:, 0]
+    
+    # Representative constants for typical soil enzyme activity
+    Vmax = 100.0  
+    Km = 100.0    
+    
+    v = (Vmax * S) / (Km + S)
+    
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    V_max = 100.0  # Maximum reaction rate (nmol g^-1 h^-1)
+    K_m = 100.0    # Half-saturation constant (uM)
+    v = (V_max * S) / (K_m + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    # Representative coefficients for standard Michaelis-Menten kinetics
+    V_max = 100.0  # Maximum activity rate (nmol g^-1 h^-1)
+    K_m = 150.0    # Half-saturation constant (uM)
+    
+    # Michaelis-Menten equation
+    v = (V_max * S) / (K_m + S)
+    
+    return v

@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Polarization"
+  symbol: "Pol"
+  unit: ""
+  description: "Polarization"
+inputs:
+  - name: "Inverse volume"
+    symbol: "n_rho"
+    unit: ""
+    description: "Inverse volume"
+  - name: "Electric dipole moment"
+    symbol: "p_d"
+    unit: ""
+    description: "Electric dipole moment"
+  - name: "Electric field"
+    symbol: "Ef"
+    unit: ""
+    description: "Electric field"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"

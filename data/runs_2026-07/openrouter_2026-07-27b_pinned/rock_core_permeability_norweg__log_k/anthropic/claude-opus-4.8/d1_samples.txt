@@ -1,0 +1,103 @@
+import numpy as np
+
+def predict(X):
+    # Kozeny-Carman / Timur-style porosity-permeability relationship.
+    # A common empirical form (Kozeny-Carman linearized) gives log10(k)
+    # as a linear function of log10(porosity), reflecting k ∝ φ^n.
+    #
+    # Widely cited approximate form: k (mD) ≈ 0.136 * phi^4.4 / Swi^2,
+    # but with porosity as the only input, the canonical linear log–log
+    # relation log10(k) = a * log10(phi) + b is used.
+    #
+    # Typical fitted coefficients for clastic reservoirs:
+    #   slope ~ 8, intercept ~ 8  (k in mD, phi as fraction)
+
+    phi = np.asarray(X[:, 0], dtype=float)
+
+    # avoid log of zero / negative
+    phi = np.clip(phi, 1e-6, None)
+
+    slope = 8.0
+    intercept = 8.0
+
+    log_k = slope * np.log10(phi) + intercept
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kozeny-Carman / Timur-style porosity-permeability relationship.
+    # A common canonical linear form: log10(k) = a * phi + b
+    # (permeability increases roughly log-linearly with porosity)
+    phi = X[:, 0]
+    phi = np.clip(phi, 1e-4, 0.69)
+
+    # Coefficients from typical clastic-reservoir porosity-permeability transforms.
+    a = 16.0   # slope (per fraction porosity)
+    b = -2.5   # intercept (log10 mD at phi ~ 0)
+
+    log_k = a * phi + b
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kozeny-Carman / Tixier-type porosity-permeability relationship.
+    # A widely cited empirical form: log10(k) = a * phi + b (semi-log linear trend).
+    # Coefficients reflect typical sandstone reservoir behavior.
+    phi = X[:, 0]
+
+    # Guard against non-physical porosity values
+    phi = np.clip(phi, 1e-4, 0.69)
+
+    # Empirical semi-log linear fit constants (commonly cited values):
+    # k in mD increases roughly one order of magnitude per ~0.07-0.10 porosity.
+    a = 20.0   # slope
+    b = -2.0   # intercept
+
+    log_k = a * phi + b
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kozeny-Carman / Timur-style porosity-permeability relationship.
+    # A widely cited empirical closed form is the linear log(k) vs porosity trend:
+    #   log10(k) = a * phi + b
+    # Typical fitted coefficients for sandstone core plugs:
+    a = 14.0   # slope [per fraction porosity]
+    b = -2.0   # intercept [log10(mD)]
+
+    phi = np.asarray(X[:, 0], dtype=float)
+    phi = np.clip(phi, 1e-6, 0.99)
+
+    log_k = a * phi + b
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kozeny-Carman / Timur-style porosity-permeability relationship.
+    # A widely cited empirical form is the log-linear (semi-log) trend:
+    #     log10(k) = a * phi + b
+    # Classic sandstone coefficients give roughly k ~ few mD at phi=0.10
+    # and ~1000+ mD at phi=0.30, corresponding to slope ~ 20-25 per unit phi.
+    phi = np.asarray(X[:, 0], dtype=float)
+
+    # Clamp porosity to a physically sensible small positive value
+    phi = np.clip(phi, 1e-4, 0.69)
+
+    # Canonical semi-log coefficients
+    a = 22.0   # slope per unit porosity fraction
+    b = -3.0   # intercept (log10 mD at phi = 0)
+
+    log_k = a * phi + b
+    return log_k

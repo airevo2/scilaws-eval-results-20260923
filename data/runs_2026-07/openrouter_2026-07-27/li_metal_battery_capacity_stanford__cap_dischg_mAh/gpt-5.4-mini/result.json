@@ -1,0 +1,35 @@
+{
+  "task": "li_metal_battery_capacity_stanford__cap_dischg_mAh",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "he_2011",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "pinson_2013",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "spotnitz_2003",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

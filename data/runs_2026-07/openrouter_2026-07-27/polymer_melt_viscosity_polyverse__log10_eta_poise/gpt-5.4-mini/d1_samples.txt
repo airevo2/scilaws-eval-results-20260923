@@ -1,0 +1,274 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard polymer-melt viscosity relation:
+    - Arrhenius temperature dependence
+    - Carreau-Yasuda / Cross-type shear thinning
+    - Molecular-weight dependence via entanglement / zero-shear viscosity scaling
+    """
+    X = np.asarray(X, dtype=float)
+
+    T = X[:, 0]          # Temperature_K
+    log10_Mw = X[:, 1]   # log10(Mw) [g/mol]
+    gdot = X[:, 2]       # Shear_Rate [s^-1]
+    Tg = X[:, 3]         # Tg_K
+
+    Mw = 10.0 ** log10_Mw
+
+    # --- Canonical polymer-melt ingredients ---
+    # Zero-shear viscosity scaling with molecular weight:
+    #   eta0 ~ Mw^3.4  for entangled linear polymers (above critical entanglement MW)
+    # Here used as a common closed-form approximation over broad Mw.
+    Mw_c = 1.0e4  # g/mol, nominal entanglement-threshold-like scale
+    n_Mw = 3.4
+    eta_ref = 1.0  # poise, arbitrary reference absorbed into intercept
+
+    # Temperature dependence: WLF form written relative to Tg.
+    # Commonly used for polymer melts near/above Tg.
+    C1 = 17.44
+    C2 = 51.6  # K
+    T_ref = Tg
+
+    # Zero-shear viscosity in poise
+    log10_eta0 = np.log10(eta_ref) + n_Mw * np.log10(np.maximum(Mw, 1.0) / Mw_c)
+    log10_eta0 += -C1 * (T - T_ref) / (C2 + np.maximum(T - T_ref, 1e-12))
+
+    # Shear-thinning: Cross equation
+    #   eta = eta0 / (1 + (lambda*gamma_dot)^m)^((1-n)/m)
+    # A common simplified form uses Carreau-like parameters.
+    n = 0.2
+    m = 2.0
+    # Relaxation time increases strongly with Mw; simple scaling
+    lam = 1e-6 * (np.maximum(Mw, 1.0) / Mw_c) ** 3.4 * np.exp(0.02 * (T_ref - T))
+
+    eta0 = 10.0 ** log10_eta0
+    eta = eta0 / (1.0 + (lam * gdot) ** m) ** ((1.0 - n) / m)
+
+    # Avoid log of zero
+    eta = np.maximum(eta, 1e-300)
+
+    return np.log10(eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Common closed-form polymer-melt viscosity model:
+    Williams-Landel-Ferry / Arrhenius-like shift + Carreau-type shear thinning
+    with molecular-weight scaling via entanglement/Mark-Houwink-style crossover.
+
+    This is a generic physics-based form, not dataset-fit coefficients.
+    """
+    T = X[:, 0]
+    logMw = X[:, 1]
+    gdot = X[:, 2]
+    Tg = X[:, 3]
+
+    Mw = 10.0 ** logMw
+
+    # --- Material constants / canonical polymer-physics parameters ---
+    # WLF constants in log10 form (common "universal" polymer values)
+    C1 = 17.44
+    C2 = 51.6  # K
+
+    # Reference viscosity scale (poise) at Mw_ref, T_ref, zero shear
+    eta_ref = 1.0e3  # poise
+    Mw_ref = 1.0e5    # g/mol
+    a_M = 3.4         # typical zero-shear molecular-weight exponent above entanglement
+
+    # Entanglement/crossover scale for shear thinning
+    Mw_e = 1.0e4      # g/mol
+    n = 2.0 / 3.0     # Carreau exponent (typical polymer-melt value)
+    lambda0 = 1.0e-3  # s, characteristic relaxation time prefactor
+
+    # --- Temperature dependence: WLF shift factor relative to Tg ---
+    # log10(a_T) = -C1*(T - Tg)/(C2 + (T - Tg))
+    dT = T - Tg
+    log10_aT = -C1 * dT / (C2 + dT)
+    aT = 10.0 ** log10_aT
+
+    # --- Molecular-weight dependence: below/above entanglement crossover ---
+    # Smooth transition from low-Mw scaling (~1) to entangled scaling (~Mw^a_M)
+    Mw_ratio = Mw / Mw_e
+    f_M = (1.0 + Mw_ratio ** 1.0) ** a_M / (2.0 ** a_M)
+
+    # Zero-shear viscosity estimate
+    eta0 = eta_ref * f_M * aT
+
+    # --- Shear thinning: Carreau form ---
+    # For gamma_dot = 0 => eta = eta0
+    lam = lambda0 * f_M * aT
+    eta = eta0 * (1.0 + (lam * gdot) ** 2.0) ** ((n - 1.0) / 2.0)
+
+    # Return log10 viscosity in poise
+    return np.log10(eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard phenomenological polymer-melt viscosity model:
+    - Arrhenius/WLF-like temperature shift
+    - molecular-weight dependence with entanglement crossover
+    - Carreau/Yasuda shear-thinning term
+
+    Inputs:
+        X[:, 0] = Temperature_K
+        X[:, 1] = log10_Mw
+        X[:, 2] = Shear_Rate
+        X[:, 3] = Tg_K
+
+    Returns:
+        log10(eta) in poise
+    """
+    T = X[:, 0].astype(float)
+    log10_Mw = X[:, 1].astype(float)
+    gdot = X[:, 2].astype(float)
+    Tg = X[:, 3].astype(float)
+
+    Mw = 10.0 ** log10_Mw
+
+    # --- Molecular-weight dependence (common crossover form) ---
+    # Newtonian zero-shear viscosity:
+    # eta0 ~ M^a for M < Me, and ~ M^(a+3.4-1) = M^a?  In practice the
+    # commonly used empirical form is a smooth crossover around Mc:
+    # eta0 = eta_s * (1 + (Mw/Mc)^a)^b
+    # with low-Mw slope ~ a*b and high-Mw slope ~ a*b.
+    # A widely used alternative is the Bueche/de Gennes form:
+    # eta0 = eta_inf * (1 + (Mw/Mc)^a)^((n_s + n_e - ...))
+    #
+    # For a standard closed-form engineering model, use the Carreau-Yasuda
+    # zero-shear plateau combined with a common melt scaling:
+    eta_s = 1e-3  # poise, rough reference solvent-like scale; absorbed by fit in practice
+    Mc = 1e5      # g/mol, characteristic entanglement crossover
+    a_mw = 3.4    # entangled melt exponent
+    eta0 = eta_s * (1.0 + (Mw / Mc)) ** a_mw
+
+    # --- Temperature dependence (WLF with Tg) ---
+    # Shift factor relative to Tg:
+    # log10(a_T) = -C1*(T - Tg)/(C2 + T - Tg)
+    # Use canonical values for polymer melts near Tg.
+    C1 = 17.44
+    C2 = 51.6  # K
+    dT = T - Tg
+    log10_aT = -C1 * dT / (C2 + dT)
+    aT = 10.0 ** log10_aT
+
+    # Zero-shear viscosity with temperature shift
+    eta0_T = eta0 * aT
+
+    # --- Shear thinning (Carreau-Yasuda) ---
+    # eta = eta0_T * [1 + (lambda * gdot)^a] ^ ((n - 1)/a)
+    # Canonical polymer-melt-like values:
+    lam = 1e-3  # s, effective relaxation time scale
+    n = 0.2
+    a_y = 2.0
+
+    eta = eta0_T * (1.0 + (lam * gdot) ** a_y) ** ((n - 1.0) / a_y)
+
+    return np.log10(eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(polymer melt viscosity in poise).
+
+    Canonical closed-form form used here:
+        log10(eta) = log10(eta_0) - log10( 1 + (gamma_dot * tau)^m ) * (1 - 1/n)
+
+    with a Williams-Landel-Ferry/Arrhenius-like temperature dependence folded into eta_0
+    via time-temperature superposition:
+        log10(eta_0) ~ A + B/(T - Tg)
+
+    Since no fitted dataset coefficients are provided, this is a standard physically
+    motivated constitutive form with generic parameters.
+    """
+
+    X = np.asarray(X, dtype=float)
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    gdot = X[:, 2]
+    Tg = X[:, 3]
+
+    # Molecular-weight scaling for zero-shear viscosity:
+    #   eta_0 ~ Mw^a below entanglement and ~ Mw^(a+b) above it
+    # Here use a smooth crossover centered near log10(Me) ~ 4.5 g/mol
+    log10_Me = 4.5
+    a = 1.0
+    b = 2.0
+    p = 4.0  # smoothness of crossover
+
+    mw_exponent = a + b / (1.0 + 10.0 ** (-p * (log10_Mw - log10_Me)))
+
+    # Temperature dependence (WLF-like in Tg-reduced form)
+    C1 = 17.44
+    C2 = 51.6
+
+    # Reference prefactor chosen for poise-scale magnitudes
+    log10_eta_ref = -3.0
+
+    # log10 of zero-shear viscosity
+    log10_eta0 = (
+        log10_eta_ref
+        + mw_exponent * (log10_Mw - 4.0)
+        - (C1 * (T - Tg)) / (C2 + (T - Tg))
+    )
+
+    # Shear-thinning via Carreau-Yasuda form
+    tau = 1.0  # s
+    n = 0.35
+    m = 2.0
+
+    shear_factor = (1.0 + (gdot * tau) ** m) ** ((n - 1.0) / m)
+
+    eta = 10.0 ** log10_eta0 * shear_factor
+    return np.log10(eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Cross-WLF / Arrhenius-like generalized Carreau–Yasuda form for polymer melt viscosity
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    gdot = X[:, 2]
+    Tg = X[:, 3]
+
+    Mw = 10.0 ** log10_Mw
+
+    # Reduced temperature relative to Tg
+    # A common closed-form for polymer melts uses a WLF shift factor:
+    # log10(a_T) = -C1*(T-Tref)/(C2 + (T-Tref))
+    # Here we use Tg as the reference temperature and canonical WLF constants.
+    C1 = 17.44
+    C2 = 51.6  # K
+    dT = T - Tg
+    log10_aT = -C1 * dT / (C2 + dT)
+
+    # Zero-shear viscosity scaling with molecular weight:
+    # eta0 ~ Mw^3.4 for entangled linear homopolymers
+    # Include temperature dependence through a_T and a mild Arrhenius-like shift.
+    # The prefactor is expressed in poise.
+    log10_eta0 = -14.0 + 3.4 * np.log10(Mw) + log10_aT
+
+    # Shear-thinning: generalized Carreau-Yasuda in log form
+    # eta = eta0 * [1 + (lambda*gamma_dot)^a]^((n-1)/a)
+    # Using a standard canonical parameterization.
+    n = 0.35
+    a = 2.0
+    # Relaxation time scaling with molecular weight and temperature
+    log10_lambda = -6.0 + 3.4 * np.log10(Mw) + log10_aT
+    lam = 10.0 ** log10_lambda
+
+    eta = (10.0 ** log10_eta0) * (1.0 + (lam * gdot) ** a) ** ((n - 1.0) / a)
+
+    return np.log10(eta)

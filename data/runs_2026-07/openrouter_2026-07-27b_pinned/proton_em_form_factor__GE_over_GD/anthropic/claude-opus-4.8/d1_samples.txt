@@ -1,0 +1,104 @@
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    mp = 0.938272  # proton mass [GeV]
+    tau = Q2 / (4.0 * mp**2)
+
+    # Kelly (2004) parametrization of the proton electric Sachs form factor
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+    GE = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Standard dipole form factor
+    GD = 1.0 / (1.0 + Q2 / 0.71)**2
+
+    return GE / GD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    Mp = 0.938272  # proton mass [GeV]
+    tau = Q2 / (4.0 * Mp**2)
+
+    # Kelly (2004) parametrization for G_E of the proton
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+    GE = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Standard dipole form factor
+    GD = 1.0 / (1.0 + Q2 / 0.71)**2
+
+    return GE / GD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+
+    # Standard dipole form factor: G_D = 1 / (1 + Q^2/0.71)^2
+    GD = 1.0 / (1.0 + Q2 / 0.71)**2
+
+    # Kelly (2004) parametrization of the proton electric Sachs form factor
+    Mp = 0.938272  # proton mass [GeV]
+    tau = Q2 / (4.0 * Mp**2)
+
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+
+    GE = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    return GE / GD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    Mp = 0.938272  # proton mass [GeV]
+    tau = Q2 / (4.0 * Mp**2)
+
+    # Kelly (2004) parametrization of the proton electric Sachs form factor
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+    GE = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Standard dipole form factor
+    GD = 1.0 / (1.0 + Q2 / 0.71)**2
+
+    return GE / GD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    Mp = 0.938272  # proton mass [GeV]
+    tau = Q2 / (4.0 * Mp**2)
+
+    # Kelly (2004) parametrization of proton electric Sachs form factor
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+    GE = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Standard dipole form factor
+    GD = 1.0 / (1.0 + Q2 / 0.71)**2
+
+    return GE / GD

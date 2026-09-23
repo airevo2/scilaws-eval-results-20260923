@@ -1,0 +1,35 @@
+{
+  "task": "budyko_partitioning_mach__et_over_p",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "choudhury_1999",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "wang_tang_2014",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "yang_2008",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

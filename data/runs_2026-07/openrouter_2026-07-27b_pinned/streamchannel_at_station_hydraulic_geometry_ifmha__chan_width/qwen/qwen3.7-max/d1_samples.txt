@@ -1,0 +1,74 @@
+import numpy as np
+
+def predict(X):
+    """
+    At-a-station hydraulic geometry: width-discharge relationship
+    following Leopold & Maddock (1953).
+    
+    w = a * Q^b
+    
+    Typical at-a-station exponents (Leopold & Maddock, 1953):
+        b ≈ 0.26  (width exponent)
+        a ≈ 4.8   (coefficient for Q in cfs, w in ft)
+    """
+    Q = X[:, 0]
+    a = 4.8
+    b = 0.26
+    w = a * Q ** b
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    
+    # Standard downstream hydraulic geometry power-law relationship 
+    # (Leopold and Maddock, 1953): w = a * Q^b
+    # Using typical average coefficients for US streams (w in ft, Q in cfs)
+    a = 3.0
+    b = 0.5
+    
+    w = a * (Q ** b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Standard hydraulic geometry power law (Leopold & Maddock, 1953)
+    # w = a * Q^b
+    a = 1.0  # empirical coefficient
+    b = 0.5  # empirical exponent (typical downstream average)
+    w = a * (Q ** b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    
+    # Leopold and Maddock (1953) at-a-station hydraulic geometry: w = a * Q^b
+    # 'a' is a highly site-specific coefficient; 'b' is the canonical mean exponent.
+    a = 1.0  
+    b = 0.26 
+    
+    w = a * np.power(Q, b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Leopold and Maddock (1953) at-a-station hydraulic geometry
+    a = 2.5  # typical coefficient for width (ft) and discharge (cfs)
+    b = 0.26 # typical at-a-station exponent for width
+    w = a * (Q ** b)
+    return w

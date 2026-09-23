@@ -1,0 +1,144 @@
+import numpy as np
+
+def predict(X):
+    """
+    Lee-Carter-style closed-form forecast for log central death rate:
+        ln M(x,t) = a_x + b_x * k_t
+    Since no fitted coefficients are provided, this returns a simple
+    canonical age-pattern approximation using a Gompertz/Makeham-style
+    log-mortality shape over age with a modest period trend by year.
+
+    Input:
+      X[:, 0] = age x
+      X[:, 1] = year t
+
+    Returns:
+      1-D numpy array of ln M(x,t)
+    """
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Canonical age pattern: infant/child mortality high, then adult Gompertz rise,
+    # with a late-life deceleration.
+    # Period component: simple secular decline over calendar time.
+    # Constants are generic stylized values, not data-fitted.
+    ax = (
+        -6.5
+        + 0.9 * np.exp(-0.22 * x)          # infant/child mortality decline
+        + 0.085 * x                        # adult Gompertz increase
+        - 0.00035 * np.maximum(x - 85, 0) ** 2  # late-life flattening
+    )
+
+    kt = -0.012 * (t - 1950.0)             # period improvement over time
+
+    return ax + kt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Lee-Carter style standard closed-form mortality surface:
+    # ln M(x,t) = a_x + b_x * k_t
+    # Since no fitted coefficients/data are provided, this returns a generic
+    # canonical functional form with age and period effects represented by
+    # simple smooth terms (a practical placeholder form).
+    #
+    # In the absence of estimated parameters, we use a standard Gompertz-like
+    # age pattern plus a linear period trend:
+    # ln M(x,t) = c0 + c1*x + c2*exp(-c3*x) + c4*(t - 2000)
+    #
+    # This captures the usual monotone age increase and secular period change.
+    c0 = -10.0
+    c1 = 0.09
+    c2 = 1.5
+    c3 = 0.15
+    c4 = -0.01
+
+    return c0 + c1 * x + c2 * np.exp(-c3 * x) + c4 * (t - 2000.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Standard Lee-Carter-style closed-form mortality surface:
+    # ln M(x,t) = a(x) + b(x) * k(t)
+    # With no fitted data provided, use a generic canonical age pattern:
+    # Gompertz-like age increase plus infant/child mortality hump and a secular time trend.
+    #
+    # This is a placeholder standard form, not empirically fitted.
+    a = -8.5 + 0.085 * x - 0.00035 * (x ** 2) + 0.9 * np.exp(-((x - 1.5) / 2.5) ** 2)
+    b = 1.0 - 0.0025 * x
+    k = -0.012 * (t - 1950)
+
+    return a + b * k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Heligman-Pollard 8-parameter mortality law (standard closed-form age pattern)
+    # M(x,t) = A^(x+B) + C * exp(-D*(ln x - ln E)^2) + F * G^x / (1 + H * G^x)
+    # Returned here on the log scale: ln M(x,t)
+    #
+    # Since no data are provided, use a generic smooth age-pattern with canonical
+    # age-group structure (infant, accident hump, senescent rise). Parameters are
+    # set to conventional illustrative constants, not fitted to a specific population.
+
+    eps = 1e-12
+    x1 = np.maximum(x, eps)
+
+    # Illustrative canonical constants
+    A = 0.20
+    B = -0.10
+    C = 0.0015
+    D = 0.35
+    E = 20.0
+    F = 0.0001
+    G = 1.10
+    H = 0.001
+
+    term1 = np.power(A, x1 + B)
+    term2 = C * np.exp(-D * (np.log(x1) - np.log(E))**2)
+    term3 = F * np.power(G, x1) / (1.0 + H * np.power(G, x1))
+
+    M = term1 + term2 + term3
+    return np.log(np.maximum(M, eps))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Lee-Carter form: ln m(x,t) = a(x) + b(x) * k(t)
+    # Without fitted coefficients/data, use a simple canonical placeholder structure.
+    # Here we represent the standard closed-form relationship in its generic form
+    # with age and period effects left as smooth functions.
+    #
+    # Since no data are provided, we cannot estimate a(x), b(x), k(t);
+    # this function returns a symbolic-style approximation using common age-pattern
+    # mortality shapes: high infant mortality, low child mortality, adult rise, old-age acceleration.
+
+    # Age pattern components
+    infant = 2.5 * np.exp(-x / 1.5)                 # infant/early-childhood decline
+    adult = -8.0 + 0.09 * x                         # Gompertz-like adult increase on log scale
+    old_age = 0.0008 * np.maximum(x - 80.0, 0.0)**2 # late-life acceleration
+
+    # Period trend (common log-linear temporal improvement)
+    period = -0.0025 * (t - 1950.0)
+
+    return infant + adult + old_age + period

@@ -1,0 +1,175 @@
+import numpy as np
+
+def predict(X):
+    """
+    Extended STIRPAT model for national annual CO2 emissions.
+    
+    Standard form: I_CO2 = exp(b0) * P^b1 * A^b2 * AP^b3 * DP^b4 * UR^b5 * exp(b6 * AT)
+    Log-linear:    ln(I_CO2) = b0 + b1*ln(P) + b2*ln(A) + b3*ln(AP) + b4*ln(DP) + b5*ln(UR) + b6*AT
+    """
+    A  = X[:, 0]   # GDP per capita (Affluence) [constant 2015 USD]
+    P  = X[:, 1]   # Total population
+    AP = X[:, 2]   # Active population share [%]
+    DP = X[:, 3]   # Population density [persons/km2]
+    UR = X[:, 4]   # Urbanization rate [%]
+    AT = X[:, 5]   # Annual mean surface air temperature [°C]
+
+    # STIRPAT elasticities / coefficients
+    b0 = -2.0      # intercept
+    b1 =  1.0      # population elasticity
+    b2 =  0.8      # affluence elasticity
+    b3 =  0.5      # active-population elasticity
+    b4 = -0.1      # density elasticity (agglomeration efficiency)
+    b5 =  0.3      # urbanization elasticity
+    b6 = -0.02     # temperature semi-elasticity (heating demand effect)
+
+    ln_I = (b0
+            + b1 * np.log(P)
+            + b2 * np.log(A)
+            + b3 * np.log(AP)
+            + b4 * np.log(DP)
+            + b5 * np.log(UR)
+            + b6 * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    STIRPAT model for national CO2 emissions (kg).
+    
+    Canonical form (Dietz & Rosa, 1997; York et al., 2003):
+        ln(I) = alpha + beta_P*ln(P) + beta_A*ln(A) + beta_AP*ln(AP)
+                + beta_DP*ln(DP) + beta_UR*ln(UR) + beta_AT*AT
+        
+    Equivalently:
+        I_CO2 = exp(alpha) * P^beta_P * A^beta_A * AP^beta_AP
+                * DP^beta_DP * UR^beta_UR * exp(beta_AT * AT)
+    """
+    A  = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P  = X[:, 1]   # Total population (persons)
+    AP = X[:, 2]   # Active population share (%)
+    DP = X[:, 3]   # Population density (persons/km2)
+    UR = X[:, 4]   # Urbanization rate (%)
+    AT = X[:, 5]   # Annual mean temperature (deg C)
+
+    # --- STIRPAT coefficients (log-linear) ---
+    alpha  =  0.90   # intercept
+    beta_P =  0.95   # population elasticity  (≈1, scale effect)
+    beta_A =  0.78   # affluence elasticity    (GDP per capita)
+    beta_AP = 0.10   # working-age share elasticity
+    beta_DP = -0.05  # density elasticity      (agglomeration efficiency)
+    beta_UR = 0.25   # urbanization elasticity (infrastructure / energy demand)
+    beta_AT = -0.02  # temperature semi-elasticity (heating vs cooling balance)
+
+    ln_I = (alpha
+            + beta_P  * np.log(P)
+            + beta_A  * np.log(A)
+            + beta_AP * np.log(AP)
+            + beta_DP * np.log(DP)
+            + beta_UR * np.log(UR)
+            + beta_AT * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    STIRPAT model for national annual CO2 emissions (fossil fuels & industry).
+    
+    Based on the Stochastic Impacts by Regression on Population, Affluence,
+    and Technology (STIRPAT) framework (Dietz & Rosa 1997; York et al. 2003).
+    
+    Closed-form: I_CO2 = a * P^b_P * A^b_A * UR^b_UR * AP^b_AP * DP^b_DP * exp(b_AT * AT)
+    Log-linear:  ln(I_CO2) = alpha + b_P*ln(P) + b_A*ln(A) + b_UR*ln(UR)
+                                + b_AP*ln(AP) + b_DP*ln(DP) + b_AT*AT
+    """
+    A  = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P  = X[:, 1]   # Total population (persons)
+    AP = X[:, 2]   # Working-age population share (%)
+    DP = X[:, 3]   # Population density (persons/km2)
+    UR = X[:, 4]   # Urbanization rate (%)
+    AT = X[:, 5]   # Annual mean surface air temperature (°C)
+
+    # STIRPAT coefficients (canonical elasticities from the literature)
+    alpha = -3.14    # intercept
+    b_P   =  1.0     # population elasticity (~1.0 is the standard finding)
+    b_A   =  0.7     # affluence elasticity (relative decoupling, typically 0.6–0.8)
+    b_UR  =  0.3     # urbanization elasticity (typically 0.2–0.4)
+    b_AP  =  1.0     # working-age population share elasticity
+    b_DP  = -0.05    # population density elasticity (slight efficiency gain)
+    b_AT  = -0.01    # temperature semi-elasticity (heating vs. cooling balance)
+
+    ln_I = (alpha
+            + b_P  * np.log(P)
+            + b_A  * np.log(A)
+            + b_UR * np.log(UR)
+            + b_AP * np.log(AP)
+            + b_DP * np.log(DP)
+            + b_AT * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # Extended STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) 
+    # model coefficients represented as named constants.
+    # In climate economics, this is the standard closed-form non-linear relationship 
+    # for environmental impact (I) as a function of demographic and economic drivers.
+    alpha = 1.0    # scaling factor (calibrated to kg CO2)
+    b_P = 1.0      # elasticity of total population
+    b_A = 1.0      # elasticity of affluence (GDP per capita)
+    b_AP = 0.0     # elasticity of active population share
+    b_DP = 0.0     # elasticity of population density
+    b_UR = 0.0     # elasticity of urbanization rate
+    b_AT = 0.0     # semi-elasticity of annual mean temperature
+    
+    # Multiplicative closed-form equation.
+    # Temperature (AT) enters as an exponential term (semi-elasticity) because 
+    # it can take negative values, precluding a standard log-log transformation.
+    I_CO2 = alpha * (P ** b_P) * (A ** b_A) * (AP ** b_AP) * (DP ** b_DP) * (UR ** b_UR) * np.exp(b_AT * AT)
+    
+    return I_CO2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # Extended STIRPAT model coefficients (named constants)
+    # I = a * P^b * A^c * AP^d * DP^e * UR^f * exp(g * AT)
+    a = 1.0
+    b = 1.0
+    c = 1.0
+    d = 0.0
+    e = 0.0
+    f = 0.0
+    g = 0.0
+    
+    # Multiplicative form with exponential for temperature to allow negative AT values
+    I_CO2 = a * (P**b) * (A**c) * (AP**d) * (DP**e) * (UR**f) * np.exp(g * AT)
+    
+    return I_CO2

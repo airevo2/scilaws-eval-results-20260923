@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Frequency"
+  symbol: "omega"
+  unit: ""
+  description: "Frequency"
+inputs:
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Magnetic field"
+    symbol: "B"
+    unit: ""
+    description: "Magnetic field"
+  - name: "Momentum"
+    symbol: "p"
+    unit: ""
+    description: "Momentum"

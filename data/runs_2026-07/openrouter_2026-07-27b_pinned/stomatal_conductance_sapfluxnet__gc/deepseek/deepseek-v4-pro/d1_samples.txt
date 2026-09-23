@@ -1,0 +1,142 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily daytime canopy conductance proxy Gc (cm3 cm-2 h-1 kPa-1)
+    from vapour pressure deficit D (kPa) using the log-linear decline model:
+        Gc = Gc_ref - m * ln(D)
+    
+    Parameters
+    ----------
+    X : 2-D numpy array
+        X[:, 0] = vpd (D) [kPa], daily daytime mean VPD >= 0.3 kPa
+    
+    Returns
+    -------
+    Gc : 1-D numpy array of canopy conductance proxy values.
+    
+    Notes
+    -----
+    Coefficients are based on the widely cited Oren et al. (1999) synthesis,
+    with Gc_ref = 1.3 cm3 cm-2 h-1 kPa-1 (conductance at D = 1 kPa) and
+    m = 0.78 (approximating the typical ratio m ≈ 0.6 * Gc_ref).
+    """
+    D = X[:, 0]          # vapour pressure deficit (kPa)
+    Gc_ref = 1.3         # reference conductance at D = 1 kPa
+    m = 0.78             # slope of log-linear decline
+    return Gc_ref - m * np.log(D)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily daytime canopy conductance proxy Gc (cm3 cm-2 h-1 kPa-1)
+    from vapour pressure deficit D (kPa) using the log-linear model:
+    Gc = Gc_ref - m * ln(D)
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = vpd (D), kPa. Typical range [0.3, 7.4].
+
+    Returns
+    -------
+    Gc : np.ndarray, shape (n_samples,)
+        Canopy conductance proxy.
+    """
+    D = X[:, 0]
+    # Reference conductance at D = 1 kPa (ln(1) = 0)
+    Gc_ref = 200.0      # cm3 cm-2 h-1 kPa-1
+    # Sensitivity parameter (commonly ~0.6 * Gc_ref; Oren et al. 1999)
+    m = 120.0           # cm3 cm-2 h-1 kPa-1
+    Gc = Gc_ref - m * np.log(D)
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily daytime canopy conductance proxy (Gc) using log-linear model.
+    
+    Gc = Gc_ref - m * ln(D)
+    
+    Parameters:
+    X : 2-D numpy array
+        X[:, 0] = vpd (D) in kPa
+    
+    Returns:
+    1-D array of Gc in cm3 cm-2 h-1 kPa-1
+    """
+    # Extract VPD
+    D = X[:, 0]
+    
+    # Reference conductance at D = 1 kPa (ln(1) = 0)
+    Gc_ref = 0.6  # cm3 cm-2 h-1 kPa-1
+    
+    # Sensitivity of conductance to ln(VPD)
+    m = 0.3  # cm3 cm-2 h-1 kPa-1 per ln(kPa)
+    
+    # Log-linear model
+    Gc = Gc_ref - m * np.log(D)
+    
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily daytime canopy conductance proxy Gc [cm3 cm-2 h-1 kPa-1]
+    using a log-linear model: Gc = Gc_ref - m * ln(D)
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, n_features)
+        X[:, 0] = vpd (D) [kPa] — daily daytime mean vapour pressure deficit
+    
+    Returns
+    -------
+    Gc : np.ndarray, shape (n_samples,)
+        Canopy conductance proxy
+    """
+    # Fitted coefficients (typical values from the literature)
+    Gc_ref = 1.0   # reference conductance at D = 1 kPa
+    m = 0.6        # sensitivity of conductance to log(VPD)
+
+    vpd = X[:, 0]
+    Gc = Gc_ref - m * np.log(vpd)
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily daytime canopy conductance proxy (Gc) from vapour pressure deficit (VPD).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = vpd (D) [kPa], daily daytime mean VPD (>= 0.3 kPa).
+
+    Returns
+    -------
+    Gc : np.ndarray, shape (n_samples,)
+        Predicted Gc [cm3 cm-2 h-1 kPa-1] using the log-linear model:
+        Gc = Gc_ref - m * ln(D)
+    """
+    # Literature-based parameters for canopy conductance proxy
+    # Gc_ref: reference conductance at D = 1 kPa  [cm3 cm-2 h-1 kPa-1]
+    # m: sensitivity of conductance to ln(D)  [same units]
+    Gc_ref = 2.5
+    m = 0.8
+
+    D = X[:, 0]          # vapour pressure deficit (already >= 0.3 kPa)
+    Gc = Gc_ref - m * np.log(D)
+    return Gc

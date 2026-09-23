@@ -1,0 +1,124 @@
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    E = X[:, 0]          # DNA strength parameter per base (dimensionless)
+    N = X[:, 1]          # Sequence length in base pairs
+    salt_M = X[:, 2]     # Sodium ion concentration [M]
+    C_DNA = X[:, 3]      # Total nucleotide strand concentration [M]
+    
+    # Universal gas constant in cal/(mol*K)
+    R = 1.987
+    
+    # SantaLucia (1998) nearest-neighbor thermodynamic model:
+    # Tm = (1000 * dH) / (dS + R * ln(C_T / x)) - 273.15
+    # where x = 4 for non-self-complementary duplexes.
+    # 
+    # Since E is the dimensionless "DNA strength parameter per base" encoding 
+    # stacking and hydrogen-bonding contributions, we treat it as proportional 
+    # to the average enthalpy per base (in kcal/mol).
+    dH = -E * N          # Total enthalpy in kcal/mol (negative for duplex formation)
+    
+    # Average entropy per base for typical DNA duplexes is approx -0.35 cal/(mol*K)
+    dS = -0.35 * N       # Total entropy in cal/(mol*K)
+    
+    # Calculate Tm in Kelvin, then convert to Celsius
+    Tm_K = (1000.0 * dH) / (dS + R * np.log(C_DNA / 4.0))
+    Tm_C = Tm_K - 273.15
+    
+    # Classic salt correction (Marmur-Schildkraut-Doty / SantaLucia)
+    Tm_C += 16.6 * np.log10(salt_M)
+    
+    return Tm_C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts DNA duplex melting temperature (Tm) using a simplified 
+    nearest-neighbor thermodynamic model.
+    
+    Inputs:
+    X[:, 0] = E (average DNA strength parameter per base, approximated as 
+               the absolute average enthalpy per base in kcal/mol)
+    X[:, 1] = N (sequence length in base pairs)
+    X[:, 2] = salt_M (Na+ concentration in Molar)
+    X[:, 3] = dna_conc_M (total strand concentration in Molar)
+    """
+    E = X[:, 0]
+    N = X[:, 1]
+    salt_M = X[:, 2]
+    dna_conc_M = X[:, 3]
+    
+    # Approximate total enthalpy (in cal/mol) from average strength per base
+    # E is treated as the absolute enthalpy per base (kcal/mol), so total ΔH is negative
+    delta_H = -1000.0 * E * N
+    
+    # Approximate total entropy (in cal/(mol*K)) using the standard average 
+    # entropy contribution of -22 cal/(mol*K) per base pair
+    delta_S = -22.0 * N
+    
+    # Gas constant in cal/(mol*K)
+    R = 1.987
+    
+    # Clip inputs to prevent invalid mathematical operations
+    C_T = np.clip(dna_conc_M, 1e-12, None)
+    Na = np.clip(salt_M, 1e-6, None)
+    
+    # Nearest-neighbor Tm formula for non-self-complementary duplexes (factor of 4)
+    # Tm = ΔH / (ΔS + R * ln(C_T / 4)) - 273.15
+    Tm_1M = delta_H / (delta_S + R * np.log(C_T / 4.0)) - 273.15
+    
+    # Apply standard Schildkraut-Lifson salt correction
+    Tm = Tm_1M + 16.6 * np.log10(Na)
+    
+    return Tm
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts DNA duplex melting temperature (Tm) in °C.
+    
+    The model is based on the standard thermodynamic nearest-neighbor relationship:
+    Tm = (ΔH / (ΔS + R * ln(C_T / 4))) - 273.15
+    
+    Here, the dimensionless DNA strength parameter E (average dinucleotide step strength)
+    is treated as encoding the sequence-specific enthalpy-to-entropy ratio (ΔH/ΔS) at
+    standard conditions, effectively representing the base Tm contribution. 
+    Standard salt and length corrections are applied empirically.
+    """
+    E = X[:, 0]          # DNA strength parameter per base (dimensionless)
+    N = X[:, 1]          # Sequence length in base pairs
+    salt_M = X[:, 2]     # [Na+] in Molar
+    dna_conc_M = X[:, 3] # Total strand concentration in Molar
+    
+    # Base Tm derived from the strength parameter (scaled to typical Celsius range)
+    # E typically ranges from ~5.4 to ~9.8, scaling by 10 gives ~54 to 98 °C
+    Tm_base = 10.0 * E
+    
+    # Salt correction (Marmur-Schildkraut / Owczarzy style)
+    salt_correction = 16.6 * np.log10(salt_M)
+    
+    # Length correction (standard inverse length penalty for short oligos)
+    length_correction = -600.0 / N
+    
+    # Concentration correction (derived from R * ln(C_T / 4), simplified and scaled)
+    # For non-self-complementary sequences, the term is R * ln(C_T / 4)
+    # Scaled to match typical empirical offsets
+    conc_correction = -1.0 * np.log(dna_conc_M)
+    
+    Tm = Tm_base + salt_correction + length_correction + conc_correction
+    
+    return Tm
+
+=====
+

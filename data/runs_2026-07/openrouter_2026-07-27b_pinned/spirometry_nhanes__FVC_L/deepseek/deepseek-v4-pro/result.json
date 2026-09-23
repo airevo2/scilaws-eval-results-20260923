@@ -1,0 +1,17 @@
+{
+  "task": "spirometry_nhanes__FVC_L",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "johnson_2023",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

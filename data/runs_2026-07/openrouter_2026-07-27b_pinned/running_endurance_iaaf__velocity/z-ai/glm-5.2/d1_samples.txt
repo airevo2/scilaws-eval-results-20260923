@@ -1,0 +1,85 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Based on Riegel's formula (t = a * d^1.06), where velocity v = d / t = (1/a) * d^(-0.06)
+    # 'a' is the Riegel constant, approximately 0.07 for men and 0.077 for women for world records
+    a = 0.07 * s_M + 0.077 * (1 - s_M)
+    
+    v_bar = (1.0 / a) * np.power(d, -0.06)
+    return v_bar
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Based on Riegel's formula: t = a * d^b, where b ~ 1.06 to 1.11
+    # Average velocity v = d / t = (1/a) * d^(1-b)
+    # Here we use a generalized power law for world-record running velocity
+    # with b = 1.08 (so alpha = 0.08) and a baseline coefficient C.
+    C = 13.0
+    alpha = 0.08
+    v_men = C * np.power(d, -alpha)
+    
+    # Women's world records typically sustain ~88% of men's velocity
+    v = v_men * (0.88 + 0.12 * s_M)
+    
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    sex_M = X[:, 1]
+    # Allometric power-law model for world-record average velocity
+    # v = a * d^b * (c0 + c1 * sex_M)
+    # Coefficients calibrated to men's and women's world records
+    a = 17.2
+    b = -0.11
+    c0 = 0.92
+    c1 = 0.08
+    v = a * (d ** b) * (c0 + c1 * sex_M)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    sex_M = X[:, 1]
+    # Standard log-linear power-law model for world-record running speed:
+    #   v = a * d^b * c^sex_M
+    # Equivalent to: log(v) = beta0 + beta1*log(d) + beta2*sex_M
+    # Coefficients reflect typical fitted values for world records
+    # spanning sprint to ultra-marathon distances.
+    beta0 = 2.70      # intercept (women baseline)
+    beta1 = -0.10     # distance exponent (speed declines with distance)
+    beta2 = 0.09      # male sex effect (~9% faster than women)
+    log_v = beta0 + beta1 * np.log(d) + beta2 * sex_M
+    return np.exp(log_v)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    # Allometric power-law model for average race velocity (Riegel-type scaling):
+    #   v̄ = C · d^α · (1 + δ·s_M)
+    # C is the women’s prefactor, α the distance exponent,
+    # δ the relative male performance advantage.
+    C = 15.8
+    alpha = -0.11
+    delta = 0.11
+    v = C * np.power(d, alpha) * (1.0 + delta * s_M)
+    return v

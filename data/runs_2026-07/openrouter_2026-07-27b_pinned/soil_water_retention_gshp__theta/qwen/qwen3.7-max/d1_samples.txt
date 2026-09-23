@@ -1,0 +1,101 @@
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    
+    # Standard van Genuchten parameters (typical default values)
+    theta_r = 0.05   # Residual volumetric water content [m^3/m^3]
+    theta_s = 0.45   # Saturated volumetric water content [m^3/m^3]
+    alpha = 1.0      # Inverse of air-entry suction [m^-1]
+    n = 1.5          # Pore-size distribution index [-]
+    m = 1.0 - 1.0 / n # Mualem constraint [-]
+    
+    # van Genuchten soil water retention curve
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h)**n)**m
+    
+    return theta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Volumetric water content (theta) as a function of matric suction (h)
+    using the van Genuchten (1980) soil water retention model.
+    
+    Parameters chosen for Loam soil from Carsel & Parrish (1988),
+    converted to SI units (metres).
+    """
+    h = X[:, 0]  # matric suction [m], positive
+
+    # van Genuchten parameters (Loam — Carsel & Parrish, 1988)
+    theta_r = 0.078          # residual water content [m^3/m^3]
+    theta_s = 0.43           # saturated water content [m^3/m^3]
+    alpha   = 3.6            # inverse air-entry suction [1/m]
+                             #   (originally 0.036 cm^{-1} × 100 cm/m)
+    n       = 1.56           # pore-size distribution index [-]
+    m       = 1.0 - 1.0 / n  # Mualem (1976) constraint
+
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h) ** n) ** m
+
+    return theta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    
+    # Standard van Genuchten (1980) parameters (typical loam values, scaled to meters)
+    theta_r = 0.078
+    theta_s = 0.430
+    alpha = 3.6   # m^-1 (equivalent to 0.036 cm^-1)
+    n = 1.56
+    m = 1.0 - 1.0 / n
+    
+    # van Genuchten soil water retention curve
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h)**n)**m
+    
+    return theta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    
+    # Typical van Genuchten parameters (e.g., representative of loam)
+    # h is in meters, so alpha is scaled to m^-1
+    theta_r = 0.078
+    theta_s = 0.430
+    alpha = 3.6   
+    n = 1.56
+    m = 1.0 - 1.0 / n
+    
+    # Van Genuchten soil water retention model
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h)**n)**m
+    
+    return theta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    
+    # Standard van Genuchten (1980) parameters for a typical Loam soil 
+    # (Carsel and Parrish, 1988), with alpha converted to m^-1
+    theta_r = 0.078
+    theta_s = 0.43
+    alpha = 3.6  # m^-1 (equivalent to 0.036 cm^-1)
+    n = 1.56
+    m = 1.0 - 1.0 / n
+    
+    # van Genuchten soil water retention curve
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h)**n)**m
+    
+    return theta

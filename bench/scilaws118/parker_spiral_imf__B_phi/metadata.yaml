@@ -1,0 +1,116 @@
+task_id: parker_spiral_imf__B_phi
+domain: physics / heliospheric_physics
+license: Public Domain
+
+type: typeI
+has_group_id: false
+
+# Science framing only — no column listing, no constants, no leakage of the answer.
+context: >-
+  The interplanetary magnetic field is the solar magnetic field carried outward through the heliosphere by the solar wind, a subject in space physics and heliophysics.
+
+target:
+  name: B_phi_nT
+  symbol: "B_phi"
+  unit: nT
+  description: Daily mean azimuthal (tangential) component of the interplanetary magnetic field at L1, positive in the prograde direction of solar rotation.
+  range: [-12.009, 10.855]
+
+inputs:
+  - name: B_r_nT
+    symbol: "B_r"
+    unit: nT
+    description: Daily mean radial component of the interplanetary magnetic field at L1, positive outward (away from the Sun).
+    range: [-15.675, 9.284]
+  - name: v_sw_km_s
+    symbol: "v_sw"
+    unit: km/s
+    description: Daily mean bulk-flow solar wind speed at L1.
+    range: [262.6, 740.6]
+  - name: r_AU
+    symbol: "r"
+    unit: AU
+    description: Heliocentric distance of the observation point in astronomical units. Constant at 1.0 for all L1/OMNI measurements; included for formula generalisation to multi-r datasets.
+    range: [1.0, 1.0]
+
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 2554
+n_test:   731
+
+# Train/test split: temporal OOD on solar-cycle phase — train = 2010-2016
+# (cycle 24 rise + decline), test = 2019-2020 (deep cycle-24 minimum); 2017-2018
+# is held out as a transition gap. r_AU = 1.0 throughout (L1 only).
+#
+# OOD note (data_spec §9.18): at daily cadence the bare Parker spiral leaves
+# large physical residual scatter (Alfvenic turbulence, CMEs, SIRs), so test
+# R^2 ~ 0.22-0.26 even for the correct law — a legitimate loose anchor, not a
+# coefficient error. Audit history (priors C12/H1, owens_forsyth_2013
+# deprecation, 2026-05-29 review) is recorded in VERDICT.md.
+
+# === Reference baselines ===
+# Two parameterisations of the Parker (1958) spiral B_phi = -B_r*Omega*r/v_sw,
+# differing only in the solar rotation rate Omega: parker_1958 uses the external
+# IAU/Carrington sidereal value (2.866e-6 rad/s, OTHER), parker_1958_omega_stated
+# uses Parker's own paper-stated ~2.7e-6 (PDF p. 11, LAW). owens_forsyth_2013 was
+# deprecated (wave-7 F8) as byte-identical to parker_1958; its PDF is retained
+# under reference/ for provenance only.
+references:
+  - id: parker_1958
+    label: Parker 1958 — original Parker spiral relation, Eq. (26) PDF p. 10; Omega from IAU/Carrington external standard
+    formula_file: formulas/parker_1958.py
+    reference_pdf: reference/parker_1958.pdf
+    n_law_constants: 0
+    n_other_constants: 3
+    n_local_params: 0
+    measured: {rmse: 1.8038, r2: 0.2171}
+  - id: parker_1958_omega_stated
+    label: Parker 1958 — same spiral form but using Parker's own stated omega ~ 2.7e-6 (PDF p. 11) as LAW constant
+    formula_file: formulas/parker_1958_omega_stated.py
+    reference_pdf: reference/parker_1958.pdf
+    n_law_constants: 1
+    n_other_constants: 2
+    n_local_params: 0
+    measured: {rmse: 1.7508, r2: 0.2625}
+
+# Candidate prior constants — the `priors` prompt slot. `_role` is audit-only
+# (stripped before the priors are shown). One genuine building-block (AU_m, the
+# AU->m unit conversion the spiral applies to r) mixed with one distractor from a
+# different sub-framework (mu0, an electromagnetic/MHD constant the *kinematic*
+# spiral does NOT use). The SR system must select which is relevant. The solar
+# rotation rate Omega is deliberately NOT offered: it is the law's own constant
+# (LAW in parker_1958_omega_stated), so handing over any value of it — sidereal,
+# synodic, or stated — would leak the answer (FM H1).
+priors:
+  - name: AU_m
+    value: 1.495978707e11
+    unit: m
+    description: One astronomical unit in metres (IAU 2012 Resolution B2, exact by definition) — the AU->m unit conversion applied to heliocentric distance r in the Parker spiral. A universal length-scale building block, not a fit coefficient.
+    source: IAU 2012 Resolution B2 (exact definition, 149 597 870 700 m).
+    _role: candidate
+  - name: mu0_vacuum_permeability
+    value: 1.25663706e-6
+    unit: N*A^-2
+    description: Vacuum magnetic permeability — a fundamental electromagnetic constant appearing in magnetic pressure and tension and in MHD wave speeds such as the Alfven speed. It belongs to the dynamic force-balance description of the magnetized plasma, not to this task's kinematic field geometry; included as a plausible-but-irrelevant candidate to test whether the SR system imports an unneeded constant.
+    source: CODATA 2018 (mu0 = 1.25663706212e-6 N*A^-2; ~ 4*pi*1e-7).
+    _role: distractor
+
+caps:
+  max_law_constants: 1
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes Parker-spiral winding of radial IMF into azimuthal field by solar rotation and radial solar-wind outflow"
+  - "predicted B_phi_nT remains bounded within a few tens of nT near 1 AU"
+  - "predicted B_phi_nT has the opposite sign to B_r_nT for the trailing Parker-spiral background"
+
+best_baseline: 1.75081    # parker_1958_omega_stated — rmse (lower is better); regenerated 2026-05-30

@@ -1,0 +1,85 @@
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    g = 9.81
+    
+    # Rehbock formula for the discharge coefficient (Cd)
+    Cd = 0.611 + 0.075 * (h / p)
+    
+    # Standard sharp-crested weir discharge equation
+    Q = (2.0 / 3.0) * Cd * np.sqrt(2.0 * g) * b * (h ** 1.5)
+    
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    
+    g = 9.81
+    # Rehbock formula for a sharp-crested weir
+    Cd = 0.611 + 0.08 * (h / p)
+    Q = (2.0 / 3.0) * Cd * np.sqrt(2.0 * g) * b * np.power(h, 1.5)
+    
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    
+    g = 9.81
+    # Rehbock discharge coefficient for a sharp-crested weir
+    Cd = 0.611 + 0.08 * (h / p)
+    
+    # Standard rectangular sharp-crested weir equation
+    Q = (2.0 / 3.0) * Cd * np.sqrt(2.0 * g) * b * np.power(h, 1.5)
+    
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    g = 9.81
+    
+    # Rehbock discharge coefficient for sharp-crested rectangular weirs
+    Cd = 0.611 + 0.08 * (h / p)
+    
+    # Standard sharp-crested weir discharge equation: Q = (2/3) * Cd * sqrt(2g) * b * h^(3/2)
+    Q = (2.0 / 3.0) * Cd * np.sqrt(2.0 * g) * b * (h ** 1.5)
+    
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    
+    g = 9.80665
+    # Rehbock-style discharge coefficient for a sharp-crested weir
+    Cd = 0.611 + 0.08 * (h / p)
+    
+    # Standard rectangular sharp-crested weir equation
+    Q = (2.0 / 3.0) * Cd * b * np.sqrt(2.0 * g) * (h ** 1.5)
+    
+    return Q

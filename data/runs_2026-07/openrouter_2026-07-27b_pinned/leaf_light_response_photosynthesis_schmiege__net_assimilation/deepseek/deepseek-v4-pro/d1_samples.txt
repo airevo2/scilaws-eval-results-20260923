@@ -1,0 +1,151 @@
+import numpy as np
+
+def predict(X):
+    # Extract incident PPFD from the first column
+    Qin = X[:, 0]
+    
+    # Model parameters (typical values for a C3 leaf)
+    phi = 0.05       # maximum quantum yield of CO2 assimilation (mol CO2 mol-1 photons)
+    A_sat = 10.0     # light-saturated gross assimilation rate (umol CO2 m-2 s-1)
+    theta = 0.5      # curvature factor (dimensionless, 0 < theta <= 1)
+    R_d = 1.0        # dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Non-rectangular hyperbola (standard light-response curve)
+    # Gross photosynthesis: A_gross = (phi*Q + A_sat - sqrt((phi*Q + A_sat)^2 - 4*theta*phi*Q*A_sat)) / (2*theta)
+    # Net assimilation: A_net = A_gross - R_d
+    term = phi * Qin + A_sat
+    discriminant = term**2 - 4.0 * theta * phi * Qin * A_sat
+    # Discriminant is theoretically non-negative for theta <= 1; clip for numerical safety
+    discriminant = np.maximum(discriminant, 0.0)
+    A_gross = (term - np.sqrt(discriminant)) / (2.0 * theta)
+    A_net = A_gross - R_d
+    
+    return A_net
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts net CO2 assimilation rate A_n (umol CO2 m-2 s-1) from incident PPFD (Q_in)
+    using the non-rectangular hyperbola (Thornley, 1976), the most widely used light-response curve.
+    
+    Equation:
+        A_gross = (phi * Q + A_max - sqrt((phi * Q + A_max)^2 - 4 * phi * Q * A_max * theta)) / (2 * theta)
+        A_net   = A_gross - R_d
+    """
+    Q = X[:, 0]  # incident PPFD, umol photons m-2 s-1
+
+    # Typical parameter values for a C3 leaf (can be adjusted)
+    phi   = 0.05   # apparent quantum yield (mol CO2 mol-1 photons)
+    A_max = 10.0   # light-saturated gross photosynthesis (umol m-2 s-1)
+    theta = 0.7    # convexity / curvature factor (dimensionless, 0 < theta < 1)
+    R_d   = 1.0    # day respiration (umol CO2 m-2 s-1)
+
+    # Compute inside the square root; clip small negative values from numeric noise
+    radical = (phi * Q + A_max)**2 - 4 * phi * Q * A_max * theta
+    radical = np.maximum(radical, 0.0)
+
+    A_gross = (phi * Q + A_max - np.sqrt(radical)) / (2.0 * theta)
+    A_net   = A_gross - R_d
+
+    return A_net
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict net CO2 assimilation rate A_n [umol CO2 m-2 s-1] from incident PPFD
+    Q_in [umol photons m-2 s-1] using the non-rectangular hyperbola model
+    (the most widely cited closed-form light-response curve in plant ecophysiology).
+
+    Model: A_n = (phi*Q + A_max - sqrt((phi*Q + A_max)^2 - 4*theta*phi*Q*A_max)) / (2*theta) - R_d
+    """
+    # Typical parameter values for a healthy C3 leaf at ambient CO2 (constants)
+    PHI = 0.05       # maximum quantum yield (mol CO2 per mol photons)
+    A_MAX = 15.0     # light-saturated gross photosynthetic rate (umol CO2 m-2 s-1)
+    THETA = 0.7      # curvature factor (dimensionless, 0 < theta <= 1)
+    R_D = 1.5        # dark respiration rate (umol CO2 m-2 s-1)
+
+    Q = X[:, 0]  # incident PPFD
+
+    # Non-rectangular hyperbola for gross photosynthesis
+    term = PHI * Q + A_MAX
+    A_gross = (term - np.sqrt(np.maximum(term**2 - 4 * THETA * PHI * Q * A_MAX, 0))) / (2 * THETA)
+
+    # Net assimilation
+    A_n = A_gross - R_D
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict net CO2 assimilation rate A_n [umol CO2 m-2 s-1] from incident PPFD
+    using the non-rectangular hyperbola light-response curve.
+
+    Input:
+        X : 2-D numpy array, X[:, 0] = Q_in [umol photons m-2 s-1]
+
+    Output:
+        A_n : 1-D numpy array of net assimilation rate
+    """
+    # Extract incident PPFD
+    Q = X[:, 0]
+
+    # --- Fitted (or typical) parameters ---
+    phi   = 0.05   # quantum yield (mol CO2 mol-1 photons)
+    A_max = 10.0   # light-saturated gross photosynthesis rate (umol CO2 m-2 s-1)
+    R_d   = 1.0    # dark respiration rate (umol CO2 m-2 s-1)
+    theta = 0.7    # curvature (convexity) factor (0 < theta <= 1)
+
+    # Non-rectangular hyperbola: gross photosynthesis P_g
+    # P_g = (phi*Q + A_max - sqrt((phi*Q + A_max)^2 - 4*theta*phi*Q*A_max)) / (2*theta)
+    term = (phi * Q + A_max)**2 - 4.0 * theta * phi * Q * A_max
+    # Guard against tiny negative values due to floating point
+    term = np.maximum(term, 0.0)
+    P_g = (phi * Q + A_max - np.sqrt(term)) / (2.0 * theta)
+
+    # Net assimilation
+    A_n = P_g - R_d
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict net CO2 assimilation rate A_n (umol CO2 m-2 s-1) from incident PPFD (Qin).
+
+    Uses the standard non-rectangular hyperbola model:
+        A_net = (α·Q + A_gmax - √[(α·Q + A_gmax)² - 4·θ·α·Q·A_gmax]) / (2·θ) - R_d
+    where:
+        α  = apparent quantum yield (umol CO2 / umol photons)
+        A_gmax = light-saturated gross photosynthetic rate (umol CO2 m-2 s-1)
+        θ  = convexity (curvature) factor (0 < θ ≤ 1)
+        R_d = dark respiration rate (umol CO2 m-2 s-1)
+    """
+    # Extract incident PPFD
+    Q = X[:, 0]  # umol photons m-2 s-1
+
+    # Typical parameter values for a healthy C3 leaf
+    alpha = 0.05       # quantum yield
+    A_gmax = 15.0      # gross max assimilation
+    theta = 0.7        # convexity
+    R_d = 1.0          # dark respiration
+
+    # Non-rectangular hyperbola (gross photosynthesis)
+    discriminant = (alpha * Q + A_gmax) ** 2 - 4 * theta * alpha * Q * A_gmax
+    # Clip to avoid tiny negative values due to floating point errors
+    discriminant = np.maximum(discriminant, 0.0)
+    A_gross = (alpha * Q + A_gmax - np.sqrt(discriminant)) / (2 * theta)
+
+    # Net assimilation
+    A_net = A_gross - R_d
+    return A_net

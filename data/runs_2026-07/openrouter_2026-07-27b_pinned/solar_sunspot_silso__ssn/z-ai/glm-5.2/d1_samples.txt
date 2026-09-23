@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # The Schwabe cycle is approximately 11 years. 
+    # A simple sinusoid is the canonical first-order closed-form approximation 
+    # for the periodic nature of sunspot numbers over long timescales.
+    period = 11.0
+    mean_ssn = 80.0
+    amplitude = 60.0
+    phase = 1749.041667
+    
+    ssn = mean_ssn + amplitude * np.sin(2 * np.pi * (t - phase) / period)
+    return ssn
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Returns predictions for the monthly mean total International Sunspot Number (ISN v2.0).
+    
+    There is no standard closed-form relationship that maps calendar time (year, month) 
+    directly to the sunspot number. The solar cycle is a stochastic, chaotic physical 
+    process driven by the solar dynamo. While parametric models exist for individual 
+    cycle shapes (e.g., the Hathaway model), they require cycle-specific parameters 
+    (amplitude, start time, etc.) that are not provided in the inputs. Consequently, 
+    sunspot numbers cannot be analytically derived from time alone.
+    """
+    return np.full(X.shape[0], np.nan)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the monthly mean total International Sunspot Number (ISN v2.0).
+    
+    Note: The solar dynamo is chaotic and does not have an exact deterministic 
+    closed-form solution. The most standard empirical approximation for the 
+    ~11-year Schwabe cycle is a harmonic (Fourier) series. This function 
+    implements a basic harmonic approximation centered on the start of the 
+    observational record.
+    """
+    t = X[:, 0]  # Decimal year
+    
+    # Approximate Schwabe cycle period (years)
+    period = 11.0 
+    
+    # Phase angle relative to the beginning of the observational record
+    phase = 2 * np.pi * (t - 1749.04) / period
+    
+    # Harmonic approximation: base mean + fundamental + 2nd harmonic
+    # The 2nd harmonic sharpens the peaks and flattens the troughs
+    mean_ssn = 80.0
+    amp1 = 60.0
+    amp2 = 20.0
+    
+    ssn = mean_ssn + amp1 * np.sin(phase) + amp2 * np.sin(2 * phase)
+    
+    # Sunspot numbers cannot be negative
+    ssn = np.maximum(0.0, ssn)
+    
+    return ssn
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Hathaway, Wilson, and Reichmann (1994) standard parametric model for the shape of the sunspot cycle.
+    # F(t) = A * x^3 / (1 + x^4) * exp(-x^2 / 2), where x = (t - t0) / b
+    
+    A = 180.0  # Typical cycle amplitude (ISN v2.0 scale)
+    b = 4.0    # Typical width parameter in years (~48 months)
+    T = 11.0   # Average solar cycle period in years
+    
+    # Approximate cycle start times (minima) assuming an 11-year periodicity
+    t0 = np.floor((t - 1749.0) / T) * T + 1749.0
+    dt = t - t0
+    x = dt / b
+    
+    # Calculate the standard sunspot cycle shape
+    R = A * (x**3) / (1.0 + x**4) * np.exp(-x**2 / 2.0)
+    
+    # Sunspot numbers cannot be negative
+    return np.maximum(R, 0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # There is no standard closed-form physical relationship that predicts 
+    # the exact International Sunspot Number (R_I) solely from calendar time.
+    # The observed R_I is fundamentally defined by the Wolf (or relative) 
+    # sunspot number formula: R_I = k * (10 * G + S), where G is the number 
+    # of sunspot groups, S is the number of individual spots, and k is a 
+    # scaling factor. Without observational inputs for G and S, or cycle 
+    # parameters (like amplitude and start time for parametric models such 
+    # as the Hathaway shape function), a deterministic closed-form prediction 
+    # from time alone is not possible.
+    return np.full(X.shape[0], np.nan)

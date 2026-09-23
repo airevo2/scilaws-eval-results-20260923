@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "U"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Spring constant"
+    symbol: "k_spring"
+    unit: ""
+    description: "Spring constant"
+  - name: "Length"
+    symbol: "x"
+    unit: ""
+    description: "Length"

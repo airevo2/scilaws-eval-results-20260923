@@ -1,0 +1,130 @@
+import numpy as np
+
+def predict(X):
+    g = X[:, 1]
+    r = X[:, 2]
+    DM = X[:, 6]
+
+    # Bell et al. (2003) mass-to-light ratio relation
+    # calibrated for Kroupa IMF, SDSS r-band, (g-r) color
+    a_ML = -0.492    # log(M*/L_r) zero-point
+    b_ML = 1.097     # log(M*/L_r) color slope
+
+    # Solar absolute magnitude in SDSS r-band (AB system)
+    M_sun_r = 4.64
+
+    # Absolute r-band magnitude
+    M_r = r - DM
+
+    # log10(L_r / L_sun_r) = -0.4 * (M_r - M_sun_r)
+    # log10(M*) = log10(M*/L_r) + log10(L_r/L_sun_r)
+    log_M_star = a_ML + b_ML * (g - r) - 0.4 * (M_r - M_sun_r)
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    g = X[:, 1]
+    r = X[:, 2]
+    DM = X[:, 6]
+
+    # Absolute r-band magnitude
+    M_r = r - DM
+
+    # Solar absolute r-band magnitude on the AB system
+    M_r_sun = 4.64
+
+    # r-band mass-to-light ratio from Bell et al. (2003), Kroupa IMF
+    # log10(M*/L_r) = a + b * (g - r)
+    a = -0.306
+    b = 1.097
+    log_ML_r = a + b * (g - r)
+
+    # Stellar mass: log10(M*) = log10(L_r/L_sun) + log10(M*/L_r)
+    # where log10(L_r/L_sun) = -0.4 * (M_r - M_r_sun)
+    log_M_star = -0.4 * (M_r - M_r_sun) + log_ML_r
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+    
+    # Absolute i-band magnitude
+    M_i = i - DM
+    
+    # Standard photometric stellar mass relation (e.g., Taylor et al. 2011)
+    # Calibrated for SDSS/GAMA photometry assuming a Kroupa/Chabrier IMF
+    log_M_star = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+    
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10 stellar mass (log_M_star) using SDSS photometry and distance modulus.
+    Uses a standard mass-to-light ratio relation based on absolute r-band magnitude 
+    and (g-r) color, calibrated for the Kroupa IMF (e.g., following Bell et al. 2003 
+    and subsequent MPA-JHU photometric proxies).
+    """
+    g = X[:, 1]
+    r = X[:, 2]
+    DM = X[:, 6]
+    
+    # Absolute r-band magnitude
+    M_r = r - DM
+    
+    # Solar absolute magnitude in r-band (AB system)
+    M_r_sun = 4.65
+    
+    # Log luminosity in solar units
+    log_L_r = -0.4 * (M_r - M_r_sun)
+    
+    # (g-r) color
+    g_minus_r = g - r
+    
+    # Mass-to-light ratio relation for Kroupa IMF
+    # log(M/L_r) = a + b * (g-r)
+    a = -0.50
+    b = 1.10
+    log_ML_r = a + b * g_minus_r
+    
+    # Total stellar mass
+    log_M_star = log_L_r + log_ML_r
+    
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    g = X[:, 1]
+    r = X[:, 2]
+    DM = X[:, 6]
+    
+    # Absolute r-band magnitude and (g-r) color
+    M_r = r - DM
+    gr = g - r
+    
+    # Bell et al. (2003), Table 7 — r-band, (g-r) color, diet Salpeter IMF (~Kroupa)
+    # log10(M*/L_r) = a + b * (g-r)
+    # Solar absolute r-band magnitude on AB system: M_r_sun = 4.64
+    # log10(M*) = -0.4 * (M_r - M_r_sun) + a + b * (g-r)
+    M_r_sun = 4.64
+    a = -0.306
+    b = 1.097
+    
+    log_M_star = -0.4 * (M_r - M_r_sun) + a + b * gr
+    return log_M_star

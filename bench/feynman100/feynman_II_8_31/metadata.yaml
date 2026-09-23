@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy density"
+  symbol: "E_den"
+  unit: ""
+  description: "Energy density"
+inputs:
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"
+  - name: "Electric field"
+    symbol: "Ef"
+    unit: ""
+    description: "Electric field"

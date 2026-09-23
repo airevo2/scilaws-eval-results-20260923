@@ -1,0 +1,170 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top income share ln S(p) 
+    using the standard Pareto tail approximation.
+    
+    For a Pareto distribution with tail parameter alpha, the income share 
+    S(p) held by the top p fraction is given by S(p) = p^(1 - 1/alpha).
+    Taking the natural log yields the closed-form linear relationship:
+    ln S(p) = (1 - 1/alpha) * ln(p)
+    
+    A canonical Pareto parameter for the upper tail of the income 
+    distribution is alpha ≈ 1.5 (though it varies by year and region).
+    This gives a scaling exponent beta = 1 - 1/1.5 = 1/3.
+    """
+    log_p = X[:, 0]  # ln(p)
+    
+    # Canonical Pareto parameter for income tails
+    alpha = 1.5 
+    
+    # Pareto exponent for the income share
+    beta = 1.0 - (1.0 / alpha)
+    
+    return beta * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Pareto law for top income shares (Piketty–Saez–Zucman / WID framework):
+
+        ln S(p) = β · ln(p)
+
+    where β = 1 − 1/α  (α is the Pareto parameter of the upper tail).
+    β is modelled as varying linearly with calendar year and by WID region,
+    calibrated to approximate historical WID top-share estimates.
+    """
+    log_p  = X[:, 0].astype(float)          # ln(p), p ≤ 1
+    year   = X[:, 2].astype(float)          # calendar year
+    region = np.array([str(r).strip() for r in X[:, 3]])
+
+    # ── global baseline (reference year 2000) ──────────────────────
+    BETA_0     = 0.45    # global β at t = 2000  → α ≈ 1.82
+    BETA_TREND = -0.003  # global drift per year (rising inequality)
+
+    # ── region offsets: (Δβ_level , Δβ_trend) ─────────────────────
+    REGION_PARAMS = {
+        'Americas': (-0.06, -0.001),   # higher & faster-growing inequality
+        'Europe':   ( 0.07,  0.001),   # lower & slower-growing inequality
+        'Asia':     ( 0.06, -0.002),   # low base but rapid catch-up
+        'Africa':  (-0.02,  0.000),   # moderate-high, stable trend
+        'Oceania': ( 0.03,  0.000),   # moderate, stable trend
+    }
+
+    delta_b = np.array([REGION_PARAMS.get(r, (0.0, 0.0))[0] for r in region])
+    delta_t = np.array([REGION_PARAMS.get(r, (0.0, 0.0))[1] for r in region])
+
+    β = (BETA_0 + delta_b) + (BETA_TREND + delta_t) * (year - 2000.0)
+
+    return β * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln S(p) — the natural log of the top-p income share —
+    using the Pareto law for upper-tail income distribution.
+
+    Canonical closed-form (Piketty & Saez; WID methodology):
+        S(p) = p^(1 - 1/α)   =>   ln S(p) = η · ln(p)
+    where η = 1 − 1/α is the inverted Pareto coefficient (α > 1).
+
+    η is parameterised as:
+        η = η_base + γ·(year − 2000) + δ_region
+    capturing the global rise in inequality (declining η) and
+    cross-regional differences in the Pareto shape parameter.
+    """
+    log_p  = np.asarray(X[:, 0], dtype=float)   # ln(p)
+    year   = np.asarray(X[:, 2], dtype=float)   # calendar year
+    region = X[:, 3]                             # categorical
+
+    # ---- Pareto exponent parameters ----
+    ETA_BASE   = 0.42    # global-average η at year 2000  (α ≈ 1.72)
+    YEAR_TREND = -0.003  # per-year decline in η (rising inequality)
+
+    REGION_OFFSETS = {
+        'Africa':   -0.08,   # highest inequality  (α ≈ 1.35)
+        'Americas': -0.05,   # US / Latin America  (α ≈ 1.45)
+        'Asia':      0.00,   # mixed               (α ≈ 1.72)
+        'Europe':    0.06,   # most equal           (α ≈ 2.08)
+        'Oceania':   0.02,   # AU / NZ              (α ≈ 1.84)
+    }
+
+    # fallback: integer codes → region names (alphabetical)
+    _NUM_MAP = {0: 'Africa', 1: 'Americas', 2: 'Asia',
+                3: 'Europe', 4: 'Oceania'}
+
+    # ---- build η vector ----
+    eta = ETA_BASE + YEAR_TREND * (year - 2000.0)
+
+    for i in range(len(X)):
+        r = region[i]
+        if isinstance(r, str):
+            key = r.strip()
+        else:
+            try:
+                key = _NUM_MAP.get(int(float(r)), str(r).strip())
+            except (ValueError, TypeError):
+                key = str(r).strip()
+        eta[i] += REGION_OFFSETS.get(key, 0.0)
+
+    # ---- Pareto law: ln S(p) = η · ln(p) ----
+    return eta * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top income share ln S(p) using a 
+    log-linear Pareto-based specification with time and region fixed effects.
+    """
+    log_p = X[:, 0]
+    top_pct = X[:, 1]
+    year = X[:, 2]
+    region = X[:, 3]
+    
+    # Named constants for the linear predictor (Pareto log-linear interpolation)
+    INTERCEPT = 0.0
+    BETA_LOG_P = 1.5      # Relates to the inverted Pareto coefficient (alpha / (alpha - 1))
+    BETA_TOP_PCT = 0.0    # Coefficient for linear percentage (often 0 in pure log-log Pareto tail)
+    BETA_YEAR = 0.0       # Time trend coefficient
+    
+    # Region fixed effects (categorical)
+    REGION_FE = {
+        'Europe': 0.0,
+        'Asia': 0.0,
+        'Africa': 0.0,
+        'Americas': 0.0,
+        'Oceania': 0.0
+    }
+    
+    # Map categorical regions to their fixed effects
+    fe = np.array([REGION_FE.get(str(r).strip(), 0.0) for r in region])
+    
+    # Standard closed-form linear predictor for ln S(p)
+    ln_Sp = INTERCEPT + BETA_LOG_P * log_p + BETA_TOP_PCT * top_pct + BETA_YEAR * year + fe
+    
+    return ln_Sp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard closed-form relationship based on the Pareto law of income distribution.
+    # S(p) = p^(1 - 1/alpha), so ln S(p) = (1 - 1/alpha) * ln p
+    # alpha is the Pareto parameter. A value of 1.5 is typical for modern income 
+    # distributions (e.g., consistent with the top 1% holding ~20% of income).
+    alpha = 1.5 
+    
+    log_p = X[:, 0]
+    
+    return (1.0 - 1.0 / alpha) * log_p

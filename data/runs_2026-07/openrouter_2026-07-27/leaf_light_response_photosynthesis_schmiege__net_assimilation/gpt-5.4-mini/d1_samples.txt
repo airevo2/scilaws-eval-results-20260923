@@ -1,0 +1,104 @@
+import numpy as np
+
+def predict(X):
+    Qin = X[:, 0].astype(float)
+
+    # Standard non-rectangular hyperbola light-response of net photosynthesis
+    # A_n = (phi*Q + Amax - sqrt((phi*Q + Amax)^2 - 4*theta*phi*Q*Amax)) / (2*theta) - Rd
+    # Using generic canonical parameters; replace with fitted species-specific values as needed.
+    phi = 0.05    # quantum yield (mol CO2 / mol photons), typical order of magnitude
+    Amax = 12.0   # light-saturated gross photosynthetic capacity (umol CO2 m^-2 s^-1)
+    theta = 0.7   # curvature parameter (0 < theta <= 1)
+    Rd = 0.8      # dark respiration (umol CO2 m^-2 s^-1)
+
+    a = phi * Qin + Amax
+    discriminant = np.maximum(a * a - 4.0 * theta * phi * Qin * Amax, 0.0)
+    An = (a - np.sqrt(discriminant)) / (2.0 * theta) - Rd
+
+    return An
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Qin = X[:, 0]
+
+    # Non-rectangular hyperbola / rectangular hyperbola-style light response
+    # A_n = Amax * (1 - exp(-alpha * Qin / Amax)) - Rd
+    # Here using a typical generic closed form with saturating asymptote.
+    Amax = 12.0   # umol CO2 m-2 s-1, representative light-saturated assimilation
+    alpha = 0.05  # initial quantum yield (umol CO2 per umol photons), generic
+    Rd = 0.8      # dark respiration (umol CO2 m-2 s-1)
+
+    An = Amax * (1.0 - np.exp(-alpha * Qin / Amax)) - Rd
+    return An
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Qin = X[:, 0].astype(float)
+
+    # Common light-response curve (non-rectangular hyperbola) for net CO2 assimilation
+    # Parameters are generic, species-dependent constants chosen to represent a standard form:
+    #   A_n = (alpha*Qin + Amax - sqrt((alpha*Qin + Amax)^2 - 4*theta*alpha*Qin*Amax)) / (2*theta) - Rd
+    # Here we use typical canopy/leaf-level default values in a plausible physiological range.
+    alpha = 0.05   # apparent quantum yield (mol CO2 mol photons^-1)
+    Amax = 18.0    # light-saturated gross assimilation capacity (umol CO2 m^-2 s^-1)
+    theta = 0.7    # curvature parameter (0<theta<=1)
+    Rd = 1.0       # dark respiration (umol CO2 m^-2 s^-1)
+
+    term = (alpha * Qin + Amax)
+    A = (term - np.sqrt(np.maximum(term**2 - 4.0 * theta * alpha * Qin * Amax, 0.0))) / (2.0 * theta)
+    return A - Rd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Qin = X[:, 0].astype(float)
+    
+    # Canonical non-rectangular photosynthesis light-response curve:
+    # A_n = A_sat * (1 - exp(-alpha * Q_in / A_sat)) - R_d
+    # Here A_sat is the light-saturated asymptote, alpha the apparent quantum yield,
+    # and R_d dark respiration.
+    #
+    # Since no species-specific fitted parameters are provided, use a generic
+    # closed-form parameterization with typical physiological values.
+    alpha = 0.05   # mol CO2 per mol photons (dimensionless on these units)
+    A_sat = 10.0   # umol CO2 m-2 s-1, generic light-saturated assimilation
+    R_d = 0.8      # umol CO2 m-2 s-1, generic dark respiration
+
+    A_n = A_sat * (1.0 - np.exp(-alpha * Qin / A_sat)) - R_d
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Net CO2 assimilation rate A_n as a function of incident PPFD using the
+    standard non-rectangular hyperbola light-response model.
+
+    X[:, 0] = Qin (incident PPFD)
+    """
+    Q = np.asarray(X)[:, 0]
+
+    # Canonical light-response parameters (general standard form).
+    # These are placeholders / generic physiological defaults, since no fit data are provided.
+    Amax = 12.0   # light-saturated net assimilation (umol CO2 m-2 s-1)
+    phi = 0.05    # apparent quantum yield (umol CO2 per umol photons)
+    Rd = 1.0      # dark respiration (umol CO2 m-2 s-1, positive magnitude)
+    theta = 0.7   # curvature parameter (0<theta<=1)
+
+    # Non-rectangular hyperbola:
+    # A = [phi*Q + Amax - sqrt((phi*Q + Amax)^2 - 4*theta*phi*Q*Amax)] / (2*theta) - Rd
+    term = phi * Q + Amax
+    disc = np.maximum(term * term - 4.0 * theta * phi * Q * Amax, 0.0)
+    A = (term - np.sqrt(disc)) / (2.0 * theta) - Rd
+
+    return A

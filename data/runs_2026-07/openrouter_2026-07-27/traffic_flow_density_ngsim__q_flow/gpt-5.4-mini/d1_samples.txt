@@ -1,0 +1,82 @@
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]  # veh/km/lane
+
+    # Standard single-regime Greenshields fundamental diagram:
+    # q(k) = u_f * k * (1 - k / k_j)
+    # Representative freeway parameters (literature-typical):
+    u_f = 120.0   # free-flow speed [km/h]
+    k_j = 150.0   # jam density [veh/km/lane]
+
+    q = u_f * k * (1.0 - k / k_j)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0].astype(float)
+    # Classical triangular fundamental diagram (most common closed-form choice)
+    # q(k) = min(v_f * k, w * (k_j - k))
+    v_f = 65.0   # free-flow speed [km/h]
+    w = 15.0     # congestion wave speed magnitude [km/h]
+    k_j = 250.0  # jam density [veh/km/lane]
+
+    q = np.minimum(v_f * k, w * (k_j - k))
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]  # veh/km/lane
+    
+    # Standard single-regime triangular fundamental diagram (Newell/Daganzo form):
+    # q(k) = min(v_f * k, q_max, w * (k_j - k))
+    # using commonly cited freeway-like parameterization.
+    v_f = 60.0    # km/h, free-flow speed
+    q_max = 2000.0  # veh/h/lane, capacity
+    w = 20.0      # km/h, congestion wave speed magnitude
+    k_j = 150.0   # veh/km/lane, jam density
+
+    return np.minimum(np.minimum(v_f * k, q_max), w * (k_j - k))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0].astype(float)  # veh/km/lane
+    
+    # Classical triangular fundamental diagram (most common closed-form form):
+    # q(k) = min(v_f * k, w * (k_j - k))
+    # with typical freeway parameters chosen to match US freeway capacity.
+    v_f = 65.0   # free-flow speed [km/h]
+    w = 20.0     # congestion wave speed magnitude [km/h]
+    k_j = 180.0  # jam density [veh/km/lane]
+    
+    q = np.minimum(v_f * k, w * (k_j - k))
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classical triangular fundamental diagram:
+    # q(k) = min(v_f * k, w * (k_j - k))
+    # Here we use a standard closed-form single-regime approximation
+    # with a smooth piecewise-linear form is not required; the canonical
+    # closed-form is the piecewise triangular FD.
+    k = X[:, 0].astype(float)
+
+    # Typical freeway parameters (canonical US freeway-style FD)
+    v_f = 65.0      # free-flow speed [km/h]
+    w = 20.0        # backward congestion wave speed [km/h]
+    k_j = 150.0     # jam density [veh/km/lane]
+
+    q = np.minimum(v_f * k, w * (k_j - k))
+    return q

@@ -1,0 +1,135 @@
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Siler (1979) competing risk model for the full age range
+    # mu(x,t) = a1 * exp(-b1 * x) + a2(t) + a3(t) * exp(b3 * x)
+    # Components: infant/early-life, background/accident, senescent/aging
+    
+    a1 = 0.04      # Initial infant mortality risk
+    b1 = 0.20      # Rate of decline in early-life mortality
+    a2_base = 0.0015 # Base background/accident mortality
+    a3_base = 0.0001 # Base senescent mortality
+    b3 = 0.085     # Gompertz rate of aging
+    
+    # Exponential time trend for mortality improvement over calendar years
+    gamma = -0.012 
+    time_effect = np.exp(gamma * (t - 1950))
+    
+    # Central death rate (hazard)
+    mu = a1 * np.exp(-b1 * x) + a2_base * time_effect + a3_base * time_effect * np.exp(b3 * x)
+    
+    return np.log(mu)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Gompertz-Makeham law of mortality with a period (time) trend
+    # M(x,t) = A + B(t) * c^x
+    # where B(t) = B0 * exp(-k * (t - t0))
+    
+    A = 0.001           # Makeham term (age-independent background mortality)
+    B0 = 0.00005        # Gompertz intercept at reference year
+    c = 1.09            # Gompertz dispersion parameter (rate of aging)
+    k = 0.01            # Annual rate of mortality improvement
+    
+    t0 = 1900           # Reference year for the time trend
+    
+    B_t = B0 * np.exp(-k * (t - t0))
+    M_xt = A + B_t * (c ** x)
+    
+    return np.log(M_xt)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Gompertz-Makeham law of mortality with a log-linear time trend
+    # M(x,t) = (A + B * exp(C * x)) * exp(gamma * (t - t_ref))
+    
+    A = 0.0008      # Makeham constant (age-independent background mortality)
+    B = 0.00005     # Gompertz scale parameter
+    C = 0.085       # Gompertz shape parameter (rate of aging)
+    gamma = -0.012  # Annual rate of mortality improvement
+    t_ref = 2000.0  # Reference year
+    
+    # Calculate the central death rate M(x,t)
+    M_x = A + B * np.exp(C * x)
+    M_xt = M_x * np.exp(gamma * (t - t_ref))
+    
+    # Return the natural log of the central death rate
+    return np.log(M_xt)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gompertz-Makeham law of mortality with secular (period) trend.
+    
+    M(x,t) = A + B * exp(gamma * x + delta * (t - t_ref))
+    
+    Returns ln M(x,t) for single-year ages x and calendar years t.
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # --- Gompertz-Makeham parameters (Total population) ---
+    A     = 5.0e-4    # Makeham constant  (age-independent hazard)
+    B     = 6.5e-5    # Gompertz scale    (initial adult vulnerability)
+    gamma = 0.085     # Gompertz slope    (rate of actuarial aging, ~8.5 %/yr)
+    delta = -0.006    # Period trend      (average annual log-mortality improvement)
+    t_ref = 2000.0    # Reference year
+
+    M = A + B * np.exp(gamma * x + delta * (t - t_ref))
+    return np.log(M)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gompertz-Makeham mortality model with time-varying parameters.
+    
+    M(x,t) = A + B(t) * exp(beta(t) * x)
+    
+    where:
+        B(t)     = exp(a + c*(t - t0))
+        beta(t)  = b + d*(t - t0)
+    
+    Parameters fitted to approximate total-sex human mortality
+    across the full age range (0-95) and calendar years 1751-2025.
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # --- Gompertz-Makeham coefficients ---
+    A  = 0.0005      # Makeham constant (age-independent background mortality)
+    a  = -9.0        # log-scale level parameter at reference year
+    b  = 0.09        # Gompertz slope (rate of senescent aging, per year of age)
+    c  = -0.012      # secular decline in log-level (per calendar year)
+    d  = 0.00008     # secular change in Gompertz slope (per age × calendar year)
+    t0 = 1900.0      # reference calendar year
+
+    dt = year - t0
+
+    # Log of the Gompertz (senescent) component with time-varying parameters
+    log_gompertz = a + b * age + c * dt + d * age * dt
+
+    # Total central death rate = Makeham + Gompertz
+    M = A + np.exp(log_gompertz)
+
+    return np.log(M)

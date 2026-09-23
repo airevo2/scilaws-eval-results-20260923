@@ -1,0 +1,26 @@
+{
+  "task": "woody_plant_allometry_baad__a_lf",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "niklas_2001",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "shinozaki_1964",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

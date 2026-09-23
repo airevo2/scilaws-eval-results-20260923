@@ -1,0 +1,93 @@
+task_id: predator_functional_response_forage__prey_eaten
+domain: biology / ecology
+license: CC0-1.0
+
+# Type II — cluster = one functional-response experiment (Data set ID).
+# Each experiment has a distinct predator-prey pair, arena, and conditions;
+# rows from different experiments are not interchangeable.
+type: typeII
+has_group_id: true
+
+# Background knowledge — science framing only; no column lists or constants.
+context: >-
+  When a predator encounters prey items at various densities, the number of
+  prey consumed per unit time first rises steeply but then levels off — the
+  predator becomes limited not by search time but by the time required to
+  handle and consume each prey item. This saturating relationship, the
+  functional response, is one of the core quantitative patterns in predator-
+  prey ecology. The curvature of the relationship differs across predator-prey
+  pairs, experimental arenas, and environmental conditions, but the qualitative
+  form — linear rise at low density, plateau at high density — is widely
+  observed across invertebrates, vertebrates, and parasitoids. Quantifying how
+  steeply the predator attacks at low density and how quickly it saturates at
+  high density matters for understanding population cycles, biological control
+  efficiency, and food-web stability.
+
+target:
+  name: prey_eaten
+  symbol: "Nₐ"
+  unit: ""
+  description: Number of prey or resource items consumed by the predator or consumer during one experimental trial (dimensionless count).
+  range: [0.0, 462.0]   # released-data range (V5, post-subsample); raw V5 max is 761 in an unsampled cluster
+
+inputs:
+  - name: prey_density
+    symbol: "N"
+    unit: ""
+    description: Initial number of prey or resource items offered to the predator at the start of one experimental trial (dimensionless count).
+    range: [0.25, 5080.0]
+
+# Three-file v2 Type II layout, whole-cluster holdout.
+# Cluster = one functional-response experiment (group_id = original Data set integer).
+# Train/test boundary: deterministic every-5th-cluster subsampling then every-4th
+# cluster assigned to test (by sorted group_id order). Within each test cluster,
+# rows are sorted by prey_density ascending and split INTERLEAVED (even rank ->
+# test_fit, odd rank -> test_test), so both halves span the full density range —
+# a representative split scored by interpolation. 0 clusters dropped for floor.
+#
+# Audit 2026-06-02 (re-split): the previous design split low-N 60% -> test_fit,
+# high-N 40% -> test_test, forcing extrapolation onto the Holling saturation
+# plateau. Within-cluster variance there is ~0, so all baselines scored
+# per-cluster R^2 < 0 (mean-per-cluster R^2 ~ -120 for holling_1959) and lost to
+# the per-cluster mean — a degenerate split the old note wrongly defended as an
+# "§9.18 hard OOD probe". Interleaving makes the best baseline (holling_1959)
+# beat the per-cluster naive in ~89% of clusters (per-cluster R^2 median +0.84,
+# pooled R^2 0.96). See VERDICT.md.
+# Data upgraded from V2 (CC-BY-NC-SA-4.0) to V5 (CC0-1.0) on 2026-05-28.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 6329
+n_test_fit: 1148
+n_test_test: 1105
+n_clusters_train: 299
+n_clusters_test: 100
+
+# === Reference baselines ===
+references:
+  - id: holling_1959
+    label: Holling (1959) disc equation — Na = a*N / (1 + a*h*N), per-cluster fit of (a, h)
+    formula_file: formulas/holling_1959.py
+    reference_pdf: reference/holling_1959.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # a, h
+    measured:
+      rmse: 7.088300608199107
+      r2: 0.9608718326470719
+  # holling_1959_typeIII DROPPED 2026-06-02 (C8/D3): its N² disc form
+  # Na=a*N²/(1+a*h*N²) is not in any on-disk reference PDF (holling_1959.pdf
+  # 91:385-398 has only the Type-II disc form; Real 1977 / Holling 91:293-320
+  # absent). Archived under ../.dropped_baselines/. See VERDICT.md.
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         2
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+metric: rmse
+best_baseline: 7.088300608199107   # holling_1959 — lowest pooled AND mean-per-cluster rmse (harness anchor agrees)

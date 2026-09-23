@@ -1,0 +1,134 @@
+task_id: mauna_loa_co2_keeling_curve_noaa__co2_ppm
+domain: earth_science / atmosphere
+license: Public-Domain    # NOAA GML data: U.S. federal government work
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This is the atmospheric carbon dioxide record from Mauna Loa Observatory in Hawaii, a foundational dataset in atmospheric science and climatology.
+
+target:
+  name: co2_ppm
+  symbol: c
+  unit: ppm
+  description: Monthly mean mole fraction of CO2 in dry air at Mauna Loa Observatory on the WMO X2019 calibration scale.
+  range: [312.42, 431.12]
+
+inputs:
+  - name: year_decimal
+    symbol: t
+    unit: yr
+    description: Decimal year of the monthly observation, equal to the midpoint of the calendar month in NOAA's convention (e.g. 1958.2027 for 1958-03).  The single physical predictor used by all three reference baselines.
+    range: [1958.2027, 2026.2917]
+  - name: year
+    symbol: Y
+    description: Integer calendar year — redundant with int(year_decimal).  Distractor input; not used by any reference baseline.
+    range: [1958, 2026]
+  - name: month
+    symbol: m
+    description: Integer calendar month (1=January..12=December) — redundant with the fractional part of year_decimal.  Distractor input; not used by any reference baseline.
+    range: [1, 12]
+  - name: ndays
+    symbol: nd
+    description: Number of daily measurements contributing to the monthly mean (1-31), or -1 sentinel for the pre-NOAA SIO-era rows where this count is not available.  Measurement-quality flag (not a physical CO2 predictor); distractor input.
+    range: [-1, 31]
+  - name: sdev
+    symbol: σ_d
+    unit: ppm
+    description: Within-month standard deviation of daily mean CO2 (~0.1-1.3 ppm), or -9.99 sentinel for the pre-NOAA SIO-era rows where this is not available.  Measurement-quality flag; distractor input.
+    range: [-9.99, 1.31]
+  - name: unc
+    symbol: u
+    unit: ppm
+    description: NOAA's combined uncertainty estimate on the monthly mean (~0.1-0.6 ppm), or -0.99 sentinel for the pre-NOAA SIO-era rows.  Measurement-quality flag; distractor input.
+    range: [-0.99, 0.58]
+
+# Dataset — Type I, two-file flat layout.  Source: NOAA Global Monitoring
+# Laboratory continuous in-situ monthly mean CO2 record at Mauna Loa
+# Observatory, https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv,
+# 1958-03 through 2026-04 (818 monthly rows on the WMO X2019 scale).
+# Split: time-extrapolation OOD — train = pre-2020 calibration window
+# (742 rows, 1958-03 to 2019-12), test = post-2020 extrapolation window
+# (76 rows, 2020-01 to 2026-04).  The 6-year OOD gap tests whether the
+# curve-fit coefficients calibrated on 60+ years of pre-2020 data
+# extrapolate through continued post-2020 growth acceleration and the
+# COVID-era emissions pause.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 742
+n_test:   76
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: keeling_seasonal_amplitude_first_harmonic
+    value: 3.0
+    unit: ppm
+    description: Mauna Loa first-harmonic seasonal-cycle peak-to-peak amplitude.
+    source: Keeling 2001 SIO Ref 01-06 §3 (Fig. 5; PDF on disk) — empirical first-harmonic amplitude at Mauna Loa.  A candidate value for √(α₁² + β₁²) in the NOAA curve-fit rung.
+    _role: candidate
+  - name: ipcc_ar6_co2_radiative_efficiency
+    value: 1.37e-5
+    unit: W/m^2/ppm
+    description: IPCC AR6 stratospherically-adjusted radiative forcing efficiency of CO2.
+    source: IPCC AR6 WG1 Table 7.8 (Forster et al. 2021).  Domain-adjacent (climate sensitivity) but not used by either Keeling-curve baseline; the curve-fit forms operate on ppm directly without converting to forcing.  A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: keeling_1960_linear
+    label: Keeling (1960) linear secular rise (Type I, frozen LAW_CONSTANTS pre-fit on train)
+    formula_file: formulas/keeling_1960_linear.py
+    reference_pdf: reference/keeling_2001.pdf
+    n_law_constants: 2         # A, B
+    n_other_constants: 1       # T0
+    n_local_params: 0
+    measured: {rmse: 12.7100, r2: -4.9540}
+  - id: bacastow_1985_quadratic
+    label: Bacastow-Keeling-Whorf (1985) quadratic secular trend (Type I, frozen)
+    formula_file: formulas/bacastow_1985_quadratic.py
+    reference_pdf: reference/keeling_2001.pdf
+    n_law_constants: 3         # A, B, C
+    n_other_constants: 1       # T0
+    n_local_params: 0
+    measured: {rmse: 2.6813, r2: 0.7350}
+  - id: noaa_curve_fit_1989
+    label: NOAA GML CCGCRV (Thoning-Tans-Komhyr 1989) — quadratic + 4 yearly harmonics (k=3+nh=4, published default; Type I, frozen)
+    formula_file: formulas/noaa_curve_fit_1989.py
+    reference_pdf: reference/keeling_2001.pdf
+    n_law_constants: 11        # A, B, C, α1-4, β1-4
+    n_other_constants: 1       # T0
+    n_local_params: 0
+    measured: {rmse: 1.5720, r2: 0.9089}
+  - id: noaa_curve_fit_k4
+    label: NOAA GML CCGCRV with k=4 (cubic trend + 4 yearly harmonics) — natural CCGCRV extension capturing post-2010 super-quadratic acceleration (Type I, frozen)
+    formula_file: formulas/noaa_curve_fit_k4.py
+    reference_pdf: reference/keeling_2001.pdf
+    n_law_constants: 12        # A, B, C, D, α1-4, β1-4
+    n_other_constants: 1       # T0
+    n_local_params: 0
+    measured: {rmse: 1.1558, r2: 0.9508}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        12
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a long-term secular increase in atmospheric CO2 (driven by anthropogenic emissions), with the deseasonalized trend monotonically increasing and a positive long-term growth rate everywhere over the record"
+  - "includes an acceleration of the secular trend, with the growth rate itself increasing over time (a quadratic-in-time curvature term, optionally extended to cubic/higher order to capture the post-2010 super-quadratic growth)"
+  - "includes a recurring annual seasonal cycle (one-year period, of order 3 ppm peak-to-peak) driven by the Northern-Hemisphere terrestrial biosphere, optionally with higher-order yearly harmonics sharpening its asymmetric saw-tooth shape"
+  - "predicted CO2 mole fraction stays within the physical dry-air range [0, 1000000] ppm"
+
+# === Scoring ===
+metric: rmse              # RMS error on co2_ppm
+best_baseline: 1.1558     # noaa_curve_fit_k4

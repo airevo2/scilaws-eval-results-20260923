@@ -1,0 +1,26 @@
+{
+  "task": "running_endurance_iaaf__velocity",
+  "model": "z-ai/glm-5.2",
+  "type": "typeI",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "emig_2020",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "riegel_1981",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

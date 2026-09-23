@@ -1,0 +1,17 @@
+{
+  "task": "life_expectancy_oeppen_vaupel_hmd__e0",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "oeppen_vaupel_2002",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

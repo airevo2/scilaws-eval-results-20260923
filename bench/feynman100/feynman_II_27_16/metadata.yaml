@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy flux"
+  symbol: "flux"
+  unit: ""
+  description: "Energy flux"
+inputs:
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"
+  - name: "Electric field"
+    symbol: "Ef"
+    unit: ""
+    description: "Electric field"

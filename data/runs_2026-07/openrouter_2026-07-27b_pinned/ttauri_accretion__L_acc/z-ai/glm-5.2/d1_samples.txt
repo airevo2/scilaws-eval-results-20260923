@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(L_acc/L_sun) for pre-main-sequence T Tauri stars.
+    
+    Uses the standard empirical correlation between accretion luminosity
+    and stellar bolometric luminosity derived from UV-excess slab modelling
+    (e.g., Alcalá et al. 2017; Manara et al. 2015):
+    
+        log(L_acc/L_sun) ≈ 1.5 * log(L_star/L_sun) - 0.5
+    """
+    logL_star = X[:, 0]
+    logL_acc = 1.5 * logL_star - 0.5
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard empirical relation for T Tauri accretion luminosity.
+    For classical T Tauri stars, the accretion luminosity is typically
+    ~10% of the stellar bolometric luminosity (e.g., Hartmann et al. 2016;
+    Alcalá et al. 2017), giving:
+        log10(L_acc / L_sun) ≈ log10(L_star / L_sun) - 1.0
+    """
+    logL_star = X[:, 0]
+    return logL_star - 1.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log10 accretion luminosity (log(L_acc/L_sun)) of a pre-main-sequence T Tauri star.
+    
+    Uses the canonical empirical linear scaling between accretion luminosity and stellar 
+    bolometric luminosity widely established for X-shooter surveys of star-forming regions 
+    (e.g., Alcalá et al. 2014, 2017; Manara et al. 2016):
+    log(L_acc / L_sun) ≈ 1.26 * log(L_star / L_sun) - 0.61
+    """
+    logL_star = X[:, 0]
+    
+    # Empirical coefficients from Alcalá et al. (2014, A&A 561, A2)
+    logL_acc = 1.26 * logL_star - 0.61
+    
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form accretion luminosity for a T Tauri star.
+    
+    The canonical theoretical expression is L_acc = G * M_star * Mdot / R_star.
+    For pre-main-sequence stars, the most commonly cited empirical scaling for
+    the mass accretion rate is Mdot ∝ M_star^2 (Muzerolle et al. 2003; 
+    Natta et al. 2006), with a normalization of ~1e-8 M_sun/yr at 1 M_sun.
+    
+    Substituting this into the accretion luminosity formula and converting to
+    solar units gives:
+    
+        L_acc / L_sun = 0.3138 * (M_star / M_sun)^3 / (R_star / R_sun)
+    
+    or in log10:
+    
+        log10(L_acc / L_sun) = -0.503 + 3*log10(M_star) - log10(R_star)
+    
+    (logL_star and Teff are redundant with R_star via the Stefan-Boltzmann
+    relation and are not needed for this closed form.)
+    """
+    M_star = X[:, 1]   # already in M_sun
+    R_star = X[:, 2]   # already in R_sun
+    
+    logM = np.log10(M_star)
+    logR = np.log10(R_star)
+    
+    logL_acc = -0.503 + 3.0 * logM - logR
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) of a pre-main-sequence T Tauri star.
+    
+    This function uses the most commonly cited empirical closed-form relationship between 
+    accretion luminosity and stellar bolometric luminosity for T Tauri stars, which is 
+    widely used in the literature (e.g., Fang et al. 2009; Herczeg & Hillenbrand 2008; 
+    Manara et al. 2017) to estimate accretion luminosities when direct UV-excess 
+    measurements are unavailable.
+    """
+    logL_star = X[:, 0]
+    
+    # Standard empirical linear relation: log(L_acc/L_sun) ~ a * log(L_star/L_sun) + b
+    # Coefficients are typical canonical values found in the literature (e.g., a ~ 1.1, b ~ -1.3)
+    logL_acc = 1.1 * logL_star - 1.3
+    
+    return logL_acc

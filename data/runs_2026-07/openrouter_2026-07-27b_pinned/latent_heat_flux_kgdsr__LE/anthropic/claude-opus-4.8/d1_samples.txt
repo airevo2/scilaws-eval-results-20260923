@@ -1,0 +1,253 @@
+import numpy as np
+
+def predict(X):
+    # ---- Inputs ----
+    SWdown  = X[:, 0]     # W m-2
+    VPD     = X[:, 1]     # kPa
+    Tair    = X[:, 2]     # K
+    RH      = X[:, 3]     # fraction
+    Wind    = X[:, 4]     # m s-1
+    Rnet    = X[:, 5]     # W m-2
+    Qg      = X[:, 6]     # W m-2
+    LAI     = X[:, 7]     # m2 m-2
+    LWdown  = X[:, 8]     # W m-2
+    Ga      = X[:, 9]     # m s-1  (aerodynamic conductance)
+    delta   = X[:, 10]    # kPa K-1 (slope of sat. vapour pressure curve)
+    theta_FC= X[:, 11]
+    theta_WP= X[:, 12]
+
+    # ---- Physical constants ----
+    cp      = 1004.0          # J kg-1 K-1, specific heat of air
+    P       = 101.3           # kPa, standard surface pressure
+    lam     = 2.45e6          # J kg-1, latent heat of vaporization
+    eps     = 0.622           # ratio Mw/Md
+    R       = 287.05          # J kg-1 K-1, gas constant dry air
+
+    # Psychrometric constant gamma [kPa K-1]
+    gamma = (cp * P) / (eps * lam)
+
+    # Air density [kg m-3]
+    rho = (P * 1000.0) / (R * Tair)
+
+    # Available energy
+    A = Rnet - Qg
+
+    # ---- Surface (canopy) conductance ----
+    # Reference (well-watered) stomatal conductance scaled by LAI, with a
+    # Jarvis-type VPD reduction; converted to a bulk surface conductance.
+    gs_max = 0.012                     # m s-1 per unit LAI (leaf scale)
+    f_vpd  = 1.0 / (1.0 + VPD / 1.0)   # VPD stress (kPa)
+    Gs = gs_max * np.maximum(LAI, 0.1) * f_vpd
+    Gs = np.maximum(Gs, 1e-4)
+
+    # ---- Penman-Monteith equation ----
+    numerator   = delta * A + rho * cp * VPD * Ga
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Penman-Monteith latent heat flux (most canonical closed form)
+    SWdown = X[:, 0]
+    VPD    = X[:, 1] * 1000.0     # kPa -> Pa
+    Tair   = X[:, 2]              # K
+    RH     = X[:, 3]
+    Wind   = X[:, 4]
+    Rnet   = X[:, 5]
+    Qg     = X[:, 6]
+    LAI    = X[:, 7]
+    LWdown = X[:, 8]
+    Ga     = X[:, 9]             # m s^-1
+    delta  = X[:, 10] * 1000.0   # kPa/K -> Pa/K
+
+    # Physical constants
+    cp   = 1004.0        # J kg^-1 K^-1, specific heat of air
+    P    = 101325.0      # Pa, reference surface pressure
+    Rd   = 287.05        # J kg^-1 K^-1, gas constant dry air
+    lam  = 2.45e6        # J kg^-1, latent heat of vaporization
+    eps  = 0.622         # ratio Mw/Md
+
+    # Psychrometric constant (Pa/K)
+    gamma = cp * P / (eps * lam)
+
+    # Air density (kg m^-3)
+    rho = P / (Rd * Tair)
+
+    # Available energy
+    A = Rnet - Qg
+
+    # Surface (canopy) conductance from LAI, Jarvis-type scaling (m s^-1)
+    gs_max = 0.012          # per unit LAI, stomatal max
+    Gs = gs_max * np.maximum(LAI, 0.05)
+    Gs = np.clip(Gs, 1e-4, 0.5)
+
+    Ga = np.clip(Ga, 1e-4, None)
+
+    # Penman-Monteith
+    numerator   = delta * A + rho * cp * VPD * Ga
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # ---- Penman-Monteith latent heat flux (canonical closed form) ----
+    # Inputs
+    SWdown  = X[:, 0]        # W m-2
+    VPD     = X[:, 1]        # kPa
+    Tair    = X[:, 2]        # K
+    RH      = X[:, 3]        # fraction
+    Wind    = X[:, 4]        # m s-1
+    Rnet    = X[:, 5]        # W m-2
+    Qg      = X[:, 6]        # W m-2
+    LAI     = X[:, 7]        # m2 m-2
+    LWdown  = X[:, 8]        # W m-2
+    Ga      = X[:, 9]        # m s-1
+    delta   = X[:, 10]       # kPa K-1  (slope of sat. vapour pressure curve)
+    theta_FC= X[:, 11]
+    theta_WP= X[:, 12]
+
+    # ---- Physical constants ----
+    cp    = 1013.0           # J kg-1 K-1  specific heat of air
+    P     = 101.325          # kPa  standard atmospheric pressure
+    Mw    = 0.622            # ratio molar mass water / dry air
+    lam   = 2.45e6           # J kg-1  latent heat of vaporisation
+
+    # Psychrometric constant (kPa K-1)
+    gamma = cp * P / (Mw * lam)   # ~0.066 kPa K-1
+
+    # Air density (kg m-3) from ideal gas law
+    Rd    = 287.05           # J kg-1 K-1
+    rho   = (P * 1000.0) / (Rd * Tair)
+
+    # ---- Available energy ----
+    A = Rnet - Qg
+
+    # ---- Surface (canopy) conductance via a Jarvis-type formulation ----
+    # Maximum stomatal conductance scaled by LAI, reduced by radiation and VPD stress
+    gs_max = 0.012                       # m s-1 per unit LAI (leaf scale ~0.01-0.02)
+    f_rad  = SWdown / (SWdown + 100.0)   # light response (saturating)
+    f_vpd  = 1.0 / (1.0 + VPD / 1.0)     # VPD down-regulation (kPa scale ~1)
+    Gs = gs_max * np.maximum(LAI, 0.1) * f_rad * f_vpd
+    Gs = np.clip(Gs, 1e-4, 1.0)
+
+    # ---- Penman-Monteith ----
+    num = delta * A + rho * cp * VPD * Ga
+    den = delta + gamma * (1.0 + Ga / Gs)
+    LE  = num / den
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # ---- Inputs ----
+    SWdown = X[:, 0]      # W m-2
+    VPD    = X[:, 1]      # kPa
+    Tair   = X[:, 2]      # K
+    RH     = X[:, 3]      # fraction
+    Wind   = X[:, 4]      # m s-1
+    Rnet   = X[:, 5]      # W m-2
+    Qg     = X[:, 6]      # W m-2
+    LAI    = X[:, 7]      # m2 m-2
+    LWdown = X[:, 8]      # W m-2
+    Ga     = X[:, 9]      # m s-1
+    delta  = X[:, 10]     # kPa K-1
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+
+    # ---- Physical constants ----
+    cp    = 1004.0        # J kg-1 K-1, specific heat of air
+    P     = 101.325       # kPa, standard surface pressure
+    Rd    = 287.05        # J kg-1 K-1
+    eps   = 0.622         # ratio Mw/Md
+    lam   = 2.45e6        # J kg-1, latent heat of vaporization
+
+    # Psychrometric constant gamma [kPa K-1]
+    gamma = (cp * P) / (eps * lam)
+
+    # Air density [kg m-3]
+    rho = (P * 1000.0) / (Rd * Tair)
+
+    # Available energy
+    A = Rnet - Qg
+
+    # ---- Surface (canopy) conductance, Jarvis-type ----
+    gs_max = 0.012                          # m s-1 per unit LAI
+    gs = gs_max * np.maximum(LAI, 0.05)     # baseline canopy conductance
+    # VPD limitation
+    f_vpd = 1.0 / (1.0 + VPD / 1.0)
+    gs = gs * f_vpd
+    gs = np.clip(gs, 1e-4, 1.0)
+
+    Ga = np.clip(Ga, 1e-4, None)
+
+    # ---- Penman-Monteith ----
+    numerator   = delta * A + rho * cp * VPD * Ga
+    denominator = delta + gamma * (1.0 + Ga / gs)
+
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Penman-Monteith combination equation (most commonly cited closed form)
+    # LE = [Delta*(Rn - G) + rho*cp*VPD*Ga] / [Delta + gamma*(1 + Ga/Gs)]
+    SWdown = X[:, 0]
+    VPD    = X[:, 1]          # kPa
+    Tair   = X[:, 2]          # K
+    RH     = X[:, 3]
+    Wind   = X[:, 4]
+    Rnet   = X[:, 5]          # W m-2
+    Qg     = X[:, 6]          # W m-2
+    LAI    = X[:, 7]          # m2 m-2
+    LWdown = X[:, 8]
+    Ga     = X[:, 9]          # m s-1
+    delta  = X[:, 10]         # kPa K-1
+    thFC   = X[:, 11]
+    thWP   = X[:, 12]
+
+    # Physical constants
+    cp     = 1004.0           # J kg-1 K-1 (specific heat of air)
+    P      = 101.325          # kPa (standard pressure)
+    Rd     = 287.05           # J kg-1 K-1
+    lam    = 2.45e6           # J kg-1 (latent heat of vaporization)
+    eps    = 0.622
+
+    # Psychrometric constant [kPa K-1]
+    gamma = (cp * P) / (eps * lam)
+
+    # Moist-air density [kg m-3]
+    rho = (P * 1000.0) / (Rd * Tair)
+
+    # Available energy
+    A = Rnet - Qg
+
+    # Surface (canopy) conductance from LAI: Gs = gs_max * LAI  [m s-1]
+    gs_max = 0.011
+    Gs = np.maximum(gs_max * LAI, 1e-4)
+
+    Ga_s = np.maximum(Ga, 1e-4)
+
+    numerator   = delta * A + rho * cp * VPD * Ga_s
+    denominator = delta + gamma * (1.0 + Ga_s / Gs)
+
+    LE = numerator / denominator
+    return LE

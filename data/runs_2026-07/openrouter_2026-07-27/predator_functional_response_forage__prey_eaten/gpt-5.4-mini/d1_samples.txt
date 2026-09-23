@@ -1,0 +1,65 @@
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Holling Type II functional response (number consumed over a fixed trial)
+    # Na = (a * N * T) / (1 + a * h * N)
+    # Using a simple canonical parameterization with unit attack rate and handling time
+    a = 1.0
+    h = 1.0
+    T = 1.0
+    Na = (a * N * T) / (1.0 + a * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Holling Type II functional response:
+    # Na = (a * N * T) / (1 + a * h * N)
+    # With no additional data, use the simplest standard closed-form
+    # dependence on prey density alone by setting T=1 and absorbing
+    # attack rate / handling time into a generic saturating form:
+    N = X[:, 0]
+    return N / (1.0 + N)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = np.asarray(X)[:, 0]
+    # Holling Type II functional response (disk equation without search time scaling)
+    # N_a = (a * T * N) / (1 + a * h * N)
+    # Using a standard closed-form canonical choice with unit-scaled parameters:
+    a = 1.0
+    h = 1.0
+    T = 1.0
+    return (a * T * N) / (1.0 + a * h * N)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Holling Type II functional response (common closed-form form)
+    # N_a = (a * N * T) / (1 + a * h * N)
+    # Using unit handling with canonical constants set to 1 where unspecified.
+    a = 1.0
+    h = 1.0
+    T = 1.0
+    Na = (a * N * T) / (1.0 + a * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0].astype(float)
+    # Holling type II functional response (disc equation) for number eaten in a trial
+    # Using a simple canonical closed form with unit coefficients in absence of fitted parameters:
+    # N_a = N / (1 + N)
+    return N / (1.0 + N)

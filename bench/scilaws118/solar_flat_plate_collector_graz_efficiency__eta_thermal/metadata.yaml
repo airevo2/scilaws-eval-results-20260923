@@ -1,0 +1,141 @@
+task_id: solar_flat_plate_collector_graz_efficiency__eta_thermal
+domain: materials_and_energy / solar_thermal_engineering
+license: CC-BY-4.0    # Tschopp et al. 2023 Data in Brief 48:109224 — CC-BY
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  A flat-plate solar collector is a solar-thermal device that converts incident sunlight into useful heat in a working fluid, studied in solar energy engineering.
+
+target:
+  name: eta_thermal
+  symbol: eta
+  unit: ""
+  description: Gross-area thermal efficiency of the collector array (useful heat / (plane-of-array irradiance x gross area)), dimensionless in (0,1).  Observed range 0.45-0.58.  Computed from the measured useful heat (mass flow x cp x (T_out - T_in)); the heat-balance quantities are NOT released as inputs.
+  range: [0.4536, 0.5756]
+
+inputs:
+  - name: G_W_m2
+    symbol: G
+    unit: W m^-2
+    description: Global plane-of-array irradiance.  HWB input — appears in the reduced temperature (T_in - T_amb)/G.
+    range: [680.38, 1114.65]
+  - name: T_in_C
+    symbol: T_in
+    unit: deg C
+    description: Collector inlet fluid temperature.  HWB input.
+    range: [60.30, 74.44]
+  - name: T_amb_C
+    symbol: T_amb
+    unit: deg C
+    description: Ambient air temperature.  HWB input (the loss term depends on T_in - T_amb).
+    range: [9.12, 34.98]
+  - name: WS_m_s
+    symbol: WS
+    unit: m s^-1
+    description: Wind speed at the collector top edge.  DISTRACTOR — ISO 9806 has an optional wind-dependent loss extension, but the core HWB law and all three reference baselines ignore wind (only weak residual signal in this data).
+    range: [0.04, 2.41]
+
+# NOTE: the target is NOT circular.  eta is the measured thermal
+# efficiency = P_thermal / (G * A_gross), where P_thermal = m_dot * cp *
+# (T_out - T_in) is the measured useful heat.  The released inputs are
+# G, T_in, T_amb, WS only — they do NOT include T_out, m_dot, P_thermal,
+# cp or rho (the heat-balance quantities eta is computed from), so eta
+# cannot be reconstructed arithmetically from the inputs.  Recovering eta
+# requires the HWB physical law relating it to the reduced temperature
+# (T_in - T_amb)/G (contrast the parked `thermoelectric_zt` and
+# `climate_sensitivity_ecs`, where the target WAS an algebraic function
+# of released inputs).  Verified: the HWB fit on the released data
+# reproduces the documented Bliss-form coefficients (a0=0.678, a1=2.58,
+# a2=0.0104; Tschopp 2023).
+
+# Dataset — Type I, two-file flat layout.  Source: Tschopp et al. 2023
+# (Data in Brief 48:109224, CC-BY), the 315-row quasi-steady-state subset
+# of the one-year 1-minute Fernheizwerk Graz Arcon-Sunmark collector
+# record (filtered: G > 600 W/m^2, AOI < 40 deg, no shadowing, mass flow
+# > 0.8 kg/s, small 5-min rolling std).  prep_data.py projects to
+# (eta, G, T_in, T_amb, WS), drops the heat-balance / metadata columns,
+# and does a random 80/20 split (np.random.default_rng(42)).
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 252
+n_test:  63
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: optical_efficiency_a0
+    value: 0.745
+    unit: dimensionless
+    description: Certified optical (zero-loss) efficiency eta0 of the Arcon-Sunmark HTHEATstore-35/10 collector (mean-fluid SP-test form); a candidate for the HWB intercept a0.
+    source: Tschopp 2023 Table 3 (SP-certified, mean-fluid form).  The Bliss inlet-form fit on this task's data gives a0 ~ 0.68.
+    _role: candidate
+  - name: linear_loss_a1
+    value: 2.067
+    unit: W m^-2 K^-1
+    description: Certified linear heat-loss coefficient a1 (mean-fluid SP-test form); a candidate for the HWB linear loss term.
+    source: Tschopp 2023 Table 3.  Bliss inlet-form fit gives a1 ~ 2.3-2.6.
+    _role: candidate
+  - name: quadratic_loss_a2
+    value: 0.009
+    unit: W m^-2 K^-2
+    description: Certified quadratic (re-radiation) heat-loss coefficient a2; a candidate for the HWB second-order term.
+    source: Tschopp 2023 Table 3.  Small; within the noise floor on this dataset's narrow reduced-temperature range.
+    _role: candidate
+  - name: water_cp
+    value: 4186.0
+    unit: J kg^-1 K^-1
+    description: Specific heat capacity of the water/glycol heat-transfer fluid.
+    source: Standard.  Used to compute the useful heat (and hence eta) upstream; a DISTRACTOR for the efficiency-law formula, which takes eta as given.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: constant_efficiency
+    label: Constant efficiency eta = a0 (Type I, frozen; mean efficiency on v2 train)
+    formula_file: formulas/constant_efficiency.py
+    reference_pdf: reference/tschopp_2023.pdf
+    n_law_constants: 1         # A0
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.02455}
+  - id: hwb_linear
+    label: Linear Hottel-Whillier-Bliss eta = a0 - a1·(T_in-T_amb)/G (Type I, frozen; a0,a1 pre-fit on v2 train)
+    formula_file: formulas/hwb_linear.py
+    reference_pdf: reference/tschopp_2023.pdf
+    n_law_constants: 2         # A0, A1
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.02029}
+  - id: hwb_quadratic
+    label: Quadratic Hottel-Whillier-Bliss (full ISO 9806) eta = a0 - a1·(T_in-T_amb)/G - a2·(T_in-T_amb)²/G (Type I, frozen; pre-fit on v2 train)
+    formula_file: formulas/hwb_quadratic.py
+    reference_pdf: reference/tschopp_2023.pdf
+    n_law_constants: 3         # A0, A1, A2
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.02037}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        3
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on eta_thermal (dimensionless efficiency)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include zero-temperature-lift optical conversion of irradiance into useful heat"
+  - "predicted thermal efficiency stays within [0, 1]"
+  - "predicted thermal efficiency is nonincreasing as T_in_C - T_amb_C increases at fixed G_W_m2"
+  - "predicted thermal efficiency is nondecreasing as G_W_m2 increases at fixed T_in_C - T_amb_C"
+
+best_baseline: 0.02029    # hwb_linear — best of three HWB rungs on v2 test (quadratic tied within noise)

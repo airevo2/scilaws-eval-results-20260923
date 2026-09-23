@@ -1,0 +1,81 @@
+import numpy as np
+
+def predict(X):
+    # Cobb-Douglas per-worker form: Y = A * K^alpha * (h*L)^(1-alpha)
+    # => ln(Y/L) = ln A + alpha*ln(K/L) + (1-alpha)*ln(h)
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    alpha = 1.0 / 3.0        # capital share
+    lnA = -1.5               # TFP / units constant
+
+    ln_Y_over_L = lnA + alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)
+    return ln_Y_over_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    alpha = 1.0 / 3.0        # capital share
+    lnA = 6.5                # TFP / level constant
+
+    k = K / L               # capital per worker
+
+    # Cobb-Douglas: Y = A K^alpha (h L)^(1-alpha)
+    # => ln(Y/L) = lnA + alpha*ln(K/L) + (1-alpha)*ln(h)
+    log_Y = lnA + alpha * np.log(k) + (1.0 - alpha) * np.log(h)
+    return log_Y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    # Cobb-Douglas production: Y = A * K^alpha * (h*L)^(1-alpha)
+    # => ln(Y/L) = ln(A) + alpha*ln(K/L) + (1-alpha)*ln(h)
+    alpha = 1.0 / 3.0
+    lnA = -2.6  # constant capturing TFP level (calibrated)
+
+    k_per_worker = K / L
+    log_Y = lnA + alpha * np.log(k_per_worker) + (1.0 - alpha) * np.log(h)
+    return log_Y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Cobb-Douglas: Y = A * K^alpha * (h*L)^(1-alpha)
+    # => ln(Y/L) = ln(A) + alpha*ln(K/L) + (1-alpha)*ln(h)
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    alpha = 1.0 / 3.0
+    lnA = 6.0  # calibrated TFP constant
+
+    return lnA + alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+    # Cobb-Douglas: Y = A * K^alpha * (h*L)^(1-alpha)
+    # => ln(Y/L) = ln A + alpha*ln(K/L) + (1-alpha)*ln(h)
+    alpha = 1.0 / 3.0
+    lnA = -1.0
+    return lnA + alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)

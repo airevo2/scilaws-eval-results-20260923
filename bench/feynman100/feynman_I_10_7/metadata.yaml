@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Mass"
+  symbol: "m"
+  unit: ""
+  description: "Mass"
+inputs:
+  - name: "Mass"
+    symbol: "m_0"
+    unit: ""
+    description: "Mass"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"

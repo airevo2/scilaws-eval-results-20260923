@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Wave number"
+  symbol: "k"
+  unit: ""
+  description: "Wave number"
+inputs:
+  - name: "Frequency"
+    symbol: "omega"
+    unit: ""
+    description: "Frequency"
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"

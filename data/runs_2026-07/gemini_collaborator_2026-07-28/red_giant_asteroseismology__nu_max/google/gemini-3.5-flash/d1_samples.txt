@@ -1,0 +1,154 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts nu_max (frequency of maximum oscillation power) in microHertz.
+
+    Uses the standard asteroseismic power-law relation between delta_nu and
+    nu_max, scaled to solar values (nu_max_solar = 3090 uHz, delta_nu_solar =
+    135.1 uHz) with the canonical empirical exponent of 1.25 (e.g., Mosser et
+    al. 2012).
+
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] is delta_nu (uHz).
+
+    Returns:
+    np.ndarray
+        1-D array of predicted nu_max values (uHz).
+    """
+    delta_nu = X[:, 0]
+    nu_max_solar = 3090.0
+    delta_nu_solar = 135.1
+    exponent = 1.25
+
+    return nu_max_solar * (delta_nu / delta_nu_solar) ** exponent
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the frequency of maximum oscillation power (nu_max) in microhertz
+
+    using the standard empirical asteroseismic scaling relation with delta_nu.
+
+    Parameters:
+    X : 2-D numpy array
+        - X[:, 0] = delta_nu (Δν) [μHz]
+        - X[:, 1] = Teff (T_eff) [K]
+        - X[:, 2] = FeH ([Fe/H]) [dex]
+        - X[:, 3] = phase (integer-coded)
+
+    Returns:
+    1-D numpy array of nu_max [μHz]
+    """
+    delta_nu = X[:, 0]
+
+    # Standard empirical relation: delta_nu = a * nu_max^b
+    # (Stello et al. 2009, Huber et al. 2011)
+    # Inverting this gives: nu_max = (delta_nu / a) ** (1/b)
+    a = 0.263
+    b = 0.772
+
+    nu_max = (delta_nu / a) ** (1.0 / b)
+
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    delta_nu = X[:, 0]
+    phase = X[:, 3]
+    
+    # Default coefficients (all/unclassified stars)
+    # Based on Kepler global fit (Hekker et al. 2011): 
+    # delta_nu = 0.273 * nu_max^0.755 -> nu_max = (delta_nu / 0.273) ** (1 / 0.755)
+    a = np.full_like(delta_nu, 5.632)
+    b = np.full_like(delta_nu, 1.3245)
+    
+    # RGB stars (phase == 1)
+    # delta_nu = 0.280 * nu_max^0.751 -> nu_max = (delta_nu / 0.280) ** (1 / 0.751)
+    rgb_mask = (phase == 1)
+    a[rgb_mask] = 5.432
+    b[rgb_mask] = 1.3316
+    
+    # He-core burning / Red Clump stars (phase == 2)
+    # delta_nu = 0.261 * nu_max^0.760 -> nu_max = (delta_nu / 0.261) ** (1 / 0.760)
+    heb_mask = (phase == 2)
+    a[heb_mask] = 5.867
+    b[heb_mask] = 1.3158
+    
+    return a * (delta_nu ** b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the frequency of maximum oscillation power (nu_max) in microhertz
+    using the empirical power-law relations with the large frequency separation (delta_nu),
+    with coefficients calibrated for different evolutionary phases (Yu et al. 2018).
+    
+    Inputs:
+    - X[:, 0] = delta_nu (Δν) [μHz]
+    - X[:, 1] = Teff [K] (not strictly needed due to the tight Δν-ν_max correlation)
+    - X[:, 2] = FeH [dex] (not strictly needed)
+    - X[:, 3] = phase (0: unclassified, 1: RGB, 2: HeB)
+    """
+    delta_nu = X[:, 0]
+    phase = X[:, 3]
+    
+    # Initialize the output array
+    nu_max = np.zeros_like(delta_nu)
+    
+    # Masks for different evolutionary phases
+    rgb_mask = (phase == 1)
+    heb_mask = (phase == 2)
+    other_mask = ~(rgb_mask | heb_mask)
+    
+    # Phase-specific power-law relations (inverted from Δν = a * ν_max^b)
+    # RGB stars (Phase 1)
+    nu_max[rgb_mask] = (delta_nu[rgb_mask] / 0.270) ** (1.0 / 0.761)
+    
+    # Helium-burning / Red Clump stars (Phase 2)
+    nu_max[heb_mask] = (delta_nu[heb_mask] / 0.254) ** (1.0 / 0.771)
+    
+    # Unclassified / fallback (Phase 0)
+    nu_max[other_mask] = (delta_nu[other_mask] / 0.262) ** (1.0 / 0.766)
+    
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    delta_nu = X[:, 0]
+    phase = X[:, 3]
+    
+    # Standard empirical power-law relations: nu_max = alpha * (delta_nu ** beta)
+    # The coefficients are phase-dependent (RGB vs. Clump vs. Global) 
+    # to account for different stellar structures (e.g., Huber et al. 2011).
+    alpha = np.select(
+        condlist=[phase == 1, phase == 2],
+        choicelist=[5.42, 5.75],
+        default=5.68
+    )
+    
+    beta = np.select(
+        condlist=[phase == 1, phase == 2],
+        choicelist=[1.319, 1.284],
+        default=1.295
+    )
+    
+    # Predict nu_max
+    nu_max = alpha * (delta_nu ** beta)
+    
+    return nu_max

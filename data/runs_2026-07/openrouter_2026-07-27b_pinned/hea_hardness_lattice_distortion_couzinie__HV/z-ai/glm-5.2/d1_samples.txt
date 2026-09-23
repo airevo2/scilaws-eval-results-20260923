@@ -1,0 +1,73 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the room-temperature Vickers hardness (HV) of a refractory or 
+    complex-concentrated high-entropy alloy using a standard empirical 
+    multiple linear regression model based on atomic size mismatch (delta), 
+    valence electron concentration (VEC), and enthalpy of mixing (dHmix).
+    """
+    # Extract inputs
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Standard empirical linear regression coefficients derived from 
+    # solid-solution strengthening and phase stability principles.
+    # Hardness increases with lattice distortion (delta) and is influenced 
+    # by electronic structure (VEC) and thermodynamic stability (dHmix).
+    HV = 150.0 + 18.5 * delta + 5.2 * VEC - 0.8 * dHmix
+    
+    # Hardness cannot be negative
+    HV = np.maximum(HV, 0)
+    
+    return HV
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+    delta = X[:, 0]
+    vec = X[:, 1]
+    dhmix = X[:, 2]
+
+    hv = 134.5 + 7.33 * delta - 1.42 * vec - 0.36 * dhmix
+    return np.ravel(hv)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict room-temperature Vickers hardness (kgf/mm²) of refractory/complex-
+    concentrated high-entropy alloys using the canonical Yang–Zhang linear
+    empirical model.
+
+    The model is originally formulated in GPa:
+        HV_GPa = 0.5·δ + 0.1·VEC + 0.01·ΔH_mix
+    and is converted to kgf/mm² using the exact SI relation:
+        1 GPa = 1000 MPa,  1 HV = 9.80665 MPa  →  1 GPa = 101.9716213 HV.
+    """
+    delta = X[:, 0]      # atomic-size mismatch, %
+    VEC   = X[:, 1]      # valence electron concentration
+    dHmix = X[:, 2]      # mixing enthalpy, kJ/mol
+
+    # Canonical Yang–Zhang hardness in GPa
+    HV_GPa = 0.5 * delta + 0.1 * VEC + 0.01 * dHmix
+
+    # Convert GPa → kgf/mm²
+    GPa_to_HV = 1000.0 / 9.80665
+    HV = HV_GPa * GPa_to_HV
+
+    return HV

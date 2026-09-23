@@ -1,0 +1,159 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict indentation force F [N] from indentation depth delta [m] and
+    spherical tip radius R [m] using the Hertz model for a spherical indenter.
+
+    F = (4/3) * E_star * sqrt(R) * delta**(3/2)
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:,0] = indentation_m (delta) [m]
+        X[:,1] = R_m (R) [m]
+
+    Returns
+    -------
+    F : np.ndarray, shape (n,)
+        Force in Newtons.
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    # Effective elastic modulus (reduced modulus) E* = E / (1 - nu^2).
+    # Placeholder value since no material properties are provided.
+    E_star = 1.0  # [Pa]
+
+    # Hertz model: F = (4/3) * E* * sqrt(R) * delta^(3/2)
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * np.power(delta, 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute indentation force using the Hertz model for a spherical indenter.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 2)
+        X[:, 0] = indentation depth delta (m)
+        X[:, 1] = tip radius R (m)
+
+    Returns
+    -------
+    F : np.ndarray, shape (n_samples,)
+        Indentation force (N).
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    # Effective (reduced) Young's modulus fitted to the data.
+    # Placeholder value; in practice obtained by fitting.
+    E_STAR = 1.0  # Pa
+
+    # Hertz model: F = (4/3) * E* * sqrt(R) * delta^(3/2)
+    F = (4.0 / 3.0) * E_STAR * np.sqrt(R) * np.power(delta, 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict indentation force F (N) for a spherical AFM tip using the Hertz model.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] : indentation_m (delta) in m
+        X[:, 1] : R_m (R) in m (spherical tip radius)
+
+    Returns
+    -------
+    F : np.ndarray, shape (n,)
+        Indentation force in N (positive during approach contact).
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    # Effective Young's modulus (E*) placeholder.
+    # In practice this would be fitted to data: E* = E_sample / (1 - nu_sample^2)
+    # assuming a rigid tip.  Units: Pa.
+    E_star = 1.0
+
+    # Force is zero when not in contact (delta <= 0)
+    delta_pos = np.maximum(delta, 0.0)
+
+    # Hertz model for a sphere on an elastic half-space:
+    # F = (4/3) * E* * sqrt(R) * delta^(3/2)
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * delta_pos ** 1.5
+
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Hertz model for a spherical indenter on an elastic half-space.
+    F = (4/3) * E_star * sqrt(R) * delta^(3/2)
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 2)
+        X[:, 0] = delta : indentation depth (m), >= 0
+        X[:, 1] = R     : tip radius (m)
+
+    Returns
+    -------
+    F : np.ndarray, shape (n_samples,)
+        Indentation force (N)
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+    # Reduced Young's modulus E* (Pa). This is a fitted material property.
+    # Placeholder value; replace with actual fitted/computed constant for real data.
+    E_star = 1.0  # Pa
+
+    # Ensure non-negative indentation to avoid complex values and model non-contact
+    delta = np.maximum(delta, 0.0)
+
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * (delta ** 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict indentation force F (N) for a spherical AFM probe using the Hertz model.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] = indentation_m (delta) [m]
+        X[:, 1] = R_m (R) [m]  (constant for the dataset)
+
+    Returns
+    -------
+    F : np.ndarray, shape (n,)
+        Indentation force [N]
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    # Reduced modulus E_star = E / (1 - nu^2) [Pa]
+    # Placeholder value — replace with fitted constant as needed.
+    E_star = 1.0
+
+    # Hertz model for a sphere on an elastic half-space:
+    # F = (4/3) * E_star * sqrt(R) * delta^(3/2)
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * np.power(delta, 1.5)
+    return F

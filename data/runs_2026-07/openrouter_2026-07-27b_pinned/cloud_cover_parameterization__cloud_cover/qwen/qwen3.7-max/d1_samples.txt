@@ -1,0 +1,125 @@
+import numpy as np
+
+def predict(X):
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH  = X[:, 2]
+    T   = X[:, 3]
+    p   = X[:, 4]
+
+    # --- Saturation vapour pressure over liquid water (Bolton 1980) ---
+    e_s = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
+
+    # --- Saturation specific humidity ---
+    # q_s = epsilon * e_s / (p - (1 - epsilon) * e_s),  epsilon = 0.622
+    q_s = 0.622 * e_s / (p - 0.378 * e_s)
+
+    # --- Total cloud condensate mixing ratio ---
+    q_cond = q_c + q_i
+
+    # --- Xu & Randall (1996) diagnostic cloud-fraction scheme ---
+    # C = q_cond / [ q_cond + q_s * (1 - RH) ]
+    denom = q_cond + q_s * (1.0 - RH)
+
+    C = np.where(denom > 1e-12, q_cond / denom, 0.0)
+    C = np.clip(C, 0.0, 1.0)
+
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    RH = X[:, 2]
+    
+    # Sundqvist (1989) diagnostic cloud cover parameterization
+    # C = 1 - sqrt((1 - RH) / (1 - RH_c))  for RH > RH_c
+    # C = 0                                  for RH <= RH_c
+    RH_c = 0.80  # critical relative humidity threshold
+    
+    C = np.zeros(RH.shape[0])
+    mask = RH > RH_c
+    C[mask] = 1.0 - np.sqrt(np.maximum(1.0 - RH[mask], 0.0) / (1.0 - RH_c))
+    
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    RH = X[:, 2]
+    
+    # Critical relative humidity (canonical constant for Sundqvist scheme)
+    RH_c = 0.80 
+    
+    # Sundqvist et al. (1989) diagnostic cloud cover parameterization
+    # C = 1 - sqrt((1 - RH) / (1 - RH_c)) for RH > RH_c, else 0
+    ratio = np.clip((1.0 - RH) / (1.0 - RH_c), 0.0, 1.0)
+    C = 1.0 - np.sqrt(ratio)
+    
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+    
+    # Canonical Sundqvist (1989) diagnostic cloud fraction scheme
+    # RH_c is the critical relative humidity, typically around 0.8 in the troposphere
+    RH_c = 0.80  
+    
+    C = np.zeros_like(RH)
+    valid = RH > RH_c
+    C[valid] = 1.0 - np.sqrt((1.0 - RH[valid]) / (1.0 - RH_c))
+    
+    # Physical constraint: ensure non-zero cloud cover if cloud condensate is explicitly present
+    q_cond = q_c + q_i
+    C = np.where(q_cond > 0, np.maximum(C, 1.0 - np.exp(-5000.0 * q_cond)), C)
+    
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+    T = X[:, 3]
+    p = X[:, 4]
+    q_v = X[:, 5]
+    z_g = X[:, 6]
+    dz_RH = X[:, 7]
+
+    # Total cloud condensate
+    q_cond = q_c + q_i
+
+    # Critical relative humidity (Sundqvist-like parameterization)
+    # RH_c is typically lower in the boundary layer and higher in the free troposphere
+    # Using pressure to scale RH_c between ~0.7 at the surface and ~0.95 aloft
+    p_norm = np.clip(p / 101325.0, 0.0, 1.0)
+    RH_c = 0.95 - 0.25 * p_norm
+
+    # Sundqvist cloud fraction diagnostic based on RH
+    # C_RH = 1 - sqrt((1 - RH) / (1 - RH_c)) for RH > RH_c
+    ratio = np.clip((1.0 - RH) / (1.0 - RH_c), 0.0, 1.0)
+    C_RH = 1.0 - np.sqrt(ratio)
+    C_RH = np.where(RH > RH_c, C_RH, 0.0)
+
+    # Cloud fraction diagnostic based on grid-mean condensate
+    # Assuming a subgrid PDF, C scales with the square root of condensate or linearly up to a threshold
+    q_threshold = 1e-4  # kg/kg typical threshold for overcast
+    C_cond = np.clip(q_cond / q_threshold, 0.0, 1.0)
+
+    # Combine diagnostics: if condensate is present, it forces cloudiness, 
+    # otherwise rely on the RH-based macrophysics scheme
+    C = np.maximum(C_RH, C_cond)
+
+    return np.clip(C, 0.0, 1.0)

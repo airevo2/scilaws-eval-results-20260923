@@ -1,0 +1,154 @@
+task_id: pp_total_cross_section_donnachie_landshoff__sigma_tot
+domain: physics / high_energy_physics
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  The total cross-section for proton-proton scattering measures the effective interaction size of the two protons, a quantity in high-energy particle physics.
+
+target:
+  name: sigma_tot
+  symbol: σ_tot
+  unit: mb
+  description: Measured total proton-proton hadronic cross-section at a given center-of-mass energy squared
+  range: [36.68, 170.00]
+
+inputs:
+  - name: s
+    symbol: s
+    unit: GeV²
+    description: Mandelstam s, the square of the center-of-mass collision energy, computed from the lab-frame beam momentum
+    range: [25.09, 9025000000.00]
+
+data_files:
+  train: data/train.csv  # sqrt(s) in [5, 100) GeV — ISR / fixed-target era
+  test:  data/test.csv   # sqrt(s) >= 100 GeV — Tevatron / LHC / cosmic-ray extrapolation
+
+n_train: 105
+n_test:  23
+
+# Note (auditor only): The DL 1992 formula was calibrated with data available
+# in 1992 (sqrt(s) <= ~1800 GeV, Tevatron). The test set includes LHC
+# measurements (7-14 TeV) and cosmic-ray air-shower data (~95000 GeV) that
+# were unavailable when the formula was published. The formula achieves
+# R2 ~ 0.86 on the test split (vs R2 ~ 0.97 overall); test RMSE ~ 10 mb
+# on a range of 48-170 mb. This is a documented legitimate hard OOD probe
+# (data_spec 9.18): any SR submission that recovers the DL functional form
+# will underperform on the LHC energies just as DL does, reflecting the
+# real scientific limitation rather than a data or formula error.
+
+# FM C12 (priors-leakage) fix — 2026-05-26
+# Per AUDIT_CHECKLIST.md §C12 (v0.6) and audit/PRIORS_LEAKAGE_AUDIT_2026-05-26.md.
+#
+# Pre-fix: LEAKAGE — four leaking priors:
+#   epsilon=0.0808 ↔ donnachie_1992.py LAW_CONSTANTS["epsilon"]=0.0808
+#   eta=0.4525     ↔ donnachie_1992.py LAW_CONSTANTS["eta"]=0.4525
+#   X_pp=21.70     ↔ donnachie_1992.py LAW_CONSTANTS["X_pp"]=21.70
+#   Y_pp=56.08     ↔ donnachie_1992.py LAW_CONSTANTS["Y_pp"]=56.08
+#
+# Classification: ALL FOUR are purely empirical Regge-pomeron fit parameters
+# from a simultaneous fit to pp and pbar-p cross-section data (Donnachie &
+# Landshoff 1992). They are NOT universal theoretical constants — they are fit
+# results specific to the DL 1992 analysis. No upstream first-principles anchor.
+# Strategy B: REMOVE all four leaking candidates.
+#
+# Replacement candidates (Strategy A — upstream theoretical physics):
+# The Pomeron soft intercept alpha_P(0) ≈ 1.08 and Reggeon intercept
+# alpha_R(0) ≈ 0.5 are UNIVERSAL Regge-trajectory constants established by
+# fitting elastic scattering data across many reactions long before DL 1992.
+# They appear in the DL formula as epsilon = alpha_P(0) - 1 ≈ 0.08 and
+# as the Reggeon trajectory slope. These ARE legitimate upstream candidates
+# (see Collins & Squires 1968; the Donnachie-Dosch-Landshoff-Nachtmann 2002
+# monograph "Pomeron Physics and QCD").
+#
+# The existing distractor Y_pbarp=98.39 does NOT match any LAW/OTHER constant
+# in any formula file — CLEAN, retained.
+#
+# Block-Halzen baselines' LAW_CONSTANTS: c0=37.32, c1=-1.440, c2=0.2817,
+# s_0=1.76070. None of the new priors match these.
+#
+# Post-fix: CLEAN — verified no prior value matches any LAW_CONSTANTS or
+# OTHER_CONSTANTS value in donnachie_1992.py or block_halzen_2005.py.
+
+priors:
+  - name: alpha_f2_trajectory
+    value: 0.70
+    unit: ""
+    description: f_2/rho Regge-trajectory intercept alpha_f2(0) ≈ 0.70, relevant to secondary Reggeon exchange in hadronic reactions. Distinct from the DL fitted eta=0.4525 (which parametrises the effective power 1 - alpha_R) and from the Pomeron intercept 1.08. Universal QCD phenomenology reference.
+    source: "Collins P.D.B. (1977) Introduction to Regge Theory, Cambridge UP, Chapter 4 — Reggeon trajectories table."
+    _role: candidate
+  - name: Y_pbarp
+    value: 98.39
+    unit: mb
+    description: Reggeon coupling coefficient for pbar-p scattering in the DL formula (not used in the pp baseline shipped here; the pbar-p reaction has a different Reggeon amplitude due to charge-conjugation).
+    source: Donnachie & Landshoff 1992, Phys. Lett. B 296:227, Figure 1(a) legend, PDF p. 10
+    _role: distractor
+  - name: sigma_tot_pp_low_energy
+    value: 39.5
+    unit: mb
+    description: Reference pp total cross-section near sqrt(s)=10 GeV (ISR threshold), the lower energy boundary of the DL formula's calibration range. A domain-knowledge anchor for the cross-section scale, not a formula coefficient.
+    source: "Particle Data Group (2022) Cross Section Data, Table — pp total cross-section near sqrt(s)=10 GeV."
+    _role: distractor
+
+references:
+  - id: donnachie_1992
+    label: Donnachie-Landshoff Regge-pomeron formula for pp total cross-section
+    formula_file: formulas/donnachie_1992.py
+    reference_pdf: reference/donnachie_1992.pdf
+    n_law_constants: 4
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 10.185780
+      r2: 0.856648
+  - id: block_halzen_2005
+    label: Block-Halzen Froissart-saturation ln²(s) parametrization for pp total cross-section
+    citation: >-
+      M. M. Block and F. Halzen (2005). "New evidence for the saturation of the
+      Froissart bound." Physical Review D 72, 036006. arXiv:hep-ph/0506031.
+      (This paper is the model used in Block & Halzen 2011, PRD 83, 077901,
+      arXiv:1102.3163, which updated the 7 TeV LHC predictions.)
+    formula_file: formulas/block_halzen_2005.py
+    reference_pdf: reference/block_halzen_2005.pdf
+    n_law_constants: 3   # c0, c1, c2 (even 3-param ln²(s) form); s_0 moved LAW->OTHER 2026-05-30 (derived from mp)
+    n_other_constants: 5 # s_0 (derived) + betaP, mu, delta, alpha (full-Eq.5 correction terms, not consumed by predict)
+    n_local_params: 0
+    measured:
+      rmse: 7.080931
+      r2: 0.930722
+
+# === Audit re-work, 2026-05-29 (claude-opus) ===
+# Removed the pancheri_srivastava_2017 reference entry. It was a FABRICATED baseline:
+# reference_pdf was null (no PDF on disk; the cited EPJ C review is paywalled and was
+# not retrieved), and its docstring admits the four LAW constants (sigma_0=65.99,
+# c_1=-5.75, c_2=0.42, s_0=1.0) were eyeballed from "Sec. 4.2 Fig. 4.4 / surrounding
+# text" with "no single compact best-fit table" — i.e. not locatable on a specific
+# page (anti-fabrication violation). It was never registered in formulas/__init__.py
+# and was absent from reference_metrics.json (the harness never ran it), yet wave-16
+# set it as best_baseline=6.225 from a self-reported metric. The wave-16 self-report
+# claimed it edited reference_metrics.json + __init__.py but neither was touched.
+# Archived to .dropped_baselines/. best_baseline reverts to the harness-computed
+# block_halzen_2005 value; the task ships with two verified baselines (donnachie_1992,
+# block_halzen_2005). See VERDICT.md.
+
+caps:
+  max_law_constants: 4
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+reference_baseline_id: block_halzen_2005   # strongest harness-computed baseline (anchor)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a slowly rising high-energy hadronic component that controls the asymptotic growth of the total cross-section"
+  - "predicted total cross-sections are non-negative throughout the physical energy domain"
+  - "predicted high-energy growth does not exceed the Froissart bound, growing no faster than order ln²(s)"
+
+best_baseline: 7.08093    # block_halzen_2005 — rmse (lower is better); regenerated 2026-05-30

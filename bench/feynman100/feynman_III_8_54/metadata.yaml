@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Dimensionless"
+  symbol: "prob"
+  unit: ""
+  description: "Dimensionless"
+inputs:
+  - name: "Energy"
+    symbol: "E_n"
+    unit: ""
+    description: "Energy"
+  - name: "Τime"
+    symbol: "t"
+    unit: ""
+    description: "Τime"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"

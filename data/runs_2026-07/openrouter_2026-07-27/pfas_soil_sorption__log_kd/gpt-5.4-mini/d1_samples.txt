@@ -1,0 +1,171 @@
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    MW    = X[:, 0]
+    pKa1  = X[:, 1]
+    C_num = X[:, 2]
+    F_num = X[:, 3]
+    F_pct = X[:, 4]
+    log_S = X[:, 5]
+    log_Kow = X[:, 6]
+    pH    = X[:, 7]
+    CEC   = X[:, 8]
+    Sand  = X[:, 9]
+    Silt  = X[:, 10]
+    Clay  = X[:, 11]
+    Corg  = X[:, 12]
+    foc   = X[:, 13]
+
+    # Common closed-form soil sorption relationship for hydrophobic organic compounds:
+    # Kd = Koc * foc, so log10(Kd) = log10(Koc) + log10(foc)
+    # A widely cited empirical approximation is:
+    # log10(Koc) = 0.72 * log10(Kow) + 0.49
+    log_Kd = 0.72 * log_Kow + 0.49 + np.log10(np.clip(foc, 1e-30, None))
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    MW    = X[:, 0]
+    pKa1  = X[:, 1]
+    C_num = X[:, 2]
+    F_num = X[:, 3]
+    F_pct = X[:, 4]
+    log_S = X[:, 5]
+    log_Kow = X[:, 6]
+    pH    = X[:, 7]
+    CEC   = X[:, 8]
+    Sand  = X[:, 9]
+    Silt  = X[:,10]
+    Clay  = X[:,11]
+    Corg  = X[:,12]
+    foc   = X[:,13]
+
+    # Commonly used closed-form soil-water partitioning relationship:
+    # Kd = Koc * foc, so log10(Kd) = log10(Koc) + log10(foc)
+    # A standard hydrophobicity-based surrogate is a linear free-energy form
+    # using log Kow to estimate Koc. A widely used simple canonical form is:
+    #   log Koc = 0.54 * log Kow + 1.47
+    # Therefore:
+    #   log Kd = 0.54 * log Kow + 1.47 + log10(foc)
+    return 0.54 * log_Kow + 1.47 + np.log10(foc)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(Kd) for PFAS sorption to soil.
+
+    Canonical closed-form relationship:
+        log10(Kd) = log10(Koc) + log10(foc)
+
+    where Koc is commonly estimated from hydrophobicity using a linear free-energy
+    style relationship with log Kow:
+        log10(Koc) = a * log10(Kow) + b
+
+    For PFAS-specific soil partitioning, a widely used pragmatic form is:
+        log10(Kd) = a * log10(Kow) + b + log10(foc)
+
+    This implementation uses a standard approximate coefficient set.
+    """
+    X = np.asarray(X, dtype=float)
+
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    # Commonly used approximate Koc-logKow relationship for hydrophobic organic sorbates
+    a = 0.54
+    b = 1.47
+
+    # Avoid log10(0) if foc is zero or extremely small
+    foc_safe = np.clip(foc, 1e-12, None)
+
+    log_Kd = a * log_Kow + b + np.log10(foc_safe)
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+
+    MW    = X[:, 0]
+    pKa1  = X[:, 1]
+    C_num = X[:, 2]
+    F_num = X[:, 3]
+    F_pct = X[:, 4]
+    log_S = X[:, 5]
+    log_Kow = X[:, 6]
+    pH    = X[:, 7]
+    CEC   = X[:, 8]
+    Sand  = X[:, 9]
+    Silt  = X[:, 10]
+    Clay  = X[:, 11]
+    Corg  = X[:, 12]
+    foc   = X[:, 13]
+
+    # Commonly used closed-form sorption relationship for PFAS in soils:
+    # log Kd = log Koc + log foc, with a hydrophobicity-based Koc estimate.
+    # For many PFAS QSPR models, log Koc is taken as an affine function of log Kow.
+    # Here we use a standard simple form:
+    #   log Kd = a + b * log Kow + log10(foc)
+    # where a and b are empirical constants often near -0.5 to 0.0 and 0.8 to 1.0.
+    #
+    # This canonical form captures organic-carbon partitioning as the dominant
+    # sorption mechanism for neutral/hydrophobic organics and is often used as a
+    # baseline approximation for PFAS soil sorption.
+    a = -0.21
+    b = 0.90
+
+    # Avoid log10(0) for extremely small foc values
+    foc_safe = np.maximum(foc, 1e-12)
+
+    logKd = a + b * log_Kow + np.log10(foc_safe)
+
+    return logKd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    MW = X[:, 0]
+    pKa1 = X[:, 1]
+    C_num = X[:, 2]
+    F_num = X[:, 3]
+    F_pct = X[:, 4]
+    log_S = X[:, 5]
+    log_Kow = X[:, 6]
+    pH = X[:, 7]
+    CEC = X[:, 8]
+    Sand = X[:, 9]
+    Silt = X[:, 10]
+    Clay = X[:, 11]
+    Corg = X[:, 12]
+    foc = X[:, 13]
+
+    # Canonical soil sorption relationship for hydrophobic organic contaminants:
+    # Kd = Koc * foc  => log10(Kd) = log10(Koc) + log10(foc)
+    # For PFAS, a widely used closed-form approximation is a linear
+    # hydrophobicity-based log Koc relationship with an ionization correction.
+    # Here, the most common compact form is written using log Kow and pH/pKa1.
+    #
+    # log Kd = a + b*logKow + log10(foc) + c*max(0, pH - pKa1)
+    # The pH term reduces sorption for anionic PFAS at environmental pH.
+    # Coefficients are representative literature-style values.
+    a = -0.49
+    b = 0.81
+    c = -0.50
+
+    ion_term = np.maximum(0.0, pH - pKa1)
+    log_Kd = a + b * log_Kow + np.log10(np.maximum(foc, 1e-30)) + c * ion_term
+
+    return log_Kd

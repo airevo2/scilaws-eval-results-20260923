@@ -1,0 +1,84 @@
+import numpy as np
+
+def predict(X):
+    theta = np.deg2rad(X[:, 0])
+
+    # Canonical circular Gaussian / von Mises tuning curve:
+    # R(theta) = R0 + A * exp(kappa * cos(2 * (theta - theta_pref)))
+    # The factor of 2 enforces 180° periodicity for orientation tuning.
+    R0 = 0.0
+    A = 1.0
+    kappa = 1.0
+    theta_pref = 0.0
+
+    return R0 + A * np.exp(kappa * np.cos(2.0 * (theta - theta_pref)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta_deg = X[:, 0]
+    theta = np.deg2rad(theta_deg)
+    # Canonical orientation tuning curve: von Mises / circular Gaussian form
+    # R(theta) = R0 + A * exp(kappa * cos(2 * (theta - theta_pref)))
+    # Here, with no fitted parameters provided, use a generic reference form
+    # centered at 90° and unit amplitude/baseline.
+    R0 = 0.0
+    A = 1.0
+    kappa = 1.0
+    theta_pref = np.deg2rad(90.0)
+    return R0 + A * np.exp(kappa * np.cos(2.0 * (theta - theta_pref)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = np.deg2rad(X[:, 0])
+    # Commonly used orientation tuning model: von Mises / circular Gaussian form
+    # R(theta) = R0 + A * exp(kappa * cos(2*(theta - theta0)))
+    R0 = 0.0
+    A = 1.0
+    theta0 = 0.0
+    kappa = 1.0
+    return R0 + A * np.exp(kappa * np.cos(2.0 * (theta - theta0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Orientation tuning curve: circular Gaussian / von Mises form.
+    X[:, 0] = orientation in degrees, folded to [0, 180)
+    Returns mean response R(theta).
+    """
+    theta = np.deg2rad(X[:, 0])
+    
+    # Canonical 180-deg periodic tuning centered at pref_deg
+    pref_deg = 90.0
+    pref = np.deg2rad(pref_deg)
+    
+    # Free parameters as generic constants
+    R0 = 0.0      # baseline
+    A = 1.0       # amplitude
+    kappa = 2.0   # concentration / tuning sharpness
+    
+    # 180-degree periodic von Mises / circular Gaussian on orientation
+    return R0 + A * np.exp(kappa * np.cos(2.0 * (theta - pref)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = np.deg2rad(X[:, 0])
+    # Standard orientation tuning model: von Mises / circular Gaussian form
+    # R(theta) = R0 + A * exp(kappa * cos(2*(theta - theta_pref)))
+    # Here coefficients are left as generic constants.
+    R0 = 0.0
+    A = 1.0
+    kappa = 1.0
+    theta_pref = 0.0
+    return R0 + A * np.exp(kappa * np.cos(2.0 * (theta - theta_pref)))

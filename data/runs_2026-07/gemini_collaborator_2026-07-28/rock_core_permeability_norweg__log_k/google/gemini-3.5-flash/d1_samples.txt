@@ -1,0 +1,105 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract porosity (phi) and clip to avoid log of zero or division by zero
+    phi = np.clip(X[:, 0], 0.0001, 0.9999)
+
+    # Kozeny-Carman equation is the standard closed-form physical relationship
+    # relating porosity to permeability: k = C * (phi^3) / (1 - phi)^2
+    # We use a canonical consensus constant C = 3000 mD for typical reservoir rocks.
+    C = 3000.0
+    k = C * (phi**3) / ((1.0 - phi) ** 2)
+
+    # Return the decadic logarithm of permeability
+    return np.log10(k)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract porosity fraction (phi) from the first column of X
+    phi = X[:, 0]
+
+    # Clip porosity to a safe range to prevent numerical instability (log of zero)
+    phi_clipped = np.clip(phi, 1e-5, 0.999)
+
+    # Use the classic Kozeny-Carman relationship:
+    # k = C * (phi^3) / ((1 - phi)^2)
+    # Taking the decadic logarithm:
+    # log10(k) = log10(C) + 3 * log10(phi) - 2 * log10(1 - phi)
+    # A standard empirical constant C = 1e5 (100,000) is commonly used for sandstone reservoirs.
+    log10_C = 5.0
+    log_k = (
+        log10_C
+        + 3.0 * np.log10(phi_clipped)
+        - 2.0 * np.log10(1.0 - phi_clipped)
+    )
+
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the decadic logarithm of horizontal permeability, log10(k) [mD],
+    from porosity fraction (phi) using the classical Kozeny-Carman relationship.
+    
+    Parameters:
+    X : ndarray of shape (N, 1) or (N, M)
+        X[:, 0] contains the porosity fraction (0 to 1).
+        
+    Returns:
+    log_k : ndarray of shape (N,)
+        Decadic logarithm of permeability in millidarcies.
+    """
+    # Extract porosity and clip to avoid division by zero or log of zero
+    phi = np.clip(X[:, 0], 1e-5, 0.99)
+    
+    # Kozeny-Carman constant (C) in mD. 
+    # For a typical sandstone with average grain size ~150 microns, 
+    # C is approximately 1e5 to 1.5e5 mD.
+    C = 1.0e5 
+    
+    # Kozeny-Carman equation: k = C * (phi^3) / (1 - phi)^2
+    k = C * (phi**3) / ((1.0 - phi)**2)
+    
+    return np.log10(k)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract porosity fraction (phi), clipping to avoid division by zero or log of negative numbers
+    phi = np.clip(X[:, 0], 1e-4, 0.99)
+
+    # Kozeny-Carman relationship: k = C * (phi^3) / (1 - phi)^2
+    # Taking the base-10 logarithm: log10(k) = log10(C) + 3*log10(phi) - 2*log10(1 - phi)
+    # C is the Kozeny constant factor, typically around 1000 mD for general reservoir sandstones.
+    log_C = 3.0
+    log_k = log_C + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract porosity (phi) from the first column
+    phi = np.clip(X[:, 0], 1e-6, 0.9999)
+    
+    # Kozeny-Carman relation: k = C * (phi^3) / (1 - phi)^2
+    # C is a classic empirical constant representing the effects of tortuosity and specific surface area.
+    # A value of C = 10,000 mD is widely used as a representative benchmark for sandstones.
+    C = 10000.0
+    k = C * (phi**3) / ((1.0 - phi)**2)
+    
+    # Return the decadic logarithm of permeability
+    return np.log10(k)

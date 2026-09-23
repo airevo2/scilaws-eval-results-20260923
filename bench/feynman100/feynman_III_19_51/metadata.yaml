@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Mass"
+    symbol: "m"
+    unit: ""
+    description: "Mass"
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"
+  - name: "Dimensionless"
+    symbol: "n"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"

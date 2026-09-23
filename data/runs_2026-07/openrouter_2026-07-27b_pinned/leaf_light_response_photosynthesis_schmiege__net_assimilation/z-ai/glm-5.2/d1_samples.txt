@@ -1,0 +1,127 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts net CO2 assimilation rate (A_n) using the non-rectangular hyperbola 
+    (Thornley, 1976) light response curve.
+    """
+    # Input: Incident photosynthetically active radiation (Qin)
+    Q = X[:, 0]
+    
+    # Typical fitted parameters for the non-rectangular hyperbola
+    alpha = 0.05  # Apparent quantum yield (mol CO2 / mol photons)
+    A_max = 8.0   # Light-saturated gross photosynthesis (umol CO2 m-2 s-1)
+    theta = 0.7   # Curvature parameter (dimensionless, 0 < theta <= 1)
+    R_d = 0.8     # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Non-rectangular hyperbola equation for gross photosynthesis
+    term1 = alpha * Q + A_max
+    # Use np.maximum to prevent negative values under the square root due to floating point precision
+    term2 = np.sqrt(np.maximum(0.0, term1**2 - 4.0 * theta * alpha * Q * A_max))
+    
+    A_gross = (term1 - term2) / (2.0 * theta)
+    
+    # Net CO2 assimilation rate
+    A_n = A_gross - R_d
+    
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    
+    # Parameters for the non-rectangular hyperbola (Marshall & Biscoe, 1980)
+    # Chosen to reflect typical C3 leaf values within the provided ranges
+    alpha = 0.05      # Apparent quantum yield (mol CO2 / mol photons)
+    A_max = 8.0       # Light-saturated gross assimilation rate (umol CO2 m-2 s-1)
+    theta = 0.7       # Curvature parameter (dimensionless, 0 < theta <= 1)
+    R_d = 0.8         # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Non-rectangular hyperbola for gross assimilation
+    sqrt_term = np.sqrt((alpha * Q + A_max)**2 - 4 * theta * alpha * Q * A_max)
+    A_gross = (alpha * Q + A_max - sqrt_term) / (2 * theta)
+    
+    # Net assimilation rate
+    A_n = A_gross - R_d
+    
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Non-rectangular hyperbola (Marshall & Biscoe, 1980) light-response model
+    for net CO2 assimilation rate.
+
+    A_n = (alpha*Q + A_max - sqrt((alpha*Q + A_max)^2 - 4*theta*alpha*Q*A_max))
+          / (2*theta) - R_d
+
+    Parameters are representative mid-range values for a typical C3 leaf.
+    """
+    Q = X[:, 0]
+
+    alpha = 0.05    # apparent quantum yield [mol CO2 mol-1 photons]
+    A_max = 8.0     # light-saturated gross assimilation [umol CO2 m-2 s-1]
+    theta = 0.7     # curvature parameter (0 < theta <= 1)
+    R_d   = 0.8     # day respiration / dark respiration [umol CO2 m-2 s-1]
+
+    aq = alpha * Q
+    A_gross = (aq + A_max - np.sqrt((aq + A_max)**2 - 4.0 * theta * aq * A_max)) / (2.0 * theta)
+    A_n = A_gross - R_d
+
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts net CO2 assimilation rate (A_n) using the non-rectangular hyperbola (NRH) 
+    light response model (Thornley, 1976).
+    """
+    Q = X[:, 0]
+    
+    # Typical ecophysiological parameters
+    alpha = 0.05      # Initial quantum yield (mol CO2 / mol photons)
+    Amax = 12.0       # Light-saturated gross assimilation rate (umol CO2 m-2 s-1)
+    theta = 0.7       # Curvature parameter (dimensionless, 0 to 1)
+    Rd = 0.8          # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Non-rectangular hyperbola equation
+    term1 = alpha * Q + Amax
+    term2 = term1**2 - 4 * theta * alpha * Q * Amax
+    
+    # Protect against negative values due to floating point precision
+    term2 = np.maximum(term2, 0)
+    
+    A_n = (1.0 / (2.0 * theta)) * (term1 - np.sqrt(term2)) - Rd
+    
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    
+    # Parameters for the non-rectangular hyperbola (standard light-response curve)
+    Amax = 10.0      # Light-saturated gross assimilation rate [umol CO2 m-2 s-1]
+    alpha = 0.05     # Apparent quantum yield [umol CO2 / umol photons]
+    theta = 0.7      # Curvature parameter (dimensionless)
+    Rd = 0.8         # Dark respiration rate [umol CO2 m-2 s-1]
+    
+    # Ensure the discriminant is non-negative to avoid NaNs due to floating point issues
+    discriminant = (alpha * Q + Amax)**2 - 4 * theta * alpha * Q * Amax
+    discriminant = np.maximum(discriminant, 0)
+    
+    sqrt_term = np.sqrt(discriminant)
+    An = (alpha * Q + Amax - sqrt_term) / (2 * theta) - Rd
+    
+    return An

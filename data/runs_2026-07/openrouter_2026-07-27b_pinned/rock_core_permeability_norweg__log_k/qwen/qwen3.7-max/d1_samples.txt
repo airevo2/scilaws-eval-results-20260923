@@ -1,0 +1,62 @@
+import numpy as np
+
+def predict(X):
+    phi = np.clip(X[:, 0], 1e-6, 1.0 - 1e-6)
+    # Kozeny-Carman equation: k = C * phi^3 / (1 - phi)^2
+    # In log10 form: log10(k) = log10(C) + 3*log10(phi) - 2*log10(1 - phi)
+    # C ~ 3162 mD (log10(C) = 3.5) is a representative constant for
+    # cemented sandstones with k in millidarcies.
+    log_k = 3.5 + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.clip(X[:, 0], 1e-4, 0.99)
+    # Kozeny-Carman equation: k = C * phi^3 / (1 - phi)^2
+    # C = 10000 is a typical empirical scaling constant for k in millidarcies (mD)
+    C = 10000.0
+    k = C * (phi**3) / ((1.0 - phi)**2)
+    return np.log10(k)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = X[:, 0]
+    # Kozeny-Carman equation: k = C * phi^3 / (1 - phi)^2
+    # log10(k) = log10(C) + 3*log10(phi) - 2*log10(1 - phi)
+    # C ~ 10^4 for typical sandstones with k in millidarcy
+    log10_C = 4.0
+    return log10_C + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = X[:, 0]
+    # Kozeny-Carman equation: k = C * phi^3 / (1 - phi)^2
+    # Expressed in log10 form for permeability in millidarcies
+    # log10(C) ≈ 4.0 is a representative constant for typical sandstones
+    log10_C = 4.0
+    log_k = log10_C + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.clip(X[:, 0], 1e-5, 1.0 - 1e-5)
+    
+    # Kozeny-Carman equation: k = C * (phi^3 / (1 - phi)^2)
+    # For typical sandstones with k in millidarcies (mD), log10(C) is approximately 4.0
+    C_log10 = 4.0 
+    
+    log_k = 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi) + C_log10
+    
+    return log_k

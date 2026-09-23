@@ -1,0 +1,100 @@
+task_id: spectrophotometry_beer_lambert_chromate__absorbance
+domain: physics / analytical spectroscopy
+license: CC-BY-4.0
+
+type: typeII
+has_group_id: true
+
+context: >-
+  Spectrophotometry is an analytical-chemistry technique that quantifies how much light a solution of an absorbing compound, here potassium dichromate, transmits or absorbs.
+
+target:
+  name: absorbance
+  symbol: "A"
+  unit: ""
+  description: Measured apparent absorbance of a potassium dichromate solution, computed as a blank-subtracted average of repeated spectrophotometric scans.
+  range: [0.01, 2.48]
+
+inputs:
+  - name: concentration
+    symbol: "c"
+    unit: g/L
+    description: Mass concentration of potassium dichromate dissolved in the solution.
+    range: [0.02, 0.60]
+  - name: path_length
+    symbol: "l"
+    unit: cm
+    description: Optical path length of the cuvette through which the beam travels.
+    values: [0.1, 0.2, 0.5, 1.0]
+
+data_files:
+  train:     data/train.csv      # 401 train wavelengths × 11 subsamples (no group_id)
+  test_fit:  data/test_fit.csv   # 100 test wavelengths × 7 dilute subsamples (c<=0.12 g/L) -> fit()
+  test_test: data/test_test.csv  # 100 test wavelengths × 4 concentrated subsamples (c>=0.20 g/L) -> scored
+
+n_train: 4411
+n_test_fit: 700
+n_test_test: 400
+n_clusters_train: 401
+n_clusters_test: 100
+
+# Cluster = wavelength (200-450 nm, 0.5 nm steps). All formula parameters are
+# per-wavelength LOCAL_FITTABLE (no global fixed values); eps_prime varies by ~3
+# orders of magnitude across the spectrum, so a Type I global-eps_prime build
+# would explode the RMSE.
+#
+# Split (v0.5 §4): Tier-1 (dataset-side) and Tier-2 (SR-paper-side) are both empty
+# (Zenodo ships a flat matrix; Yeh fits all subsamples jointly). Tier-3 LLM-proposed,
+# two OOD axes:
+#   (cluster)        every 5th wavelength is held out -> 100 test / 401 train clusters.
+#   (within-cluster) per-wavelength parameters are fit on the 7 dilute subsamples
+#                    (c <= 0.12 g/L) and scored on the 4 concentrated ones
+#                    (c >= 0.20 g/L) — a credible extrapolation into the regime where
+#                    the HCrO4-/Cr2O7^2- equilibrium drives the Beer-Lambert deviation,
+#                    which is the discrimination this dataset exists to test.
+# Re-split + audit history (2026-05-29, replacing the original by-index 0-6/7-10
+# within-cluster split that left the scored set non-discriminative): see VERDICT.md.
+
+references:
+  - id: beer_lambert_1852
+    label: Classical Beer-Lambert-Bouguer law (alpha=beta=1, per-wavelength epsilon)
+    formula_file: formulas/beer_lambert_1852.py
+    reference_pdf: reference/beer_1852.pdf
+    n_law_constants: 2
+    n_other_constants: 0
+    n_local_params: 1
+    measured: {rmse: 0.036711, r2: 0.991572}
+  - id: yeh_2023
+    label: Yeh 2023 generalized power-law extension (eps_prime, alpha, beta per wavelength)
+    formula_file: formulas/yeh_2023.py
+    reference_pdf: reference/yeh_2023.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3
+    measured: {rmse: 0.025281, r2: 0.996003}
+
+# No priors block. Unlike most tasks, there is no genuine candidate constant to
+# offer: the only fixed constants are the classical-model LAW (alpha = beta = 1 in
+# beer_lambert_1852) — offering any of them would leak the answer (FM-H1) — and the
+# per-wavelength eps_prime / alpha / beta, which are LOCAL_FITTABLE with no globally
+# published values. Per the "don't pad priors" rule, none is added.
+
+caps:
+  max_law_constants: 2
+  max_local_params: 3
+  max_init_size_per_param: 4
+  fit_timeout_seconds: 10
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes Bouguer-Lambert-Beer absorption by analyte along the optical path"
+  - "predicted absorbance remains non-negative"
+  - "predicted absorbance increases monotonically with concentration at fixed path_length"
+  - "predicted absorbance increases monotonically with path_length at fixed concentration"
+
+best_baseline: 0.018736    # yeh_2023 — mean per-cluster rmse (lower is better); regenerated 2026-05-30

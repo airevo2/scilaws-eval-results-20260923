@@ -1,0 +1,170 @@
+task_id: traffic_flow_density_ngsim__q_flow
+domain: social_science / transportation
+license: CC0-1.0    # NGSIM = U.S. Federal Government Works (public domain)
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task is drawn from vehicular traffic on a freeway, where the relationship between traffic density and flow rate is studied in transportation engineering.
+
+target:
+  name: q_veh_h_lane
+  symbol: q
+  unit: veh/h/lane
+  description: Per-lane traffic flow rate (vehicles per hour per lane), computed as the total vehicle distance travelled in a space-time cell divided by the cell area Δt·Δx (Edie's generalised flow).  Range observed on the v2 split [24.82, 3499.45] — the upper bound is roughly the per-lane capacity of a US freeway.
+  range: [24.82, 3499.45]
+
+inputs:
+  - name: k_veh_km_lane
+    symbol: k
+    unit: veh/km/lane
+    description: Per-lane traffic density (vehicles per kilometre per lane), computed as the total vehicle time-in-cell divided by the cell area Δt·Δx (Edie's generalised density).  PRIMARY input — the only column the closed-form fundamental-diagram q = Q(k) consumes; all three reference baselines use this input alone.
+    range: [3.28, 249.45]
+  - name: corridor
+    symbol: corridor
+    unit: dimensionless
+    description: Integer code for the recording corridor — 0 = US-101 Hollywood, 1 = I-80 Emeryville.  DISTRACTOR — different corridors have slightly different empirical FD parameters (Cassidy & Bertini 1999, TR-B 33:25), but the Type I single-pool fit ignores corridor identity.  No reference baseline uses this input.
+    range: [0, 1]
+  - name: lane_id
+    symbol: lane_id
+    unit: dimensionless
+    description: Integer lane number, 1 = leftmost (typically HOV) … 6 = rightmost.  DISTRACTOR — lane behavior differs (HOV vs general-purpose) but the q(k) constitutive law is the same.  No reference baseline uses this input.
+    range: [1, 6]
+  - name: t_bin_s
+    symbol: t
+    unit: s
+    description: Start time of the 30-second space-time cell within the NGSIM recording session (each corridor has its own 15-minute recording window, so t resets at zero per corridor — not a wall-clock timestamp).  DISTRACTOR — bookkeeping, not cross-corridor comparable.  No reference baseline uses this input.
+    range: [0.0, 1140.0]
+  - name: x_bin_ft
+    symbol: x
+    unit: ft
+    description: Midpoint of the 100-ft spatial bin along the corridor (50 ft = upstream edge, 2150 ft = downstream edge).  DISTRACTOR — encodes proximity to known bottlenecks (e.g. I-80's Powell St on-ramp ≈ x ≈ 1300 ft) but the closed-form FD is location-independent.  No reference baseline uses this input.
+    range: [50.0, 2150.0]
+
+# NOTE: the v1 sibling task released seven columns
+# (q, k, v_km_h, corridor, lane_id, t_bin_s, x_bin_ft, n_frames).
+# v2 releases six: (q, k, corridor, lane_id, t_bin_s, x_bin_ft).
+# Two v1 columns are dropped:
+#   - `v_km_h` is the Edie speed v = q/k by definition; releasing it
+#     alongside k would let SR systems recover q via the algebraic
+#     identity q = v·k (the same circular-target pathology
+#     documented for `thermoelectric_zt` (ZT = α²T/(ρκ)),
+#     `cex_dex_arbitrage` (gap_bps = (cex − dex)/dex) and
+#     `eclipsing_binary_mass_luminosity_debcat`
+#     (L = 4πR²σT⁴)).
+#   - `n_frames` is the per-cell vehicle-frame count; by the Edie
+#     definition k = n_frames × 0.1 s / (Δt · Δx_km) holds exactly
+#     to machine precision on the released cells (verified
+#     corr(k, n_frames) = 1.0, max relative residual < 1e-15), so
+#     `n_frames` is just `k` rescaled.  Releasing it would duplicate
+#     the primary input under a different name.
+# The four kept distractors (`corridor`, `lane_id`, `t_bin_s`,
+# `x_bin_ft`) are bona-fide site / location / time metadata.  None
+# of them are used by any reference baseline — the q(k) constitutive
+# law is a strictly one-dimensional function — but they are released
+# so that SR systems must learn to ignore them, exercising the
+# input-selection part of the Type I contract.
+
+# Dataset — Type I, two-file flat layout.  Source: NGSIM US-101 +
+# I-80 vehicle trajectories (FHWA 2007, public-domain U.S. Federal
+# Government Works), aggregated server-side by the Socrata API into
+# 30 s × 100 ft space-time cells; per-cell (q, k) computed via
+# Edie's (1965) generalised flow/density definitions in
+# `data_raw/ngsim_aggregate.py`.  Filtering (n_frames ≥ 30; 0 < k ≤
+# 250 veh/km/lane; 0 ≤ q ≤ 3500 veh/h/lane; lane_id ∈ [1, 6]) yields
+# 2,858 valid cells; v2 splits 80/20 with
+# `np.random.default_rng(0).permutation(...)` to 2,286 train + 572
+# test rows.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 2286
+n_test:  572
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: us_freeway_typical_free_flow_speed
+    value: 105.0
+    unit: km/h
+    description: Typical free-flow (uncongested) speed on a US Interstate-class freeway under a 65 mph speed limit; a candidate value for the V_F coefficient in the linear / exponential / triangular q-k forms.
+    source: AASHTO Green Book 2018 §3.2 design-speed table; speed-limit data from the California DOT 2005 corridor logs that accompany NGSIM.
+    _role: candidate
+  - name: us_freeway_typical_capacity_per_lane
+    value: 2200.0
+    unit: veh/h/lane
+    description: Practical per-lane capacity at level-of-service E for a US freeway with 12-ft lanes and good shoulders; a candidate value for the Q_CAP plateau in the trapezoidal FD.
+    source: HCM (Highway Capacity Manual) 6th edition, Exhibit 12-6.  Empirically NGSIM cells approach but rarely exceed 2,500 veh/h/lane; the v2 test reaches 3,499 in one outlier cell.
+    _role: candidate
+  - name: us_freeway_typical_jam_density_per_lane
+    value: 180.0
+    unit: veh/km/lane
+    description: Jam density (bumper-to-bumper) for typical US passenger-car traffic with ~6 m vehicle length + minimum gap; a candidate value for K_JAM.
+    source: Transportation Research Board, NCHRP Report 387 (1997).
+    _role: candidate
+  - name: us_freeway_backward_wave_speed
+    value: 19.0
+    unit: km/h
+    description: Magnitude of the LWR backward kinematic-wave speed for US freeways; a candidate value for the slope |W| of the congested branch in the triangular FD.
+    source: Cassidy & Bertini 1999 TR-B 33:25 §4, Eisenhower Expressway empirical estimate.  Daganzo 1994 §3.1 gives "around 20 km/h" for typical conditions.
+    _role: candidate
+  - name: pedestrian_jam_density
+    value: 5.4
+    unit: ped/m²
+    description: Maximum sustainable pedestrian density (Fruin's level-of-service F).
+    source: Fruin 1971 "Pedestrian Planning and Design", §3.  Pedestrian-flow constant; a DISTRACTOR for vehicular traffic on a freeway.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: greenshields_1935_parabolic
+    label: Greenshields (1935) parabolic q-k fundamental diagram (Type I, frozen; coefficients pre-fit on v2 train)
+    formula_file: formulas/greenshields_1935_parabolic.py
+    reference_pdf: reference/greenshields_1935.pdf
+    n_law_constants: 2         # V_F, K_JAM
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 633.7892, r2: 0.5450}
+  - id: underwood_1961_exponential
+    label: Underwood (1961) exponential q-k fundamental diagram — reproduced by Drake-Schofer-May (1967) (Type I, frozen; coefficients pre-fit on v2 train)
+    formula_file: formulas/underwood_1961_exponential.py
+    reference_pdf: reference/drake_schofer_may_1967.pdf
+    n_law_constants: 2         # V_F, K_M
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 616.6449, r2: 0.5693}
+  - id: daganzo_1995_ctm_triangular
+    label: Daganzo (1995) trapezoidal CTM q-k fundamental diagram (Type I, frozen; coefficients pre-fit on v2 train)
+    formula_file: formulas/daganzo_1995_ctm_triangular.py
+    reference_pdf: reference/daganzo_1995_ctm.pdf
+    n_law_constants: 4         # V_F, Q_CAP, W, K_JAM
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 658.9718, r2: 0.5081}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        4
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a falling congested branch where increasing density lowers flow"
+  - "includes a finite per-lane capacity at an intermediate critical density"
+  - "includes density-induced congestion that reduces vehicle speed as spacing shrinks"
+  - "includes sparse free-flow motion at approximately constant vehicle speed"
+  - "predicted flow is non-negative for every physically admissible density"
+  - "predicted flow goes to zero at the physical jam density"
+  - "predicted flow has one intermediate capacity peak or plateau separating free-flow growth from congested decline"
+  - "predicted flow is invariant to corridor, lane, time-bin, and spatial-bin inputs when density is fixed"
+
+# === Scoring ===
+metric: rmse              # RMS error on q_veh_h_lane (veh/h/lane)
+best_baseline: 616.6449   # underwood_1961_exponential — best of three Type I rungs on v2 test

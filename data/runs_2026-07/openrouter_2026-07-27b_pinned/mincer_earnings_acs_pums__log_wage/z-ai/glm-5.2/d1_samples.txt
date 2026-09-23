@@ -1,0 +1,87 @@
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]  # SCHL_years
+    x = X[:, 1]  # exp
+    
+    # Standard Mincer earnings function coefficients
+    beta_0 = 0.5       # Base log wage intercept
+    beta_1 = 0.08      # Return to schooling
+    beta_2 = 0.05      # Return to experience
+    beta_3 = -0.0006   # Concavity of experience profile
+    
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x ** 2)
+    
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]  # Years of schooling
+    x = X[:, 1]  # Years of potential experience
+    
+    # Canonical Mincer (1974) human capital earnings function coefficients
+    # ln(Y) = beta_0 + r * S + beta_1 * X + beta_2 * X^2
+    beta_0 = 5.5
+    r = 0.10       # Return to schooling
+    beta_1 = 0.08  # Return to experience
+    beta_2 = -0.0008 # Concavity of experience profile
+    
+    log_wage = beta_0 + r * s + beta_1 * x + beta_2 * np.square(x)
+    
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    # Mincer earnings function: ln(Y) = beta_0 + beta_1 * S + beta_2 * X - beta_3 * X^2
+    beta_0 = 6.0
+    beta_1 = 0.08
+    beta_2 = 0.05
+    beta_3 = 0.0006
+    
+    log_wage = beta_0 + beta_1 * s + beta_2 * x - beta_3 * (x ** 2)
+    
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    exp = X[:, 1]
+    
+    # Standard Mincer earnings function coefficients
+    # ln(Y) = ln(Y_0) + r * S + b1 * X + b2 * X^2
+    intercept = 7.0
+    r = 0.10
+    b1 = 0.05
+    b2 = -0.0005
+    
+    log_wage = intercept + r * S + b1 * exp + b2 * (exp ** 2)
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    # Standard Mincer earnings function coefficients (typical empirical values)
+    intercept = 0.5
+    beta_s = 0.08
+    beta_x = 0.04
+    beta_x2 = -0.0006
+    
+    log_wage = intercept + beta_s * s + beta_x * x + beta_x2 * np.square(x)
+    return log_wage

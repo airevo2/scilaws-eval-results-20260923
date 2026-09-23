@@ -1,0 +1,124 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the average race velocity (v_bar) in m/s using the canonical
+
+    power-law scaling relationship (Savaglio & Carbone, 2000) for running world
+    records.
+
+    Parameters:
+    X : ndarray of shape (N, 2)
+        X[:, 0] = distance_m (d) [m]
+        X[:, 1] = sex_M (s_M) [1 for men, 0 for women]
+
+    Returns:
+    ndarray of shape (N,)
+        Predicted average velocity in m/s.
+    """
+    d = X[:, 0]
+    s_M = X[:, 1]
+
+    # Canonical scaling exponent for running over a broad range of distances
+    # (Savaglio & Carbone, 2000; typically around -0.11)
+    k = 0.11
+
+    # Sex-specific scaling constants derived from world record fits
+    c = 15.5 + 1.65 * s_M
+
+    # Power-law relationship: v = c * d^(-k)
+    v_bar = c * (d**-k)
+
+    return v_bar
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract distance and sex indicator
+    d = X[:, 0]
+    s_M = X[:, 1]
+
+    # Kennelly/Riegel power-law parameters power-fit to world record scaling
+    # A represents the reference speed scaling factor, B is the endurance exponent
+    A = 14.8 + 2.4 * s_M
+    B = 0.098 + 0.008 * s_M
+
+    # Compute average velocity (v = A * d^(-B))
+    v_bar = A * (d**-B)
+
+    return v_bar
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the average race velocity (v̄) in m/s of a world-record running event
+
+    using a power-law scaling relationship (Riegel's / Kennelly's Law).
+
+    Inputs:
+    - X[:, 0]: distance (d) [m]
+    - X[:, 1]: sex_M (1 for men, 0 for women)
+    """
+    d = X[:, 0]
+    s_M = X[:, 1]
+
+    # Empirical scaling constants for elite world-record runners
+    # c_men ≈ 13.9, c_women ≈ 12.5, scaling exponent k ≈ 0.085
+    c = 12.5 + 1.4 * s_M
+    k = 0.085
+
+    return c * (d**-k)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    d = X[:, 0]  # distance in meters
+    s_M = X[:, 1]  # sex indicator (1 for men, 0 for women)
+
+    # Riegel's power law model for running velocity: v = c * d^(-k)
+    # Using an optimized exponent k = 0.08 to span sprint to ultra-marathon.
+    c = 12.2 + 1.3 * s_M
+    v_pred = c * (d**-0.08)
+
+    return v_pred
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the average race velocity (v̄) in m/s based on the race distance
+
+    and sex of the athlete using a generalized Riegel power-law model.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = distance_m (d) [m]
+        - X[:, 1] = sex_M (s_M) [1 for men, 0 for women]
+
+    Returns:
+    - 1-D numpy array of average velocities [m/s]
+    """
+    d = X[:, 0]
+    s_M = X[:, 1]
+
+    # Riegel-type power law parameters: v = A * d^(-B)
+    # Exponent B = b - 1, where b ~ 1.09 is the fatigue index across sprints to ultra-marathons.
+    # A represents the sex-specific scaling factor.
+    B = 0.09
+    A = 13.3 + 1.5 * s_M
+
+    v_mean = A * (d**-B)
+
+    return v_mean

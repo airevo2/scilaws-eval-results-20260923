@@ -1,0 +1,17 @@
+{
+  "task": "dna_melting_temperature_khandelwal__Tm",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeI",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "khandelwal_2010",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

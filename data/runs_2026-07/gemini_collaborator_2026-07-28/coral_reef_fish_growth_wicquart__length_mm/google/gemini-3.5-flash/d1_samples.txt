@@ -1,0 +1,109 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract Age at otolith increment i (years)
+    Agei = X[:, 0]
+
+    # Von Bertalanffy Growth Function (VBGF) parameters
+    # These represent typical values for fish growth (e.g., asymptotic length of 500 mm)
+    L_inf = 500.0  # Asymptotic average length (mm)
+    K = 0.2  # Growth coefficient (1/year)
+    t0 = -0.5  # Theoretical age at length zero (years)
+
+    # Standard VBGF model to predict back-calculated length at age
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (Agei - t0)))
+
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Age at otolith increment i (years)
+    age = X[:, 0]
+
+    # Standard von Bertalanffy Growth Function (VBGF) parameters
+    # representing a typical fish species' growth trajectory.
+    # L_inf (asymptotic length) = 500.0 mm
+    # K (growth coefficient) = 0.25 yr^-1
+    # t0 (theoretical age at zero length) = -0.1 yr
+    L_inf = 500.0
+    K = 0.25
+    t0 = -0.1
+
+    # Calculate back-calculated total length (mm)
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (age - t0)))
+
+    # Ensure lengths are non-negative
+    return np.maximum(Li_sp_m, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = Agei (Age at otolith increment i in years)
+    # The standard model for fish length at age is the Von Bertalanffy Growth Function (VBGF).
+    # Since the VBGF is typically fit to these back-calculated lengths, we use it to predict Li_sp_m.
+    # For a long-lived species (up to 30 years), representative parameters are:
+    # Linf (asymptotic length) = 600.0 mm
+    # K (growth coefficient) = 0.15 year^-1
+    # t0 (theoretical age at length 0) = -0.5 years
+
+    Agei = X[:, 0]
+    Linf = 600.0
+    K = 0.15
+    t0 = -0.5
+
+    Li_sp_m = Linf * (1.0 - np.exp(-K * (Agei - t0)))
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = Agei (Age at otolith increment i in years)
+    age = X[:, 0]
+
+    # Standard von Bertalanffy Growth Function (VBGF) parameters
+    # Using typical representative values for fish growth (e.g., asymptotic length of 500 mm)
+    L_inf = 500.0  # Asymptotic length (mm)
+    K = 0.25  # Growth coefficient (yr^-1)
+    t0 = -0.1  # Theoretical age at zero length (years)
+
+    # Calculate back-calculated total length at age using VBGF
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (age - t0)))
+
+    # Length cannot be negative
+    Li_sp_m = np.maximum(Li_sp_m, 0.0)
+
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = Agei (Age at otolith increment i in years)
+    age = X[:, 0]
+
+    # Standard von Bertalanffy Growth Function (VBGF) parameters
+    # These represent typical species-level mean growth parameters
+    L_inf = 500.0  # Asymptotic total length (mm)
+    K = 0.25  # Growth coefficient (yr^-1)
+    t_0 = -0.2  # Theoretical age at zero length (years)
+
+    # VBGF formula
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (age - t_0)))
+
+    # Length cannot be negative
+    Li_sp_m = np.maximum(Li_sp_m, 0.0)
+
+    return Li_sp_m

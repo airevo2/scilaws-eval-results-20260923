@@ -1,0 +1,125 @@
+task_id: rock_core_permeability_norweg__log_k
+domain: earth_science / petrophysics
+license: CC-BY-4.0
+
+# Type I — each core-plug measurement is an independent row; no cluster structure
+# released. Demoted from Type II per FM-T7 (only 4 train lithologies, below the
+# K>=9 demotion floor). See prep_data.py and per-formula docstrings for the
+# demotion lineage. Each formula's per-lithology C_log was pre-fitted globally
+# on the train split and frozen as a LAW_CONSTANT (HANDOFF §6b recipe).
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  The permeability of reservoir rocks — how readily fluids flow through the pore
+  network — spans more than seven orders of magnitude across lithologies, controlled
+  primarily by the pore geometry that connects void space to fluid pathways. In
+  granular rocks, porosity is the dominant predictor: as grains pack more tightly
+  and porosity decreases, the tortuous pore network increasingly restricts flow.
+  The classic Kozeny-Carman theory models permeability as an increasing power-law
+  function of porosity divided by a geometric resistance factor, with the
+  relationship differing substantially between siliciclastic rocks (sandstone,
+  siltstone) and carbonate rocks (limestone, chalk), which develop distinct vuggy
+  and intercrystalline pore systems. Norwegian Continental Shelf core-plug
+  measurements sample this natural variability across a broad range of depths and
+  depositional environments.
+
+target:
+  name: log_k
+  symbol: log₁₀(k)
+  unit: log10(mD)
+  description: Decadic logarithm of the horizontal permeability in millidarcy, measured by steady-state gas permeameter on core plugs. Primary value is the Klinkenberg-corrected permeability (ke); where ke is unavailable (~11% of rows) the uncorrected air permeability (ka) is used as fallback.
+  range: [-2.523, 4.783]
+
+inputs:
+  - name: phi
+    symbol: φ
+    unit: ""
+    description: Porosity fraction (dimensionless, 0–1), measured by helium expansion or fluid summation.
+    range: [0.0001, 0.69]
+
+# Dataset — Type I two-file layout (train.csv + test.csv), stratified random
+# 70/30 split (stratified by lithology so all 6 rock types appear in both files).
+# Split seed = 20260528.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 51908
+n_test:  22246
+
+# Candidate prior constants. KC pre-factor + canonical KC numerator exponent
+# (Cabalar-Akbulut 2016 Table 4 / Kozeny-Carman theory); Hazen pre-factor distractor.
+# --- Audit 2026-05-29 (FM-C12/H1): removed slichter_exponent=3.287 and
+#     terzaghi_phi_threshold=0.13 — each equalled a shipped baseline's LAW_CONSTANT
+#     (slichter_1898 N_EXPONENT / terzaghi_1925 N_THRESHOLD) → priors leak. The KC
+#     numerator exponent 3.0 is retained: it is hardcoded structurally in
+#     kozeny_carman_1937.predict(), not declared in any LAW_CONSTANTS dict.
+priors:
+  - name: kc_pre_factor
+    value: 0.0083
+    unit: ""
+    description: Kozeny-Carman pre-factor coefficient (8.3e-3) in k = pre_factor * (g/nu) * [phi^3/(1-phi)^2] * d10^2.
+    source: Cabalar and Akbulut 2016 Table 4 (PDF p.10, SpringerPlus 5:820).
+    _role: candidate
+  - name: kc_canonical_exponent
+    value: 3.0
+    unit: ""
+    description: Canonical Kozeny-Carman numerator porosity exponent (phi^3 in phi^3/(1-phi)^2).
+    source: Kozeny 1927 / Carman 1937 theoretical value. (Han et al. 2019 Table 3 confirms the DENOMINATOR exponent 2 as invariant across its per-core fits; its numerator fits are 1.19-1.92, below this ideal 3.)
+    _role: candidate
+  - name: hazen_pre_factor
+    value: 0.0006
+    unit: ""
+    description: Hazen (1911) pre-factor in k = 6e-4 * (g/nu) * [1 + 10(phi - 0.26)] * d10^2.
+    source: Cabalar and Akbulut 2016 Table 4 (PDF p.10). (Uses d10, not available in this dataset.)
+    _role: distractor
+
+# === Reference baselines ===
+# All three formulas demoted to Type I (LOCAL_FITTABLE = {}, no fit()).
+# Each formula has the structural form from Cabalar-Akbulut 2016 Table 4 plus
+# one dataset-effective C_GLOBAL pre-fitted on the train split (the Type II
+# per-cluster C_log absorbed into a single global LAW_CONSTANT). The paper-
+# published pre-factor for each (8.3e-3 / 1e-2 / 0.0084) is preserved in
+# OTHER_CONSTANTS for provenance per FM-C10a — not numerically used because
+# d10 (grain size) is unavailable in this dataset.
+references:
+  - id: kozeny_carman_1937
+    label: Kozeny-Carman 1937 — phi^3/(1-phi)^2 with global pre-fit C_GLOBAL (Type I demoted)
+    formula_file: formulas/kozeny_carman_1937.py
+    reference_pdf: reference/cabalar_akbulut_2016_perm_formulae.pdf
+    n_law_constants:  1        # C_GLOBAL (dataset-frozen)
+    n_other_constants: 1        # KC_PRE_FACTOR (provenance only)
+    n_local_params:   0
+    measured: {rmse: 1.1512, r2: 0.5044}
+
+  - id: slichter_1898
+    label: Slichter 1898 — phi^3.287 power law with global pre-fit C_GLOBAL (Type I demoted)
+    formula_file: formulas/slichter_1898.py
+    reference_pdf: reference/cabalar_akbulut_2016_perm_formulae.pdf
+    n_law_constants:  2        # N_EXPONENT (paper), C_GLOBAL (dataset-frozen)
+    n_other_constants: 1        # SLICHTER_PRE_FACTOR (provenance only)
+    n_local_params:   0
+    measured: {rmse: 1.1686, r2: 0.4893}
+
+  - id: terzaghi_1925
+    label: Terzaghi 1925 — (phi-0.13)/(1-phi)^(2/3) with global pre-fit C_GLOBAL (Type I demoted; inapplicable for phi<=0.13)
+    formula_file: formulas/terzaghi_1925.py
+    reference_pdf: reference/cabalar_akbulut_2016_perm_formulae.pdf
+    n_law_constants:  2        # N_THRESHOLD (paper), C_GLOBAL (dataset-frozen)
+    n_other_constants: 1        # TERZAGHI_PRE_FACTOR (provenance only)
+    n_local_params:   0
+    measured: {rmse: 1.6646, r2: -0.0363}
+
+# === v2 anti-dump caps ===
+# Type I: max_local_params = 0; fit_timeout irrelevant (no fit()).
+caps:
+  max_law_constants:        2
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+# === Scoring ===
+metric: rmse
+best_baseline: 1.1512   # kozeny_carman_1937 has lowest pooled test RMSE

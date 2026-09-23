@@ -1,0 +1,117 @@
+import numpy as np
+
+def predict(X):
+    # Zanna & Bolton (2020) equation-discovery closure for the subgrid
+    # eddy momentum forcing (divergence of the deviatoric eddy stress tensor).
+    #
+    # Stress tensor (with D = shearing, D̃ = stretching deformation):
+    #   S_x = kappa * [ d/dx( 1/2 * zeta^2 - zeta*D ) + d/dy( zeta*D̃ ) ]
+    #       = kappa * ( 1/2 * d(zeta^2)/dx - d(zeta*D)/dx + d(zeta*D̃)/dy )
+    #
+    # kappa is a (negative) eddy amplitude with units of m^2 (backscatter).
+    kappa = -4.87e8  # [m^2]
+
+    d_zeta2_dx      = X[:, 5]
+    d_zetaD_dx      = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    Sx = kappa * (0.5 * d_zeta2_dx - d_zetaD_dx + d_zetaDtilde_dy)
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Zanna & Bolton (2020) deterministic subgrid eddy-momentum closure.
+    # S = div( kappa * T ), with the anisotropic stress tensor built from
+    # vorticity (zeta), shearing (D) and stretching (Dtilde) deformation.
+    #
+    # For the zonal component this reduces to a linear combination of the
+    # supplied flux-divergence features:
+    #
+    #   Sx = kappa * [ (1/2) d(zeta^2)/dx  -  d(zeta*D)/dx  +  d(zeta*Dtilde)/dy ]
+    #
+    # kappa (units m^2) is the single fitted scaling coefficient (negative,
+    # reflecting mesoscale energy backscatter).
+    kappa = -4.87e8
+
+    d_zeta2_dx      = X[:, 5]
+    d_zetaD_dx      = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    Sx = kappa * (0.5 * d_zeta2_dx - d_zetaD_dx + d_zetaDtilde_dy)
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Zanna & Bolton (2020) deterministic subgrid eddy-momentum closure.
+    # The forcing is the divergence of a deviatoric stress tensor built from
+    # the coarse-grained vorticity (zeta) and deformation rates (D, Dtilde):
+    #
+    #   T11 = 1/2 * zeta^2 + zeta*D
+    #   T12 = zeta*Dtilde
+    #
+    #   S_x = kappa * ( dT11/dx + dT12/dy )
+    #       = kappa * ( 1/2 * d(zeta^2)/dx + d(zeta*D)/dx + d(zeta*Dtilde)/dy )
+    #
+    # kappa is the single fitted (negative) eddy coefficient [m^2].
+
+    d_zeta2_dx      = X[:, 5]
+    d_zetaD_dx      = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    kappa = -4.87e4  # m^2, canonical fitted constant
+
+    Sx = kappa * (0.5 * d_zeta2_dx + d_zetaD_dx + d_zetaDtilde_dy)
+
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Zanna & Bolton (2020) deterministic eddy-momentum closure.
+
+    The subgrid momentum forcing is the divergence of a stress tensor built
+    from the coarse-grained velocity-gradient invariants (vorticity zeta,
+    shearing deformation D, stretching deformation Dtilde):
+
+        T = kappa * [ [ 1/2 zeta^2 + zeta*D ,   zeta*Dtilde ],
+                      [ zeta*Dtilde        ,   1/2 zeta^2 - zeta*D ] ]
+
+    so that the zonal component of S = div(T) is
+
+        Sx = kappa * ( 1/2 d(zeta^2)/dx + d(zeta*D)/dx + d(zeta*Dtilde)/dy )
+    """
+    d_zeta2_dx      = X[:, 5]   # d(zeta^2)/dx
+    d_zetaD_dx      = X[:, 6]   # d(zeta*D)/dx
+    d_zetaDtilde_dy = X[:, 7]   # d(zeta*Dtilde)/dy
+
+    # Fitted dimensional scaling coefficient (Zanna & Bolton 2020), units of metres
+    kappa = -4.87e4
+
+    Sx = kappa * (0.5 * d_zeta2_dx + d_zetaD_dx + d_zetaDtilde_dy)
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Zanna & Bolton (2020) discovered subgrid eddy-momentum closure.
+    # Sx = kappa * [ 1/2 d(zeta^2)/dx - d(zeta*D)/dx + d(zeta*Dtilde)/dy ]
+    # kappa is a negative scaling constant (units m^2).
+    kappa = -4.87e7
+
+    d_zeta2_dx      = X[:, 5]
+    d_zetaD_dx      = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    Sx = kappa * (0.5 * d_zeta2_dx - d_zetaD_dx + d_zetaDtilde_dy)
+    return Sx

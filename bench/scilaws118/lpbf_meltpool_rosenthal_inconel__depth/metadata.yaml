@@ -1,0 +1,156 @@
+task_id: lpbf_meltpool_rosenthal_inconel__depth
+domain: materials_science / additive_manufacturing
+license: Public Domain
+
+# Type I — each row is an independent single laser track; no cluster structure.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only, no task instructions.
+context: >-
+  In laser powder-bed fusion additive manufacturing, a focused laser scans a metal surface and locally melts material to form a melt pool, a problem in materials and manufacturing engineering.
+
+target:
+  name: meltpool_depth_um
+  symbol: d
+  unit: um
+  description: Maximum depth of the laser melt-pool cross-section, measured by optical microscopy perpendicular to the scan direction.
+  range: [28.0, 232.0]
+
+inputs:
+  - name: laser_power_W
+    symbol: P
+    unit: W
+    description: Incident laser power delivered to the workpiece surface.
+    range: [137.0, 326.0]
+  - name: scan_velocity_mm_per_s
+    symbol: V
+    unit: mm/s
+    description: Laser beam scan velocity along the track direction.
+    range: [399.0, 1201.0]
+  - name: beam_diameter_um
+    symbol: D4sigma
+    unit: um
+    description: Laser beam D4-sigma diameter at the workpiece surface (four times the 1/e^2 radius).
+    range: [48.0, 171.0]
+
+# Dataset — Type I two-file layout
+# OOD split axis: beam_diameter_um / material system.
+# Train = IN718 rows (D4sigma 49-82 um, P 245-325 W, AMB2022-03).
+# Test  = IN625 rows (D4sigma 100-170 um, P 137.9-195 W, AMB2018-02).
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+
+n_train: 48
+n_test:  20
+
+# Reference baselines
+references:
+  - id: king_2014_normalized_enthalpy
+    label: King 2014 — normalized-enthalpy scaling (Eq. 2.6 + linear d/sigma fit)
+    formula_file: formulas/king_2014_normalized_enthalpy.py
+    reference_pdf: reference/king_2014_keyhole.pdf
+    n_law_constants: 6
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 56.538059
+      r2: -0.852250
+  - id: promoppatum_2017_rosenthal
+    label: Promoppatum 2017 — Rosenthal Eq.6 melt-pool width with D=W/2 depth
+    formula_file: formulas/promoppatum_2017_rosenthal.py
+    reference_pdf: reference/promoppatum_2017_rosenthal_lpbf.pdf
+    n_law_constants: 4
+    n_other_constants: 3
+    n_local_params: 0
+    measured:
+      rmse: 35.525694
+      r2: 0.268688
+
+auditor_notes:
+  neg_r2_disclosure:
+    severity: ACCEPTABLE_PER_E6_MIXED_BANK
+    baseline: king_2014_normalized_enthalpy
+    pooled_r2: -0.852250
+    pooled_rmse: 56.538059
+    best_positive_r2_baseline: promoppatum_2017_rosenthal
+    best_positive_r2: 0.268688
+    summary: >-
+      King 2014 normalized-enthalpy baseline yields pooled R² = -0.852 / RMSE = 56.54 µm
+      on the OOD test split. The mixed bank satisfies §9.6 via promoppatum_2017_rosenthal
+      (R²=0.269). Anchor-scale check: RMSE (56.54 µm) < target span (141.4 µm) — §9.18
+      anchor-scale violation NOT triggered. §9.14 (feature-OOD legitimate) applies.
+    citation: "AUDIT_CHECKLIST.md v0.5 §E6 (mixed-bank partial-negative-R² annotation) + data_spec §9.14 (cross-feature OOD legitimately produces negative pooled R²)"
+    root_cause: >-
+      King 2014 coefficients (316L stainless steel, Table 3, PDF p. 36) and the graphically
+      derived d/sigma linear fit (PDF §5.3, Fig. 8) were calibrated on 316L specimens.
+      The benchmark test set contains Inconel 718 specimens with substantially different
+      thermal properties (higher Tm, different absorptivity). The normalized-enthalpy
+      scaling does not account for alloy-specific melt-pool geometry; systematic under- or
+      over-prediction on IN718 is expected and constitutes a cross-material OOD probe.
+    # FM E6 annotation added by subagent L 2026-05-26 (wave-3 re-audit).
+    # Policy: §9.14 only (RMSE 56.54 < span 141.4, bank beats naive via promoppatum).
+
+# FM C12 fix (2026-05-26): removed 4 leaking priors that exactly matched
+# LAW_CONSTANTS in the shipped formulas:
+#   absorptivity_rosenthal_in718=0.4 → promoppatum_2017_rosenthal.py LAW_CONSTANTS["absorptivity"]
+#     AND king_2014_normalized_enthalpy.py LAW_CONSTANTS["A_abs_316L"]=0.4
+#   tm_in718_celsius=1340.0 → promoppatum_2017_rosenthal.py LAW_CONSTANTS["Tm_C"]=1340.0
+#   hs_enthalpy_316L=1.2e6 → king_2014_normalized_enthalpy.py LAW_CONSTANTS["hs_J_kg_316L"]=1.2e6
+#   thermal_diffusivity_316L=5.38e-6 → king_2014_normalized_enthalpy.py LAW_CONSTANTS["D_diff_316L"]=5.38e-6
+# euler_number=2.71828... appears in promoppatum_2017_rosenthal.py OTHER_CONSTANTS["e_euler"].
+# Per the corrected leakage rule (2026-05-29): leakage is tested against LAW_CONSTANTS ONLY;
+# overlap with OTHER_CONSTANTS is normal/expected and is NOT a leak. euler is the universal
+# mathematical constant e (building block) — retained as a candidate.
+# rho_cp_in718=3,575,700 was REMOVED (audit 2026-05-29, FM-H1): it equals no single LAW value,
+# but 8220 * 435 = 3,575,700 = rho_kg_m3 * CP_J_kgK (promoppatum LAW) — the volumetric heat
+# capacity in the Rosenthal Eq.6 denominator, i.e. a semantic leak of the LAW combination.
+# Live priors are now 4: 1 candidate (euler_number) + 3 distractors (Tm_iron_K,
+# thermal_diff_water_m2_s, stefan_boltzmann_W_m2_K4).
+priors:
+  - name: euler_number
+    value: 2.71828182845904523536
+    unit: dimensionless
+    description: Euler's number e — universal mathematical constant appearing as a structural prefactor in the Rosenthal melt-pool width formula (Eq. 6 of Promoppatum 2017). This is NOT an alloy-specific fit coefficient; it is the base of the natural logarithm, fixed by mathematics.
+    source: Mathematical constant; implicit in Promoppatum 2017 Eq. 6 (PDF p. 4) and standard heat-conduction point-source theory.
+    _role: candidate
+  - name: Tm_iron_K
+    value: 1811.0
+    unit: K
+    description: Melting point of pure iron — a reference scale for iron-based alloys; not used in the shipped conduction model.
+    source: NIST WebBook / CODATA standard value for pure Fe.
+    _role: distractor
+  - name: thermal_diff_water_m2_s
+    value: 1.43e-7
+    unit: m^2/s
+    description: Thermal diffusivity of water at room temperature — reference value for comparison; several orders of magnitude lower than metal alloys.
+    source: Standard thermophysical data; CRC Handbook of Chemistry and Physics.
+    _role: distractor
+  - name: stefan_boltzmann_W_m2_K4
+    value: 5.670374419e-8
+    unit: W/(m^2 K^4)
+    description: Stefan-Boltzmann radiation constant sigma — relevant to radiative heat loss at high temperatures; not included in the Rosenthal conduction-dominant model.
+    source: CODATA 2018; exact value in SI.
+    _role: distractor
+
+caps:
+  max_law_constants:        6
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include absorbed laser energy input as the heat source"
+  - "include conductive heat transport away from the melt zone"
+  - "include reduced interaction time or energy per length at higher scan velocity"
+  - "include the material energy required to reach melting"
+  - "predicted melt-pool depth is non-negative"
+
+best_baseline: 35.5257    # promoppatum_2017_rosenthal — rmse (lower is better); regenerated 2026-05-30

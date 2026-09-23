@@ -1,0 +1,77 @@
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning's roughness coefficient (typical default for natural channels)
+    n = 0.03 
+    
+    # Manning's equation for mean flow velocity in SI units
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * np.sqrt(S)
+    
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning's roughness coefficient (typical default for natural streams)
+    n = 0.035 
+    
+    # Manning's equation for mean flow velocity in SI units
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * (S ** 0.5)
+    
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning's roughness coefficient (typical default for natural streams)
+    n = 0.03 
+    
+    # Manning's equation for mean flow velocity (SI units)
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * np.sqrt(S)
+    
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning's roughness coefficient (typical default for natural streams)
+    n = 0.035 
+    
+    # Manning's equation for mean flow velocity
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * (S ** 0.5)
+    
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning's roughness coefficient (typical default for natural streams)
+    n = 0.03 
+    
+    # Manning's equation for mean flow velocity (SI units)
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * np.sqrt(S)
+    
+    return V

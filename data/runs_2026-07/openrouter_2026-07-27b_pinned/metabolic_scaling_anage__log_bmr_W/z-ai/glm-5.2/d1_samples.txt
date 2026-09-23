@@ -1,0 +1,67 @@
+def predict(X):
+    import numpy as np
+    M = X[:, 0]
+    # Kleiber's law: BMR (kcal/day) = 70 * (M_kg)^0.75
+    # Convert to watts: 1 kcal/day = 4184 J / 86400 s
+    # Convert grams to kilograms: M_kg = M_g / 1000
+    log10_B = np.log10(70.0 * 4184.0 / 86400.0) + 0.75 * (np.log10(M) - 3.0)
+    return log10_B
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's law: BMR (kcal/day) = 70 * M_kg^0.75
+    # Convert to watts: 1 kcal/day = 4184/86400 W ≈ 0.048426 W
+    # B_W = 70 * 0.048426 * (M_g/1000)^0.75
+    # log10(B_W) = log10(70*0.048426) + 0.75*(log10(M_g) - 3)
+    log_bmr_W = 0.75 * np.log10(M_g) + (np.log10(70.0 * 4184.0 / 86400.0) - 0.75 * 3.0)
+    return log_bmr_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's Law: BMR (kcal/day) = 70 * (M_kg)^0.75
+    # Convert M_g to M_kg: M_kg = M_g / 1000
+    # Convert kcal/day to Watts: 1 kcal/day = 4184 J / 86400 s
+    # log10(BMR_W) = log10(70 * 4184 / 86400) + 0.75 * log10(M_g / 1000)
+    log_bmr_W = np.log10(70.0 * 4184.0 / 86400.0) + 0.75 * np.log10(M_g / 1000.0)
+    return log_bmr_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    M_kg = M_g / 1000.0
+    
+    # Kleiber's law: BMR (kcal/day) = 70 * M_kg^0.75
+    # Convert kcal/day to Watts: 1 kcal/day = 4184.0 J / 86400.0 s
+    bmr_W = 70.0 * (M_kg ** 0.75) * (4184.0 / 86400.0)
+    
+    return np.log10(bmr_W)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kleiber's Law: BMR in Watts
+    # B (W) = 3.3898 * (M_kg)^0.75
+    # Given M in grams (M_g), M_kg = M_g / 1000
+    # log10(B) = log10(3.3898) + 0.75 * log10(M_g / 1000)
+    #          = 0.5302 + 0.75 * (log10(M_g) - 3)
+    #          = 0.5302 - 2.25 + 0.75 * log10(M_g)
+    #          = -1.7198 + 0.75 * log10(M_g)
+    
+    M_g = X[:, 0]
+    log_M_g = np.log10(M_g)
+    log_bmr_W = 0.75 * log_M_g - 1.7198
+    
+    return log_bmr_W

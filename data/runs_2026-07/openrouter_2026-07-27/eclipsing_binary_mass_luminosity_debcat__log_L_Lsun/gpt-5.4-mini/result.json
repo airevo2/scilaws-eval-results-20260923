@@ -1,0 +1,35 @@
+{
+  "task": "eclipsing_binary_mass_luminosity_debcat__log_L_Lsun",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "eker_2018_six_piece",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "henry_1993_two_piece",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "kuiper_1938_pure_power",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

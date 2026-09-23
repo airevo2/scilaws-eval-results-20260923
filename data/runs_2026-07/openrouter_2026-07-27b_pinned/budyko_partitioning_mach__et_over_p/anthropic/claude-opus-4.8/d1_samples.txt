@@ -1,0 +1,55 @@
+import numpy as np
+
+def predict(X):
+    phi = X[:, 0]  # aridity index PET/P
+    # Budyko (Choudhury-Yang / Turc-Pike style) Fu equation
+    w = 2.6  # commonly cited parameter for Fu's equation
+    et_over_p = 1.0 + phi - (1.0 + phi**w)**(1.0 / w)
+    return np.clip(et_over_p, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = X[:, 0]  # aridity index PET/P
+    # Budyko-Fu equation (Fu 1981) with typical parameter w = 2.6
+    w = 2.6
+    et_over_p = 1.0 + phi - (1.0 + phi**w)**(1.0 / w)
+    return np.clip(et_over_p, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Budyko (Choudhury/Turc-Pike) form using aridity index phi
+    phi = X[:, 0]
+    n = 2.0  # commonly cited shape parameter
+    et_over_p = 1.0 / (1.0 + phi**(-n))**(1.0 / n)
+    return et_over_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Budyko-Choudhury-Yang (Turc-Pike / Choudhury) form for E/P as a
+    # function of the aridity index phi = PET/P.
+    # E/P = phi / (1 + phi^n)^(1/n), with the canonical n = 2 (Turc-Pike).
+    phi = X[:, 0]
+    n = 2.0
+    et_over_p = phi / np.power(1.0 + np.power(phi, n), 1.0 / n)
+    return et_over_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Budyko framework - Choudhury-Yang single-parameter form
+    # E/P = phi / (1 + phi^n)^(1/n), with n a fitted shape parameter
+    phi = X[:, 0]
+    n = 2.0  # commonly cited representative value
+    et_over_p = phi / np.power(1.0 + np.power(phi, n), 1.0 / n)
+    return np.clip(et_over_p, 0.0, 1.0)

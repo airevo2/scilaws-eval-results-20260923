@@ -1,0 +1,35 @@
+{
+  "task": "gutenberg_richter_b_value_usgs__gr_freq_mag",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "aki_1965",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "hanks_kanamori_1979",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "kagan_2010",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

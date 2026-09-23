@@ -1,0 +1,98 @@
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = chan_discharge (Q) [cfs]
+    Q = X[:, 0]
+    
+    # Clip to avoid negative or zero values in power calculation
+    Q_safe = np.clip(Q, a_min=1e-5, a_max=None)
+    
+    # Classical downstream hydraulic geometry (DHG) relationship (Leopold and Maddock, 1953)
+    # w = a * Q^b, where typically a ≈ 4.5 and b ≈ 0.5 for channel width in feet
+    w = 4.5 * np.pow(Q_safe, 0.5)
+    
+    return w
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts water-surface width (w) in feet from discharge (Q) in cfs
+
+    using the canonical downstream hydraulic geometry (DHG) relationship
+    derived from Lacey's regime theory and Leopold & Maddock (1953).
+
+    Relationship: w = 2.67 * Q^0.5
+    """
+    Q = X[:, 0]
+    # Ensure no negative values for the square root
+    Q_safe = np.maximum(Q, 0.0)
+    w = 2.67 * np.sqrt(Q_safe)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the water-surface width (w) in feet from stream discharge (Q) in cfs
+    using the classic downstream hydraulic geometry (DHG) relationship 
+    originally described by Leopold and Maddock (1953).
+    
+    Relationship: w = a * Q^b
+    Where:
+    - Q is the discharge in cfs
+    - b is the theoretical/empirical exponent, typically ~0.5 for downstream relationships
+    - a is the empirical coefficient, typically ~4.6 for US units (feet and cfs)
+    """
+    # Extract discharge (Q) and ensure no values are negative
+    Q = np.maximum(X[:, 0], 0.0)
+    
+    # Coefficients for downstream hydraulic geometry (US customary units)
+    a = 4.6
+    b = 0.5
+    
+    # Calculate width
+    w = a * np.power(Q, b)
+    
+    return w
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract channel discharge (Q) in cfs
+    Q = X[:, 0]
+
+    # Lacey's regime equation for stable channel width (downstream hydraulic geometry)
+    # w = 2.67 * Q^0.5, where w is in feet and Q is in cfs.
+    # We use np.maximum to handle any potential non-positive values gracefully.
+    w = 2.67 * np.sqrt(np.maximum(Q, 0.0))
+
+    return w
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the stream discharge (Q) in cubic feet per second [cfs]
+    Q = X[:, 0]
+
+    # Ensure no negative values for the power calculation
+    Q_safe = np.maximum(Q, 0.0)
+
+    # Downstream hydraulic geometry (Leopold and Maddock, 1953)
+    # Standard representative values for the hydraulic geometry relation: w = a * Q^b
+    # For width (w) in feet and discharge (Q) in cfs, typical values are a ≈ 4.6 and b ≈ 0.5
+    a = 4.6
+    b = 0.5
+
+    w = a * np.power(Q_safe, b)
+    return w

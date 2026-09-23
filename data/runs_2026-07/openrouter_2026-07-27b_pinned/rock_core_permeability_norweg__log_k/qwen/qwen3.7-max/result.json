@@ -1,0 +1,35 @@
+{
+  "task": "rock_core_permeability_norweg__log_k",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "kozeny_carman_1937",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "slichter_1898",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "terzaghi_1925",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

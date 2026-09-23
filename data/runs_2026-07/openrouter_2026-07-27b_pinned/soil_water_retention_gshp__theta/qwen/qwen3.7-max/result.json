@@ -1,0 +1,26 @@
+{
+  "task": "soil_water_retention_gshp__theta",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "brooks_corey_1964",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "vangenuchten_1980",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

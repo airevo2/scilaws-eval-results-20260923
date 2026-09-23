@@ -1,0 +1,54 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the ratio G_E / G_D.
+    In the standard dipole approximation, the proton electric Sachs form factor 
+    G_E is parameterized by the standard dipole form factor G_D itself. 
+    Therefore, the ratio G_E / G_D is identically 1.
+    """
+    Q2 = X[:, 0]
+    return np.ones_like(Q2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    # Galster parameterization for G_E / G_D
+    ratio = 1.0 - 0.13 * Q2 / (1.0 + 5.6 * Q2)
+    return ratio
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the ratio of the proton electric Sachs form factor G_E 
+    to the standard dipole form factor G_D.
+    
+    In the standard dipole approximation, the proton electric form factor 
+    is parameterized exactly as the standard dipole form factor, 
+    G_D(Q^2) = (1 + Q^2 / 0.71)^(-2). Thus, G_E / G_D = 1.
+    """
+    Q2 = X[:, 0]
+    return np.ones_like(Q2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Returns the ratio G_E / G_D for the proton.
+    In the standard dipole approximation, the proton electric Sachs form factor G_E 
+    is exactly equal to the standard dipole form factor G_D, so the ratio is 1.0.
+    """
+    Q2 = X[:, 0]
+    return np.ones_like(Q2)

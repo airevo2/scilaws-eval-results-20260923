@@ -1,0 +1,108 @@
+import numpy as np
+
+def predict(X):
+    phi = np.asarray(X)[:, 0]
+    
+    # Commonly cited log-linear porosity-permeability trend (Athy-style / many core-data fits):
+    # log10(k) = a + b * phi
+    # with k in mD and phi as porosity fraction.
+    a = -4.0
+    b = 8.0
+    
+    return a + b * phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(horizontal permeability in mD) from porosity using the
+    commonly cited Kozeny-Carman form.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, 1)
+        X[:, 0] = porosity fraction phi
+
+    Returns
+    -------
+    np.ndarray, shape (n_samples,)
+        log10(k) where k is permeability in mD
+    """
+    phi = np.asarray(X)[:, 0]
+
+    # Standard Kozeny-Carman style relationship:
+    # k = C * phi^3 / (1 - phi)^2
+    # For core-plug permeability in mD, a common practical calibration is:
+    # k(mD) = 1000 * phi^3 / (1 - phi)^2
+    k_mD = 1000.0 * (phi ** 3) / np.clip((1.0 - phi) ** 2, 1e-30, None)
+
+    return np.log10(np.clip(k_mD, 1e-30, None))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.asarray(X)[:, 0]
+    # Kozeny-Carman / Archie-type porosity-permeability relation
+    # k (mD) = C * phi^3 / (1 - phi)^2
+    # Using a common empirical constant in md for consolidated rocks.
+    C = 1000.0
+    k_md = C * (phi ** 3) / ((1.0 - phi) ** 2)
+    return np.log10(k_md)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(horizontal permeability in mD) from porosity using the
+    classic Kozeny-Carman-type relationship.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        2D array with X[:, 0] = porosity fraction (phi), 0 < phi < 1
+
+    Returns
+    -------
+    np.ndarray
+        log10(k) in mD
+    """
+    phi = np.asarray(X)[:, 0]
+
+    # Commonly cited idealized Kozeny-Carman form:
+    # k ∝ phi^3 / (1 - phi)^2
+    # With a common permeability scaling constant in mD:
+    # k(mD) = 1e5 * phi^3 / (1 - phi)^2
+    k_mD = 1e5 * (phi**3) / np.maximum((1.0 - phi)**2, 1e-30)
+
+    return np.log10(np.maximum(k_mD, 1e-300))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(horizontal permeability in mD) from porosity using a
+    standard Kozeny-Carman-type porosity-permeability relationship.
+
+    X[:, 0] = phi (porosity fraction)
+    """
+    phi = np.asarray(X)[:, 0]
+
+    # Guard against invalid values
+    phi = np.clip(phi, 1e-12, 1.0 - 1e-12)
+
+    # Canonical Kozeny-Carman form (common petrophysical scaling):
+    # k = C * phi^3 / (1 - phi)^2
+    # Here C is chosen as a standard permeability scale in mD.
+    C = 1.0  # mD
+
+    k = C * (phi ** 3) / ((1.0 - phi) ** 2)
+
+    return np.log10(k)

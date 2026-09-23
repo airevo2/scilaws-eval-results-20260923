@@ -1,0 +1,17 @@
+{
+  "task": "solar_spectrum_sorce_sim__planck_radiance",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeII",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "thuillier_2022",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

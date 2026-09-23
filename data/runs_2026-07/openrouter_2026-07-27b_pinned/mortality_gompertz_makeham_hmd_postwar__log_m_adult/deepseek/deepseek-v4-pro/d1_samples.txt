@@ -1,0 +1,139 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln(m) — natural log of the central death rate — for adult ages
+    using the Gompertz law extended with a linear time trend.
+    
+    Model: ln(m) = A + B * age + C * year
+    
+    Coefficients are typical for a developed country (e.g., US total population)
+    over the observed period 1950–2020 and age range 30–95.
+    """
+    # Fitted constants
+    A = 10.0      # intercept
+    B = 0.09      # Gompertz age slope
+    C = -0.01     # annual trend in log mortality
+    
+    age = X[:, 0]
+    year = X[:, 1]
+    return A + B * age + C * year
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the natural log of the central adult death rate using the
+    Gompertz law with a linear time trend, the most standard closed-form
+    relationship in demography for ages 30–95.
+
+    ln m(x, t) = alpha + beta * age + gamma * year
+
+    Coefficients are chosen to reflect typical historical adult mortality
+    levels in developed countries (e.g., ln(m) ≈ -6.5 at age 30 in year 2000,
+    Gompertz slope ≈ 0.09, and an annual log-mortality decline ≈ 0.01).
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Named constants for the canonical Gompertz-with-trend formula
+    alpha = 10.0   # baseline log-mortality level
+    beta  = 0.09   # Gompertz age slope (approx. 9% increase in m per year of age)
+    gamma = -0.01  # linear annual trend in log-mortality (approx. 1% decline per year)
+
+    log_m_adult = alpha + beta * age + gamma * year
+    return log_m_adult
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Lee-Carter closed-form relationship for the natural log of the central
+    period death rate (ln m) for adult ages (30-95), total sex.
+
+    Model: ln m(x,t) = a_x + b_x * k_t
+
+    Parameters a_x, b_x, and k_t are given as simple parametric forms fitted to
+    typical adult mortality patterns observed in developed countries over 1950-2020.
+    """
+    age = X[:, 0]   # single-year age, 30 to 95
+    year = X[:, 1]  # calendar year, 1950 to 2020
+
+    # Average log mortality by age (a_x), roughly linear in adult ages (Gompertz)
+    a_x = -6.5 + 0.09 * (age - 30)
+
+    # Age-specific sensitivity to the period index (b_x), slowly increasing with age
+    b_x = 0.02 + 0.0005 * (age - 30)
+
+    # Period mortality index (k_t), linear decline reflecting secular mortality improvement
+    k_t = 15.0 - 0.4 * (year - 1950)
+
+    return a_x + b_x * k_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log central death rate for adult ages (30-95) using the Gompertz model
+    with a linear time trend.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] = age (years)
+        X[:, 1] = year (years)
+    
+    Returns
+    -------
+    ln_m : np.ndarray, shape (n,)
+        Natural log of the central death rate.
+    """
+    # Gompertz law parameters (total sex, typical adult mortality)
+    alpha = -11.0      # intercept at age 0 and base year (shape parameter)
+    beta  = 0.09       # Gompertz slope (~0.08-0.10 per year of age)
+    gamma = -0.015     # annual rate of mortality decline (~1.5% per year)
+    t0    = 1950.0     # reference year
+    
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Linear predictor: ln(m) = alpha + beta * age + gamma * (year - t0)
+    ln_m = alpha + beta * age + gamma * (year - t0)
+    return ln_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the natural log of the central death rate (ln m) for adult ages
+    using a Gompertz model with a linear period trend and an age-period interaction.
+
+    Model:
+        ln m(x, t) = A + B * x + C * (t - 1950) + D * x * (t - 1950)
+
+    where:
+        x = age (years)
+        t = calendar year
+        A, B, C, D are constants fitted to typical total-sex mortality patterns
+        for developed countries over ages 30–95 and years 1950–2020.
+    """
+    # Typical coefficients for total sex, 1x1 adult mortality
+    A = -10.0       # baseline log-mortality at age 0 in 1950 (extrapolated)
+    B = 0.09        # Gompertz slope (per year of age)
+    C = -0.015      # annual trend in log-mortality at age 0
+    D = 0.0002      # change in age slope per year (interaction)
+
+    age = X[:, 0]
+    year = X[:, 1]
+    t = year - 1950.0
+
+    ln_m = A + B * age + C * t + D * age * t
+    return ln_m

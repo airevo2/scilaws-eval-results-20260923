@@ -1,0 +1,100 @@
+task_id: metabolic_scaling_anage__log_bmr_W
+domain: biology / physiology
+license: CC-BY-3.0
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Basal metabolic rate is the resting energy expenditure of an animal, studied in comparative physiology across mammal species.
+
+target:
+  name: log_bmr_W
+  symbol: log10(B)
+  unit: log10(W)
+  description: Base-10 logarithm of basal metabolic rate in watts.
+  range: [-1.5686, 3.3686]
+
+inputs:
+  - name: body_mass_g
+    symbol: M
+    unit: g
+    description: Adult body mass in grams (raw, not log-transformed).
+    range: [3.7, 3672000.0]
+
+# Dataset — Type I, two-file flat layout.  Source: AnAge build 14 (de
+# Magalhaes 2024 release).  Filters:
+#   (i)   Mammalia only — Kleiber's stated domain.
+#   (ii)  Drop literature-named BMR-anomalous Orders Soricomorpha
+#         (McNab 2009) and Afrosoricida (Lovegrove 2000).
+# After filters: 396 mammal species.  Split: body-mass-extrapolation
+# OOD — train = middle 60% by mass (mass quantile 0.2-0.8, 238 species,
+# mass 39 g - 3924 g), test = extremes (bottom 20% + top 20%, 158
+# species, mass 3.7 g - 3.7 t).
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 238
+n_test:  158
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: kleiber_exponent_three_quarters
+    value: 0.75
+    unit: dimensionless
+    description: Kleiber's universal 3/4-power scaling exponent.
+    source: Kleiber (1932) paginated p. 320 — empirical fit across 13 mammalian species groups; subsequently derived from fractal-network theory by West, Brown & Enquist (1997).  A candidate — the v2 reference baseline `kleiber_1932` uses this as B_EXPONENT.
+    _role: candidate
+  - name: rubner_surface_exponent_two_thirds
+    value: 0.6667
+    unit: dimensionless
+    description: Rubner's surface-area scaling exponent.
+    source: Rubner (1883) surface law — BMR ∝ body surface area ∝ M^(2/3) for geometrically similar animals.  A candidate — the v2 reference baseline `rubner_1883` uses this as B_EXPONENT.
+    _role: candidate
+  - name: stefan_boltzmann_radiation_constant
+    value: 5.67e-8
+    unit: W / (m^2 K^4)
+    description: Stefan-Boltzmann constant for blackbody radiation.
+    source: Universal physics constant; radiation-based heat transfer relates to body surface but the relevant scaling here is metabolic generation, not blackbody emission.  A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: kleiber_1932
+    label: Kleiber (1932) 3/4-power law, B0 from human formula paginated p. 345 (Type I frozen)
+    formula_file: formulas/kleiber_1932.py
+    reference_pdf: reference/kleiber_1932.pdf
+    n_law_constants: 2         # B_EXPONENT, LOG_B0
+    n_other_constants: 0
+    n_local_params: 0          # Type I — no fit()
+    measured: {rmse: 0.2121, r2: 0.9689}
+  - id: rubner_1883
+    label: Rubner (1883) surface-area 2/3 law (Type I frozen, prefactor calibrated to Kleiber at M = 391 g)
+    formula_file: formulas/rubner_1883.py
+    reference_pdf: reference/kleiber_1932.pdf   # Rubner 1883 not present; Kleiber 1932 cites and critiques it
+    n_law_constants: 2         # B_EXPONENT, LOG_B0
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.2313, r2: 0.9630}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        2
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted whole-organism BMR increases as body_mass_g increases"
+  - "predicted mass-specific BMR decreases as body_mass_g increases"
+  - "predicted log_bmr_W is defined over the full positive mammalian body-mass domain"
+
+# === Scoring ===
+metric: rmse              # RMS error on log_bmr_W (log10 units)
+best_baseline: 0.2121     # kleiber_1932

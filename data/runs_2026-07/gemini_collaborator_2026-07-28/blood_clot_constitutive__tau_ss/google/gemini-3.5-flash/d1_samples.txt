@@ -1,0 +1,107 @@
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = gamma (dimensionless shear strain)
+    gamma = X[:, 0]
+    
+    # In classical continuum mechanics, the closed-form relation for simple shear 
+    # stress of a Neo-Hookean or Mooney-Rivlin material is linear with respect to 
+    # the shear strain: tau_ss = mu * gamma.
+    # For a typical in-vitro whole-blood thrombus specimen, the shear modulus (mu)
+    # is approximately 1.5 kPa.
+    mu = 1.5  # kPa
+    
+    return mu * gamma
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the simple-shear Cauchy stress (tau_ss) in kPa using the
+
+    canonical neo-Hookean constitutive relation for homogeneous simple shear.
+
+    Parameters:
+    - X: 2-D numpy array where:
+        - X[:, 0] = gamma (shear strain)
+        - X[:, 1] = conc_mM (fibrinogen concentration, unused in baseline)
+        - X[:, 2] = time_min (clot maturation time, unused in baseline)
+
+    Returns:
+    - 1-D numpy array of predicted tau_ss [kPa]
+    """
+    gamma = X[:, 0]
+
+    # Typical shear modulus (mu) for a whole-blood thrombus/mimic is ~1.5 kPa
+    mu = 1.5  # kPa
+
+    # Neo-Hookean relationship in simple shear: tau = mu * gamma
+    tau_ss = mu * gamma
+
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the simple-shear Cauchy stress (tau_ss) in kPa for a whole-blood 
+    thrombus specimen using the standard homogeneous simple-shear closed-form 
+    relationship (Neo-Hookean / linear-elastic shear approximation).
+    
+    Inputs:
+        X : 2-D numpy array where:
+            - X[:, 0] is gamma (shear strain)
+            - X[:, 1] is conc_mM (fibrinogen concentration, unused in baseline)
+            - X[:, 2] is time_min (maturation time, unused in baseline)
+            
+    Returns:
+        1-D numpy array of tau_ss [kPa]
+    """
+    gamma = X[:, 0]
+    
+    # Typical shear modulus (mu) for whole-blood clot mimics is approximately 1.5 kPa
+    mu = 1.5 
+    
+    # For a Neo-Hookean material in homogeneous simple shear, 
+    # the Cauchy shear stress is exactly mu * gamma.
+    tau_ss = mu * gamma
+    
+    return tau_ss
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract engineering shear strain (gamma)
+    gamma = X[:, 0]
+
+    # The standard baseline constitutive model for simple shear of soft biological
+    # tissues/clots is the Neo-Hookean model. In homogeneous simple shear, the
+    # Cauchy shear stress relation simplifies to: tau = mu * gamma
+    # For a typical whole-blood thrombus, the shear modulus (mu) is approximately 1.5 kPa.
+    mu = 1.5  # kPa
+
+    return mu * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract engineering shear strain (gamma)
+    gamma = X[:, 0]
+    
+    # Standard Neo-Hookean shear modulus for a whole-blood thrombus (typically ~1.5 kPa)
+    mu = 1.5  # kPa
+    
+    # For a Neo-Hookean material in simple shear, the Cauchy shear stress is:
+    # tau_ss = mu * gamma
+    tau_ss = mu * gamma
+    
+    return tau_ss

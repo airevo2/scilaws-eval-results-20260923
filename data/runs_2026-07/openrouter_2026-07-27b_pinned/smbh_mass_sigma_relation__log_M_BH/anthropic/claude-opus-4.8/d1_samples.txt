@@ -1,0 +1,59 @@
+import numpy as np
+
+def predict(X):
+    # M-sigma relation (Kormendy & Ho 2013 canonical form)
+    # log10(M_BH/M_sun) = alpha + beta * log10(sigma/200)
+    sigma0 = X[:, 0]
+    alpha = 8.49
+    beta = 4.38
+    return alpha + beta * np.log10(sigma0 / 200.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # M-sigma relation (Kormendy & Ho 2013 canonical form)
+    # log(M_BH/Msun) = alpha + beta * log10(sigma/200 km/s)
+    sigma0 = X[:, 0]
+    alpha = 8.49
+    beta = 4.38
+    log_M_BH = alpha + beta * np.log10(sigma0 / 200.0)
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # M_BH - sigma relation (Kormendy & Ho 2013)
+    # log(M_BH/M_sun) = alpha + beta * log10(sigma / 200 km/s)
+    sigma0 = X[:, 0]
+    alpha = 8.49
+    beta = 4.38
+    return alpha + beta * np.log10(sigma0 / 200.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    sigma0 = X[:, 0]
+    # M-sigma relation (Kormendy & Ho 2013):
+    # log10(M_BH/M_sun) = alpha + beta * log10(sigma/200 km/s)
+    alpha = 8.49
+    beta = 4.38
+    return alpha + beta * np.log10(sigma0 / 200.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # M-sigma relation (Kormendy & Ho 2013):
+    # log10(M_BH/M_sun) = alpha + beta * log10(sigma/200 km/s)
+    alpha = 8.49
+    beta = 4.38
+    sigma0 = X[:, 0]
+    log_M_BH = alpha + beta * np.log10(sigma0 / 200.0)
+    return log_M_BH

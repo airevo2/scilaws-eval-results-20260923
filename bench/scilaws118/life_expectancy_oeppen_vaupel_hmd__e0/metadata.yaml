@@ -1,0 +1,105 @@
+task_id: life_expectancy_oeppen_vaupel_hmd__e0
+domain: social_science / demography
+license: CC-BY-4.0
+
+# Type II — cluster = country (HMD code).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task is from demography, concerning period life expectancy at birth recorded in the national life tables of the Human Mortality Database (HMD).
+
+target:
+  name: e0
+  symbol: e0
+  unit: years
+  description: Period life expectancy at birth (Total sex), from HMD national life tables.
+  range: [17.94, 85.2]
+
+inputs:
+  - name: year
+    symbol: t
+    unit: years
+    description: Calendar year of the life table.
+    range: [1751, 2024]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-country-out)
+# plus an interleaved within-test-cluster split. 42 HMD countries split 28
+# train / 14 test. Test countries are never seen during form discovery; for
+# each test country, fit() sees every other year (test_fit, even-position
+# sorted years) and predict() is scored on the remaining years (test_test).
+# The within-cluster split is interleaved, not early/late: `year` is the
+# sole input, so a temporal split would force the per-cluster line to be
+# extrapolated across the whole curvature of the 1751-2024 e0 ascent and
+# fail; an interleaved split keeps both halves spanning the full year range,
+# making the per-cluster fit an interpolation. The OOD axis is the
+# leave-country-out holdout — the law form must generalise to unseen
+# countries.
+#
+# Target note: the SR target is the life-expectancy LEVEL e0, predicted from
+# calendar year alone — a law-discovery task. It deliberately replaces the
+# v1 `__e0_next` framing (predict next-year e0 from current-year e0), which
+# was autoregressive and degenerate: e0(t+1) is so close to e0(t) that a
+# persistence copy nearly matched the reference. Here `year` and `e0` are
+# separated by the law to be discovered; no lagged copy of the target is
+# among the inputs.
+data_files:
+  train:     data/train.csv        # 28 train countries, all years
+  test_fit:  data/test_fit.csv     # 14 test countries, even-position years
+  test_test: data/test_test.csv    # 14 test countries, odd-position years
+n_train:       2665
+n_test_fit:     657
+n_test_test:    649
+n_clusters_train: 28
+n_clusters_test:  14
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: oeppen_vaupel_record_slope
+    value: 0.243
+    unit: years per year
+    description: Annual increment of best-practice (record) life expectancy — the Oeppen-Vaupel slope.
+    source: Oeppen & Vaupel 2002, Science 296(5570), Fig. 1 caption — 0.243 yr/yr for the female record (0.222 for the male record). The reference law re-estimates the slope per country, so this is a guide value, not a frozen constant.
+    _role: candidate
+  - name: olshansky_1990_ceiling
+    value: 85.0
+    unit: years
+    description: A proposed upper limit ("ceiling") on human life expectancy at birth.
+    source: Olshansky et al. (1990), cited in Oeppen & Vaupel 2002 — the paper explicitly REFUTES such ceilings; the linear-rise law has no ceiling parameter. A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+# One formula — the Oeppen & Vaupel (2002) "broken limits" law: period
+# life expectancy rises linearly in calendar year, e0 = a + b*year, with
+# a and b fitted per country.
+references:
+  - id: oeppen_vaupel_2002
+    label: Oeppen & Vaupel (2002) linear rise of life expectancy (closed-form OLS)
+    formula_file: formulas/oeppen_vaupel_2002.py
+    reference_pdf: reference/oeppen_vaupel2002.pdf
+    n_law_constants: 0
+    n_other_constants: 1       # year_center
+    n_local_params: 2          # a, b
+    measured: {rmse: 1.6792, r2: 0.8436}   # mean per-cluster
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         2
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on e0 (years)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted life expectancy rises with calendar year (a sustained secular increase as the year advances)"
+  - "models the rise as a roughly constant-pace, near-linear secular climb with no built-in ceiling or saturation within the observed range"
+  - "predicted life expectancy stays within realistic human-lifespan bounds (a positive number of years, bounded above by a plausible maximum)"
+
+best_baseline: 1.6792     # oeppen_vaupel_2002, mean per-cluster rmse

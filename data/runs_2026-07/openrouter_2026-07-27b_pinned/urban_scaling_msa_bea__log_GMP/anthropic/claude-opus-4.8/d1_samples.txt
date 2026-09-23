@@ -1,0 +1,53 @@
+import numpy as np
+
+def predict(X):
+    # Urban scaling law: GMP ~ N^beta, superlinear scaling (beta ~ 1.12)
+    # ln Y = alpha + beta * ln N
+    beta = 1.12
+    alpha = -4.4
+    log_pop = X[:, 0]
+    return alpha + beta * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_pop = X[:, 0]
+    beta = 1.15          # superlinear urban scaling exponent for economic output
+    intercept = -4.7     # normalization constant (ln million chained-2017 USD)
+    return intercept + beta * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Superlinear scaling of output with city size (urban agglomeration):
+    # ln Y = beta * ln N + c,  with beta ~ 1.12 (increasing returns)
+    beta = 1.12
+    c = -4.53
+    ln_N = X[:, 0]
+    return beta * ln_N + c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Urban scaling law: ln Y = a + beta * ln N, with superlinear exponent beta ~ 1.12
+    beta = 1.12
+    a = -4.4
+    return a + beta * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Urban scaling law: ln Y = ln(a) + beta * ln(N)
+    # Superlinear agglomeration exponent (commonly cited ~1.10-1.15)
+    beta = 1.12
+    ln_a = -4.5
+    log_pop = X[:, 0]
+    return ln_a + beta * log_pop

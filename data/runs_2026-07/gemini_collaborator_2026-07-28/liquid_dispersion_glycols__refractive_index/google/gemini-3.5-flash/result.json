@@ -1,0 +1,26 @@
+{
+  "task": "liquid_dispersion_glycols__refractive_index",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeI",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "cauchy_1836",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "jakubczyk_2023",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

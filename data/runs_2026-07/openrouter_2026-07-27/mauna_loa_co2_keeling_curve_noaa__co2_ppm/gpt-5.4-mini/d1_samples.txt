@@ -1,0 +1,96 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+
+    # Standard Mauna Loa CO2 baseline: a quadratic long-term trend plus fixed seasonal harmonics
+    # (commonly used NOAA-style closed form for monthly mean CO2 at MLO).
+    dt = t - 2000.0
+
+    c = (
+        369.29
+        + 1.4855956 * dt
+        + 0.019369 * dt**2
+        + 3.1966 * np.cos(2.0 * np.pi * (t - 0.8))
+        + 0.4198 * np.sin(2.0 * np.pi * (t - 0.8))
+        + 0.6943 * np.cos(4.0 * np.pi * (t - 0.8))
+        + 0.1034 * np.sin(4.0 * np.pi * (t - 0.8))
+    )
+
+    return c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = np.asarray(X)[:, 0]
+
+    # Commonly used smooth fit for Mauna Loa CO2:
+    # linear trend + annual cycle + semiannual cycle.
+    # Coefficients are representative of the standard monthly-fit form.
+    c0 = 315.0
+    c1 = 1.57  # ppm/yr
+    a1 = 3.10
+    b1 = 1.80
+    a2 = 0.20
+    b2 = 0.10
+
+    phi = 2.0 * np.pi * (t - 1958.0)
+    return (c0
+            + c1 * (t - 1958.0)
+            + a1 * np.cos(phi) + b1 * np.sin(phi)
+            + a2 * np.cos(2.0 * phi) + b2 * np.sin(2.0 * phi))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = np.asarray(X)[:, 0]
+    return 315.98 + 1.35 * (t - 1975.0) + 0.54 * (t - 1975.0) ** 2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = np.asarray(X)[:, 0]
+    # Commonly used NOAA-style Mauna Loa monthly CO2 baseline:
+    # a quadratic trend plus annual and semiannual harmonics.
+    c = (
+        315.98
+        + 1.6314 * (t - 1958.0)
+        + 0.01305 * (t - 1958.0) ** 2
+        - 1.3714 * np.cos(2 * np.pi * t)
+        - 0.2722 * np.sin(2 * np.pi * t)
+        - 0.1693 * np.cos(4 * np.pi * t)
+        - 0.3805 * np.sin(4 * np.pi * t)
+    )
+    return c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    
+    # Classic NOAA/Keeling-style seasonal + trend form for Mauna Loa CO2:
+    # c(t) = a0 + a1*(t - t0) + a2*(t - t0)^2 + a3*(t - t0)^3
+    #        + b1*sin(2πt) + b2*cos(2πt) + b3*sin(4πt) + b4*cos(4πt)
+    #
+    # Coefficients below are a commonly used closed-form approximation
+    # for the monthly Mauna Loa series on the X2019 scale.
+    dt = t - 1958.0
+    
+    return (
+        315.32
+        + 1.6016 * dt
+        + 0.01893 * dt**2
+        - 0.007128 * dt**3
+        + 2.72 * np.sin(2.0 * np.pi * t)
+        - 1.04 * np.cos(2.0 * np.pi * t)
+        - 0.46 * np.sin(4.0 * np.pi * t)
+        - 0.30 * np.cos(4.0 * np.pi * t)
+    )

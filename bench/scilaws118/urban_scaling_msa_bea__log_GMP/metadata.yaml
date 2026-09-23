@@ -1,0 +1,127 @@
+task_id: urban_scaling_msa_bea__log_GMP
+domain: social_science / urban_economics
+license: Public-Domain-US-Gov
+
+# Type II — cluster = census year. Each year's cross-section of 374 US MSAs is
+# a distinct urban system for which the scaling intercept log_Y0 and exponent
+# beta are fitted independently. Within each test cluster (year), the fit window
+# contains the 60% smallest MSAs (by population) and the test window contains
+# the 40% largest MSAs, probing size-extrapolation of the power law.
+type: typeII
+has_group_id: true
+
+context: >-
+  This task is drawn from urban economics, which studies the total economic output of metropolitan areas in relation to their size.
+
+target:
+  name: log_GMP
+  symbol: "ln Y"
+  unit: ln(million USD, chained 2017)
+  description: Natural log of Gross Metropolitan Product in millions of chained 2017 dollars, aggregated from BEA county-level real GDP over OMB 2013 MSA county components.
+  range: [5.87, 14.51]
+
+inputs:
+  - name: log_pop
+    symbol: "ln N"
+    unit: ln(persons)
+    description: Natural log of Metropolitan Statistical Area resident population, aggregated from BEA county-level population over OMB 2013 MSA county components.
+    range: [9.93, 16.86]
+
+# Dataset — three-file v2 Type II layout.
+# Cluster = census year. Train clusters: 2001–2018 (18 years). Test clusters:
+# 2019–2024 (6 years; group_id 0=2019, ..., 5=2024). Within each test cluster,
+# the fit window is the 60% smallest MSAs by population and the test window is
+# the 40% largest MSAs, so the baseline must extrapolate across the size range.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 6732
+n_test_fit: 1344
+n_test_test: 900
+n_clusters_train: 18
+n_clusters_test: 6
+n_msas_per_year: 374
+
+# Audit note: The 4 MSAs missing 2024 data (CBSA codes 14860, 25540, 35300,
+# 35980) are excluded to maintain a balanced panel. This does not affect the
+# core scaling analysis; 374 MSAs represent the full range of US metropolitan
+# sizes from ~20,000 to ~20 million population. The 2013 OMB delineation keeps
+# MSA boundaries fixed across 2001–2024, so cross-year changes in log_GMP and
+# log_pop reflect real economic / demographic change, not boundary redefinitions.
+
+# Reference priors — empirical exponents from Bettencourt 2007 Table 1 (PDF p. 26)
+# and Lobo 2013 Eq. (4) (PDF pp. 2-3); capital income share from Lobo 2013 PDF p. 4.
+priors:
+  - name: beta_GDP_usa
+    value: 1.12
+    unit: dimensionless
+    description: Urban scaling exponent beta for total wages, USA 2002 (Bettencourt et al. 2007, Table 1, PDF p. 26; 95% CI [1.09, 1.13]).
+    source: Bettencourt et al. 2007, PNAS 104(17):7301-7306, Table 1.
+    _role: candidate
+  - name: alpha_capital_share
+    value: 0.30
+    unit: dimensionless
+    description: Capital income share of total metropolitan output; empirically confirmed population-size-independent (correlation approx 0.05) across US MSAs and Micropolitan Areas 1969-2009 (Lobo et al. 2013, PDF p. 4).
+    source: Lobo et al. 2013, PLOS ONE 8(3):e58407, PDF p. 4.
+    _role: candidate
+  - name: beta_wages_usa_2009_2011
+    value: 1.146
+    unit: dimensionless
+    description: Urban scaling exponent for total wages across 943 US urban areas (367 MSAs + 576 Micropolitan), 2009-2011 average; R^2 = 0.97 (Lobo et al. 2013, Eq. 4, PDF pp. 2-3).
+    source: Lobo et al. 2013, PLOS ONE 8(3):e58407, Eq. (4), PDF pp. 2-3.
+    _role: candidate
+  - name: beta_gdp_eu_germany
+    value: 1.13
+    unit: dimensionless
+    description: Urban scaling exponent for GDP in Germany, 2003 (Bettencourt et al. 2007, Table 1, PDF p. 26).
+    source: Bettencourt et al. 2007, PNAS 104(17):7301-7306, Table 1.
+    _role: distractor
+  - name: beta_TFP_size_dependence
+    value: 0.11
+    unit: dimensionless
+    description: Systematic size-dependence of Total Factor Productivity (beta_A approx 0.11); implies TFP grows ~11% per population doubling (Lobo et al. 2013, Eq. 25, abstract).
+    source: Lobo et al. 2013, PLOS ONE 8(3):e58407, abstract and Eq. (25).
+    _role: distractor
+
+# Reference-baseline bank
+references:
+  - id: bettencourt_2007
+    label: Bettencourt et al. 2007 — urban power-law scaling, OLS per year
+    formula_file: formulas/bettencourt_2007.py
+    reference_pdf: reference/bettencourt_2007.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured:
+      rmse: 0.2366
+      r2: 0.9488
+  - id: lobo_2013
+    label: Lobo et al. 2013 — Cobb-Douglas urban scaling, OLS per year (alpha=0.30)
+    formula_file: formulas/lobo_2013.py
+    reference_pdf: reference/lobo_2013_plos.pdf
+    n_law_constants: 1
+    n_other_constants: 0
+    n_local_params: 2
+    measured:
+      rmse: 0.2366
+      r2: 0.9488
+
+caps:
+  max_law_constants: 1
+  max_local_params: 2
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include increasing returns to urban population size, so economic output rises more than proportionally with population"
+  - "represent city-specific productivity advantages or disadvantages as size-adjusted deviations from the population-scaling expectation"
+  - "predicted log_GMP is nondecreasing as log_pop increases"
+
+best_baseline: 0.236563    # bettencourt_2007 — mean per-cluster rmse (lower is better); regenerated 2026-05-30

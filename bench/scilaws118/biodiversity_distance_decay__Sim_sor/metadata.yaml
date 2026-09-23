@@ -1,0 +1,152 @@
+task_id: biodiversity_distance_decay__Sim_sor
+domain: biology / community ecology
+license: CC-BY-4.0
+
+# Type II — cluster = ecological study system (142 kept of 151 datasets).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  In community ecology, taxonomic similarity measures how many species two ecological communities share, here quantified by the occurrence-based Sorensen index.
+
+target:
+  name: Sim_sor
+  symbol: S
+  unit: ""
+  description: >-
+    Mean occurrence-based Sørensen taxonomic similarity of the site
+    pairs in one environmental-distance bin of one ecological dataset;
+    dimensionless, bounded [0, 1].
+  range: [0.0075, 0.8373]
+
+inputs:
+  - name: env_dist
+    symbol: d
+    unit: ""
+    description: >-
+      Mean environmental distance of the site pairs in the bin —
+      Euclidean distance in the dataset's standardised (z-scored)
+      environmental-variable space.
+    range: [0.0011, 11.5947]
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Of the 151 ecological datasets, 142 are kept as clusters; 9 are dropped
+# by a data-side under-sampling filter (< 160 site-pairs — too few to bin
+# reliably at ~16 bins). Each kept dataset's site pairs are aggregated
+# into ~16 environmental-distance bins (one released row per bin: bin-mean
+# Sim_sor vs bin-mean env_dist). Clusters whose group_id is divisible by 5
+# are held out: 114 train clusters / 28 test clusters, disjoint. For each
+# test cluster, fit() sees half its bins (test_fit, even-index in env_dist
+# order) and predict() is scored on the other half (test_test, odd-index)
+# — both halves span the cluster's full environmental-distance range.
+data_files:
+  train:     data/train.csv        # 114 train clusters, all bins
+  test_fit:  data/test_fit.csv     # 28 test clusters, half the bins
+  test_test: data/test_test.csv    # 28 test clusters, the other half
+n_train:          1816
+n_test_fit:        224
+n_test_test:       224
+n_clusters_train:  114
+n_clusters_test:    28
+
+# Candidate prior constants — the `priors` prompt slot. The three
+# reference distance-decay forms fit every parameter per cluster from
+# the test_fit bins; no external constant is load-bearing. The
+# distractors below are real quantities from the distance-decay
+# literature that this benchmark's point-prediction forms do not use.
+priors:
+  - name: jaccard_sorensen_conversion
+    value: 2.0
+    unit: dimensionless
+    description: >-
+      Factor relating the Jaccard and Sørensen similarity indices,
+      S_sor = 2J / (1 + J). Nekola & White (1999) measured similarity
+      with Jaccard's index; this benchmark uses Sørensen. A genuine
+      structural relationship between two similarity measures.
+    source: Nekola & White (1999), PDF p. 5, "Similarity index" section.
+    _role: distractor
+  - name: mantel_significance_threshold
+    value: 0.05
+    unit: dimensionless
+    description: >-
+      Conventional p-value threshold for Mantel-test significance of a
+      distance-decay relationship in the source meta-analysis.
+    source: Graco-Roza et al. (2022), Methods §2.4 — Mantel tests of
+      pairwise dissimilarity-distance matrices.
+    _role: distractor
+  - name: halving_distance_log2
+    value: 0.693147
+    unit: dimensionless
+    description: >-
+      ln 2, appearing in the halving distance d_1/2 of the log-linear
+      decay form (the distance over which similarity drops by half) — a
+      derived diagnostic of a fitted decay curve, not a coefficient of
+      the prediction formula.
+    source: Soininen et al. (2007), PDF p. 3 — log-linear form,
+      d_1/2 = 1 - ln 2 / beta.
+    _role: distractor
+
+# === Reference baselines ===
+# Three distinct functional forms for the distance decay of similarity.
+# All fit two per-cluster parameters (intercept + rate) by closed-form
+# OLS on the test_fit bins. The v1 task carried four formula files, but
+# its gracoroza_2022 and nekola_1999 files were the same exponential
+# point-prediction shape S = exp(alpha + beta*d); they are merged here
+# into the single exponential form.
+references:
+  - id: nekola_exponential
+    label: Exponential distance decay — S = exp(alpha + beta*d) (closed-form OLS in log space)
+    formula_file: formulas/nekola_exponential.py
+    reference_pdf: reference/nekola_1999.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # alpha, beta
+    measured: {r2: 0.6804, rmse: 0.0254}
+  - id: soininen_powerlaw
+    label: Power-law (log-log) distance decay — S = exp(alpha)*d**beta (closed-form OLS in log-log space)
+    formula_file: formulas/soininen_powerlaw.py
+    reference_pdf: reference/soininen_2007.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # alpha, beta
+    measured: {r2: 0.6830, rmse: 0.0269}
+  - id: soininen_linear
+    label: Linear distance decay — S = alpha + beta*d (closed-form OLS)
+    formula_file: formulas/soininen_linear.py
+    reference_pdf: reference/soininen_2007.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # alpha, beta
+    measured: {r2: 0.5297, rmse: 0.0334}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         2
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a distance-decay effect where greater environmental distance lowers community similarity"
+  - "includes a decelerating decline in which similarity drops steeply at small environmental distances and flattens toward larger distances"
+  - "predicted similarity stays within [0, 1]"
+  - "predicted similarity stays strictly positive at every finite environmental distance"
+
+# === Scoring ===
+# r2 (higher-is-better): the prediction unit is a binned distance-decay
+# curve, and the natural question is how much of each cluster's
+# similarity-vs-distance variance the discovered form explains. r2 is
+# scale-free across clusters whose Sim_sor levels differ widely, and the
+# v2 r2 score anchors directly on "predict the cluster mean" (r2 = 0).
+# best_baseline is the mean per-cluster r2 of the strongest reference on
+# test_test (median per-cluster r2 is ~0.81; the mean is pulled down by
+# ~7% of clusters whose binned decay curve the reference form genuinely
+# mispredicts — kept in the test set, not cherry-picked out).
+metric: r2
+best_baseline: 0.6830     # soininen_powerlaw mean per-cluster r2 on test_test

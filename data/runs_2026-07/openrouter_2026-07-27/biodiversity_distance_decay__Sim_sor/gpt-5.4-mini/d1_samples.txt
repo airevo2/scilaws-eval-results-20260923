@@ -1,0 +1,50 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Common decay form for Sørensen similarity with increasing environmental distance:
+    # S = exp(-b * d)
+    b = 1.0
+    return np.exp(-b * d)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Common canonical form for distance-decay of similarity: exponential decay
+    # S = exp(-beta * d)
+    beta = 0.3
+    return np.exp(-beta * d)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Canonical negative exponential decay of similarity with environmental distance
+    S = np.exp(-d)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Standard negative exponential decay of similarity with environmental distance
+    # S = exp(-b * d), with a commonly used canonical choice b = 1
+    return np.exp(-1.0 * d)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Common canonical distance-decay form for similarity: exponential decay
+    # S = exp(-beta * d), bounded in [0, 1]
+    beta = 1.0
+    return np.exp(-beta * d)

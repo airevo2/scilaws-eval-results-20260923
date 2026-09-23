@@ -1,0 +1,223 @@
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the log10 of the solid-liquid distribution coefficient (log_kd) [log10(L/kg)]
+    for PFAS in soil based on chemical and soil properties.
+
+    Inputs:
+    X[:, 0] = MW (g/mol)
+    X[:, 1] = pKa1
+    X[:, 2] = C_num (carbon count)
+    X[:, 3] = F_num (fluorine count)
+    X[:, 4] = F_pct (%)
+    X[:, 5] = log_S (log10 solubility)
+    X[:, 6] = log_Kow (log10 octanol-water partition coefficient)
+    X[:, 7] = pH
+    X[:, 8] = CEC (cmol+/kg)
+    X[:, 9] = Sand (%)
+    X[:, 10] = Silt (%)
+    X[:, 11] = Clay (%)
+    X[:, 12] = Corg (%)
+    X[:, 13] = foc (fraction of organic carbon)
+    """
+    # Extract variables
+    C_num = X[:, 2]
+    log_Kow = X[:, 6]
+    pH = X[:, 7]
+    CEC = X[:, 8]
+    Clay = X[:, 11]
+    foc = np.maximum(X[:, 13], 1e-5)  # Avoid log of zero or negative values
+
+    # Estimate log Koc (organic carbon normalized partition coefficient)
+    # PFAS sorption increases with hydrophobicity (log_Kow) and chain length (C_num),
+    # and decreases with pH due to increasing negative charge of soil surfaces.
+    log_Koc = 0.52 * log_Kow + 0.28 * C_num - 0.17 * pH + 1.35
+
+    # Estimate sorption to the inorganic clay fraction, which is also pH-dependent
+    log_Kd_clay = 0.015 * Clay - 0.12 * pH + 0.08 * np.log10(CEC + 0.1) - 0.6
+
+    # Combine organic carbon partitioning and clay sorption contributions
+    Kd = foc * (10**log_Koc) + (10**log_Kd_clay)
+
+    # Return log10(Kd)
+    return np.log10(Kd)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the log10 of the solid-liquid distribution coefficient (log_kd) [log10(L/kg)]
+    for PFAS in soil based on chemical properties and soil characteristics.
+
+    Inputs:
+    X[:, 0] = MW (g/mol)
+    X[:, 1] = pKa1
+    X[:, 2] = C_num (carbon count)
+    X[:, 3] = F_num (fluorine count)
+    X[:, 4] = F_pct (%)
+    X[:, 5] = log_S (log10(mg/L))
+    X[:, 6] = log_Kow
+    X[:, 7] = pH
+    X[:, 8] = CEC (cmol+/kg)
+    X[:, 9] = Sand (%)
+    X[:, 10] = Silt (%)
+    X[:, 11] = Clay (%)
+    X[:, 12] = Corg (%)
+    X[:, 13] = foc (fraction of organic carbon)
+    """
+    # Extract relevant features
+    C_num = X[:, 2]
+    log_Kow = X[:, 6]
+    pH = X[:, 7]
+    CEC = X[:, 8]
+    Clay = X[:, 11]
+    foc = X[:, 13]
+
+    # Estimate log Koc (organic carbon-normalized partition coefficient)
+    # PFAS sorption strongly increases with chain length (~0.5-0.6 log units per CF2)
+    # and decreases with increasing pH due to electrostatic repulsion of anionic species.
+    log_Koc = 0.52 * C_num + 0.12 * log_Kow - 0.22 * pH + 1.8
+
+    # Convert to Koc
+    Koc = 10**log_Koc
+
+    # Contribution of the inorganic soil fraction (clay and CEC), which becomes
+    # significant in low-foc soils. It is also pH-dependent due to surface charge changes.
+    Kd_inorganic = (0.02 * Clay + 0.01 * CEC) * 10 ** (-0.12 * pH)
+
+    # Total Kd is the sum of organic and inorganic contributions
+    Kd = foc * Koc + Kd_inorganic
+
+    # Ensure no log of zero or negative values
+    Kd = np.maximum(Kd, 1e-5)
+
+    return np.log10(Kd)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of the solid-liquid distribution coefficient (log Kd)
+
+    for PFAS in soil/sediment systems using environmental chemistry relationships.
+
+    Inputs:
+    - X[:, 6]  = log_Kow (primary hydrophobicity descriptor)
+    - X[:, 7]  = pH (controls soil surface charge and PFAS speciation)
+    - X[:, 8]  = CEC (cation exchange capacity)
+    - X[:, 11] = Clay (%)
+    - X[:, 13] = foc (fraction of organic carbon)
+    """
+    log_Kow = X[:, 6]
+    pH = X[:, 7]
+    CEC = X[:, 8]
+    Clay = X[:, 11]
+    foc = X[:, 13]
+
+    # Clip foc to a small positive value to avoid issues in extreme cases
+    foc_clipped = np.clip(foc, 1e-5, 1.0)
+
+    # Hydrophobic organic carbon partitioning (K_oc)
+    # log10(K_oc) decreases with pH due to increased electrostatic repulsion
+    # of anionic PFAS at higher soil pH (typically ~ -0.15 log units per pH unit).
+    log_Koc = 0.63 * log_Kow - 0.15 * (pH - 7.0) + 0.20
+    K_oc = 10**log_Koc
+    Kd_oc = foc_clipped * K_oc
+
+    # Inorganic clay mineral contribution (important in low-foc soils)
+    Kd_clay = 0.002 * Clay * (10 ** (0.30 * log_Kow - 0.08 * (pH - 7.0)))
+
+    # Electrostatic contribution from Cation Exchange Capacity (CEC)
+    Kd_cec = 0.001 * CEC * (10 ** (0.10 * log_Kow))
+
+    # Total distribution coefficient Kd (L/kg) is the sum of partitioning phases
+    Kd = Kd_oc + Kd_clay + Kd_cec
+
+    # Ensure Kd is positive before taking log10
+    Kd = np.maximum(Kd, 1e-5)
+
+    return np.log10(Kd)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of the solid-liquid distribution coefficient (log_kd)
+
+    for PFAS in soil-water systems.
+
+    Inputs:
+    - X[:, 6] = log_Kow (primary hydrophobicity descriptor)
+    - X[:, 7] = pH (controls surface charge and speciation)
+    - X[:, 8] = CEC (cation exchange capacity)
+    - X[:, 11] = Clay (clay content %)
+    - X[:, 13] = foc (fraction of organic carbon)
+    """
+    log_Kow = X[:, 6]
+    pH = X[:, 7]
+    CEC = X[:, 8]
+    Clay = X[:, 11]
+    foc = X[:, 13]
+
+    # Estimate organic carbon partition coefficient (Koc) from Kow
+    log_Koc = 0.70 * log_Kow + 0.40
+    K_oc = 10**log_Koc
+
+    # Estimate mineral phase contribution based on clay content and CEC
+    K_mineral = 0.05 * Clay + 0.01 * CEC
+
+    # Combine organic and inorganic contributions, adjusting for pH.
+    # PFAS sorption decreases at higher pH due to increased electrostatic repulsion
+    # on negatively charged soil surfaces.
+    K_d = (foc * K_oc + K_mineral) * 10 ** (-0.20 * (pH - 5.0))
+
+    # Ensure no log10 of zero or negative values
+    log_Kd = np.log10(np.maximum(K_d, 1e-5))
+
+    return log_Kd
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of the solid-liquid distribution coefficient (log Kd)
+
+    for PFAS in soil/sediment.
+
+    Inputs:
+    - X[:, 6]  = log_Kow (Log10 octanol-water partition coefficient)
+    - X[:, 7]  = pH (Soil solution pH)
+    - X[:, 11] = Clay (Clay mass fraction in soil [%])
+    - X[:, 13] = foc (Fraction of organic carbon)
+    """
+    log_Kow = X[:, 6]
+    pH = X[:, 7]
+    clay = X[:, 11]
+    foc = np.maximum(X[:, 13], 1e-4)  # Clip to prevent log of zero
+
+    # Empirical estimation of log Koc (organic carbon-water partition coefficient)
+    # derived from PFAS sorption literature (e.g., Higgins & Luthy, 2006)
+    log_Koc = 0.79 * log_Kow - 0.11 * pH + 1.25
+
+    # Sorption contributions:
+    # 1. Organic carbon partitioning (dominant phase)
+    Kd_organic = foc * (10**log_Koc)
+
+    # 2. Mineral phase partitioning (clay contribution, significant at low foc)
+    Kd_clay = 0.005 * clay * (10 ** (0.4 * log_Kow))
+
+    # Total Kd is the sum of organic and inorganic contributions
+    log_Kd = np.log10(Kd_organic + Kd_clay)
+
+    return log_Kd

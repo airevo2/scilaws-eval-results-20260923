@@ -1,0 +1,138 @@
+task_id: thermal_performance_curve__pf_utpc
+domain: biology / thermal_physiology
+license: GPL-3.0
+
+# Type II — cluster = one thermal-performance experiment (organism + trait).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  A thermal performance curve, studied in thermal biology and physiological ecology, characterizes how a rate-like biological trait of an organism depends on environmental temperature.
+
+target:
+  name: performance
+  symbol: P
+  unit: ""
+  description: >-
+    Measured value of a rate-like biological trait at a given temperature.
+    Units differ across experiments (the dataset spans 159 distinct trait
+    units) but are consistent within an experiment; each cluster's own scale
+    parameter absorbs its unit.
+  range: [-3.4486, 2775.18]   # released (post-filter) data; raw pre-filter extremes are far wider
+
+inputs:
+  - name: temperature
+    symbol: T
+    unit: degrees Celsius
+    description: Environmental temperature at which the trait was measured.
+    range: [-18.0728, 83.329]   # released (post-filter) data
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# 316 experiments kept (>=14 distinct temperatures, positive variance,
+# positive maximum performance) from the 2,739 raw experiments. Whole
+# experiments are held out for test: every 5th sorted cluster -> 64 test
+# experiments, 252 train experiments. Test experiments are never seen during
+# form discovery; for each test experiment the per-cluster parameters are
+# fitted on test_fit (one interleaved half of its distinct temperatures) and
+# scored on test_test (the other half) — both halves span cold side, peak and
+# hot side of the curve.
+data_files:
+  train:     data/train.csv        # 252 train experiments, all measurements
+  test_fit:  data/test_fit.csv     # 64 test experiments, temperature half A
+  test_test: data/test_test.csv    # 64 test experiments, temperature half B
+n_train:           7010
+n_test_fit:         948
+n_test_test:        913
+n_clusters_train:   252
+n_clusters_test:     64
+
+# Candidate prior constants — the `priors` prompt slot. The reference TPC
+# forms fit every parameter per experiment; no external constant is
+# load-bearing. The entries below are genuine thermal-biology quantities
+# drawn from the reference materials, mixed candidate / distractor: the Q10
+# coefficient is a real ingredient of the Rezende form, while the others are
+# parameters of the Schoolfield enzyme-kinetic model that the benchmark's
+# reference forms deliberately do not use.
+priors:
+  - name: q10_coefficient
+    value: 2.0
+    unit: dimensionless
+    description: >-
+      Q10 temperature coefficient — the factor by which a biological rate
+      multiplies for every 10 degrees C of warming; a generic value used to
+      seed the cold-side exponential rise.
+    source: >-
+      Rezende & Bozinovic (2019) Eq. 2.1 and Table 1, PDF pp. 2,5 — the Q10
+      rule is the thermodynamic component of their TPC; cross-trait medians
+      run ~1.8 (photosynthesis) to ~3.8 (insects).
+    _role: candidate
+  - name: gas_constant_cal
+    value: 1.987
+    unit: cal / (mol K)
+    description: Universal gas constant in calorie units, appearing in Arrhenius/Eyring exponents.
+    source: >-
+      Schoolfield et al. (1981) Eq. 4, PDF pp. 1-4 — R in cal deg^-1 mol^-1.
+      Belongs to the enzyme-kinetic Schoolfield model, not to the UTPC or
+      Rezende reference forms.
+    _role: distractor
+  - name: schoolfield_reference_temperature
+    value: 298.0
+    unit: K
+    description: Reference temperature (25 degrees C) anchoring the Schoolfield reparameterisation.
+    source: >-
+      Schoolfield et al. (1981) Eq. 4, PDF p. 5 — 298 K reference anchor of
+      the enzyme-kinetic model. Not used by the UTPC or Rezende forms.
+    _role: distractor
+
+# === Reference baselines ===
+# Two formulas for the universal thermal performance curve. arnoldi_2025 is
+# the parameter-free UTPC attractor exp(x)*(1-x) in physical units (the
+# strongest reference). rezende_2019 is the mechanistic Q10 x piecewise
+# quadratic denaturation form.
+references:
+  - id: arnoldi_2025
+    label: Universal Thermal Performance Curve — attractor exp(x)*(1-x) in physical units (nonlinear LS)
+    formula_file: formulas/arnoldi_2025.py
+    reference_pdf: reference/arnoldi_2025.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # Pfmax, Topt, Tc
+    measured: {r2: 0.6473, rmse: 0.4267}
+  - id: rezende_2019
+    label: Rezende-Bozinovic mechanistic TPC — Q10 rise times piecewise quadratic denaturation (bounded nonlinear LS)
+    formula_file: formulas/rezende_2019.py
+    reference_pdf: reference/rezende_2019.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # C, Q10, T_th, d
+    measured: {r2: 0.6402, rmse: 0.4227}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes exponential thermodynamic acceleration of performance with warming on the cold side"
+  - "includes high-temperature breakdown or denaturation that collapses performance near an upper thermal limit"
+  - "predicted performance is non-negative at every temperature"
+  - "predicted performance is unimodal with a single temperature optimum"
+  - "predicted performance is zero at and above the critical high temperature"
+
+# === Scoring ===
+# metric: r2. Performance units differ wildly across experiments (the raw
+# target spans eight orders of magnitude), so a pooled absolute-error metric
+# would be dominated by a handful of large-unit clusters. Type II scores each
+# cluster separately and averages; r2 is scale-free within a cluster, so it
+# compares the SHAPE fit fairly across experiments regardless of their units —
+# the natural choice for a universal-shape discovery task.
+metric: r2
+best_baseline: 0.6473     # arnoldi_2025 mean per-cluster r2 on data/test_test.csv

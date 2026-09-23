@@ -1,0 +1,17 @@
+{
+  "task": "pfas_soil_sorption__log_kd",
+  "model": "z-ai/glm-5.2",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "fabregat_2025",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

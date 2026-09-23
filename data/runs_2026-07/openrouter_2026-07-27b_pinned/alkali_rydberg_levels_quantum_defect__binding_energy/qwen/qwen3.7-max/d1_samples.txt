@@ -1,0 +1,64 @@
+import numpy as np
+
+def predict(X):
+    n = X[:, 0]
+    R_inf = 109737.315  # Rydberg constant in cm^-1
+    return R_inf / (n ** 2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    n = X[:, 0]
+    R_y = 109737.315  # Rydberg constant in cm^-1
+    return R_y / (n ** 2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    n = X[:, 0]
+    # Rydberg constant in cm^-1 (hydrogenic limit, as no atom/quantum defect is specified)
+    R_inf = 109737.31568
+    return R_inf / (n**2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    n = X[:, 0]
+    l = X[:, 1]
+    # Rydberg constant (cm^-1)
+    R = 109737.31568
+    # Quantum defects delta_l for Na I (config example 2p6.3s -> Na-like core)
+    # l = 0(s), 1(p), 2(d), 3(f), 4(g), 5(h)
+    delta = np.array([1.373, 0.883, 0.010, 0.001, 0.0, 0.0])
+    l_int = np.clip(l.astype(int), 0, 5)
+    delta_l = delta[l_int]
+    # Rydberg formula: E_bind = R / (n - delta_l)^2
+    return R / (n - delta_l) ** 2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(int)
+
+    # Rydberg constant for Na (mass-corrected), cm^-1
+    R_Na = 109734.70
+
+    # Quantum defects for Na I (asymptotic values, standard literature)
+    delta = np.zeros(len(l), dtype=float)
+    delta[l == 0] = 1.348   # s-series
+    delta[l == 1] = 0.855   # p-series
+    delta[l == 2] = 0.015   # d-series
+    delta[l == 3] = 0.000   # f-series and above: delta ~ 0
+
+    # Rydberg formula: E_bind = R / (n - delta_l)^2
+    E_bind = R_Na / (n - delta) ** 2
+    return E_bind

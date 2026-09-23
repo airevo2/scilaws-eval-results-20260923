@@ -1,0 +1,92 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard cumulative size-frequency distribution (SFD) for near-Earth objects.
+    N(<H) = N_ref * 10^(alpha * (H - H_ref))
+    with alpha derived from the typical complete-regime endpoints:
+      H_low  = 12.0625  -> N_low  = 2
+      H_high = 18.0     -> N_high = 1097
+    """
+    H = X[:, 0]
+    H_ref = 12.0625
+    N_ref = 2.0
+    H_max = 18.0
+    N_max = 1097.0
+
+    # Slope of the cumulative exponential SFD
+    alpha = np.log10(N_max / N_ref) / (H_max - H_ref)
+
+    return N_ref * 10.0 ** (alpha * (H - H_ref))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X: 2-D array, shape (n, 1), where X[:, 0] = H_upper (mag)
+    H = X[:, 0]
+    # Cumulative number N(<H) = 10^{a + b*H}
+    # Coefficients derived from the given range: N ~ 2 at H=12, N ~ 1097 at H=18
+    # log10(2) ≈ 0.30103, log10(1097) ≈ 3.04018
+    a = -5.177262   # intercept
+    b = 0.456524    # slope
+    log10_N = a + b * H
+    return np.power(10.0, log10_N)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict cumulative count of near-Earth objects N(<H) for absolute magnitude H.
+    N(<H) = 10^(alpha * H + beta), fitted to N(12)=2, N(18)=1097.
+    """
+    H_upper = X[:, 0]
+    # Endpoints from the problem statement
+    H1, N1 = 12.0, 2.0
+    H2, N2 = 18.0, 1097.0
+    # Slope and intercept in log10 space
+    alpha = (np.log10(N2) - np.log10(N1)) / (H2 - H1)
+    beta  = np.log10(N1) - alpha * H1
+    return np.power(10.0, alpha * H_upper + beta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict cumulative count of NEOs with absolute magnitude H <= H_upper.
+    Standard exponential cumulative size-frequency distribution: N(<H) = 10**(a * H + b).
+    Coefficients are fitted to the complete regime H in [12.0625, 18.0] mag,
+    spanning counts from ~2 to ~1097.
+    """
+    H_upper = X[:, 0]
+    # Slope and intercept for log10(N) = a * H + b
+    a = 0.461334
+    b = -5.263
+    # Equivalent form: N(<H) = 2 * 10**(a * (H_upper - 12.0625))
+    return np.power(10.0, a * H_upper + b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict cumulative number of near-Earth objects N(<H) for given
+    upper-edge absolute magnitude H_upper.
+
+    Standard exponential SFD:  N(<H) = N0 * 10^(alpha * (H - H0))
+    with canonical values:
+        alpha = 0.5  mag^{-1}  (slope of log10 cumulative count vs. H)
+        H0    = 18.0 mag       (reference magnitude)
+        N0    = 1000           (approx. number of NEOs with H <= 18)
+    """
+    alpha = 0.5
+    H0 = 18.0
+    N0 = 1000.0
+    H_upper = X[:, 0]
+    return N0 * np.power(10.0, alpha * (H_upper - H0))

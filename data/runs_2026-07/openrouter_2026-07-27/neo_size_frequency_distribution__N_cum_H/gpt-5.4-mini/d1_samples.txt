@@ -1,0 +1,64 @@
+import numpy as np
+
+def predict(X):
+    H = np.asarray(X)[:, 0]
+    # Standard exponential NEO cumulative magnitude distribution:
+    # N(<H) = N0 * 10^(alpha * (H - H0))
+    # Using a commonly cited normalization for near-Earth objects in the complete regime.
+    N0 = 3.8
+    alpha = 0.35
+    H0 = 13.0
+    return N0 * 10.0 ** (alpha * (H - H0))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    H = np.asarray(X)[:, 0]
+    # Standard cumulative NEO size-frequency distribution in absolute magnitude:
+    # N(<H) = N0 * 10^(alpha * (H - H0))
+    # Using a commonly cited canonical NEO cumulative slope with normalization at H=17.
+    N0 = 1000.0
+    alpha = 0.35
+    H0 = 17.0
+    return N0 * 10.0 ** (alpha * (H - H0))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    H = np.asarray(X)[:, 0]
+    # Commonly used cumulative NEO size-distribution form:
+    # log10 N(<H) = a + b H
+    # with a standard representative normalization/slope for the cataloged NEO cumulative SFD.
+    a = -3.3
+    b = 0.35
+    return 10.0 ** (a + b * H)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    H = np.asarray(X)[:, 0]
+    # Commonly used cumulative NEO size distribution:
+    # N(<H) = 10^(a + b H)
+    # A widely cited approximation for near-Earth objects is:
+    # log10 N(<H) = -3.88 + 0.35 H
+    return 10.0 ** (-3.88 + 0.35 * H)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    H = np.asarray(X)[:, 0]
+    # Commonly used cumulative NEO size-frequency relation in absolute magnitude:
+    # N(<H) = N0 * 10^(alpha * (H - H0))
+    # with a representative modern fit normalized near H=18.
+    N0 = 1097.0
+    H0 = 18.0
+    alpha = 0.35
+    return N0 * 10.0 ** (alpha * (H - H0))

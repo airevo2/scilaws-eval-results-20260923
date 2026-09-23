@@ -1,0 +1,102 @@
+import numpy as np
+
+def predict(X):
+    # Standard PV power translation equation (single reference-point model):
+    #   P_mp = (G / G_ref) * P_mp_ref * [1 + gamma * (T_c - T_ref)]
+    # This is the most commonly cited closed-form relationship for module DC
+    # power at the maximum-power point.
+
+    G   = X[:, 0]   # plane-of-array irradiance [W/m^2]
+    Tc  = X[:, 1]   # back-of-cell module temperature [deg C]
+    # WS  = X[:, 2] # wind speed (not needed; Tc measured directly)
+    # AM  = X[:, 3] # air mass (second-order spectral effect, neglected)
+
+    # Reference (STC) conditions
+    G_ref     = 1000.0     # W/m^2
+    T_ref     = 25.0       # deg C
+    P_mp_ref  = 280.0      # W, per-module rated maximum power
+    gamma     = -0.0045    # 1/deg C, temperature coefficient of P_mp
+
+    P_mp = (G / G_ref) * P_mp_ref * (1.0 + gamma * (Tc - T_ref))
+
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard PV translation (STC-referenced) equation for maximum-power point:
+    #   P_mp = P_mp_ref * (G/G_ref) * [1 + gamma * (T_c - T_ref)]
+    # This is the most commonly cited closed-form Pmp model
+    # (e.g. the linear "power translation" form used in IEC 60891 / PVUSA-style models).
+    G   = X[:, 0]     # plane-of-array irradiance [W/m2]
+    T_c = X[:, 1]     # module (back-of-cell) temperature [deg C]
+
+    # Reference (Standard Test Conditions) constants
+    G_ref    = 1000.0     # W/m2
+    T_ref    = 25.0       # deg C
+    P_mp_ref = 280.0      # per-module nameplate DC power at STC [W]
+    gamma    = -0.0045    # power temperature coefficient [1/deg C]
+
+    P_mp = P_mp_ref * (G / G_ref) * (1.0 + gamma * (T_c - T_ref))
+
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard PVWatts-style maximum-power-point model:
+    # P_mp = (G / G_ref) * P_mp,ref * [1 + gamma * (T_c - T_ref)]
+    G   = X[:, 0]          # plane-of-array irradiance [W/m^2]
+    Tc  = X[:, 1]          # module (back-of-cell) temperature [deg C]
+
+    # Reference (STC) conditions
+    G_ref   = 1000.0       # W/m^2
+    T_ref   = 25.0         # deg C
+    P_ref   = 230.0        # per-module Pmp at STC [W]
+    gamma   = -0.0045      # power temperature coefficient [1/deg C]
+
+    P_mp = (G / G_ref) * P_ref * (1.0 + gamma * (Tc - T_ref))
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard PV power translation equation (irradiance + temperature correction):
+    #   P_mp = (G / G_ref) * P_mp_ref * [1 + gamma * (T_c - T_ref)]
+    G   = X[:, 0]   # plane-of-array irradiance [W/m^2]
+    T_c = X[:, 1]   # module (cell) temperature [deg C]
+
+    # Standard Test Conditions reference values
+    G_ref     = 1000.0    # W/m^2
+    T_ref     = 25.0      # deg C
+    P_mp_ref  = 280.0     # W  (per-module rated power at STC)
+    gamma     = -0.0045   # 1/deg C (temperature coefficient of P_mp)
+
+    P_mp = (G / G_ref) * P_mp_ref * (1.0 + gamma * (T_c - T_ref))
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G   = X[:, 0]   # W/m^2
+    Tc  = X[:, 1]   # deg C
+
+    # Reference (STC) conditions
+    G_ref = 1000.0        # W/m^2
+    T_ref = 25.0          # deg C
+    P_ref = 290.0         # W, per-module rated max-power at STC
+    gamma = -0.0045       # 1/degC, power temperature coefficient
+
+    # Standard PVWatts-style closed-form:
+    # linear in irradiance, linear temperature correction
+    P_mp = P_ref * (G / G_ref) * (1.0 + gamma * (Tc - T_ref))
+
+    return P_mp

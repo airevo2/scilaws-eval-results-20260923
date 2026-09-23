@@ -1,0 +1,83 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract relevant columns
+    M1 = X[:, 0]   # gravitational mass of primary [M_sun]
+    M2 = X[:, 1]   # gravitational mass of secondary [M_sun]
+    C1 = X[:, 4]   # compactness of primary
+    C2 = X[:, 5]   # compactness of secondary
+
+    # Fitted coefficients from the commonly cited Foucart et al. (2018) formula
+    a = 0.007
+    b = 0.004
+    c = 0.003
+
+    # Dynamical ejecta mass [M_sun]
+    term1 = a * (M1 / M2) ** (-1.0 / 3.0) * (1.0 - 2.0 * C1) / C1
+    term2 = b * (M2 / M1) * (1.0 - 2.0 * C2) / C2
+    term3 = c * C1
+
+    Mej = M1 * (term1 - term2 + term3)
+    return Mej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the dynamical ejecta mass M_ej using the standard closed-form
+    fitting formula from Kawaguchi et al. (2016, ApJ, 825, 52).
+
+    Formula:
+        M_ej = 1e-4 * (a*q + b) * (c*(1 - 2*C2)/C2 + d) * M2
+
+    where:
+        a = 2.00
+        b = 0.446
+        c = 2.20
+        d = 0.860
+
+    Inputs:
+        X[:, 0] = M1   (gravitational mass of primary, M_sun)
+        X[:, 1] = M2   (gravitational mass of secondary, M_sun)
+        X[:, 2] = Mb1  (baryonic mass of primary, M_sun)
+        X[:, 3] = Mb2  (baryonic mass of secondary, M_sun)
+        X[:, 4] = C1   (compactness of primary)
+        X[:, 5] = C2   (compactness of secondary)
+        X[:, 6] = q    (mass ratio, M2/M1)
+        X[:, 7] = Lambda_tilde (effective tidal deformability)
+
+    Returns:
+        1-D array of M_ej in solar masses.
+    """
+    M2 = X[:, 1]
+    C2 = X[:, 5]
+    q = X[:, 6]
+
+    a = 2.00
+    b = 0.446
+    c = 2.20
+    d = 0.860
+
+    # Avoid division by zero (C2 is never exactly zero in the typical range)
+    term1 = a * q + b
+    term2 = c * (1.0 - 2.0 * C2) / C2 + d
+
+    M_ej = 1e-4 * term1 * term2 * M2
+
+    # Enforce non-negativity
+    M_ej = np.maximum(M_ej, 0.0)
+
+    return M_ej
+
+=====
+
+
+
+=====
+

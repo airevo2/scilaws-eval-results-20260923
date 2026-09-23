@@ -1,0 +1,117 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the indentation force (F) using the Hertzian contact model
+
+    for a spherical probe on a flat elastic half-space.
+
+    Parameters:
+    X : 2-D numpy array
+        X[:, 0] = indentation depth (delta) [m]
+        X[:, 1] = probe radius (R) [m]
+
+    Returns:
+    F : 1-D numpy array
+        Indentation force [N]
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    # Effective Young's modulus (E*) in Pa.
+    # A typical value for soft biological samples (e.g., cells or embryos) is ~1 kPa.
+    E_star = 1000.0
+
+    # Hertz model: F = (4/3) * E* * R^(1/2) * delta^(3/2)
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * (np.maximum(delta, 0) ** 1.5)
+
+    return F
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = indentation depth (delta) [m]
+    # X[:, 1] = probe radius (R) [m]
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    # Hertzian contact model for a spherical indenter on a flat elastic half-space:
+    # F = (4/3) * E_star * sqrt(R) * delta^(1.5)
+    # For soft biological samples (such as zebrafish embryos in the zef18 dataset),
+    # a typical reduced Young's modulus E* is on the order of 1 kPa (1000 Pa).
+    E_star = 1000.0  # [Pa]
+
+    # Ensure indentation is positive (contact regime)
+    delta_pos = np.maximum(delta, 0.0)
+
+    # Calculate force
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * (delta_pos**1.5)
+
+    return F
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs
+    delta = X[:, 0]  # Indentation depth (m)
+    R = X[:, 1]  # Spherical probe radius (m)
+
+    # Effective Young's modulus E* (in Pascals)
+    # For biological tissues/cells (such as zebrafish embryos), E* typically ranges from 100 to 2000 Pa.
+    # We define a representative value of 1000.0 Pa.
+    E_star = 1000.0
+
+    # Hertzian contact mechanics model for a spherical indenter
+    force_N = (4.0 / 3.0) * E_star * np.sqrt(R) * (delta**1.5)
+
+    return force_N
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = indentation depth (delta) [m]
+    # X[:, 1] = spherical probe radius (R) [m]
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    # Effective Young's modulus (E*) in Pascals [Pa].
+    # For biological samples like zebrafish embryos, a typical E* is around 1 kPa.
+    E_star = 1000.0
+
+    # Hertz model for a spherical indenter: F = (4/3) * E* * R^(1/2) * delta^(3/2)
+    # We use np.maximum to ensure no negative values under the fractional power
+    delta_safe = np.maximum(delta, 0.0)
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * (delta_safe**1.5)
+
+    return F
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = indentation depth (delta) [m]
+    # X[:, 1] = spherical probe radius (R) [m]
+    delta = np.maximum(X[:, 0], 0.0)
+    R = X[:, 1]
+
+    # Hertzian contact mechanics model for a spherical indenter:
+    # F = (4/3) * E_star * sqrt(R) * delta^(1.5)
+    # Where E_star is the effective Young's modulus.
+    # For typical soft biological samples (e.g., cells or tissues),
+    # we assume a representative effective Young's modulus E_star ≈ 1.0 kPa (1000 Pa).
+    E_star = 1000.0  # [Pa]
+
+    force_N = (4.0 / 3.0) * E_star * np.sqrt(R) * (delta**1.5)
+    return force_N

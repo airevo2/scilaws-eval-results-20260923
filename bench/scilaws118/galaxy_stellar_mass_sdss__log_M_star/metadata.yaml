@@ -1,0 +1,192 @@
+task_id: galaxy_stellar_mass_sdss__log_M_star
+domain: astronomy / galaxies
+license: Public Domain
+
+# Type I — each galaxy is an independent row; all baselines use globally fixed
+# coefficients with no per-galaxy free parameters.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no column listing, no constants.
+context: >-
+  In galaxy evolution studies, a galaxy's stellar mass is the total mass locked in its stars, inferred from the galaxy's observed light rather than weighed directly.
+
+target:
+  name: log_M_star
+  symbol: "log₁₀ M⋆"
+  unit: dex
+  description: >-
+    Log base-10 of total galaxy stellar mass in solar masses, estimated by the
+    MPA-JHU pipeline via Bayesian spectral fitting of the 4000 Angstrom break
+    strength and the Hδ_A absorption index under the Kroupa initial mass function.
+  range: [7.02, 12.48]   # train [7.029926, 12.46617]; test [8.118873, 12.46157]; round outward
+
+inputs:
+  - name: u
+    symbol: "u"
+    unit: mag
+    description: >-
+      Galactic-extinction-corrected SDSS u-band apparent model magnitude on the AB system.
+    range: [15.36, 22.96]   # full: [15.36988, 22.94913]; round outward
+  - name: g
+    symbol: "g"
+    unit: mag
+    description: >-
+      Galactic-extinction-corrected SDSS g-band apparent model magnitude on the AB system.
+    range: [14.86, 22.52]   # full: [14.86303, 22.51956]
+  - name: r
+    symbol: "r"
+    unit: mag
+    description: >-
+      Galactic-extinction-corrected SDSS r-band apparent model magnitude on the AB system.
+    range: [14.41, 21.92]   # full: [14.41012, 21.91952]
+  - name: i
+    symbol: "i"
+    unit: mag
+    description: >-
+      Galactic-extinction-corrected SDSS i-band apparent model magnitude on the AB system.
+    range: [14.08, 21.97]   # full: [14.08313, 21.96579]
+  - name: z_mag
+    symbol: "z"
+    unit: mag
+    description: >-
+      Galactic-extinction-corrected SDSS z-band apparent model magnitude on the AB system.
+      Column named z_mag to avoid ambiguity with the redshift symbol z.
+    range: [13.76, 21.96]   # full: [13.76824, 21.95789]
+  - name: redshift
+    symbol: "z"
+    unit: ""
+    description: >-
+      Spectroscopic redshift of the galaxy measured by the SDSS spectrograph.
+    range: [0.02, 0.31]   # full: [0.020002, 0.299998]; round outward
+  - name: DM
+    symbol: "μ"
+    unit: mag
+    description: >-
+      Distance modulus computed from spectroscopic redshift under a flat LCDM
+      cosmology (H0=70 km/s/Mpc, Omega_m=0.3, Omega_Lambda=0.7), enabling
+      conversion from apparent to absolute magnitudes.
+    range: [34.69, 40.96]   # full: [34.6972, 40.9555]; round outward
+
+# Dataset — Type I two-file layout
+# FM G1-borderline upgrade (2026-05-26, wave-3 subagent K finding + wave-4 subagent O fix):
+#   Split axis changed from redshift to DM (distance modulus).
+#   DM is a monotone bijection of redshift under flat LCDM, so the 80/20 partition
+#   is identical; all baseline metrics are unchanged.  DM ∈ USED_INPUTS for all three
+#   baselines (bell_2003, taylor_2011, zibetti_2009), so the OOD axis now directly
+#   matches the formula inputs — G1-CLEAN (no longer G1-borderline).
+data_files:
+  train: data/train.csv   # galaxies with DM < p80 = 39.3857 mag (low-distance, well-sampled regime)
+  test:  data/test.csv    # galaxies with DM >= p80 (high-DM tail; Malmquist-biased)
+n_train: 160000
+n_test:  40000
+
+# Audit note (not shown to SR system):
+# The test set is a Malmquist-biased OOD slice (DM>=39.386 mag, mean log_M_star=11.13
+# vs 10.49 in train). bell_2003 and zibetti_2009 have negative pooled R2 on the
+# test set (R2=-1.16 and -0.95 respectively) due to: (1) large systematic bias
+# (+0.56 and +0.49 dex) from IMF mismatch (bell_2003 diet-Salpeter vs Kroupa
+# target) and OOD k-correction residuals; (2) the test-set mean is 0.64 dex above
+# the train mean, so the test variance (std=0.41 dex) is small relative to the
+# formula biases. Per data_spec §9.14, negative pooled R2 in a genuine OOD slice
+# is a valid benchmark signal. taylor_2011 achieves R2=0.40 (Chabrier IMF,
+# calibrated at similar z, smaller bias +0.24 dex). The bell_2003 systematic bias
+# is intentional calibration-crudeness (data_spec §9.6 framing) — the formula is
+# shipped paper-faithful under diet-Salpeter IMF; subtract 0.15 dex for Kroupa.
+
+# Reference-baseline bank
+references:
+  - id: bell_2003
+    label: "Bell et al. 2003 — i-band / g-r colour M/L calibration (Table A7, diet-Salpeter IMF)"
+    formula_file: formulas/bell_2003.py
+    reference_pdf: reference/bell_2003.pdf
+    n_law_constants:   2   # a_i, b_i
+    n_other_constants: 2   # c, M_sun_i
+    n_local_params:    0
+    measured:
+      rmse: 0.5958
+      r2: -1.1574
+    # §9.14 OOD: diet-Salpeter IMF mismatch + K-correction residuals at z>=0.158; +0.56 dex systematic bias. Per-baseline disclosure (relay-C proposed §E6).
+  - id: taylor_2011
+    label: "Taylor et al. 2011 GAMA — i-band / g-i colour calibration (Eq. 7+8, Chabrier IMF)"
+    formula_file: formulas/taylor_2011.py
+    reference_pdf: reference/taylor_2011.pdf
+    n_law_constants:   2   # a, b
+    n_other_constants: 2   # c, M_sun_i
+    n_local_params:    0
+    measured:
+      rmse: 0.3150
+      r2: 0.3968
+  - id: zibetti_2009
+    label: "Zibetti et al. 2009 — i-band / g-i colour M/L calibration (Table B1, Chabrier IMF)"
+    formula_file: formulas/zibetti_2009.py
+    reference_pdf: reference/zibetti_2009.pdf
+    n_law_constants:   2   # a_i, b_i
+    n_other_constants: 2   # c, M_sun_i
+    n_local_params:    0
+    measured:
+      rmse: 0.5663
+      r2: -0.9493
+    # §9.14 OOD: Chabrier IMF calibration at low-z + DR17 K-correction residuals; +0.49 dex systematic bias on Malmquist-biased z>=0.158 test slice. Per-baseline disclosure (relay-C proposed §E6).
+
+caps:
+  max_law_constants:       2
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "increases the stellar mass-to-light ratio for redder broadband optical colours"
+  - "uses distance-corrected i-band luminosity to set the stellar-mass scale"
+  - "predicted log stellar mass increases when an otherwise identical galaxy is made brighter in every band at fixed distance modulus"
+  - "predicted log stellar mass increases with distance modulus for fixed apparent magnitudes and colours"
+
+best_baseline: 0.315019    # taylor_2011 — rmse (lower is better); regenerated 2026-05-30
+
+# Prior constants — a small grounded set from reference papers.
+# Candidates are consumed by the baselines; distractors appear in the papers
+# but are not used by the shipped formulas.
+priors:
+  # FM C12 fix (2026-05-26): removed all 5 leaking priors:
+  #   - log_ML_intercept_bell_i_gr=-0.222 (Bell 2003 LAW_CONSTANTS a_i): EMPIRICAL_FIT
+  #   - log_ML_slope_bell_i_gr=0.864 (Bell 2003 LAW_CONSTANTS b_i): EMPIRICAL_FIT
+  #   - taylor_slope_gi=0.70 (Taylor 2011 LAW_CONSTANTS b): EMPIRICAL_FIT
+  #   - zibetti_slope_i_gi=1.032 (Zibetti 2009 LAW_CONSTANTS b_i): EMPIRICAL_FIT
+  #   - M_sun_i_AB=4.58: building-block BUT in OTHER_CONSTANTS of all 3 formula files;
+  #     removing it achieves fully CLEAN audit status (solar_g_AB / solar_r_AB are
+  #     equivalent other-band references that don't overlap any formula constant).
+  # Added solar_g_AB=5.11 and solar_r_AB=4.65 (Willmer 2018; not in any formula constant)
+  # as distractors that hint the solar magnitude scale without directly giving M_sun_i.
+  # Retained imf_offset_salpeter_to_kroupa=0.15 as a distractor (Bell 2003).
+  - name: solar_g_AB
+    value: 5.11
+    unit: mag
+    description: >-
+      g-band AB solar absolute magnitude (Willmer 2018 Table 3). Used in g-band or
+      g-r colour based M/L estimates; not consumed by the shipped i-band formulas.
+    source: "Willmer 2018, ApJS 236 47, Table 3."
+    _role: distractor
+  - name: solar_r_AB
+    value: 4.65
+    unit: mag
+    description: >-
+      r-band AB solar absolute magnitude (Willmer 2018 Table 3). Relevant for r-band
+      M/L calibrations; not consumed by the shipped i-band formulas.
+    source: "Willmer 2018, ApJS 236 47, Table 3."
+    _role: distractor
+  - name: imf_offset_salpeter_to_kroupa
+    value: 0.15
+    unit: dex
+    description: >-
+      Logarithmic stellar-mass offset to convert diet-Salpeter IMF masses to
+      Kroupa/Kennicutt IMF masses. Bell 2003 Table A7 note: "subtract 0.15 dex for
+      Kennicutt or Kroupa IMF". Not consumed by any formula's LAW or OTHER constants
+      (the formulas are shipped with their original IMF without this correction).
+    source: "Bell et al. 2003, Table A7 note, PDF p. 22."
+    _role: distractor

@@ -1,0 +1,275 @@
+import numpy as np
+
+def predict(X):
+    # Unpack inputs
+    T         = X[:, 0]   # Temperature [K]
+    log10_Mw  = X[:, 1]   # log10 weight-average molecular weight [log10(g/mol)]
+    shear_rate = X[:, 2]  # shear rate [s^-1], 0 for zero-shear
+    Tg        = X[:, 3]   # glass-transition temperature [K]
+
+    # ---- Standard model parameters ----
+    # WLF temperature shift (universal constants for many polymers)
+    C1 = 17.44
+    C2 = 51.6   # [K]
+
+    # Molecular weight dependence
+    log10_Mc = 4.0           # log10 of critical molecular weight for entanglements
+    alpha    = 3.4           # exponent above Mc (~ 3.4)
+    log10_eta0_ref = 13.0    # log10(viscosity [poise]) at T=Tg and Mw=Mc
+
+    # Shear-thinning Cross model parameters
+    tau_star = 1.0e4         # critical shear stress [Pa]
+    m = 0.7                  # exponent in Cross equation (typical n=0.3 => m=1-n=0.7)
+
+    # ---- Zero-shear viscosity ----
+    # 1) Mw contribution (piecewise linear/exponential law)
+    log10_diff = log10_Mw - log10_Mc
+    # For Mw <= Mc : exponent = 1  (Rouse)
+    # For Mw >  Mc : exponent = alpha (entangled)
+    log10_eta0_M = np.where(
+        log10_Mw <= log10_Mc,
+        log10_eta0_ref + log10_diff,               # exponent = 1
+        log10_eta0_ref + alpha * log10_diff        # exponent = 3.4
+    )
+
+    # 2) WLF temperature shift
+    delta_T = T - Tg
+    log10_aT = -C1 * delta_T / (C2 + delta_T)      # a_T = η(T)/η(Tg)
+
+    # 3) Zero-shear viscosity (log10 poise)
+    log10_eta0 = log10_eta0_M + log10_aT
+    eta0_poise = 10.0**log10_eta0                  # in poise
+    eta0_Pa_s  = eta0_poise / 10.0                 # convert to Pa·s
+
+    # ---- Apply Cross shear-thinning model ----
+    # η(γ̇) = η0 / (1 + (η0 * γ̇ / τ*)^m)
+    # Use Pa·s units throughout for the dimensionless group
+    # Handle zero shear rate safely (denominator = 1)
+    with np.errstate(divide='ignore', over='ignore'):
+        # For γ̇ = 0 the group is 0, no problem
+        group = eta0_Pa_s * shear_rate / tau_star
+    eta_Pa_s = eta0_Pa_s / (1.0 + group**m)
+
+    # Convert back to log10 poise
+    log10_eta = np.log10(eta_Pa_s * 10.0)   # 1 Pa·s = 10 poise
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(viscosity in poise) for homopolymer melts using the
+    WLF temperature dependence, 3.4-power molecular weight dependence,
+    and Carreau-Yasuda shear thinning.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 4)
+        Columns:
+            0 : Temperature_K (T) [K]
+            1 : log10_Mw (log10(Mw)) [log10(g/mol)]
+            2 : Shear_Rate (γ̇) [s^-1] (0 for zero-shear)
+            3 : Tg_K (Tg) [K] — glass-transition temperature
+
+    Returns
+    -------
+    log10_eta : np.ndarray, shape (n,)
+        log10(viscosity) in poise.
+    """
+    T = X[:, 0]
+    log10Mw = X[:, 1]
+    shear_rate = X[:, 2]
+    Tg = X[:, 3]
+
+    # ---------- model constants ----------
+    # WLF universal constants at Tg
+    C1 = 17.44
+    C2 = 51.6            # K
+
+    # critical molecular weight for entanglement (g/mol)
+    Mc = 20000.0
+    log10_Mc = np.log10(Mc)
+
+    # log10(viscosity) at Tg and Mw = Mc (poise)
+    log10_eta_Tg_Mc = 13.0
+
+    # Carreau-Yasuda parameters
+    G0 = 1e6              # plateau modulus in dyne/cm^2 (poise = dyne·s/cm^2)
+    n_shear = 0.5         # power-law index
+    a_yasuda = 2.0        # Yasuda exponent
+
+    # ---------- zero-shear viscosity ----------
+    # molecular weight exponent: 3.4 for entangled, 1.0 for unentangled
+    Mw = 10.0 ** log10Mw
+    exponent = np.where(Mw > Mc, 3.4, 1.0)
+
+    log10_eta0_Tg = log10_eta_Tg_Mc + exponent * (log10Mw - log10_Mc)
+
+    # WLF temperature shift: log10(eta(T)/eta(Tg))
+    delta_T = T - Tg
+    wlf_shift = -C1 * delta_T / (C2 + delta_T)
+
+    log10_eta0 = log10_eta0_Tg + wlf_shift
+    eta0 = 10.0 ** log10_eta0
+
+    # ---------- shear thinning (Carreau-Yasuda) ----------
+    # eta = eta0 / [1 + (eta0 * gamma_dot / G0)^a]^((1-n)/a)
+    exponent_shear = (1.0 - n_shear) / a_yasuda
+    term = (eta0 * shear_rate / G0) ** a_yasuda
+    eta = eta0 / (1.0 + term) ** exponent_shear
+
+    return np.log10(eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(melt viscosity) in poise using a standard Carreau-Yasuda model
+    combined with WLF temperature dependence (reference temperature = Tg + 50 K).
+    """
+    T = X[:, 0]          # Temperature (K)
+    logMw = X[:, 1]      # log10(weight-average molecular weight) (g/mol)
+    shear_rate = X[:, 2]  # shear rate (s^-1), 0 for zero-shear
+    Tg = X[:, 3]          # glass-transition temperature (K)
+
+    # WLF constants for Tref = Tg + 50 K (universal values)
+    C1 = 8.86
+    C2 = 101.6
+
+    # Reference state at Tref = Tg + 50 K
+    Tref = Tg + 50.0
+    # log10(eta0) at Tref: scaling with Mw^3.4; constant chosen to give realistic
+    # melt viscosities (~10^4 poise for Mw=1e5 g/mol at Tref)
+    log10_eta0_ref = -12.6 + 3.4 * logMw
+
+    # WLF shift factor: log10(a_T) = log10(eta(T)/eta(Tref))
+    shift_log = -C1 * (T - Tref) / (C2 + T - Tref)
+    log10_eta0 = log10_eta0_ref + shift_log
+
+    # Shear thinning: Carreau-Yasuda model
+    lambda0 = 0.1       # characteristic relaxation time at Tref (s)
+    n = 0.3             # power-law index
+    a = 2.0             # Yasuda exponent
+
+    # relaxation time at current temperature
+    lambda_T = lambda0 * 10.0 ** shift_log
+
+    # Carreau-Yasuda shear factor
+    shear_factor = ((n - 1.0) / a) * np.log10(1.0 + (lambda_T * shear_rate) ** a)
+
+    log10_eta = log10_eta0 + shear_factor
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(melt viscosity) in poise using the Carreau–WLF model.
+    
+    X columns:
+    0: Temperature_K (T) [K]
+    1: log10_Mw (log10(Mw)) [log10(g/mol)]
+    2: Shear_Rate (γ̇) [s^-1]
+    3: Tg_K (Tg) [K]
+    """
+    T = X[:, 0]
+    logMw = X[:, 1]
+    shear_rate = X[:, 2]
+    Tg = X[:, 3]
+
+    # WLF shift factor (universal constants, T_ref = Tg + 50 K)
+    C1 = 8.86
+    C2 = 101.6          # K
+    T_ref = Tg + 50.0
+    log_aT = -C1 * (T - T_ref) / (C2 + T - T_ref)
+
+    # Molecular weight exponent (entanglement regime)
+    alpha = 3.4
+
+    # Carreau model parameters
+    n = 0.3      # power-law index
+    a = 2.0      # Yasuda exponent (Carreau = 2)
+
+    # Fitted prefactors (illustrative values)
+    log10_K = -12.0        # log10(zero-shear viscosity prefactor) [poise]
+    log10_lambda0 = -4.0   # log10(relaxation time prefactor) [s]
+
+    # Zero-shear viscosity (log10)
+    log10_eta0 = log10_K + alpha * logMw + log_aT
+
+    # Relaxation time (log10)
+    log10_lambda = log10_lambda0 + alpha * logMw + log_aT
+    lambda_T = 10 ** log10_lambda
+
+    # Carreau model: eta = eta0 * (1 + (lambda_T * shear_rate)^a)^((n-1)/a)
+    log10_eta = log10_eta0 + ((n - 1) / a) * np.log10(1 + (lambda_T * shear_rate) ** a)
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(melt viscosity) in poise using the standard Carreau model
+    with WLF temperature shift factor and a 3.4 power-law molecular weight
+    dependence.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 4)
+        Columns:
+        0: Temperature_K (T) [K]
+        1: log10_Mw [log10(g/mol)]
+        2: Shear_Rate (γ̇) [s⁻¹]
+        3: Tg_K (Tg) [K]
+
+    Returns
+    -------
+    log10_eta : np.ndarray, shape (n,)
+        Base-10 logarithm of viscosity in poise.
+    """
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    shear_rate = X[:, 2]
+    Tg = X[:, 3]
+
+    # Universal WLF constants for T_ref = Tg + 50 K
+    C1 = 8.86
+    C2 = 101.6           # K
+    T_ref_offset = 50.0   # K
+
+    # Carreau model parameters
+    K = 1e-14             # poise, zero-shear viscosity prefactor at T_ref
+    LAMBDA0 = 1e-19       # s, relaxation time prefactor
+    N = 0.2               # power-law index (n)
+    EXPONENT = 3.4        # molecular weight exponent
+
+    # Reference temperature
+    T_ref = Tg + T_ref_offset
+
+    # WLF shift factor (base-10)
+    # log10(a_T) = -C1 * (T - T_ref) / (C2 + T - T_ref)
+    log10_aT = -C1 * (T - T_ref) / (C2 + T - T_ref)
+    aT = 10.0 ** log10_aT
+
+    Mw = 10.0 ** log10_Mw
+
+    # Zero-shear viscosity at T_ref scaled by aT
+    eta0 = K * (Mw ** EXPONENT) * aT
+
+    # Characteristic relaxation time
+    lam = LAMBDA0 * (Mw ** EXPONENT) * aT
+
+    # Carreau shear-thinning factor (a = 2)
+    factor = (1.0 + (lam * shear_rate) ** 2) ** ((N - 1.0) / 2.0)
+    eta = eta0 * factor
+
+    return np.log10(eta)

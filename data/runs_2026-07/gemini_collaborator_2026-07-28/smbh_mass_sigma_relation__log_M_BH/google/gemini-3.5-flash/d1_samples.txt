@@ -1,0 +1,122 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the base-10 logarithm of the supermassive black hole mass
+
+    (log_M_BH) using the canonical M_BH - sigma_0 relation from
+    Kormendy & Ho (2013).
+
+    Inputs:
+    - X[:, 0]: sigma0 [km/s] (Central stellar velocity dispersion)
+    - X[:, 1]: log_M_sph [log10(M_sun)] (Spheroid stellar mass)
+    - X[:, 2]: B_T [fraction] (Bulge-to-total ratio)
+    - X[:, 3]: Pseudobulge [0 or 1] (Binary indicator)
+    """
+    sigma0 = X[:, 0]
+
+    # Canonical M_BH - sigma relation (Kormendy & Ho 2013)
+    # log10(M_BH/M_sun) = 8.49 + 4.38 * log10(sigma0 / 200 km/s)
+    log_M_BH = 8.49 + 4.38 * np.log10(sigma0 / 200.0)
+
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = sigma0 (central stellar velocity dispersion in km/s)
+    sigma0 = X[:, 0]
+
+    # Canonical M_BH - sigma relation from Kormendy & Ho (2013)
+    # log10(M_BH/M_sun) = alpha + beta * log10(sigma0 / 200 km/s)
+    alpha = 8.49
+    beta = 4.38
+
+    log_M_BH = alpha + beta * np.log10(sigma0 / 200.0)
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of the supermassive black hole mass (log_M_BH)
+
+    using the canonical Kormendy & Ho (2013) M_BH - sigma relation.
+
+    Parameters:
+    X : 2-D numpy array
+        X[:, 0] = sigma0 (central stellar velocity dispersion in km/s)
+        X[:, 1] = log_M_sph (log10 of the spheroid stellar mass)
+        X[:, 2] = B_T (bulge-to-total ratio)
+        X[:, 3] = Pseudobulge (binary indicator)
+
+    Returns:
+    1-D numpy array of log10(M_BH/M_sun)
+    """
+    sigma0 = X[:, 0]
+
+    # Canonical M_BH - sigma relation from Kormendy & Ho (2013)
+    # log10(M_BH/M_sun) = 8.49 + 4.38 * log10(sigma0 / 200 km/s)
+    log_M_BH = 8.49 + 4.38 * np.log10(sigma0 / 200.0)
+
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the supermassive black hole mass log_M_BH using the canonical
+
+    M_BH - sigma_0 relation from Kormendy & Ho (2013).
+
+    Inputs:
+    - X[:, 0]: sigma0 (km/s)
+    - X[:, 1]: log_M_sph (log10(M_sun)) [not used in the primary relation]
+    - X[:, 2]: B_T [not used]
+    - X[:, 3]: Pseudobulge [not used]
+    """
+    sigma0 = X[:, 0]
+
+    # Canonical M_BH - sigma relation (Kormendy & Ho 2013)
+    # log10(M_BH/M_sun) = alpha + beta * log10(sigma0 / 200 km/s)
+    alpha = 8.49
+    beta = 4.38
+
+    log_M_BH = alpha + beta * np.log10(sigma0 / 200.0)
+
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the base-10 logarithm of the supermassive black hole mass (log_M_BH)
+    using the canonical Kormendy & Ho (2013) M_BH - sigma scaling relation.
+    
+    Parameters:
+    X : ndarray of shape (N, 4)
+        X[:, 0] = sigma0 (central stellar velocity dispersion in km/s)
+        X[:, 1] = log_M_sph (log10 of stellar mass of the host spheroid)
+        X[:, 2] = B_T (bulge-to-total ratio)
+        X[:, 3] = Pseudobulge (binary indicator)
+        
+    Returns:
+    ndarray of shape (N,)
+        Predicted log10(M_BH/M_sun)
+    """
+    sigma0 = X[:, 0]
+    
+    # Standard Kormendy & Ho (2013) M_BH - sigma relation:
+    # log10(M_BH/M_sun) = 8.49 + 4.38 * log10(sigma0 / 200 km/s)
+    log_M_BH = 8.49 + 4.38 * np.log10(sigma0 / 200.0)
+    
+    return log_M_BH

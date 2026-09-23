@@ -1,0 +1,130 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict f2 (kHz) from total mass M and tidal coupling constant kap2t (κ₂ᵀ).
+    Uses the quasi-universal relation from Bernuzzi et al. (2015) (PRL 114, 161103),
+    which is the most commonly cited closed-form for the dominant post-merger peak.
+    """
+    M = X[:, 0]          # total gravitational mass (M_sun)
+    kap2t = X[:, 2]      # combined tidal coupling constant κ₂ᵀ (dimensionless)
+    f2 = 2.14 * (M / 2.7)**(-1.05) * (kap2t / 100.0)**0.18
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the dominant post-merger GW spectral peak frequency f2 (in kHz)
+    using the quasi-universal relation from Ciolfi et al. (2017),
+    f2 = A * (M / M0)^{-1} * (1 + B * kap2t)^{-0.5} ,
+    with A = 2.43, M0 = 2.7 M_sun, B = 0.001.
+    """
+    # Extract inputs
+    M     = X[:, 0]   # total gravitational mass [M_sun]
+    kap2t = X[:, 2]   # combined tidal coupling constant κ₂ᵀ
+
+    # Constants
+    A  = 2.43
+    M0 = 2.7
+    B  = 0.001
+
+    f2 = A * (M0 / M) / np.sqrt(1.0 + B * kap2t)
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the dominant post-merger gravitational-wave spectral peak frequency f2 [kHz]
+    from binary parameters using the quasi-universal relation fitted to high-resolution
+    numerical-relativity simulations.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 7)
+        Columns:
+        0 - mass M [M_sun]
+        1 - mass ratio q
+        2 - combined tidal coupling constant kap2t (κ₂ᵀ)
+        3 - combined tidal deformability lamT (Λ̃)
+        4 - primary mass m1 [M_sun]
+        5 - secondary mass m2 [M_sun]
+        6 - chirp mass M_chirp [M_sun]
+    
+    Returns
+    -------
+    f2 : np.ndarray, shape (n_samples,)
+        Dominant post-merger frequency in kHz.
+    """
+    # Extract the required inputs
+    M = X[:, 0]         # total mass
+    kap2t = X[:, 2]     # κ₂ᵀ, tidal coupling constant
+
+    # Fit coefficients from the universal relation (e.g., Breschi et al. 2019)
+    c0 =  6.5
+    c1 = -0.003
+
+    # Universal relation: f2 * M = c0 + c1 * κ₂ᵀ
+    f2 = (c0 + c1 * kap2t) / M
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict f2 (kHz) from binary parameters using a quasi-universal relation.
+    
+    Input X: 2-D numpy array.
+    Columns:
+    X[:,0] = M    (total gravitational mass, Msun)
+    X[:,1] = q    (mass ratio, m2/m1 <= 1)
+    X[:,2] = kap2t (combined tidal coupling constant)
+    X[:,3] = lamT  (combined tidal deformability, Λ̃)
+    X[:,4] = m1    (primary mass, Msun)
+    X[:,5] = m2    (secondary mass, Msun)
+    X[:,6] = M_chirp (chirp mass, Msun)
+    
+    Returns: f2 (kHz) as 1-D numpy array.
+    """
+    M = X[:, 0]
+    q = X[:, 1]
+    lamT = X[:, 3]
+    
+    # Coefficients of the canonical quasi-universal fit
+    # based on Bauswein, Stergioulas & Janka (2014, 2016) and Bauswein et al. (2019).
+    M_norm = 2.7          # reference total mass (Msun)
+    lam_norm = 800.0      # reference tidal deformability
+    alpha = 1.6           # amplitude of tidal dependence
+    beta = -0.14          # scaling exponent for Λ̃
+    gamma = 0.9           # baseline frequency contribution
+    delta = 0.03          # small mass-ratio correction
+    
+    # Quasi-universal scaling: f2 ~ 1/M, with a power-law dependence on Λ̃
+    # and a minor linear correction for unequal masses.
+    f2 = (alpha * (lamT / lam_norm)**beta + gamma) * (M_norm / M) * (1.0 + delta * (1.0 - q))
+    
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the dominant post-merger GW peak frequency f2 [kHz] from BNS simulations.
+    Input columns:
+        X[:,0] : M   [M_sun]  total binary mass
+        X[:,2] : kap2t (κ₂ᵀ)  combined tidal coupling constant
+    Uses the quasi-universal relation from Bauswein, Stergioulas & Janka (2016).
+    """
+    M = np.atleast_1d(X[:, 0])
+    kap2t = np.atleast_1d(X[:, 2])
+    f2 = 6.15 / M * np.power(1.0 + 0.0012 * kap2t, 0.44)
+    return f2

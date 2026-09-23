@@ -1,0 +1,1389 @@
+{
+  "afm_nanoindentation_spherical_zef18__force_indentation": {
+    "formula": "mendova_2024",
+    "score": 0.983,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "mendova_2024"
+    ]
+  },
+  "alkali_rydberg_levels_quantum_defect__binding_energy": {
+    "formula": "martin_1996",
+    "score": 0.24,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "martin_1996",
+      "rydberg_1890"
+    ]
+  },
+  "alpha_decay_geiger_nuttall_nubase__log_half_life": {
+    "formula": "qi_2014",
+    "score": 1.1592,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "qi_2014"
+    ]
+  },
+  "baseball_pythagorean_winpct_lahman__win_pct": {
+    "formula": "miller_2007",
+    "score": 0.0253675,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "james_1980",
+      "miller_2007"
+    ]
+  },
+  "baseflow_recession_nwis__Q_t": {
+    "formula": "brutsaert_nieber_1977",
+    "score": 0.9785,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "brutsaert_nieber_1977",
+      "roques_2022"
+    ]
+  },
+  "binary_pulsar_post_keplerian_atnf__PBDOT": {
+    "formula": "peters_1963",
+    "score": 1.21727e-13,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "peters_1963"
+    ]
+  },
+  "biodiversity_distance_decay__Sim_sor": {
+    "formula": "soininen_powerlaw",
+    "score": 0.683,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "nekola_exponential",
+      "soininen_linear",
+      "soininen_powerlaw"
+    ]
+  },
+  "bird_flight_speed_alerstam__Ue": {
+    "formula": "alerstam_2007_empirical",
+    "score": 2.63609,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "alerstam_2007",
+      "alerstam_2007_empirical"
+    ]
+  },
+  "blood_clot_constitutive__tau_ss": {
+    "formula": "sugerman_2021_yeoh",
+    "score": 0.045224,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "ogden_1972",
+      "sugerman_2021_fung",
+      "sugerman_2021_yeoh"
+    ]
+  },
+  "bns_merger_disk_ejecta__Mdisk": {
+    "formula": "lund_2025",
+    "score": 0.403,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "darc_2025_pyoperon",
+      "kruger_2020",
+      "lund_2025",
+      "nedora_2020"
+    ]
+  },
+  "bns_merger_disk_ejecta__Mej": {
+    "formula": "nedora_2020",
+    "score": 0.4668,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "coughlin_2018",
+      "dietrich_2017",
+      "kruger_2020",
+      "nedora_2020"
+    ]
+  },
+  "bns_merger_disk_ejecta__vej": {
+    "formula": "dietrich_2017",
+    "score": 0.2315,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "coughlin_2018",
+      "dietrich_2017",
+      "nedora_2020_eq9",
+      "nedora_2020_poly2"
+    ]
+  },
+  "bns_postmerger_waveform_core__f2": {
+    "formula": "gonzalez_2023",
+    "score": 0.165207,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "gonzalez_2023",
+      "vretinaris_2020"
+    ]
+  },
+  "budyko_partitioning_mach__et_over_p": {
+    "formula": "wang_tang_2014",
+    "score": 0.105706,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "choudhury_1999",
+      "wang_tang_2014",
+      "yang_2008"
+    ]
+  },
+  "catchment_mean_runoff_camels__q_mean": {
+    "formula": "choudhury_yang_1999",
+    "score": 0.4096,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "choudhury_yang_1999",
+      "demand_limit",
+      "pike_1964"
+    ]
+  },
+  "cepheid_period_luminosity__M_W": {
+    "formula": "breuval_2022",
+    "score": 0.373263,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "breuval_2022",
+      "cruzreyes_2023"
+    ]
+  },
+  "chiller_gordon_ng_universal__one_over_COP_minus_1": {
+    "formula": "gordon_ng_sreedharan2001",
+    "score": 0.011506,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "gordon_ng_sreedharan2001"
+    ]
+  },
+  "cloud_cover_parameterization__cloud_cover": {
+    "formula": "grundner_2025",
+    "score": 0.0956211,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "grundner_2024",
+      "grundner_2025",
+      "xu_randall_1996"
+    ]
+  },
+  "co2_adsorption_zeolite_isodb_toth__n_ads": {
+    "formula": "kim_2023",
+    "score": 0.5315,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "kim_2023",
+      "swenson_stadie_2019"
+    ]
+  },
+  "cobb_douglas_growth_pwt__log_Y": {
+    "formula": "mankiw_1992",
+    "score": 0.169163,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "cobb_1928",
+      "mankiw_1992"
+    ]
+  },
+  "commuting_gravity_lodes__flow_Tij": {
+    "formula": "lenormand_2016_gravity_pow",
+    "score": 0.536064,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "lenormand_2016_extrad",
+      "lenormand_2016_gravity_exp",
+      "lenormand_2016_gravity_pow",
+      "simini_2012"
+    ]
+  },
+  "coral_reef_fish_growth_wicquart__length_mm": {
+    "formula": "ricker_1975",
+    "score": 25.409,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "ricker_1975"
+    ]
+  },
+  "cosmic_ray_eas_auger__dE_dX": {
+    "formula": "aab_2019",
+    "score": 2.4479,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "aab_2019",
+      "schiel_2007"
+    ]
+  },
+  "curie_weiss_paramagnetic_susceptibility_mpms__chi_inv": {
+    "formula": "liang_2008",
+    "score": 2.0708,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "liang_2008",
+      "mugiraneza_2022"
+    ]
+  },
+  "disinfection_kinetics_chick_watson__log_reduction": {
+    "formula": "peleg_2021_cwh",
+    "score": 1.4113,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "peleg_2021_cw",
+      "peleg_2021_cwh"
+    ]
+  },
+  "dna_melting_temperature_khandelwal__Tm": {
+    "formula": "khandelwal_2010",
+    "score": 4.15727,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "khandelwal_2010"
+    ]
+  },
+  "drosophila_isolation_by_distance_dest__M_stat": {
+    "formula": "rousset_1997_1d",
+    "score": 0.0382,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "rousset_1997",
+      "rousset_1997_1d"
+    ]
+  },
+  "eclipsing_binary_mass_luminosity_debcat__log_L_Lsun": {
+    "formula": "henry_1993_two_piece",
+    "score": 0.5581,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "eker_2018_six_piece",
+      "henry_1993_two_piece",
+      "kuiper_1938_pure_power"
+    ]
+  },
+  "ecoli_antibiotic_temperature_growth__OD24h": {
+    "formula": "cruz_loya_2021",
+    "score": 0.0661,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "cruz_loya_2021"
+    ]
+  },
+  "ecoli_growth_curve_chemically_defined__od600": {
+    "formula": "zwietering_1990_richards",
+    "score": 0.0181,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "zwietering_1990_gompertz",
+      "zwietering_1990_logistic",
+      "zwietering_1990_richards"
+    ]
+  },
+  "electron_impact_ionization_alecs__cross_section": {
+    "formula": "lotz_1968",
+    "score": 0.22985592643937874,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "gaches_2024",
+      "lotz_1968"
+    ]
+  },
+  "exfor_neutron_capture_resonance_gold__sigma_E": {
+    "formula": "one_over_v_plus_breit_wigner",
+    "score": 0.3297,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "constant_sigma",
+      "one_over_v",
+      "one_over_v_plus_breit_wigner"
+    ]
+  },
+  "exoplanet_mass_radius__R": {
+    "formula": "chen_2016",
+    "score": 0.1782,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "bashi_2017",
+      "chen_2016"
+    ]
+  },
+  "fish_stock_recruit_ramldb_bh__recruits": {
+    "formula": "ricker_1954",
+    "score": 9316672706207.088,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "ricker_1954",
+      "shepherd_1982"
+    ]
+  },
+  "fluid_surface_tension_nist_webbook_eotvos__sigma": {
+    "formula": "kaptay_2024",
+    "score": 0.000282,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "kaptay_2024"
+    ]
+  },
+  "galaxy_mass_metallicity_sdss__oh": {
+    "formula": "mannucci_2010_mzr",
+    "score": 0.141033,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 7,
+    "all_formulas": [
+      "andrews_2013",
+      "curti_2020",
+      "curti_2020_fmr",
+      "mannucci_2010_fmr",
+      "mannucci_2010_fmr_eq4",
+      "mannucci_2010_mzr",
+      "tremonti_2004"
+    ]
+  },
+  "galaxy_stellar_mass_sdss__log_M_star": {
+    "formula": "taylor_2011",
+    "score": 0.315019,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "bell_2003",
+      "taylor_2011",
+      "zibetti_2009"
+    ]
+  },
+  "geomagnetic_storm_dst__dDst_dt": {
+    "formula": "markidis_2025",
+    "score": 2.47197,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "burton_1975",
+      "markidis_2025",
+      "obrien_2000"
+    ]
+  },
+  "ghg_emission_drivers__CDE": {
+    "formula": "vazquez_2022_stirpat",
+    "score": 0.496415,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "vazquez_2022_stirpat"
+    ]
+  },
+  "ghg_emission_drivers__EC": {
+    "formula": "vazquez_2022_stirpat",
+    "score": 0.472866,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "vazquez_2022_bms",
+      "vazquez_2022_stirpat"
+    ]
+  },
+  "ghg_emission_drivers__ME": {
+    "formula": "vazquez_2022_stirpat",
+    "score": 0.757284,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "vazquez_2022_bms",
+      "vazquez_2022_stirpat",
+      "york_2003"
+    ]
+  },
+  "ghg_emission_drivers__NOE": {
+    "formula": "vazquez_2022_stirpat",
+    "score": 0.587733,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "vazquez_2022_bms",
+      "vazquez_2022_stirpat"
+    ]
+  },
+  "gravity_wgs84_somigliana__g0": {
+    "formula": "nima_2000",
+    "score": 0.000472647,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "nima_2000"
+    ]
+  },
+  "ground_motion_ita18__log10_pga": {
+    "formula": "bindi_2011",
+    "score": 0.334563,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "akkar_bommer_2010",
+      "bindi_2011"
+    ]
+  },
+  "gutenberg_richter_b_value_usgs__gr_freq_mag": {
+    "formula": "kagan_2010",
+    "score": 0.275353,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "aki_1965",
+      "hanks_kanamori_1979",
+      "kagan_2010"
+    ]
+  },
+  "hacks_law_river_length_hydrosheds__main_length_km": {
+    "formula": "hack_1957",
+    "score": 0.0988459,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "dodds_rothman_2000",
+      "hack_1957"
+    ]
+  },
+  "hea_hardness_lattice_distortion_couzinie__HV": {
+    "formula": "temesi_2023_hardness_bonding",
+    "score": 116.132,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "temesi_2023_hardness_bonding"
+    ]
+  },
+  "her_hor_pt_acid_kucernak__current_density": {
+    "formula": "kucernak_2016_hv",
+    "score": 14.362733505830931,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "kucernak_2016_bv",
+      "kucernak_2016_hv"
+    ]
+  },
+  "income_distribution_wid__pareto_alpha": {
+    "formula": "atkinson_2011",
+    "score": 0.436,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "atkinson_2011",
+      "gabaix_2016",
+      "reed_2001"
+    ]
+  },
+  "intertemporal_discount__p_ll": {
+    "formula": "mazur_1987",
+    "score": 0.1053,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "laibson_1997",
+      "mazur_1987"
+    ]
+  },
+  "island_species_richness_terceira__S_terceira": {
+    "formula": "cardoso_2020_glm",
+    "score": 1.58862,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "cardoso_2020",
+      "cardoso_2020_glm"
+    ]
+  },
+  "lake_thermocline_depth_pilla__z_t": {
+    "formula": "boehrer_2008",
+    "score": 6.2518,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "boehrer_2008"
+    ]
+  },
+  "latent_heat_flux_kgdsr__LE": {
+    "formula": "stewart_1988",
+    "score": 64.1921,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "li_2024",
+      "stewart_1988"
+    ]
+  },
+  "leaf_light_response_photosynthesis_schmiege__net_assimilation": {
+    "formula": "lobo_2013",
+    "score": 0.18090216,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "lobo_2013",
+      "peek_2002"
+    ]
+  },
+  "li_metal_battery_capacity_stanford__cap_dischg_mAh": {
+    "formula": "he_2011",
+    "score": 0.6964,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "he_2011",
+      "pinson_2013",
+      "spotnitz_2003"
+    ]
+  },
+  "life_expectancy_oeppen_vaupel_hmd__e0": {
+    "formula": "oeppen_vaupel_2002",
+    "score": 1.6792,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "oeppen_vaupel_2002"
+    ]
+  },
+  "life_expectancy_preston__e0_vs_gdppc": {
+    "formula": "preston_1975_logistic",
+    "score": 5.34451,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "preston_1975_logistic",
+      "preston_1975_logistic_kappa",
+      "preston_1975_loglinear"
+    ]
+  },
+  "liion_capacity_fade_nasa_pcoe__capacity_Ah": {
+    "formula": "pinson_2013",
+    "score": 0.1145,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "he_2011",
+      "pinson_2013"
+    ]
+  },
+  "liquid_dispersion_glycols__refractive_index": {
+    "formula": "jakubczyk_2023",
+    "score": 0.0002,
+    "type": "typeI",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "cauchy_1836",
+      "jakubczyk_2023"
+    ]
+  },
+  "lpbf_meltpool_rosenthal_inconel__depth": {
+    "formula": "promoppatum_2017_rosenthal",
+    "score": 35.5257,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "king_2014_normalized_enthalpy",
+      "promoppatum_2017_rosenthal"
+    ]
+  },
+  "magnet_3c90_core_loss__log_P_vol": {
+    "formula": "steinmetz_temperature_extended",
+    "score": 0.1826,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "bertotti_1988",
+      "steinmetz_1892",
+      "steinmetz_temperature_extended"
+    ]
+  },
+  "mars_crater_size_frequency__N_cum": {
+    "formula": "hartmann_piecewise_power_law",
+    "score": 0.046,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "hartmann_piecewise_power_law",
+      "neukum_2001_npf",
+      "single_power_law"
+    ]
+  },
+  "materials_project_elastic_birch_murnaghan__K_VRH": {
+    "formula": "anderson_nafe_1965",
+    "score": 59.6039,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "anderson_nafe_1965",
+      "cohen_1985"
+    ]
+  },
+  "mauna_loa_co2_keeling_curve_noaa__co2_ppm": {
+    "formula": "noaa_curve_fit_k4",
+    "score": 1.1558,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "bacastow_1985_quadratic",
+      "keeling_1960_linear",
+      "noaa_curve_fit_1989",
+      "noaa_curve_fit_k4"
+    ]
+  },
+  "measles_tsir_uk__cases_weekly": {
+    "formula": "grenfell_2001",
+    "score": 0.7806,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "becker_2017",
+      "bjornstad_2002",
+      "finkenstadt_2000",
+      "grenfell_2001"
+    ]
+  },
+  "metabolic_scaling_anage__log_bmr_W": {
+    "formula": "kleiber_1932",
+    "score": 0.2121,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "kleiber_1932",
+      "rubner_1883"
+    ]
+  },
+  "mincer_earnings_acs_pums__log_wage": {
+    "formula": "murphy_welch_1990",
+    "score": 0.6695,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "heckman_2005",
+      "murphy_welch_1990"
+    ]
+  },
+  "mof_co2_adsorption_langmuir_crafted__q_CO2": {
+    "formula": "swenson_stadie_2019",
+    "score": 0.3668,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "swenson_stadie_2019"
+    ]
+  },
+  "mortality_gompertz_makeham_hmd__log_m_adult": {
+    "formula": "gompertz_age_year",
+    "score": 0.6772,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "gompertz_age",
+      "gompertz_age_year",
+      "gompertz_age_year_interaction",
+      "gompertz_makeham"
+    ]
+  },
+  "mortality_gompertz_makeham_hmd_postwar__log_m_adult": {
+    "formula": "gompertz_age_year",
+    "score": 0.2515,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "gompertz_age",
+      "gompertz_age_year",
+      "gompertz_age_year_interaction",
+      "gompertz_makeham"
+    ]
+  },
+  "mortality_heligman_pollard_hmd__log_m_full": {
+    "formula": "heligman_pollard_1980",
+    "score": 0.9496,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "gompertz_makeham",
+      "heligman_pollard_1980"
+    ]
+  },
+  "mosquito_larvicide_resistance_culex__probit_mortality": {
+    "formula": "lopez_2025",
+    "score": 0.144,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 3,
+    "all_formulas": [
+      "lopez_2025",
+      "ritz_2015_ll4",
+      "ritz_2015_lnormal"
+    ]
+  },
+  "mouse_skin_biaxial_constitutive__sigma11": {
+    "formula": "demiray_1972",
+    "score": 0.009938,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "demiray_1972",
+      "linka_2023",
+      "tac_2022"
+    ]
+  },
+  "mouse_skin_biaxial_constitutive__sigma22": {
+    "formula": "demiray_1972",
+    "score": 0.009076,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "demiray_1972",
+      "linka_2023",
+      "tac_2022"
+    ]
+  },
+  "neo_size_frequency_distribution__N_cum_H": {
+    "formula": "dohnanyi_exponential_sfd",
+    "score": 0.041,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "constant_count",
+      "dohnanyi_exponential_sfd",
+      "free_exponential_sfd"
+    ]
+  },
+  "nuclear_binding_energy_ame2020__BE_per_A": {
+    "formula": "wang_2014",
+    "score": 0.0145,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "duflo_1995",
+      "moller_1995",
+      "wang_2014",
+      "weizsacker_1935"
+    ]
+  },
+  "ocean_mesoscale_eddy_closure__Sx": {
+    "formula": "ross_2023_zb_partial",
+    "score": 0.334932,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "ross_2023_zb_partial",
+      "zanna_bolton_2020_eq4",
+      "zanna_bolton_2020_eq5"
+    ]
+  },
+  "open_channel_flow_manning_usgs__mean_velocity": {
+    "formula": "jobson_1988_chezy",
+    "score": 0.2673404909946124,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "jobson_1988",
+      "jobson_1988_chezy"
+    ]
+  },
+  "optical_dispersion_sellmeier__refractive_index": {
+    "formula": "sellmeier_1871",
+    "score": 0.006647797121279506,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "cauchy_1836_eq15",
+      "cauchy_1836_eq55",
+      "sellmeier_1871"
+    ]
+  },
+  "parker_spiral_imf__B_phi": {
+    "formula": "parker_1958_omega_stated",
+    "score": 1.75081,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "parker_1958",
+      "parker_1958_omega_stated"
+    ]
+  },
+  "pfas_soil_sorption__log_kd": {
+    "formula": "fabregat_2025",
+    "score": 0.582475,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "fabregat_2025"
+    ]
+  },
+  "plant_competition_reciprocal_yield__mean_plant_mass": {
+    "formula": "weiner_2010_watkinson",
+    "score": 0.1067,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "bleasdale_1960",
+      "weiner_2010_bleasdale_nelder",
+      "weiner_2010_vandermeer",
+      "weiner_2010_watkinson"
+    ]
+  },
+  "polymer_melt_viscosity_polyverse__log10_eta_poise": {
+    "formula": "shangguan_2017_dwlf",
+    "score": 1.1832,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "shangguan_2017_dwlf",
+      "shangguan_2017_wlf"
+    ]
+  },
+  "pp_total_cross_section_donnachie_landshoff__sigma_tot": {
+    "formula": "block_halzen_2005",
+    "score": 7.08093,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "block_halzen_2005",
+      "donnachie_1992"
+    ]
+  },
+  "predator_functional_response_forage__prey_eaten": {
+    "formula": "holling_1959",
+    "score": 7.088300608199107,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "holling_1959"
+    ]
+  },
+  "proton_em_form_factor__GE_over_GD": {
+    "formula": "arrington_2007",
+    "score": 0.0316649,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "arrington_2007",
+      "bradford_2006",
+      "hofstadter_1956"
+    ]
+  },
+  "protoplanetary_disk_mmflux__F_mm": {
+    "formula": "andrews_2013_sdf00",
+    "score": 0.532986,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "andrews_2013_sdf00"
+    ]
+  },
+  "pv_module_temperature_efficiency_pvpmc__P_max": {
+    "formula": "dobos_2014",
+    "score": 15.284,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "dobos_2014"
+    ]
+  },
+  "qg_turbulence_subgrid_pyqg__Sq": {
+    "formula": "ross_2023",
+    "score": 0.737249,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 4,
+    "all_formulas": [
+      "leith_1968",
+      "ross_2023",
+      "smagorinsky_1963",
+      "zanna_bolton_2020"
+    ]
+  },
+  "red_giant_asteroseismology__delta_nu": {
+    "formula": "yu_2018",
+    "score": 0.543631,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "brown_1991",
+      "kjeldsen_bedding_1995",
+      "yu_2018"
+    ]
+  },
+  "red_giant_asteroseismology__nu_max": {
+    "formula": "yu_2018_inverted",
+    "score": 8.079,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "yu_2018_inverted"
+    ]
+  },
+  "rock_core_permeability_norweg__log_k": {
+    "formula": "kozeny_carman_1937",
+    "score": 1.1512,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "kozeny_carman_1937",
+      "slichter_1898",
+      "terzaghi_1925"
+    ]
+  },
+  "running_endurance_iaaf__velocity": {
+    "formula": "emig_2020",
+    "score": 0.26277,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "emig_2020",
+      "riegel_1981"
+    ]
+  },
+  "seed_dispersal_kernel_2dt_masaki__seed_count": {
+    "formula": "clark_1999",
+    "score": 7.1306,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "bullock_2017",
+      "clark_1999"
+    ]
+  },
+  "sex_mortality_ratio_hmd__log_sex_ratio": {
+    "formula": "glei_horiuchi_year_drift",
+    "score": 0.2492,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "glei_horiuchi_2007",
+      "glei_horiuchi_year_drift"
+    ]
+  },
+  "silicate_melt_viscosity_gpvisc__log_viscosity": {
+    "formula": "le_losq_2025",
+    "score": 0.365461,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "giordano_2008",
+      "le_losq_2025"
+    ]
+  },
+  "smbh_mass_sigma_relation__log_M_BH": {
+    "formula": "jin_2023_easy",
+    "score": 0.474129,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 5,
+    "all_formulas": [
+      "jin_2023_easy",
+      "mcconnell_2013_mbulge",
+      "mcconnell_2013_msigma",
+      "saglia_2016",
+      "tremaine_2002"
+    ]
+  },
+  "sne_ia_distance_modulus_pantheonplus__mu": {
+    "formula": "linder_2003",
+    "score": 0.152819,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "linder_2003"
+    ]
+  },
+  "soil_exoenzyme_kinetics_alves__activity_rate": {
+    "formula": "alves_2021",
+    "score": 114.0293,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "alves_2021",
+      "hill_1910"
+    ]
+  },
+  "soil_water_retention_gshp__theta": {
+    "formula": "vangenuchten_1980",
+    "score": 0.01738176,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "brooks_corey_1964",
+      "vangenuchten_1980"
+    ]
+  },
+  "solar_flat_plate_collector_graz_efficiency__eta_thermal": {
+    "formula": "hwb_linear",
+    "score": 0.02029,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "constant_efficiency",
+      "hwb_linear",
+      "hwb_quadratic"
+    ]
+  },
+  "solar_spectrum_sorce_sim__planck_radiance": {
+    "formula": "thuillier_2022",
+    "score": 1477.453,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "thuillier_2022"
+    ]
+  },
+  "solar_sunspot_silso__ssn": {
+    "formula": "hathaway_2015",
+    "score": 26.5842,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "hathaway_2015",
+      "volobuev_2009"
+    ]
+  },
+  "spectrophotometry_beer_lambert_chromate__absorbance": {
+    "formula": "yeh_2023",
+    "score": 0.018736,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "beer_lambert_1852",
+      "yeh_2023"
+    ]
+  },
+  "spirometry_nhanes__FEV1_L": {
+    "formula": "johnson_2023",
+    "score": 0.4073,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "johnson_2023"
+    ]
+  },
+  "spirometry_nhanes__FVC_L": {
+    "formula": "johnson_2023",
+    "score": 0.4433,
+    "type": "typeI",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "johnson_2023"
+    ]
+  },
+  "stomatal_conductance_sapfluxnet__gc": {
+    "formula": "oren_1999",
+    "score": 4.3101,
+    "type": "typeII",
+    "how": "single",
+    "n_formulas": 1,
+    "all_formulas": [
+      "oren_1999"
+    ]
+  },
+  "streamchannel_at_station_hydraulic_geometry_ifmha__chan_width": {
+    "formula": "leopold_1953",
+    "score": 21.442,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "leopold_1953",
+      "richards_1973"
+    ]
+  },
+  "thermal_performance_curve__pf_utpc": {
+    "formula": "arnoldi_2025",
+    "score": 0.6473,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "arnoldi_2025",
+      "rezende_2019"
+    ]
+  },
+  "top_income_share_wid__top_share_log": {
+    "formula": "atkinson_piketty_saez_2011",
+    "score": 0.3564,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "atkinson_piketty_saez_2011",
+      "piketty_saez_2003"
+    ]
+  },
+  "trade_gravity_cepii__log_tradeflow": {
+    "formula": "head_mayer_2014",
+    "score": 2.8515,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "anderson_vanwincoop_2003",
+      "head_mayer_2014"
+    ]
+  },
+  "traffic_flow_density_ngsim__q_flow": {
+    "formula": "underwood_1961_exponential",
+    "score": 616.6449,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "daganzo_1995_ctm_triangular",
+      "greenshields_1935_parabolic",
+      "underwood_1961_exponential"
+    ]
+  },
+  "tree_biomass_allometry_chave__agb": {
+    "formula": "chave_2014",
+    "score": 0.109234,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "chave_2014",
+      "chave_2014_eq5"
+    ]
+  },
+  "tree_height_diameter_chave__height_m": {
+    "formula": "chave_2014",
+    "score": 3.3885,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "chave_2014",
+      "feldpausch_2011"
+    ]
+  },
+  "ttauri_accretion__L_acc": {
+    "formula": "manara_2017_bpl",
+    "score": 0.782062,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "manara_2017",
+      "manara_2017_bpl"
+    ]
+  },
+  "tumor_growth_mouse__tumor_volume": {
+    "formula": "benzekry_2014_gompertz",
+    "score": 114.264,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 9,
+    "all_formulas": [
+      "benzekry_2014_dynamic_cc",
+      "benzekry_2014_exponential1",
+      "benzekry_2014_exponential_linear",
+      "benzekry_2014_exponential_v0",
+      "benzekry_2014_generalized_logistic",
+      "benzekry_2014_gompertz",
+      "benzekry_2014_logistic",
+      "benzekry_2014_power_law",
+      "benzekry_2014_von_bertalanffy"
+    ]
+  },
+  "urban_scaling_msa_bea__log_GMP": {
+    "formula": "bettencourt_2007",
+    "score": 0.236563,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "bettencourt_2007",
+      "lobo_2013"
+    ]
+  },
+  "v1_orientation_tuning_stringer__neuron_response": {
+    "formula": "wu_2025",
+    "score": 3.1013,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 5,
+    "all_formulas": [
+      "swindale_1998_flat_topped",
+      "swindale_1998_skewed",
+      "swindale_1998_von_mises",
+      "swindale_1998_wrapped_gaussian",
+      "wu_2025"
+    ]
+  },
+  "volcanic_column_mer_ivespa__H_top": {
+    "formula": "mtt_plume_quarter_power",
+    "score": 0.1334,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 3,
+    "all_formulas": [
+      "aubry_powerlaw_trainfit",
+      "linear_mer",
+      "mtt_plume_quarter_power"
+    ]
+  },
+  "weir_flow_tilting_pugh__discharge": {
+    "formula": "pugh_2025",
+    "score": 0.000351,
+    "type": "typeII",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "fenton_2015",
+      "pugh_2025"
+    ]
+  },
+  "wind_turbine_power_curve_engie__power_kW": {
+    "formula": "lydia_2014_4pl",
+    "score": 89.16,
+    "type": "typeI",
+    "how": "comment",
+    "n_formulas": 2,
+    "all_formulas": [
+      "carrillo_2013_cubic",
+      "lydia_2014_4pl"
+    ]
+  },
+  "woody_plant_allometry_baad__a_lf": {
+    "formula": "shinozaki_1964",
+    "score": 179.889,
+    "type": "typeII",
+    "how": "value-match",
+    "n_formulas": 2,
+    "all_formulas": [
+      "niklas_2001",
+      "shinozaki_1964"
+    ]
+  }
+}

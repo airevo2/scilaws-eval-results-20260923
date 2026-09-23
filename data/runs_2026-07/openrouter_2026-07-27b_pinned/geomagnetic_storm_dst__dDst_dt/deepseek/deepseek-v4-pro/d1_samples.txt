@@ -1,0 +1,185 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict dDst/dt [nT/hr] using the standard Burton et al. (1975) type
+    ring-current evolution equation with O'Brien and McPherron (2000)
+    magnetopause correction.
+    
+    dDst*/dt = Q - Dst* / tau
+    where Dst* = Dst - b*sqrt(P_dyn) + c  (ring-current-only Dst)
+    Q = -alpha * max(Ey - Ec, 0)          (injection term for Ey > Ec)
+    
+    Typical values:
+      b = 7.26 nT/(nPa^0.5)   pressure correction coefficient
+      c = 11.0 nT             offset
+      Ec = 0.5 mV/m           solar wind electric field threshold
+      alpha = 5.4 nT/hr/(mV/m) injection amplitude
+      tau = 8.0 hr            decay time scale
+    """
+    Dst   = X[:, 0]   # nT
+    Ey    = X[:, 1]   # mV/m
+    P_dyn = X[:, 2]   # nPa
+
+    # Pressure-corrected Dst (ring current contribution)
+    b = 7.26          # nT / sqrt(nPa)
+    c = 11.0          # nT
+    Dst_star = Dst - b * np.sqrt(P_dyn) + c
+
+    # Injection term: dawn-dusk electric field above threshold
+    Ec = 0.5          # mV/m
+    alpha = 5.4       # nT/hr per mV/m
+    Q = -alpha * np.maximum(Ey - Ec, 0.0)
+
+    # Decay term
+    tau = 8.0         # hr
+    dDst_dt = Q - Dst_star / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict dDst/dt [nT/hr] using the standard Burton et al. (1975) model
+    with the O'Brien and McPherron (2000) pressure correction.
+    
+    Inputs (columns of X):
+        X[:,0] : Dst   [nT]
+        X[:,1] : Ey    [mV/m]  dawn-dusk convective electric field
+        X[:,2] : P_dyn [nPa]   solar wind dynamic pressure
+        X[:,3] : V_sw  [km/s]  (unused in the canonical closed form)
+        X[:,4] : Bz_GSM [nT]   (unused; information already in Ey)
+        X[:,5] : n_sw  [cm^-3] (unused)
+        X[:,6] : B_mag [nT]    (unused)
+        X[:,7] : T_sw  [K]     (unused)
+    """
+    Dst   = X[:, 0]
+    Ey    = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Pressure-corrected Dst (O'Brien & McPherron 2000)
+    # Dst* = Dst - b * sqrt(P_dyn) + c
+    b = 7.26       # nT / (nPa)^0.5
+    c = 11.0       # nT
+    Dst_star = Dst - b * np.sqrt(np.maximum(P_dyn, 0.0)) + c
+
+    # Injection term (Burton et al. 1975)
+    # Q(Ey) = 0               for Ey <= Ec
+    # Q(Ey) = -5.4*(Ey - Ec)  for Ey > Ec
+    Ec = 0.49      # mV/m threshold
+    Q_coeff = -5.4 # nT/hr per mV/m
+    injection = np.where(Ey > Ec, Q_coeff * (Ey - Ec), 0.0)
+
+    # Decay term: -Dst* / tau
+    tau = 8.0      # hours
+    decay = -Dst_star / tau
+
+    # Instantaneous dDst/dt (neglecting the dP_dyn/dt term, as is common)
+    dDst_dt = injection + decay
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for dDst/dt based on the Burton
+    (1975) model with the O'Brien & McPherron (2000) dynamic-pressure
+    correction.
+
+    dDst/dt = - (Dst*) / tau - injection
+    where
+        Dst* = Dst - b * sqrt(P_dyn) + c
+        injection = gamma * max(Ey - E0, 0)
+
+    Typical coefficients are used (units yield dDst/dt in nT/hr).
+    """
+    # Extract inputs
+    Dst   = X[:, 0]   # nT
+    Ey    = X[:, 1]   # mV/m
+    P_dyn = X[:, 2]   # nPa
+
+    # Coefficients (commonly cited values)
+    b     = 7.26      # nT per sqrt(nPa) – pressure correction factor
+    c     = 11.0       # nT – offset
+    tau   = 8.0        # hr – e-folding recovery time
+    E0    = 0.5        # mV/m – electric field threshold
+    gamma = 5.0        # nT/hr per mV/m – injection efficiency
+
+    # Pressure-corrected Dst
+    Dst_star = Dst - b * np.sqrt(P_dyn) + c
+
+    # Injection term (only active when Ey exceeds threshold)
+    injection = gamma * np.maximum(Ey - E0, 0.0)
+
+    # Total tendency (negative during storm main phase, positive during recovery)
+    dDst_dt = -Dst_star / tau - injection
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict hourly dDst/dt [nT/hr] using the O'Brien & McPherron (2000) 
+    parameterization of the classical Burton et al. (1975) Dst evolution equation.
+
+    Dst* = Dst - b * sqrt(P_dyn) + c
+    dDst*/dt = -Dst* / tau + Q(Ey)
+    where Q(Ey) = alpha * (E_y - E_c) for E_y > E_c, zero otherwise.
+    """
+    # Extract inputs
+    Dst = X[:, 0]      # nT
+    Ey = X[:, 1]       # mV/m
+    Pdyn = X[:, 2]     # nPa
+
+    # O'Brien & McPherron (2000) constants
+    b = 7.26           # nT / sqrt(nPa)   magnetopause current factor
+    c = 11.0           # nT               quiet-time baseline offset
+    tau = 8.0          # hours            ring-current decay time constant
+    alpha = -4.4       # nT/hr per mV/m   injection efficiency
+    Ec = 0.49          # mV/m             convection electric field threshold
+
+    # Pressure-corrected Dst
+    Dst_star = Dst - b * np.sqrt(np.maximum(Pdyn, 0.0)) + c
+
+    # Ring-current injection term (only for southward IMF / positive Ey)
+    injection = np.where(Ey > Ec, alpha * (Ey - Ec), 0.0)
+
+    # Hourly tendency of Dst*
+    dDst_dt = -Dst_star / tau + injection
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract columns
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Constants (O'Brien & McPherron, 2000; simplified constant tau)
+    b = 7.26       # nT / (nPa)^0.5  -- magnetopause pressure correction
+    c = 11.0       # nT              -- quiet-time offset
+    tau = 8.0      # hours           -- ring-current decay time scale
+    a = 4.4        # nT/hr per mV/m  -- injection rate coefficient
+    Ec = 0.5       # mV/m            -- electric field threshold
+
+    # Pressure-corrected Dst (Dst*)
+    Dst_star = Dst - b * np.sqrt(P_dyn) + c
+
+    # Injection term: ring-current energization driven by dawn-dusk E-field
+    injection = np.where(Ey > Ec, -a * (Ey - Ec), 0.0)
+
+    # Standard Burton equation for dDst*/dt (approximates dDst/dt)
+    dDst_dt = injection - Dst_star / tau
+    return dDst_dt

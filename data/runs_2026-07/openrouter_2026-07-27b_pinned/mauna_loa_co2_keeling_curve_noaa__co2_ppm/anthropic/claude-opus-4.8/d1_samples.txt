@@ -1,0 +1,93 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Reference epoch
+    t0 = 1958.0
+    dt = t - t0
+    # Quadratic secular trend (Keeling curve)
+    c0 = 315.0
+    a = 0.80      # linear ppm/yr
+    b = 0.0125    # quadratic ppm/yr^2
+    trend = c0 + a * dt + b * dt**2
+    # Seasonal cycle (annual + semiannual harmonics)
+    seasonal = (2.8 * np.cos(2 * np.pi * (t - 1958.0)) +
+                1.2 * np.sin(2 * np.pi * (t - 1958.0)) +
+                0.6 * np.cos(4 * np.pi * (t - 1958.0)) +
+                0.4 * np.sin(4 * np.pi * (t - 1958.0)))
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    t0 = 1958.0
+    dt = t - t0
+
+    # Long-term trend: quadratic in time (accelerating CO2 growth)
+    trend = 315.0 + 1.30 * dt + 0.0128 * dt**2
+
+    # Seasonal cycle: first two harmonics of the annual oscillation
+    # (peak ~May, minimum ~October); phase relative to calendar year
+    phase = 2.0 * np.pi * t
+    seasonal = (2.90 * np.sin(phase + 1.10)
+                + 0.80 * np.sin(2.0 * phase + 0.50))
+
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Reference epoch
+    t0 = 1958.0
+    dt = t - t0
+    # Quadratic long-term trend (Keeling curve) + seasonal harmonics
+    # Coefficients based on canonical Mauna Loa CO2 fit (WMO X2019 scale)
+    c = (315.0
+         + 0.79 * dt
+         + 0.0125 * dt**2
+         + 2.9 * np.sin(2 * np.pi * t + 1.9)
+         + 0.9 * np.sin(4 * np.pi * t + 1.1))
+    return c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Reference epoch
+    t0 = 1958.0
+    dt = t - t0
+    # Quadratic long-term trend (Keeling curve) + seasonal harmonics
+    # Coefficients based on standard Mauna Loa CO2 fits
+    trend = 315.0 + 0.75 * dt + 0.0130 * dt**2
+    # Seasonal cycle (annual + semiannual)
+    phase = 2.0 * np.pi * t
+    seasonal = (2.8 * np.sin(phase + 1.9)
+                + 0.8 * np.sin(2.0 * phase + 1.0))
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    t0 = 1958.0
+    dt = t - t0
+    # Quadratic long-term trend (Keeling curve) + seasonal harmonics
+    c = (315.0
+         + 0.80 * dt
+         + 0.0130 * dt**2
+         # annual and semi-annual seasonal cycle
+         + 2.90 * np.cos(2 * np.pi * (t - 1958.0))
+         + 1.00 * np.sin(2 * np.pi * (t - 1958.0))
+         + 0.60 * np.cos(4 * np.pi * (t - 1958.0))
+         + 0.20 * np.sin(4 * np.pi * (t - 1958.0)))
+    return c

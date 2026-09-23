@@ -1,0 +1,135 @@
+import numpy as np
+
+def predict(X):
+    # Semi-empirical mass formula (Bethe-Weizsäcker) coefficients [MeV]
+    aV = 15.75   # volume
+    aS = 17.8    # surface
+    aC = 0.711   # Coulomb
+    aA = 23.7    # asymmetry
+    aP = 11.18   # pairing
+
+    Z    = X[:, 0]
+    N    = X[:, 1]
+    A    = X[:, 2]
+    NZ   = X[:, 3]
+    coul = X[:, 5]   # Z(Z-1)/A^(1/3)
+    pair = X[:, 6]   # +1 even-even, 0 odd-A, -1 odd-odd
+
+    B = (aV * A
+         - aS * A**(2.0/3.0)
+         - aC * coul
+         - aA * (NZ**2) / A
+         + pair * aP / np.sqrt(A))
+
+    return B / A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Z    = X[:, 0]
+    N    = X[:, 1]
+    A    = X[:, 2]
+    NZ   = X[:, 3]
+    coul = X[:, 5]
+    pair = X[:, 6]
+
+    # Bethe-Weizsäcker (semi-empirical mass formula) coefficients [MeV]
+    a_V = 15.75   # volume
+    a_S = 17.8    # surface
+    a_C = 0.711   # Coulomb
+    a_A = 23.7    # asymmetry
+    a_P = 11.18   # pairing
+
+    B = (a_V * A
+         - a_S * A**(2.0/3.0)
+         - a_C * coul
+         - a_A * (NZ**2) / A
+         + a_P * pair / np.sqrt(A))
+
+    return B / A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Bethe-Weizsacker semi-empirical mass formula, expressed as B/A
+    Z    = X[:, 0]
+    N    = X[:, 1]
+    A    = X[:, 2]
+    NZ   = X[:, 3]        # N - Z
+    coul = X[:, 5]        # Z(Z-1)/A^(1/3)
+    delta = X[:, 6]       # +1 even-even, 0 odd-A, -1 odd-odd
+
+    # Standard fitted coefficients (MeV)
+    a_V = 15.75   # volume
+    a_S = 17.8    # surface
+    a_C = 0.711   # Coulomb
+    a_A = 23.7    # asymmetry
+    a_P = 11.18   # pairing
+
+    B = (a_V * A
+         - a_S * A**(2.0/3.0)
+         - a_C * coul
+         - a_A * (NZ**2) / A
+         + delta * a_P / np.sqrt(A))
+
+    return B / A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Z = X[:, 0]
+    N = X[:, 1]
+    A = X[:, 2]
+    coul = X[:, 5]      # Z(Z-1)/A^(1/3)
+    delta = X[:, 6]     # +1 even-even, 0 odd-A, -1 odd-odd
+
+    # Bethe-Weizsäcker semi-empirical mass formula coefficients (MeV)
+    aV = 15.75   # volume
+    aS = 17.8    # surface
+    aC = 0.711   # Coulomb
+    aA = 23.7    # asymmetry
+    aP = 11.18   # pairing
+
+    # Total binding energy
+    B = (aV * A
+         - aS * A**(2.0/3.0)
+         - aC * coul
+         - aA * (N - Z)**2 / A
+         + delta * aP / np.sqrt(A))
+
+    return B / A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Z    = X[:, 0]
+    N    = X[:, 1]
+    A    = X[:, 2]
+    NZ   = X[:, 3]
+    coul = X[:, 5]
+    pair = X[:, 6]
+
+    # Bethe-Weizsäcker semi-empirical mass formula coefficients (MeV)
+    a_V = 15.75   # volume
+    a_S = 17.8    # surface
+    a_C = 0.711   # Coulomb
+    a_A = 23.7    # asymmetry
+    a_P = 11.18   # pairing
+
+    A = np.where(A <= 0, 1e-9, A)
+
+    B = (a_V * A
+         - a_S * A**(2.0/3.0)
+         - a_C * coul
+         - a_A * (NZ**2) / A
+         + pair * a_P / np.sqrt(A))
+
+    return B / A

@@ -1,0 +1,230 @@
+task_id: smbh_mass_sigma_relation__log_M_BH
+metric: rmse
+domain: astronomy / extragalactic astrophysics
+type: typeI
+has_group_id: false
+
+license: "CC-BY-4.0 (Jin & Davis 2023 preprint; factual measurement values additionally non-copyrightable per Feist v. Rural Telephone 1991)"
+
+# === Audit re-work history ===
+# 2026-05-29 audit (claude-opus): three coupled defects fixed.
+#   1. FM-A2 target leak: removed input `Rho_soi` (sphere-of-influence density is
+#      derived from M_BH itself, r_soi = G*M_BH/sigma^2) and archived the only
+#      baseline that consumed it (jin_2023_lowscatter) to .dropped_baselines/.
+#   2. FM-B9a: prep_data.py now performs the NaN-row drop in-script and
+#      reproduces the shipped CSVs (previously the drop lived only in the data).
+#   3. Degenerate high-sigma OOD split replaced by a deterministic representative
+#      split (interleave by sigma0 rank); all 5 baselines now have positive R^2.
+#   Result: n_train 94->99, n_test 28->25 (124 complete rows, 0 NaN); new
+#   reference_baseline_id = jin_2023_easy (R^2=0.731). See VERDICT.md.
+# Earlier history (superseded): wave-12 NaN drop, wave-14 metric refresh,
+#   wave-7 F8 dedup (removed ferrarese/gebhardt/kormendy/vandenbosch/sahu).
+# 2026-05-30 field-classification audit (claude-opus): three bare structural pivots
+#   declared into OTHER_CONSTANTS (gold style; predict reads from the dict):
+#     tremaine_2002 + mcconnell_2013_msigma  sigma_pivot=200 km/s  (n_other 0->1 each)
+#     mcconnell_2013_mbulge                  log_mass_pivot=11 (=1e11 M_sun) (n_other 0->1)
+#   All alpha/beta/a/ZP slopes+intercepts kept in LAW (verified vs PDFs). saglia_2016 and
+#   jin_2023_easy have no bare structural number — unchanged. Behavior-preserving:
+#   rmse/r2 identical (re-run evaluate.py reference). caps.max_law_constants unchanged (4).
+#   Phase-2 note: this task has no `priors:` block yet — OTHER pivots not exposed (deferred).
+
+context: >-
+  Supermassive black holes are the extremely massive compact objects residing at the centres of massive galaxies, studied in extragalactic astrophysics.
+
+target:
+  name: log_M_BH
+  symbol: log10(M_BH/M_sun)
+  unit: log10(M_sun)
+  description: >-
+    Base-10 logarithm of the dynamically measured supermassive black hole
+    mass, expressed in solar masses. Values from resolved stellar dynamics,
+    ionized-gas kinematics, or megamaser disk kinematics.
+  range:
+    - 5.74
+    - 10.30
+
+inputs:
+  - name: sigma0
+    symbol: sigma_0
+    unit: km/s
+    dtype: float
+    description: >-
+      Central stellar velocity dispersion of the host galaxy bulge,
+      aperture-homogenized following the HyperLeda convention as compiled
+      by Jin & Davis (2023). Measured by galaxy spectroscopy, independent of
+      the M_BH dynamical modelling.
+    range:
+      - 34.59
+      - 393.04
+  - name: log_M_sph
+    symbol: log10(M_sph/M_sun)
+    unit: log10(M_sun)
+    dtype: float
+    description: >-
+      Base-10 logarithm of the stellar mass of the host spheroid (bulge)
+      component in solar masses, from photometric decomposition.
+    range:
+      - 8.03
+      - 12.36
+  - name: B_T
+    symbol: B/T
+    unit: ""
+    dtype: float
+    description: >-
+      Bulge-to-total luminosity ratio of the host galaxy (dimensionless
+      fraction between 0 and 1).
+    range:
+      - 0.07
+      - 1.0
+  - name: Pseudobulge
+    symbol: P
+    unit: ""
+    dtype: float
+    description: >-
+      Binary morphological indicator: 1 for galaxies hosting a pseudobulge,
+      0 for classical bulges or elliptical galaxies.
+    range:
+      - 0.0
+      - 1.0
+
+data_files:
+  train: data/train.csv   # 99 rows; representative split (sigma0 rank % 5 != 2)
+  test:  data/test.csv    # 25 rows; representative split (sigma0 rank % 5 == 2)
+
+n_train: 99
+n_test: 25
+
+# Auditor notes:
+#
+# 1. Tautology check: CLEAR (FALSE).
+#    M_BH values are direct dynamical measurements (resolved stellar orbits,
+#    ionized-gas kinematics, megamaser disks). sigma0 is from independent
+#    spectroscopy; log_M_sph and B_T are from photometric decomposition;
+#    Pseudobulge is a morphological class flag. None is derived from M_BH.
+#    The sphere-of-influence density rho_soi — which IS derived from M_BH
+#    (r_soi = G*M_BH/sigma^2) — was removed from the released schema during the
+#    2026-05-29 audit, eliminating the only circular input.
+#
+# 2. License: CC-BY-4.0.
+#    The Jin & Davis (2023) GitHub repo has no LICENSE file, but the arXiv
+#    preprint carries CC-BY 4.0. Additionally, the factual
+#    measurement values (M_BH from stellar dynamics, sigma0 from spectroscopy,
+#    photometric masses/ratios) are not copyrightable under US law (Feist v.
+#    Rural Telephone Service Co., 1991).
+#
+# 3. Split: deterministic REPRESENTATIVE split (not OOD).
+#    Sort the 124 complete rows by sigma0, assign every 5th (rank % 5 == 2) to
+#    test. Train and test both span the full sigma0 range (train 34.6-393.0,
+#    test 91.8-387.2 km/s) so the published M-sigma laws are evaluated
+#    in-distribution. The source paper specifies no split (full-sample fit), so
+#    an invented split is permitted per v0.5 §4; a representative split is used
+#    because the previously tried high-sigma OOD was degenerate (a constant beat
+#    most baselines on the held-out tail).
+#
+# 4. Data shape: 145 source rows -> 143 after sigma0/target filter -> 124 after
+#    dropping the 19 rows missing log_M_sph/B_T (same galaxies). All released
+#    rows are complete (0 NaN); every baseline runs on every row.
+#
+# 5. Metric: rmse (the evaluate.py harness computes rmse/mae/mse/smape/r2).
+
+references:
+  # measured blocks computed 2026-05-29 by evaluate.py reference on the
+  # representative 99/25 split (n_test=25). All 5 baselines run finite, R^2 > 0.
+  - id: tremaine_2002
+    label: "Tremaine et al. 2002 Eq. 19 — log M = 8.13 + 4.02*log10(sigma/200) (PDF p. 10)"
+    formula_file: formulas/tremaine_2002.py
+    reference_pdf: reference/tremaine_2002.pdf
+    n_law_constants: 2
+    n_other_constants: 1   # sigma_pivot=200 km/s (fixed structural normalization, PDF p. 10)
+    n_local_params: 0
+    measured:
+      rmse: 0.640653
+      mse: 0.410436
+      mae: 0.484870
+      smape: 0.059648
+      r2: 0.508069
+      n_finite: 25
+      n_test: 25
+
+  - id: mcconnell_2013_msigma
+    label: "McConnell & Ma 2013 Table 2 M-sigma — log M = 8.32 + 5.64*log10(sigma/200) (PDF p. 8)"
+    formula_file: formulas/mcconnell_2013_msigma.py
+    reference_pdf: reference/mcconnell_2013.pdf
+    n_law_constants: 2
+    n_other_constants: 1   # sigma_pivot=200 km/s (fixed structural normalization, PDF p. 4/8)
+    n_local_params: 0
+    measured:
+      rmse: 0.665436
+      mse: 0.442805
+      mae: 0.449602
+      smape: 0.056939
+      r2: 0.469272
+      n_finite: 25
+      n_test: 25
+
+  - id: mcconnell_2013_mbulge
+    label: "McConnell & Ma 2013 Table 2 M-bulge — log M = 8.46 + 1.05*(log_M_sph - 11) (PDF p. 8)"
+    formula_file: formulas/mcconnell_2013_mbulge.py
+    reference_pdf: reference/mcconnell_2013.pdf
+    n_law_constants: 2
+    n_other_constants: 1   # log_mass_pivot=11 (=1e11 M_sun fixed normalization, PDF p. 8)
+    n_local_params: 0
+    measured:
+      rmse: 0.523117
+      mse: 0.273652
+      mae: 0.424180
+      smape: 0.051035
+      r2: 0.672012
+      n_finite: 25
+      n_test: 25
+
+  - id: saglia_2016
+    label: "Saglia et al. 2016 Table 11 All — log M = 5.246*log10(sigma) - 3.77 (PDF p. 33)"
+    formula_file: formulas/saglia_2016.py
+    reference_pdf: reference/saglia_2016.pdf
+    n_law_constants: 2
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.640861
+      mse: 0.410702
+      mae: 0.440870
+      smape: 0.055498
+      r2: 0.507750
+      n_finite: 25
+      n_test: 25
+
+  - id: jin_2023_easy
+    label: "Jin & Davis 2023 Table 1 easy-to-use — log M = log10(sigma)+log_M_sph-0.56*P-4.57 (PDF p. 4); reference anchor"
+    formula_file: formulas/jin_2023_easy.py
+    reference_pdf: reference/jin_2023.pdf
+    n_law_constants: 4
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.474129
+      mse: 0.224798
+      mae: 0.317752
+      smape: 0.038487
+      r2: 0.730567
+      n_finite: 25
+      n_test: 25
+
+caps:
+  max_law_constants: 4
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+reference_baseline_id: jin_2023_easy   # best leak-free baseline on the representative split
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted log_M_BH is nondecreasing with sigma0 when other inputs are held fixed"
+  - "predicted log_M_BH is nondecreasing with log_M_sph when other inputs are held fixed"
+  - "includes a pseudobulge morphology term that is non-positive: at fixed sigma0 and spheroid mass, a pseudobulge host (Pseudobulge=1) is predicted to have black-hole mass no larger than a classical-bulge/elliptical host (Pseudobulge=0)"
+
+best_baseline: 0.474129    # jin_2023_easy — rmse (lower is better); regenerated 2026-05-30

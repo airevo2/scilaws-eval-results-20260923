@@ -1,0 +1,91 @@
+import numpy as np
+
+def predict(X):
+    """
+    Gas-phase oxygen abundance, 12 + log(O/H), using the Mannucci et al. (2010)
+    / "fundamental metallicity relation" polynomial form.
+
+    Inputs
+    ------
+    X : array-like, shape (n_samples, 2)
+        X[:, 0] = log_Mstar = log10(M_star / Msun)
+        X[:, 1] = log_SFR   = log10(SFR / (Msun/yr))
+
+    Returns
+    -------
+    oh : ndarray, shape (n_samples,)
+        12 + log10(O/H)
+    """
+    X = np.asarray(X)
+    m = X[:, 0]
+    s = X[:, 1]
+    mu = m - 0.32 * s
+    return 8.90 + 0.37 * (mu - 10.0) - 0.14 * (mu - 10.0) ** 2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mannucci et al. (2010) "fundamental metallicity relation" polynomial fit
+    m = X[:, 0] - 10.0
+    s = X[:, 1]
+    return 8.90 + 0.37 * m - 0.14 * s - 0.19 * m**2 + 0.12 * m * s - 0.054 * s**2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mannucci et al. (2010) "fundamental metallicity relation" in polynomial form
+    m = X[:, 0] - 10.0               # log_Mstar - 10
+    s = X[:, 1]                      # log_SFR
+
+    oh = 8.90 + 0.37 * m - 0.14 * s - 0.19 * m**2 + 0.12 * m * s - 0.054 * s**2
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gas-phase oxygen abundance 12 + log(O/H) using the widely used
+    Mannucci et al. (2010) "fundamental metallicity relation" fit.
+    
+    Inputs
+    ------
+    X : ndarray, shape (n_samples, 2)
+        X[:, 0] = log_Mstar = log10(Mstar / Msun)
+        X[:, 1] = log_SFR   = log10(SFR / Msun yr^-1)
+    
+    Returns
+    -------
+    ndarray, shape (n_samples,)
+        12 + log(O/H) in dex
+    """
+    m = X[:, 0]
+    s = X[:, 1]
+    
+    # Commonly used FMR variable
+    mu = m - 0.32 * s
+    
+    # Mannucci et al. (2010), valid in the usual calibration range
+    oh = 8.90 + 0.37 * (mu - 10.0) - 0.14 * (mu - 10.0)**2
+    
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    # Fundamental Metallicity Relation (Mannucci et al. 2010), commonly used polynomial form
+    m = log_Mstar - 10.0
+    s = log_SFR
+
+    oh = 8.90 + 0.37*m - 0.14*s - 0.19*m**2 + 0.12*m*s - 0.054*s**2
+    return oh

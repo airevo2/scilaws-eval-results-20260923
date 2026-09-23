@@ -1,0 +1,26 @@
+{
+  "task": "polymer_melt_viscosity_polyverse__log10_eta_poise",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeII",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "shangguan_2017_dwlf",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "shangguan_2017_wlf",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

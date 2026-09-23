@@ -1,0 +1,233 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual N2O emissions (I_N2O) in kg N2O per year 
+    excluding land-use change and forestry, using a STIRPAT (Stochastic 
+    Impacts by Regression on Population, Affluence, and Technology) 
+    multiplicative model.
+
+    Inputs (columns of X):
+        X[:,0] = GDP  : GDP per capita (constant 2015 USD)
+        X[:,1] = TP   : Total national population (persons)
+        X[:,2] = AP   : Working-age population share (%)
+        X[:,3] = DP   : Population density (persons per km²)
+        X[:,4] = UR   : Urban population share (%)
+        X[:,5] = AT   : Annual mean surface air temperature (°C)
+
+    Returns:
+        I_N2O : 1-D numpy array of N2O emissions in kg N2O/year
+    """
+    # Extract columns
+    GDP = X[:, 0]
+    TP  = X[:, 1]
+    AP  = X[:, 2]
+    DP  = X[:, 3]
+    UR  = X[:, 4]
+    AT  = X[:, 5]
+
+    # Fitted coefficients (typical values from cross-country STIRPAT studies for N2O)
+    b0 = -9.5       # intercept (log-scale)
+    b1 =  1.0       # population elasticity
+    b2 =  0.7       # GDP per capita elasticity
+    b3 =  0.05      # active population share elasticity
+    b4 = -0.08      # population density elasticity
+    b5 =  0.12      # urbanization elasticity
+    b6 =  0.02      # temperature semi-elasticity (linear effect)
+
+    # Log-linear model (STIRPAT)
+    log_I = (b0
+             + b1 * np.log(TP)
+             + b2 * np.log(GDP)
+             + b3 * np.log(AP)
+             + b4 * np.log(DP)
+             + b5 * np.log(UR)
+             + b6 * AT)
+
+    I_N2O = np.exp(log_I)
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs (order: GDP per capita, total population, active population share,
+    # population density, urbanization rate, annual mean temperature)
+    A = X[:, 0]   # GDP per capita [USD/cap]
+    P = X[:, 1]   # total population [persons]
+    AP = X[:, 2]  # working-age share [%]
+    DP = X[:, 3]  # population density [persons/km²]
+    UR = X[:, 4]  # urbanization rate [%]
+    AT = X[:, 5]  # annual mean temperature [°C]
+
+    # Standard STIRPAT (Stochastic Impacts by Regression on Population, Affluence, Technology)
+    # log-linear form with additive temperature effect.
+    # Coefficients from a typical cross-country panel regression for N2O emissions.
+    ALPHA = 0.05
+    BETA_P = 1.0
+    BETA_A = 0.6
+    BETA_AP = 0.0
+    BETA_DP = 0.0
+    BETA_UR = 0.3
+    BETA_AT = 0.02
+
+    # Multiplicative exponential relationship
+    I_N2O = (
+        ALPHA
+        * (P ** BETA_P)
+        * (A ** BETA_A)
+        * (AP ** BETA_AP)
+        * (DP ** BETA_DP)
+        * (UR ** BETA_UR)
+        * np.exp(BETA_AT * AT)
+    )
+
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual N2O emissions (kg N2O) via an extended STIRPAT model.
+    Input X columns:
+        0: GDP (A) [USD/capita, constant 2015 USD]
+        1: TP (P) [persons]
+        2: AP (AP) [% working-age share]
+        3: DP (DP) [persons per km2]
+        4: UR (UR) [% urban population]
+        5: AT (AT) [degrees C annual mean temperature]
+    Returns 1-D array of I_N2O.
+    """
+    # Unpack inputs
+    A = X[:, 0]   # GDP per capita
+    P = X[:, 1]   # total population
+    AP = X[:, 2]  # active population share
+    DP = X[:, 3]  # population density
+    UR = X[:, 4]  # urbanisation rate
+    AT = X[:, 5]  # annual mean temperature
+
+    # Model coefficients (placeholders for typical fitted values)
+    beta0 = 1.0    # intercept factor
+    beta_P = 1.0   # population elasticity
+    beta_A = 0.8   # affluence elasticity (often <1 for N2O)
+    beta_DP = 0.2  # population density elasticity
+    gamma_AP = 0.01  # semi-elasticity for working-age share (percent)
+    gamma_UR = 0.005 # semi-elasticity for urbanisation (percent)
+    gamma_AT = 0.02  # semi-elasticity for temperature (deg C)
+
+    # STIRPAT closed form: I = exp(ln(beta0) + beta_P*ln(P) + beta_A*ln(A) + beta_DP*ln(DP)
+    #                         + gamma_AP*AP + gamma_UR*UR + gamma_AT*AT)
+    # Note: AP, UR, AT enter linearly (not log-transformed) because they are not strictly positive ratios
+    log_I = (np.log(beta0) +
+             beta_P * np.log(P) +
+             beta_A * np.log(A) +
+             beta_DP * np.log(DP) +
+             gamma_AP * AP +
+             gamma_UR * UR +
+             gamma_AT * AT)
+
+    I_N2O = np.exp(log_I)
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual N2O emissions (I_N2O) [kg N2O] excluding land-use change
+    and forestry, using a STIRPAT (Stochastic Impacts by Regression on Population,
+    Affluence, and Technology) log-linear multiplicative model.
+
+    Input X: 2-D numpy array with columns:
+        0 - GDP (A) [USD per capita, constant 2015]
+        1 - TP (P)  [persons]
+        2 - AP (AP) [% working-age population]
+        3 - DP (DP) [persons per km2]
+        4 - UR (UR) [% urban population]
+        5 - AT (AT) [degrees C, annual mean temperature]
+
+    Returns:
+        1-D numpy array of I_N2O in kg N2O per country per year.
+    """
+
+    # Model coefficients (elasticities) from a standard STIRPAT specification
+    # fitted to national N2O emission inventories.
+    INTERCEPT = -2.0       # scale factor (log kg N2O)
+    B_GDP     =  0.35      # elasticity w.r.t. GDP per capita
+    B_POP     =  0.95      # elasticity w.r.t. population
+    B_AP      =  0.10      # elasticity w.r.t. working-age share
+    B_DP      = -0.05      # elasticity w.r.t. population density
+    B_UR      =  0.20      # elasticity w.r.t. urbanization rate
+    B_AT      =  0.08      # semi-elasticity w.r.t. temperature (deg C)
+
+    # Extract variables
+    gdp = X[:, 0]
+    pop = X[:, 1]
+    ap  = X[:, 2]
+    dp  = X[:, 3]
+    ur  = X[:, 4]
+    at  = X[:, 5]
+
+    # Log-linear form: ln(I) = intercept + B1*ln(gdp) + B2*ln(pop) + ...
+    # Temperature enters linearly (exponential Q10-type response)
+    log_emissions = (INTERCEPT 
+                     + B_GDP * np.log(gdp)
+                     + B_POP * np.log(pop)
+                     + B_AP  * np.log(ap)
+                     + B_DP  * np.log(dp)
+                     + B_UR  * np.log(ur)
+                     + B_AT  * at)
+
+    # Convert back to natural units
+    I_N2O = np.exp(log_emissions)
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual N2O emissions (kg N2O) using a STIRPAT model.
+    
+    Inputs (X columns):
+    0: GDP per capita (constant 2015 USD)
+    1: Total population (persons)
+    2: Working-age population share (%)
+    3: Population density (persons per km2)
+    4: Urban population share (%)
+    5: Annual mean temperature (degrees C)
+    
+    Returns:
+    1-D numpy array of I_N2O in kg N2O.
+    """
+    GDP = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+
+    # Model coefficients (typical STIRPAT elasticities for N2O)
+    b0 = -10.2   # intercept (log-scale)
+    b1 = 1.02    # population elasticity
+    b2 = 0.55    # affluence elasticity (GDP/capita)
+    b3 = 0.018   # working-age share parameter
+    b4 = -0.15   # density elasticity
+    b5 = 0.012   # urbanization parameter
+    b6 = 0.035   # temperature parameter
+
+    log_I = (b0
+             + b1 * np.log(P)
+             + b2 * np.log(GDP)
+             + b3 * AP
+             + b4 * np.log(DP)
+             + b5 * UR
+             + b6 * AT)
+
+    I_N2O = np.exp(log_I)
+    return I_N2O

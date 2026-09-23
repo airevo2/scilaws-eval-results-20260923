@@ -1,0 +1,170 @@
+import numpy as np
+
+def predict(X):
+    # Standard canonical gravity model coefficients
+    # Based on typical empirical estimates (e.g., Head & Mayer 2014, Disdier & Head 2008)
+    beta_0 = -18.8   # Intercept (scaled for trade and GDP in thousands of USD)
+    beta_1 = 1.0     # Origin GDP elasticity
+    beta_2 = 1.0     # Destination GDP elasticity
+    beta_3 = -1.0    # Distance elasticity
+    beta_4 = 0.4     # Contiguity premium
+    beta_5 = 0.3     # Common official language premium
+    beta_6 = 0.4     # Colonial/dependency relationship premium
+    beta_7 = 0.3     # FTA/WTO agreement premium
+    
+    log_tradeflow = (beta_0 + 
+                     beta_1 * X[:, 0] + 
+                     beta_2 * X[:, 1] + 
+                     beta_3 * X[:, 2] + 
+                     beta_4 * X[:, 3] + 
+                     beta_5 * X[:, 4] + 
+                     beta_6 * X[:, 5] + 
+                     beta_7 * X[:, 6])
+                     
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard log-linear gravity model coefficients 
+    # (calibrated to typical CEPII/BACI empirical estimates)
+    beta_0 = -15.00  # Constant
+    beta_1 = 0.90    # Origin GDP elasticity
+    beta_2 = 0.90    # Destination GDP elasticity
+    beta_3 = -0.80   # Distance elasticity
+    beta_4 = 0.40    # Contiguity effect
+    beta_5 = 0.30    # Common official language effect
+    beta_6 = 0.30    # Colonial/dependency tie effect
+    beta_7 = 0.30    # FTA/WTO agreement effect
+    
+    log_tradeflow = (beta_0 + 
+                     beta_1 * X[:, 0] + 
+                     beta_2 * X[:, 1] + 
+                     beta_3 * X[:, 2] + 
+                     beta_4 * X[:, 3] + 
+                     beta_5 * X[:, 4] + 
+                     beta_6 * X[:, 5] + 
+                     beta_7 * X[:, 6])
+    
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    log_gdp_o = X[:, 0]
+    log_gdp_d = X[:, 1]
+    log_dist = X[:, 2]
+    contig = X[:, 3]
+    comlang_off = X[:, 4]
+    col_dep_ever = X[:, 5]
+    fta_wto = X[:, 6]
+    
+    # Standard cross-sectional gravity model coefficients (log-linear form)
+    # Based on canonical empirical regularities (e.g., Disdier & Head 2008, Head & Mayer 2014)
+    beta_0 = -20.0      # Constant
+    beta_1 = 0.95       # Origin GDP elasticity
+    beta_2 = 0.95       # Destination GDP elasticity
+    beta_3 = -1.00      # Distance elasticity
+    beta_4 = 0.50       # Contiguity premium
+    beta_5 = 0.40       # Common language premium
+    beta_6 = 0.60       # Colonial history premium
+    beta_7 = 0.30       # RTA/FTA premium
+    
+    # Calculate log trade flow
+    log_tradeflow = (beta_0 + 
+                     beta_1 * log_gdp_o + 
+                     beta_2 * log_gdp_d + 
+                     beta_3 * log_dist + 
+                     beta_4 * contig + 
+                     beta_5 * comlang_off + 
+                     beta_6 * col_dep_ever + 
+                     beta_7 * fta_wto)
+    
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard log-linear Gravity Model coefficients (e.g., Head & Mayer, 2014)
+    beta_0 = -20.00     # Constant (intercept)
+    beta_1 = 1.00       # Origin GDP elasticity
+    beta_2 = 1.00       # Destination GDP elasticity
+    beta_3 = -1.20      # Distance elasticity
+    beta_4 = 0.40       # Contiguity premium
+    beta_5 = 0.50       # Common official language premium
+    beta_6 = 0.20       # Colonial/dependency tie premium
+    beta_7 = 0.30       # FTA/WTO agreement premium
+    
+    log_gdp_o = X[:, 0]
+    log_gdp_d = X[:, 1]
+    log_dist = X[:, 2]
+    contig = X[:, 3]
+    comlang_off = X[:, 4]
+    col_dep_ever = X[:, 5]
+    fta_wto = X[:, 6]
+    
+    log_tradeflow = (beta_0 + 
+                     beta_1 * log_gdp_o + 
+                     beta_2 * log_gdp_d + 
+                     beta_3 * log_dist + 
+                     beta_4 * contig + 
+                     beta_5 * comlang_off + 
+                     beta_6 * col_dep_ever + 
+                     beta_7 * fta_wto)
+                     
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log of bilateral trade flows using the standard log-linear 
+    Gravity Model of International Trade. 
+    
+    Coefficients are based on typical empirical estimates from the gravity 
+    literature (e.g., Disdier & Head 2008 meta-analysis, Head & Mayer 2014), 
+    adjusted for the specified units (Trade in thousands USD, GDP in USD).
+    """
+    # Intercept (ln G - ln Y_world + ln 1000 + average multilateral resistance effects)
+    BETA_0 = -26.50
+    
+    # Elasticities and semi-elasticities
+    BETA_GDP_O = 0.92    # Origin GDP elasticity (typically ~0.9 - 1.0)
+    BETA_GDP_D = 0.94    # Destination GDP elasticity (typically ~0.9 - 1.0)
+    BETA_DIST = -0.78    # Distance elasticity (typically ~ -0.7 to -0.9)
+    BETA_CONTIG = 0.45   # Contiguity premium
+    BETA_LANG = 0.35     # Common official language premium
+    BETA_COLONY = 0.28   # Historical colonial tie premium
+    BETA_FTA = 0.32      # Regional Trade Agreement / WTO premium
+    
+    # Extract features
+    log_gdp_o = X[:, 0]
+    log_gdp_d = X[:, 1]
+    log_dist = X[:, 2]
+    contig = X[:, 3]
+    comlang_off = X[:, 4]
+    col_dep_ever = X[:, 5]
+    fta_wto = X[:, 6]
+    
+    # Compute log trade flow
+    log_tradeflow = (
+        BETA_0 + 
+        BETA_GDP_O * log_gdp_o + 
+        BETA_GDP_D * log_gdp_d + 
+        BETA_DIST * log_dist + 
+        BETA_CONTIG * contig + 
+        BETA_LANG * comlang_off + 
+        BETA_COLONY * col_dep_ever + 
+        BETA_FTA * fta_wto
+    )
+    
+    return log_tradeflow

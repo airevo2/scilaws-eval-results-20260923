@@ -1,0 +1,257 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh].
+
+    Canonical degradation model:
+        Q_dis = Q_0 * exp(-a * EFC^b) * f_group * f_voltage * f_current * f_cycle
+
+    where a, b and the correction terms are represented here in a standard
+    closed-form semi-empirical style. Since no fitted dataset is provided,
+    this function uses a conservative physics-inspired approximation that
+    preserves the expected monotone decrease with aging and dependence on
+    cutoff/charge conditions.
+    """
+    X = np.asarray(X, dtype=float)
+
+    k = X[:, 0]          # cycle index
+    efc = X[:, 1]        # equivalent full cycles
+    q0 = X[:, 2]         # nominal capacity [mAh]
+    v_low = X[:, 3]      # discharge cutoff [V]
+    v_high = X[:, 4]     # charge cutoff [V]
+    i_cv = X[:, 5]       # CV termination current in C-rate
+    i_chg = X[:, 6]      # max charge C-rate
+    g = X[:, 7]          # group label
+
+    # Group-dependent baseline aging severity (higher = faster fade)
+    group_factor = np.array([1.00, 1.06, 1.12, 1.18, 1.24])  # index 0 unused
+    gf = group_factor[np.clip(g.astype(int), 1, 4)]
+
+    # Semi-empirical fade law in EFC:
+    # capacity retention = exp(-a * efc^b)
+    a = 2.2e-3
+    b = 1.12
+    retention = np.exp(-a * np.power(np.maximum(efc, 0.0), b))
+
+    # Voltage window effect: broader usable window slightly increases measured discharge capacity
+    # Reference window around common Li-ion values.
+    v_effect = 1.0 + 0.18 * (v_high - 4.2) - 0.22 * (v_low - 2.8)
+
+    # Charge protocol effect: lower CV cutoff current / lower charge rate tends to reduce stress
+    # and preserve discharge capacity.
+    current_effect = 1.0 - 0.10 * (i_chg - 0.2) - 0.06 * (i_cv - 0.02)
+
+    # Mild cycle-index transient (formation / early-cycle conditioning)
+    cycle_effect = 1.0 - 0.015 * np.exp(-0.25 * np.maximum(k - 1.0, 0.0))
+
+    q_dis = q0 * retention * gf * v_effect * current_effect * cycle_effect
+
+    # Capacity cannot be negative
+    return np.maximum(q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh].
+
+    Canonical closed-form choice: an exponential fade law with
+    cycle/EFC-dependent degradation, plus a mild dependence on operating
+    limits and design group.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 8)
+        Columns:
+        0 cycle_index (k)
+        1 efc (EFC)
+        2 nominal_capacity_mAh (Q_0)
+        3 v_cutoff_low_V (V_low)
+        4 v_cutoff_high_V (V_high)
+        5 i_cutoff_crate (I_CV)
+        6 i_chg_crate_max (I_chg)
+        7 group (g)
+
+    Returns
+    -------
+    np.ndarray, shape (n,)
+        Predicted discharge capacity [mAh]
+    """
+    X = np.asarray(X, dtype=float)
+
+    k = X[:, 0]
+    efc = X[:, 1]
+    Q0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+    g = X[:, 7]
+
+    # Group-specific baseline fade constants (generic, literature-style form)
+    # Group 1 is the reference; other groups slightly adjust degradation rate.
+    gamma_g = np.where(g == 1, 1.00,
+                np.where(g == 2, 0.95,
+                np.where(g == 3, 1.05, 1.10)))
+
+    # Operating-condition modifier:
+    # higher upper cutoff and higher charge rate mildly accelerate fade,
+    # lower discharge cutoff mildly preserves usable discharge capacity.
+    op = (
+        1.0
+        + 0.06 * (V_high - 4.2)
+        - 0.08 * (V_low - 2.8)
+        + 0.10 * (I_chg - 0.2)
+        + 0.04 * (I_CV - 0.02)
+    )
+
+    # Convert calendar/cycle index into a smooth degradation variable.
+    # EFC is the primary driver; cycle index adds a weak additional trend.
+    z = 0.0018 * efc + 0.00015 * k
+
+    # Standard exponential capacity-fade form with a small asymptotic floor.
+    # Q_dis = Q0 * [Q_min/Q0 + (1 - Q_min/Q0) * exp(-rate * z)]
+    Q_min_frac = 0.72
+    rate = 0.95 * gamma_g * op
+
+    Q_dis = Q0 * (Q_min_frac + (1.0 - Q_min_frac) * np.exp(-rate * z))
+
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh] using a simple
+    semi-empirical degradation law based on cycle count and equivalent full cycles,
+    with scaling by nominal capacity and discrete group effects.
+    """
+    X = np.asarray(X, dtype=float)
+
+    k = X[:, 0]          # cycle_index
+    efc = X[:, 1]        # equivalent full cycles
+    Q0 = X[:, 2]         # nominal capacity [mAh]
+    V_low = X[:, 3]      # lower cutoff voltage [V]
+    V_high = X[:, 4]     # upper cutoff voltage [V]
+    I_CV = X[:, 5]       # CV termination current (C-rate)
+    I_chg = X[:, 6]      # max charge C-rate
+    g = X[:, 7]          # group label
+
+    # Common closed-form battery capacity fade model:
+    # retained capacity = Q0 * (1 - a * efc^b - c * log(1 + k) - group offsets ...)
+    # Here expressed in discharge-capacity form and clipped at zero.
+    a = 1.8e-3
+    b = 1.12
+    c = 2.5e-4
+
+    # Mild physics-inspired adjustments:
+    # - larger nominal capacity tends to slightly slow relative fade
+    # - higher upper cutoff and lower lower cutoff generally increase usable capacity
+    # - higher CV termination current / charge rate can increase stress, slightly reducing capacity
+    scale_Q0 = (Q0 / 100.0) ** (-0.03)
+    voltage_term = 1.0 + 0.08 * (V_high - 4.2) - 0.05 * (V_low - 2.8)
+    charge_stress = 1.0 + 0.25 * (I_CV - 0.02) + 0.12 * (I_chg - 0.2)
+
+    # Group-specific offsets commonly used for categorical design differences
+    group_offset = np.choose(
+        np.clip(g.astype(int) - 1, 0, 3),
+        [0.00, 0.015, 0.030, 0.045]
+    )
+
+    fade = (
+        a * (efc ** b) * scale_Q0 * charge_stress / voltage_term
+        + c * np.log1p(k)
+        + group_offset
+    )
+
+    Q_dis = Q0 * np.clip(1.0 - fade, 0.0, 1.0)
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh].
+
+    Canonical closed-form phenomenological model:
+        Q_dis = Q_0 * exp(-k_deg * EFC) * f_cycle(k) * f_voltage(V_low, V_high) * f_rate(I_CV, I_chg, g)
+
+    Since no fitted coefficients/data are provided, this returns a physically
+    motivated baseline form with unity correction factors and a mild calendar/
+    cycling fade term commonly used as a generic approximation.
+    """
+    X = np.asarray(X, dtype=float)
+
+    k = X[:, 0]            # cycle index
+    efc = X[:, 1]          # equivalent full cycles
+    q0 = X[:, 2]           # nominal capacity [mAh]
+    v_low = X[:, 3]        # lower cutoff [V]
+    v_high = X[:, 4]       # upper cutoff [V]
+    i_cv = X[:, 5]         # CV termination current [C-rate]
+    i_chg = X[:, 6]        # max charge C-rate
+    g = X[:, 7]            # group label
+
+    # Generic degradation rate (per EFC), representing a standard exponential fade law.
+    k_deg = 1e-3
+
+    # Mild, dimensionless empirical modifiers that preserve the expected trends:
+    # - later cycles tend to have lower discharged capacity
+    # - higher lower cutoff and lower upper cutoff reduce delivered capacity
+    # - higher charge rates / higher CV termination current can slightly reduce capacity
+    # - group acts as a small configuration-dependent offset
+    f_cycle = np.exp(-1e-4 * (k - 1.0))
+    f_voltage = 1.0 - 0.15 * (v_low - 2.8) - 0.10 * (4.3 - v_high)
+    f_rate = 1.0 - 0.03 * (i_cv - 0.02) - 0.05 * (i_chg - 0.2) - 0.01 * (g - 1.0)
+
+    # Capacity cannot be negative; clip to a small positive value.
+    q_dis = q0 * np.exp(-k_deg * efc) * f_cycle * f_voltage * f_rate
+    return np.maximum(q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Baseline empirical semi-physics model for discharge-capacity fade:
+    # Q_dis ≈ Q0 * [1 - a1*sqrt(EFC) - a2*EFC - a3*(V_low-2.8) + a4*(V_high-4.2)
+    #               - a5*I_CV + a6*I_chg + group offsets]
+    #
+    # Coefficients are generic literature-style degradation terms; in practice
+    # these would be fitted to a specific dataset.
+    k = X[:, 0]
+    efc = X[:, 1]
+    q0 = X[:, 2]
+    v_low = X[:, 3]
+    v_high = X[:, 4]
+    i_cv = X[:, 5]
+    i_chg = X[:, 6]
+    g = X[:, 7]
+
+    # Group-specific small offsets (design/configuration dependence)
+    group_offset = np.choose(
+        g.astype(int) - 1,
+        [-0.02, -0.04, -0.01, -0.03]
+    )
+
+    # Capacity fade model
+    fade = (
+        0.020 * np.sqrt(np.maximum(efc, 0.0)) +
+        0.00020 * efc +
+        0.080 * (v_low - 2.8) -
+        0.030 * (v_high - 4.2) +
+        0.60 * (i_cv - 0.02) -
+        0.08 * (i_chg - 0.2) +
+        group_offset
+    )
+
+    q_dis = q0 * (1.0 - fade)
+
+    # Discharge capacity cannot be negative
+    return np.maximum(q_dis, 0.0)

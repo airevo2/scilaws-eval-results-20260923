@@ -1,0 +1,89 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Sørensen similarity (S) from environmental distance (d).
+    Uses the widely cited exponential decay model: S = S_max * exp(-alpha * d)
+    with S_max = 1.0 (theoretical similarity at d=0) and alpha a decay rate.
+    """
+    d = X[:, 0]  # environmental distance (z-scored Euclidean)
+    S_max = 1.0
+    alpha = 0.5   # typical decay constant for standardised environment
+    S = S_max * np.exp(-alpha * d)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean occurrence-based Sørensen similarity (S) from mean environmental distance (d).
+
+    Standard closed-form relationship: exponential decay
+    S = a * exp(-b * d)
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1)
+        X[:, 0] = env_dist (d), mean environmental distance of site pairs in a bin.
+
+    Returns
+    -------
+    S : np.ndarray, shape (n,)
+        Predicted Sørensen similarity, bounded [0, 1].
+    """
+    # Fitted coefficients (typical values from published distance-decay relationships)
+    a = 0.95   # similarity at zero environmental distance (intercept)
+    b = 0.25   # decay rate
+
+    d = X[:, 0]
+    S = a * np.exp(-b * d)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean occurrence-based Sørensen similarity (S) from 
+    mean environmental distance (d) using an exponential decay model.
+
+    S = a * exp(-b * d)
+    """
+    d = X[:, 0]  # environmental distance (z-scored Euclidean)
+    a = 0.92     # similarity at d=0 (intercept)
+    b = 0.35     # decay rate
+    S = a * np.exp(-b * d)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean Sørensen similarity (S) from mean environmental distance (d).
+
+    Standard model: exponential decay S = exp(-beta * d),
+    where beta > 0 is a fitted rate parameter.
+    """
+    # Fitted coefficient (rate of decay) – placeholder value
+    beta = 0.5  # typical value in the range of observed data, to be replaced by actual fit
+    d = X[:, 0]  # environmental distance
+    S = np.exp(-beta * d)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X is a 2-D array; X[:, 0] is environmental distance (d)
+    d = X[:, 0]
+    # Standard exponential decay of Sørensen similarity with environmental distance
+    # S = exp(-beta * d), where beta is a decay-rate constant.
+    beta = 0.3   # typical value from distance-decay literature
+    S = np.exp(-beta * d)
+    return S

@@ -1,0 +1,160 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(sigma) for Au-197(n,gamma) using the single-level Breit-Wigner
+    formula with energy-dependent neutron width (1/v tail).
+    
+    Parameters:
+    X : 2D numpy array, X[:,0] = E in eV.
+    
+    Returns:
+    1D array of log10(sigma) [log10(barn)].
+    """
+    E = X[:, 0]
+    
+    # Resonance parameters for the 4.9 eV resonance (standard values)
+    E_r = 4.9          # resonance energy [eV]
+    sigma_0 = 30000.0  # peak cross section [barn]
+    Gamma = 0.15       # total width (FWHM) [eV]
+    
+    # Single-level Breit-Wigner with 1/v factor:
+    # sigma(E) = sigma_0 * sqrt(E_r / E) * (Gamma/2)**2 / ((E - E_r)**2 + (Gamma/2)**2)
+    half_Gamma_sq = (Gamma / 2.0) ** 2
+    sigma = sigma_0 * np.sqrt(E_r / E) * half_Gamma_sq / ((E - E_r)**2 + half_Gamma_sq)
+    
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of Au-197(n,gamma) capture cross section (barn) 
+    as a function of incident neutron energy E (eV).
+
+    Uses the standard single-level Breit-Wigner resonance formula 
+    plus a 1/v (low-energy) background term.
+    """
+    # Extract energy in eV (first column of X)
+    E = X[:, 0]  # eV
+
+    # ------------------------------------------------------------------
+    # Physical constants for Au-197(n,gamma) (from standard nuclear data)
+    # ------------------------------------------------------------------
+    E_thermal = 0.0253          # 2200 m/s reference energy [eV]
+    sigma_thermal = 98.65       # thermal capture cross section [barn]
+    
+    E_res = 4.906               # resonance energy [eV] (4.9 eV resonance)
+    sigma_peak = 33000.0        # peak capture cross section at E_res [barn]
+    Gamma = 0.14                # total resonance width (FWHM) [eV]
+
+    # 1/v background: dominates at low energies
+    sigma_1v = sigma_thermal * np.sqrt(E_thermal / E)
+
+    # Single-level Breit-Wigner resonance for s-wave capture
+    # Includes the 1/sqrt(E) factor from the energy dependence of 
+    # lambda^2 and the neutron width Gamma_n ~ sqrt(E).
+    lorentz = (Gamma**2 / 4.0) / ((E - E_res)**2 + (Gamma / 2.0)**2)
+    sigma_res = sigma_peak * np.sqrt(E_res / E) * lorentz
+
+    # Total capture cross section
+    sigma_total = sigma_1v + sigma_res
+
+    # Return base-10 logarithm
+    return np.log10(sigma_total)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of the Au-197(n,gamma) capture cross section in barns
+    as a function of incident neutron energy E in eV.
+    
+    Uses the standard single-level Breit-Wigner formula for an s-wave
+    resonance, which naturally exhibits a 1/v behaviour at low energies
+    and a Breit-Wigner peak at the 4.906 eV resonance.
+    """
+    E = X[:, 0].astype(float)
+    
+    # Physical constant: pi * hbar^2 / (2 * m_n)  in eV * barn
+    # Computed from hbar*c = 197.327 MeV*fm, m_n*c^2 = 939.565 MeV
+    CONST = 6.511e5  # eV·barn
+    
+    # Resonance parameters for the first resonance in Au-197
+    E0 = 4.906           # resonance energy [eV]
+    Gamma_n0 = 0.0152    # neutron width at E0 [eV]
+    Gamma_gamma = 0.124  # radiative width [eV] (assumed constant)
+    g = 5.0 / 8.0        # statistical factor: J=2, I=3/2, s=1/2
+    
+    # Energy-dependent neutron width (s-wave: Gamma_n ~ sqrt(E))
+    Gamma_n = Gamma_n0 * np.sqrt(E / E0)
+    total_width = Gamma_n + Gamma_gamma
+    
+    # pi * lambda^2  (lambda is the reduced neutron wavelength)
+    pi_lambda2 = CONST / E
+    
+    # Single-level Breit-Wigner radiative capture cross section
+    sigma_res = (
+        pi_lambda2 * g * Gamma_n * Gamma_gamma
+        / ((E - E0)**2 + (total_width / 2.0)**2)
+    )
+    
+    # The resonance tail accounts for ~91 b of the 98.7 b thermal value.
+    # A small 1/v background (from distant/bound resonances) is added
+    # to match the recommended thermal capture cross section (0.0253 eV).
+    sigma_1v = 7.7 * np.sqrt(0.0253 / E)   # barns
+    
+    sigma = sigma_res + sigma_1v
+    
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of the Au-197(n,gamma) capture cross section (in barns)
+    using the single-level Breit-Wigner formula with an energy-dependent
+    s-wave neutron width. This closed-form includes the 1/v behaviour
+    at low energies and the resonance peak at 4.906 eV.
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 1)
+        Incident neutron energy in eV.
+    
+    Returns
+    -------
+    log10_sigma : ndarray, shape (n_samples,)
+        Base-10 logarithm of the capture cross section in barns.
+    """
+    # Physical constants -------------------------------------------------
+    # pi * hbar^2 / (2 * m_n) converted to barns * eV
+    C = 6.51e5          # barns * eV
+    E0 = 4.906          # resonance energy, eV
+    g = 5.0 / 8.0       # statistical spin factor (J=2, I=3/2)
+    Gamma_n0 = 0.0151   # neutron width at E0, eV
+    Gamma_gamma = 0.1225 # radiative width (assumed constant), eV
+
+    # Input energy
+    E = X[:, 0]
+
+    # Energy-dependent neutron width (s-wave)
+    Gamma_n = Gamma_n0 * np.sqrt(E / E0)
+    # Total width
+    Gamma = Gamma_n + Gamma_gamma
+
+    # Single-level Breit-Wigner capture cross section in barns
+    sigma = (C / E) * g * Gamma_n * Gamma_gamma \
+            / ((E - E0)**2 + (Gamma / 2.0)**2)
+
+    return np.log10(sigma)

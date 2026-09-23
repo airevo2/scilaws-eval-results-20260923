@@ -1,0 +1,172 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress sigma_11 [MPa] for a planar mouse-skin specimen 
+    under biaxial loading using a standard 2D Fung-type hyperelastic model.
+    
+    The strain energy density function is:
+    W = 0.5 * c * (exp(Q) - 1)
+    where Q = A1 * E11^2 + A2 * E22^2 + 2 * A3 * E11 * E22
+    
+    The Cauchy stress is derived assuming incompressibility and plane stress.
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Representative material parameters for mouse skin
+    c = 0.5     # MPa
+    A1 = 12.0
+    A2 = 15.0
+    A3 = 4.0
+    
+    # Exponential argument Q
+    Q = A1 * E11**2 + A2 * E22**2 + 2.0 * A3 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S11 = dW/dE11
+    S11 = c * (A1 * E11 + A3 * E22) * np.exp(Q)
+    
+    # Convert to Cauchy stress (assuming 3D incompressibility, plane stress sigma_33 = 0)
+    # For a 2D reduced strain energy function, this reduces to sigma_11 = lambda_11^2 * S_11
+    sigma11 = lambda11**2 * S11
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Representative Fung-type orthotropic hyperelastic constants for skin
+    c = 0.1
+    c1 = 1.0
+    c2 = 1.0
+    c12 = 0.5
+    
+    # Exponential argument Q
+    Q = c1 * E11**2 + c2 * E22**2 + 2.0 * c12 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S11
+    S11 = c * np.exp(Q) * (c1 * E11 + c12 * E22)
+    
+    # Cauchy stress sigma11 (assuming incompressibility, J=1, sigma = F * S * F^T)
+    sigma11 = lambda11**2 * S11
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress in the first principal direction (sigma11) for 
+    a planar mouse-skin specimen under biaxial loading using a standard 
+    Fung-type hyperelastic model.
+    
+    Inputs:
+    X : 2-D numpy array
+        X[:, 0] = lambda11 (principal stretch ratio in direction 1)
+        X[:, 1] = lambda22 (principal stretch ratio in direction 2)
+    
+    Output:
+    1-D numpy array of sigma11 (Cauchy stress in MPa)
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Standard Fung-type material parameters (typical representative values for skin)
+    C = 0.1      # MPa, scaling parameter
+    b1 = 10.0    # Stiffness parameter in direction 1
+    b2 = 10.0    # Stiffness parameter in direction 2
+    b12 = 2.0    # Coupling parameter
+    
+    # Exponential argument Q
+    Q = b1 * E11**2 + b2 * E22**2 + 2.0 * b12 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S11
+    S11 = C * (b1 * E11 + b12 * E22) * np.exp(Q)
+    
+    # Cauchy stress sigma11 (assuming planar stress formulation where p=0)
+    sigma11 = lambda11**2 * S11
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress sigma_11 [MPa] for a planar mouse-skin specimen 
+    under biaxial loading using a standard Fung-type orthotropic hyperelastic model.
+    """
+    # Extract stretch ratios
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Compute Green-Lagrange strains in the principal directions
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Representative material parameters for mouse skin (Fung-type)
+    # c [MPa], b1, b2, b12 [dimensionless]
+    c = 0.05
+    b1 = 15.0
+    b2 = 12.0
+    b12 = 5.0
+    
+    # Exponential strain energy function argument Q
+    Q = b1 * E11**2 + b2 * E22**2 + 2.0 * b12 * E11 * E22
+    
+    # 2nd Piola-Kirchhoff stress in the 11-direction
+    S11 = c * np.exp(Q) * (b1 * E11 + b12 * E22)
+    
+    # Convert to Cauchy stress (assuming planar/membrane stress state, sigma_11 = lambda_11^2 * S_11)
+    sigma11 = lambda11**2 * S11
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Fung-type exponential strain energy density parameters (typical for planar soft tissues/skin)
+    c = 0.1      # MPa
+    b1 = 1.0     # Material parameter for direction 1
+    b2 = 1.0     # Material parameter for direction 2
+    b12 = 0.5    # Coupling parameter
+    
+    # Exponential argument Q
+    Q = b1 * E11**2 + b2 * E22**2 + 2.0 * b12 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S11 = dW/dE11
+    S11 = c * np.exp(Q) * (b1 * E11 + b12 * E22)
+    
+    # Cauchy stress sigma11 (assuming tissue incompressibility, J=1, so sigma_11 = lambda_11^2 * S_11)
+    sigma11 = lambda11**2 * S11
+    
+    return sigma11

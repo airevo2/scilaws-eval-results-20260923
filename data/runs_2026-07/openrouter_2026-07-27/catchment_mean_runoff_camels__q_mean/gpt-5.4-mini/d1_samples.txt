@@ -1,0 +1,102 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    phi = Ep / P
+    # Fu (1981) / Zhang et al. (2001) Budyko-type water-balance curve
+    # Common closed form:
+    # Q = P * (1 + phi - (1 + phi**w)**(1.0 / w))
+    # with a commonly used empirical shape parameter w ≈ 2.0
+    w = 2.0
+    Q = P * (1.0 + phi - (1.0 + phi**w)**(1.0 / w))
+    return np.clip(Q, 0.0, P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Budyko-type long-term mean runoff estimate using the classic Fu / Zhang-Gupta form:
+        Q = P * [1 + (PET/P)^w - (1 + (PET/P)**w)^(1/w)]^(1/w)
+
+    Here, because no fitted parameter data are provided, a standard commonly used
+    canonical one-parameter Budyko form is implemented with a fixed exponent w.
+    The result is constrained to [0, P] by construction.
+    """
+    P = X[:, 0]
+    PET = X[:, 1]
+
+    # Aridity index
+    phi = PET / np.maximum(P, 1e-12)
+
+    # Common canonical Budyko/Fu-style shape parameter.
+    # In practice this is often fitted; here a representative standard value is used.
+    w = 2.6
+
+    # Fu equation for evaporative ratio E/P
+    ep_ratio = 1.0 + phi - (1.0 + phi**w)**(1.0 / w)
+
+    # Runoff ratio Q/P = 1 - E/P
+    q_ratio = 1.0 - ep_ratio
+
+    # Physical bounds: runoff cannot be negative or exceed precipitation
+    q_ratio = np.clip(q_ratio, 0.0, 1.0)
+
+    return P * q_ratio
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    phi = Ep / P
+    # Fu (1981) / Zhang et al. (2001) Budyko-type water balance curve
+    # Actual evapotranspiration:
+    #   E = P * [1 + phi - (1 + phi**w)^(1/w)]
+    # Then runoff Q = P - E = P * [(1 + phi**w)^(1/w) - phi]
+    w = 2.0
+    Q = P * ((1.0 + phi**w) ** (1.0 / w) - phi)
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]          # p_mean [mm/day]
+    Ep = X[:, 1]         # pet_mean [mm/day]
+    phi = Ep / P         # aridity index
+
+    # Classic Budyko formulation: Fu (1981)
+    # Actual evapotranspiration ratio:
+    #   E/P = 1 + phi - (1 + phi^w)^(1/w), with w ≈ 2
+    # Hence runoff ratio Q/P = 1 - E/P = (1 + phi^w)^(1/w) - phi
+    w = 2.0
+    runoff_ratio = (1.0 + phi**w)**(1.0 / w) - phi
+
+    # Convert to runoff depth and enforce physical bounds [0, P]
+    Q = P * runoff_ratio
+    return np.clip(Q, 0.0, P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    phi = np.divide(Ep, P, out=np.zeros_like(Ep, dtype=float), where=P != 0)
+
+    # Fu (1981) / Zhang et al. (2001) Budyko-type closed-form relationship
+    # Actual evapotranspiration:
+    #   E = P * (1 + phi - (1 + phi**w)**(1.0 / w))
+    # Long-term runoff:
+    #   Q = P - E = P * ((1 + phi**w)**(1.0 / w) - phi)
+    w = 2.6  # commonly used global Budyko parameter
+    Q = P * (np.power(1.0 + np.power(phi, w), 1.0 / w) - phi)
+
+    return np.maximum(Q, 0.0)

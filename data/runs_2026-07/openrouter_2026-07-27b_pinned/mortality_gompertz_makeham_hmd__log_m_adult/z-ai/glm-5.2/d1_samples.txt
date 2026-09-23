@@ -1,0 +1,136 @@
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Standard Gompertz model with log-linear time trend for adult mortality:
+    # ln m(x, t) = alpha + beta * age + gamma * year
+    # where beta ~ 0.09 (mortality roughly doubles every 7-8 years of age)
+    # and gamma < 0 (mortality declines steadily over calendar time)
+    
+    alpha = 10.0
+    beta = 0.09
+    gamma = -0.01
+    
+    return alpha + beta * age + gamma * year
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Lee-Carter model for adult mortality (ages 30-95, total sex, 1x1).
+    ln m_{x,t} = a_x + b_x * k_t
+    
+    Typical parameters for a developed population (approximate values):
+    - a_x is approximately linear in age: a_x ≈ -9.0 + 0.085*x
+    - b_x is roughly constant for adult ages: ≈ 0.08
+    - k_t declines roughly linearly over time: k_t ≈ -0.2*(t - 1900)
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Age-specific average log mortality (a_x)
+    a_x = -9.0 + 0.085 * age
+    
+    # Age-specific sensitivity to the time index (b_x)
+    b_x = 0.08
+    
+    # Time index (k_t), normalized to zero at 1900
+    k_t = -0.2 * (year - 1900)
+    
+    # Lee-Carter closed-form relationship
+    ln_m = a_x + b_x * k_t
+    
+    return ln_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Lee-Carter model: ln(m_{x,t}) = a_x + b_x * k_t
+    # This is the most commonly cited canonical closed-form relationship for 
+    # log central period death rates across age and time.
+    # Since no data is provided to fit the age-specific vectors (a_x, b_x) 
+    # and time series (k_t), we use standard Gompertz-like parametric 
+    # approximations for these components to maintain a fully closed-form function.
+    
+    # a_x: General shape of log mortality by age (increases exponentially in adulthood)
+    a_x = -10.0 + 0.1 * age
+    
+    # b_x: Age-specific sensitivity to the time trend (typically decreases with age)
+    b_x = 0.005 + 0.0005 * (95.0 - age)
+    
+    # k_t: Temporal trend (mortality generally declines over time)
+    k_t = -1.0 * (year - 1900)
+    
+    ln_m_adult = a_x + b_x * k_t
+    return ln_m_adult
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the central period death rate (ln m) 
+    for adult ages using the Gompertz law of mortality with a linear time trend.
+    
+    The standard Gompertz model posits that mortality increases exponentially 
+    with age. To account for period improvements over time, the baseline 
+    mortality parameter is modeled as a linear function of the calendar year.
+    
+    Model: ln(m(x, t)) = a(t) + b * x
+    where: a(t) = a0 + a1 * (t - t0)
+    
+    Inputs:
+    X[:, 0] = age (x) in years
+    X[:, 1] = year (t) in years
+    
+    Returns:
+    1-D numpy array of predicted ln(m)
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Representative fitted constants for human adult mortality
+    # b is the rate of aging (Gompertz slope), typically ~0.08 to 0.11
+    b = 0.095
+    
+    # Baseline mortality intercept parameters
+    t0 = 1900.0  # reference year
+    a0 = -8.5    # baseline intercept at t0
+    a1 = -0.012  # annual rate of mortality decline
+    
+    # Compute ln(m)
+    log_m = (a0 + a1 * (year - t0)) + b * age
+    
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the central period death rate (ln m) 
+    for adult ages based on the Gompertz law with a log-linear time trend.
+    
+    ln(m(x, t)) = alpha + beta * x + gamma * t
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Named constants for the Gompertz time-trend model
+    alpha = -5.0  # baseline intercept
+    beta = 0.1    # age effect (Gompertz slope)
+    gamma = -0.01 # period effect (mortality decline over time)
+    
+    log_m_adult = alpha + beta * age + gamma * year
+    return log_m_adult

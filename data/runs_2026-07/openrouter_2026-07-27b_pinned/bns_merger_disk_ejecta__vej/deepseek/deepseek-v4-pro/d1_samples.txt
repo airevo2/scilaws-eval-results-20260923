@@ -1,0 +1,156 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict the mass-averaged terminal velocity of the dynamical ejecta, 
+    <v∞> [c], using the commonly cited Radice et al. (2018) fitting formula.
+
+    Parameters:
+        X : ndarray, shape (n_samples, 6)
+            X[:,0] = q          (mass ratio M1/M2 >= 1)
+            X[:,1] = Lambda_tilde (reduced tidal deformability)
+            X[:,2] = M1         (heavier NS mass, Msun)      -- unused
+            X[:,3] = M2         (lighter NS mass, Msun)      -- unused
+            X[:,4] = C1         (compactness of heavier NS)  -- unused
+            X[:,5] = C2         (compactness of lighter NS)  -- unused
+
+    Returns:
+        v_inf : ndarray, shape (n_samples,)
+            Mass-averaged asymptotic velocity in units of c.
+    """
+    q = X[:, 0]
+    Ltilde = X[:, 1]
+
+    # Radice et al. 2018, ApJ 869, L6 (rounded coefficients)
+    v_inf = 0.015 + 0.015 * np.cbrt(Ltilde) + 0.007 * (q - 1.0)
+
+    return v_inf
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mass-averaged terminal velocity of dynamical ejecta, ⟨v∞⟩ [c].
+
+    Uses the canonical fit from Radice et al. (2018) (see also Nedora et al. 2022):
+        ⟨v∞⟩/c = 0.015 * q + 0.035 * sqrt(Λ̃ / 1000) + 0.13
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 6)
+        Columns:
+        0 : q          — mass ratio (≥ 1)
+        1 : Λ̃          — reduced tidal deformability
+        2 : M1 [M_sun] — mass of heavier NS
+        3 : M2 [M_sun] — mass of lighter NS
+        4 : C1         — compactness of heavier NS
+        5 : C2         — compactness of lighter NS
+
+    Returns
+    -------
+    vej : np.ndarray, shape (n_samples,)
+        Mass-averaged terminal velocity in units of c.
+    """
+    q = X[:, 0]
+    Lambda_tilde = X[:, 1]
+
+    vej = 0.015 * q + 0.035 * np.sqrt(Lambda_tilde / 1000.0) + 0.13
+    return vej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the mass-averaged terminal velocity of dynamical ejecta, ⟨v∞⟩ [c],
+    using the closed-form relation from Coughlin et al. (2019, MNRAS 489, L91).
+
+    Inputs:
+        X[:, 0] = q          (mass ratio, heavier / lighter)
+        X[:, 1] = Lambda_tilde (reduced tidal deformability)
+        X[:, 2] = M1         (heavier NS mass [M_sun])
+        X[:, 3] = M2         (lighter NS mass [M_sun])
+        X[:, 4] = C1         (compactness of heavier NS)
+        X[:, 5] = C2         (compactness of lighter NS)
+
+    Returns:
+        1-D numpy array of v_ej ⟨v∞⟩ [c].
+    """
+    q = X[:, 0]
+    Lambda_tilde = X[:, 1]
+    M1 = X[:, 2]
+    M2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    M_total = M1 + M2
+
+    v_ej = (0.44
+            * (q / (1.0 + q))**0.2
+            * (1.0 + 0.3 * (C1 - C2))
+            * (Lambda_tilde / 1000.0)**0.1
+            * (M_total / 2.7)**0.2)
+
+    return v_ej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the mass-averaged terminal velocity of dynamical ejecta <v∞> in units of c.
+
+    Uses the fitting formula from Radice et al. (2018):
+    <v∞> = 0.3 * (q / 1.2)^0.2 * (Λ̃ / 300)^0.1
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 6)
+        Input array with columns:
+        X[:,0] = q          (mass ratio, M1/M2 >= 1)
+        X[:,1] = Λ̃          (reduced tidal deformability)
+        X[:,2] = M1 [M_sun] (mass of heavier NS)
+        X[:,3] = M2 [M_sun] (mass of lighter NS)
+        X[:,4] = C1         (compactness of heavier NS)
+        X[:,5] = C2         (compactness of lighter NS)
+
+    Returns
+    -------
+    v_ej : np.ndarray, shape (n_samples,)
+        Predicted <v∞> in units of c.
+    """
+    q = X[:, 0]
+    Lambda_tilde = X[:, 1]
+
+    v_ej = 0.3 * (q / 1.2)**0.2 * (Lambda_tilde / 300.0)**0.1
+    return v_ej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mass-averaged terminal velocity of dynamical ejecta ⟨v∞⟩ in units of c
+    using the fit from Radice et al. (2018).
+    
+    Inputs:
+    X : 2-D numpy array with columns:
+        X[:,0] = q        (mass ratio M1/M2 >= 1)
+        X[:,1] = Λ̃        (reduced tidal deformability)
+        X[:,2] = M1       (heavier NS mass, Msun)
+        X[:,3] = M2       (lighter NS mass, Msun)
+        X[:,4] = C1       (compactness of heavier NS)
+        X[:,5] = C2       (compactness of lighter NS)
+    
+    Returns:
+    v : 1-D array of ⟨v∞⟩ [c]
+    """
+    q = X[:, 0]
+    C1 = X[:, 4]
+    v = 0.15 + 0.15 * C1 + 0.35 * (q - 1.0)
+    return v

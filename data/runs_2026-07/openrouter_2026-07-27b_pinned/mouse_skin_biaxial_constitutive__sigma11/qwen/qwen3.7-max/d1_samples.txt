@@ -1,0 +1,149 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress sigma11 in the first principal direction 
+    for an incompressible isotropic Neo-Hookean material under biaxial loading.
+    
+    Parameters:
+    X : numpy.ndarray
+        2D array where X[:, 0] is lambda11 and X[:, 1] is lambda22.
+        
+    Returns:
+    numpy.ndarray
+        1D array of predicted sigma11 values.
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Mu is the shear modulus (named constant placeholder for the material stiffness)
+    mu = 1.0 
+    
+    # For an incompressible material, lambda11 * lambda22 * lambda33 = 1
+    # Thus, lambda33 = 1 / (lambda11 * lambda22)
+    # The Cauchy stress for a Neo-Hookean material is sigma_ii = mu * (lambda_ii^2 - p)
+    # Applying the plane stress boundary condition (sigma33 = 0) gives p = lambda33^2
+    # Therefore, sigma11 = mu * (lambda11^2 - lambda33^2)
+    
+    lambda33_sq = 1.0 / (lambda11**2 * lambda22**2)
+    sigma11 = mu * (lambda11**2 - lambda33_sq)
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Fung-type anisotropic exponential model parameters (placeholder constants)
+    c = 1.0
+    a1 = 1.0
+    a2 = 1.0
+    a3 = 1.0
+    
+    # Exponential argument
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S11
+    S11 = c * (a1 * E11 + a3 * E22) * np.exp(Q)
+    
+    # Cauchy stress sigma11 (2D membrane formulation)
+    sigma11 = (lambda11**2) * S11
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Fung anisotropic exponential model parameters (dummy/representative constants)
+    c = 1.0   # MPa
+    b1 = 1.0
+    b2 = 1.0
+    b3 = 1.0
+    
+    # Exponent Q
+    Q = b1 * E11**2 + b2 * E22**2 + 2.0 * b3 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S11
+    S11 = c * (b1 * E11 + b3 * E22) * np.exp(Q)
+    
+    # Cauchy stress sigma11 (plane stress / membrane assumption)
+    sigma11 = (lambda11**2) * S11
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress sigma11 in the first principal direction 
+    for a planar mouse-skin specimen under biaxial loading using the 
+    standard Fung-type anisotropic exponential hyperelastic model.
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Green-Lagrange strain components
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Fung model material constants (representative for mouse skin)
+    c  = 0.02   # Stress-like parameter [MPa]
+    b1 = 3.0    # Dimensionless stiffness parameter (direction 1)
+    b2 = 6.0    # Dimensionless stiffness parameter (direction 2)
+    b3 = 1.0    # Dimensionless cross-coupling parameter
+    
+    # Exponential argument Q
+    Q = b1 * E11**2 + b2 * E22**2 + 2.0 * b3 * E11 * E22
+    
+    # Second Piola-Kirchhoff stress S11 (derived from dW/dE11)
+    S11 = c * (b1 * E11 + b3 * E22) * np.exp(Q)
+    
+    # Push-forward to Cauchy stress sigma11 (assuming plane stress / thin membrane)
+    sigma11 = (lambda11**2) * S11
+    
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Fung-type anisotropic exponential hyperelastic model parameters
+    c = 0.05   # Stress-like parameter (MPa)
+    a1 = 2.5   # Dimensionless stiffness parameter (lateral)
+    a2 = 4.0   # Dimensionless stiffness parameter (cranial-caudal)
+    a3 = 1.5   # Dimensionless coupling parameter
+    
+    # Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Exponent Q
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+    
+    # Cauchy stress sigma11 (assuming plane stress / membrane condition)
+    sigma11 = lambda11**2 * c * (a1 * E11 + a3 * E22) * np.exp(Q)
+    
+    return sigma11

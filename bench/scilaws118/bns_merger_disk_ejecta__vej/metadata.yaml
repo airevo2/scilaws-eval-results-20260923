@@ -1,0 +1,161 @@
+task_id: bns_merger_disk_ejecta__vej
+metric: smape
+domain: astronomy / gravitational-wave astrophysics
+target:
+  name: vej
+  symbol: ⟨v∞⟩
+  unit: c
+  description: Mass-averaged terminal velocity of the dynamical ejecta in units of the speed of light.
+  range:
+  - 0.11
+  - 0.45
+inputs:
+- name: q
+  symbol: q
+  unit: ""
+  description: Binary mass ratio of the heavier to the lighter neutron star (≥ 1).
+  range:
+  - 1.0
+  - 1.82
+- name: Lambda_tilde
+  symbol: Λ̃
+  unit: ""
+  description: Reduced (mass-weighted) tidal deformability of the binary.
+  range:
+  - 116.0
+  - 1689.0
+- name: M1
+  symbol: M₁
+  unit: M_sun
+  description: Gravitational mass of the heavier neutron star.
+  range:
+  - 1.2
+  - 1.86
+- name: M2
+  symbol: M₂
+  unit: M_sun
+  description: Gravitational mass of the lighter neutron star.
+  range:
+  - 1.02
+  - 1.71
+- name: C1
+  symbol: C₁
+  unit: ""
+  description: Compactness of the heavier neutron star, defined as G M / (c² R).
+  range:
+  - 0.13
+  - 0.24
+- name: C2
+  symbol: C₂
+  unit: ""
+  description: Compactness of the lighter neutron star, defined as G M / (c² R).
+  range:
+  - 0.11
+  - 0.21
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block added for schema symmetry with GOLD.
+priors: []
+
+n_train: 207
+n_test: 35
+has_group_id: false
+license: CC-BY-4.0
+type: typeI
+
+# Background knowledge — science framing only; no task instructions or constants.
+context: >-
+  When two neutron stars merge, matter is tidally stripped and ejected at characteristic velocities, a phenomenon studied in relativistic astrophysics and kilonova modeling.
+
+# FM E2 sister-divergence note (2026-05-26, wave-3 subagent L finding):
+#   This task is a sister of bns_merger_disk_ejecta__{Mdisk, Mej}.
+#   The 3 sisters use different OOD axes (this task uses q-range condition-out
+#   [q < 1.4 train → q >= 1.4 test, threshold at ~P90 of the q distribution]; the
+#   Mdisk sister uses cross-publication split [Kruger 2020 NR calibration set → Nedora 2021
+#   compilation], and the Mej sister uses cross-simulation-group split [Radice/Lehner group
+#   → Nedora/Vincent/Sekiguchi groups] respectively).
+#   Per FM E2 v0.5, each sister's choice must be independently defensible.
+#   Defensibility documentation:
+#   - vej (this task): Tier-3 LLM-proposed; q >= 1.4 marks onset of tidal-ejecta
+#     dominance over shocked ejecta — a physically distinct mechanism cited in Nedora 2021 §6
+#     ("for q ≳ 1.5, the tidal ejecta component dominates"). The q-range condition-out is
+#     defensible as a physically motivated OOD probe of the formula's extrapolation across
+#     merger-mechanism regimes, per prep_data.py Tier-3 rationale.
+#   - Mdisk sister: Tier-2 SR-method-side authority (Darc et al. 2025 arXiv:2511.08784 §5)
+#     explicitly uses Kruger20 train / Nedora21 test with multi-axis OOD justification.
+#   - Mej sister: Tier-3 LLM-proposed; fully disjoint authorship between train
+#     (Radice 2018 + Lehner 2016) and test (Nedora/Vincent/Sekiguchi groups), with
+#     simultaneous cross-code and partial EOS extrapolation — defensible per prep_data.py.
+#   Cross-references: see audit/triages/bns_merger_disk_ejecta_*_REAUDIT_*.md if
+#   present, or audit/proposed_FMs/2026-05-26_E2_sister_consistency_subagent_L.md.
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv    # 90 rows, all available vej rows except test split
+  test:  data/test.csv     # 13 rows, OOD test split (Nedora 2021 subset)
+
+# === Reference baselines ===
+references:
+  - id: nedora_2020_poly2
+    label: "Nedora et al. 2020 — 2nd-order polynomial in q, Lambda_tilde (Table V)"
+    formula_file: formulas/nedora_2020_poly2.py
+    reference_pdf: reference/nedora_2020.pdf
+    n_law_constants: 6
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.3695
+      r2: -20.9462
+
+  - id: nedora_2020_eq9
+    label: "Nedora et al. 2020 — physics-motivated Eq. 9 (M1, M2, C1, C2)"
+    formula_file: formulas/nedora_2020_eq9.py
+    reference_pdf: reference/nedora_2020.pdf
+    n_law_constants: 3
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.3588
+      r2: -0.9760
+
+  - id: coughlin_2018
+    label: "Coughlin et al. 2018 — symmetric velocity fit Eq. E9 (M1, M2, C1, C2)"
+    formula_file: formulas/coughlin_2018.py
+    reference_pdf: reference/coughlin_2018.pdf
+    n_law_constants: 3
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.2418
+      r2: -0.2464
+
+  - id: dietrich_2017
+    label: "Dietrich & Ujevic 2017 — velocity fit Eqs. 5-9 (M1, M2, C1, C2)"
+    formula_file: formulas/dietrich_2017.py
+    reference_pdf: reference/dietrich_2017.pdf
+    n_law_constants: 6
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.2315
+      r2: -0.2499
+
+# Caps — from evaluate.py reference (derived_caps in reference_metrics.json)
+caps:
+  max_law_constants:        6
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include dependence of the ejecta speed on binary mass-ratio asymmetry"
+  - "include dependence of the ejecta speed on neutron-star compactness or equivalent tidal deformability/EOS stiffness"
+  - "predicted ejecta speed stays non-negative"
+  - "predicted ejecta speed stays below the speed of light"
+  - "predicted ejecta speed is invariant under interchange of the two neutron-star labels"
+
+best_baseline: 0.2315    # dietrich_2017 — smape (lower is better); regenerated after de-dup + n_train metadata fix (90→207)

@@ -1,0 +1,81 @@
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period time trend
+    # ln(m(x,t)) = alpha + beta * x + gamma * t
+    alpha = 9.8
+    beta = 0.09
+    gamma = -0.01
+    
+    return alpha + beta * age + gamma * year
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period effect (mortality shift)
+    # ln m(x, t) = alpha + beta * x - gamma * (t - t_base)
+    alpha = -9.05    # log-mortality intercept at base year
+    beta = 0.085     # Gompertz slope (rate of aging)
+    gamma = 0.01     # annual rate of log-mortality decline
+    t_base = 1900.0  # base year
+    
+    return alpha + beta * age - gamma * (year - t_base)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with linear period trend
+    # ln(m(x,t)) = alpha + beta * x + gamma * (t - t_ref)
+    alpha = -9.5
+    beta = 0.085
+    gamma = -0.008
+    t_ref = 1900.0
+    
+    ln_m = alpha + beta * age + gamma * (year - t_ref)
+    return ln_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period (time) trend
+    # ln(m_x,t) = alpha + beta * x + gamma * t
+    alpha = 10.55
+    beta = 0.085
+    gamma = -0.010
+    
+    return alpha + beta * age + gamma * year
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period (time) trend
+    # ln m(x, t) = alpha + beta * x + gamma * t
+    alpha = 12.5     # Intercept (calibrated for absolute year)
+    beta = 0.085     # Gompertz aging rate (log-linear slope with age)
+    gamma = -0.01    # Period mortality improvement rate (time trend)
+    
+    ln_m = alpha + beta * age + gamma * year
+    return ln_m

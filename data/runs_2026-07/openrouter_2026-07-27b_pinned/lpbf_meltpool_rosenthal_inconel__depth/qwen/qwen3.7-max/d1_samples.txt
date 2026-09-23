@@ -1,0 +1,96 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    V = X[:, 1]
+    D = X[:, 2]
+    
+    # Fitted coefficients for the empirical scaling law
+    C1 = 15.0
+    C2 = 0.0
+    
+    # Standard closed-form relationship: melt pool depth scales with 
+    # the areal energy density (fluence-like term) P / (V * D)
+    d = C1 * (P / (V * D)) + C2
+    
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    V = X[:, 1]
+    D = X[:, 2]
+    
+    # Standard empirical scaling law for melt pool depth in L-PBF.
+    # Depth scales with the linear energy density (P/V) and inversely 
+    # with the beam diameter (D), representing the energy per unit area.
+    C = 20000.0  # Fitted proportionality constant to yield depth in um
+    
+    d = C * (P / (V * D))
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]  # Laser power [W]
+    V = X[:, 1]  # Scan velocity [mm/s]
+    D = X[:, 2]  # Beam D4sigma diameter [um]
+    
+    # Meltpool depth scales with the square root of the areal energy density
+    # d proportional to sqrt(P / (V * D))
+    # Coefficient absorbs material properties (absorptivity, thermal conductivity,
+    # density, specific heat, latent heat) and unit conversions for a typical
+    # L-PBF metal (e.g., 316L stainless steel).
+    C = 1200.0
+    
+    d = C * np.sqrt(P / (V * D))
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the melt pool depth based on the standard dimensional analysis 
+    scaling law for laser melting. 
+    
+    The melt pool depth (d) scales with the ratio of laser power (P) to the 
+    product of scan velocity (V) and beam diameter (D), which represents an 
+    effective areal energy density divided by a characteristic volumetric 
+    melting enthalpy.
+    """
+    P = X[:, 0]  # Laser power [W]
+    V = X[:, 1]  # Scan velocity [mm/s]
+    D = X[:, 2]  # Beam diameter [um]
+    
+    # Proportionality constant (named constant) that absorbs material properties 
+    # (density, specific heat, latent heat, melting temperature) and unit conversions.
+    # Calibrated to yield depth in [um] for typical L-PBF metals (e.g., Ti-6Al-4V, SS316L).
+    C_material = 45000.0 
+    
+    d = C_material * (P / (V * D))
+    
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    V = X[:, 1]
+    D = X[:, 2]
+    
+    # Canonical empirical scaling law for melt pool depth in laser melting.
+    # Depth scales proportionally with the normalized energy density P / (V * D).
+    # The constant C absorbs material-specific thermal properties and unit conversions.
+    C = 40000.0  # Fitted proportionality constant (yields depth in um for typical LPBF alloys)
+    
+    d = C * (P / (V * D))
+    return d

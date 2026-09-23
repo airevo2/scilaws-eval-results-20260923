@@ -1,0 +1,77 @@
+import numpy as np
+
+def predict(X):
+    # Hertz model for a spherical (colloidal) AFM probe indenting an elastic half-space:
+    #   F = (4/3) * E/(1 - nu^2) * sqrt(R) * delta^(3/2)
+    delta = np.asarray(X[:, 0], dtype=float)
+    R     = np.asarray(X[:, 1], dtype=float)
+
+    E  = 1.0e3   # Young's modulus [Pa] (soft biological sample, e.g. cells/tissue)
+    nu = 0.5     # Poisson ratio (incompressible, standard assumption)
+
+    delta = np.clip(delta, 0.0, None)  # only contact (positive indentation) gives force
+    F = (4.0 / 3.0) * (E / (1.0 - nu**2)) * np.sqrt(R) * delta**1.5
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hertz model for a spherical indenter (colloidal-probe AFM)
+    # F = (4/3) * (E / (1 - nu^2)) * sqrt(R) * delta^(3/2)
+    delta = X[:, 0]
+    R = X[:, 1]
+
+    E = 1000.0      # Young's modulus [Pa] (soft biological sample)
+    nu = 0.5        # Poisson's ratio (incompressible tissue/cell)
+
+    E_eff = E / (1.0 - nu**2)
+    F = (4.0 / 3.0) * E_eff * np.sqrt(R) * np.power(np.clip(delta, 0, None), 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    # Hertz model for a spherical indenter
+    E = 1000.0        # Young's modulus [Pa] (soft biological sample)
+    nu = 0.5          # Poisson ratio (incompressible)
+    Eeff = E / (1.0 - nu**2)
+    F = (4.0 / 3.0) * Eeff * np.sqrt(R) * np.power(np.clip(delta, 0, None), 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]        # indentation depth (m)
+    R = X[:, 1]            # spherical probe radius (m)
+
+    # Hertz model for a spherical indenter:
+    # F = (4/3) * (E / (1 - nu^2)) * sqrt(R) * delta^(3/2)
+    E = 1000.0             # Young's modulus (Pa) -- fitted constant
+    nu = 0.5               # Poisson's ratio (incompressible soft sample)
+
+    E_star = E / (1.0 - nu**2)
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * np.power(np.clip(delta, 0, None), 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    # Hertz model for a spherical indenter (colloidal probe)
+    # F = (4/3) * (E / (1 - nu^2)) * sqrt(R) * delta^(3/2)
+    E = 1000.0      # Young's modulus [Pa] (soft biological sample)
+    nu = 0.5        # Poisson ratio (incompressible)
+    delta = np.clip(delta, 0.0, None)
+    F = (4.0 / 3.0) * (E / (1.0 - nu**2)) * np.sqrt(R) * delta**1.5
+    return F

@@ -1,0 +1,26 @@
+{
+  "task": "sex_mortality_ratio_hmd__log_sex_ratio",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "glei_horiuchi_2007",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "glei_horiuchi_year_drift",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "no-cite",
+      "verdict": "suspect"
+    }
+  ]
+}

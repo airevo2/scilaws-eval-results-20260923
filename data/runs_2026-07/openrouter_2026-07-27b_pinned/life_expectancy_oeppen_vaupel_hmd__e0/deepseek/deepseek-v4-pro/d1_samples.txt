@@ -1,0 +1,92 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict period life expectancy at birth from calendar year using a logistic
+    (S-shaped) function that captures the historical demographic transition.
+    The function is bounded between a pre-transition plateau and a post-transition
+    plateau, with a steady inflection around the mid-20th century.
+    """
+    t = X[:, 0]                     # calendar year
+    lower = 30.0                    # typical pre-transition e0 (years)
+    upper = 85.0                    # asymptotic maximum e0 (years)
+    mid_year = 1950.0               # inflection point of the logistic curve
+    rate = 0.025                    # pace of the increase (1/year)
+
+    e0 = lower + (upper - lower) / (1.0 + np.exp(-rate * (t - mid_year)))
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict period life expectancy at birth (e0) from calendar year using
+    the standard logistic (S-curve) demographic transition model.
+    Coefficients are typical for a historical forerunner country (e.g., Sweden).
+    """
+    year = X[:, 0]
+    # Lower and upper asymptotes (years)
+    A = 35.0
+    K = 85.0
+    # Growth rate and inflection year
+    r = 0.04
+    t0 = 1910.0
+    e0 = A + (K - A) / (1.0 + np.exp(-r * (year - t0)))
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict period life expectancy at birth (e0) from calendar year.
+    Uses a logistic (sigmoid) model, a standard closed-form function
+    for the historical S-shaped increase in life expectancy observed
+    in HMD national life tables.
+    """
+    year = X[:, 0]
+    # Coefficients reflecting typical demographic transition patterns
+    L = 30.0      # lower asymptote (pre-industrial life expectancy)
+    U = 85.0      # upper asymptote (recent plateau)
+    k = 0.02      # growth rate parameter
+    t0 = 1950.0   # inflection point (year of maximum increase)
+    e0 = L + (U - L) / (1.0 + np.exp(-k * (year - t0)))
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for period life expectancy at birth (e0)
+    as a function of calendar year, based on the well-known Oeppen-Vaupel
+    linear trend for best-practice life expectancy.
+    e0 = 0.25 * year - 415
+    """
+    slope = 0.25
+    intercept = -415.0
+    year = X[:, 0]
+    return slope * year + intercept
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict period life expectancy at birth (e0) from calendar year using
+    a logistic function, which is the standard closed-form model for the
+    demographic transition in life expectancy over long historical periods.
+    """
+    t = X[:, 0]
+    # Parameters chosen to reflect a typical long-run trajectory
+    L_lower = 30.0      # pre-transitional life expectancy (years)
+    L_upper = 85.0      # asymptotic maximum life expectancy (years)
+    k = 0.025           # speed of transition (1/years)
+    t_mid = 1925.0      # midpoint year of the transition
+    e0 = L_lower + (L_upper - L_lower) / (1.0 + np.exp(-k * (t - t_mid)))
+    return e0

@@ -1,0 +1,104 @@
+import numpy as np
+
+def predict(X):
+    phi = np.clip(X[:, 0], 1e-6, 1.0 - 1e-6)
+    # Kozeny-Carman porosity-permeability relationship (reference-state form)
+    k_ref = 100.0      # mD
+    phi_ref = 0.20     # fraction
+    k = k_ref * (phi / phi_ref)**3 * ((1.0 - phi_ref) / (1.0 - phi))**2
+    return np.log10(k)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = X[:, 0]
+    # Kozeny-Carman equation simplified to porosity-only form:
+    #   k = C * phi^3 / (1 - phi)^2
+    #   log10(k) = log10(C) + 3*log10(phi) - 2*log10(1 - phi)
+    # C is a lumped constant (1/(K * S_v^2)) representative of typical clastic rocks.
+    C = 1.0e4  # mD
+    phi = np.clip(phi, 1e-4, 0.69)
+    log_k = np.log10(C) + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(k) using the Kozeny-Carman equation.
+    
+    The standard Kozeny-Carman relationship for permeability (k) as a function 
+    of porosity (phi), assuming a constant specific surface area/grain size, is:
+        k = C * (phi^3) / ((1 - phi)^2)
+    
+    Taking the decadic logarithm:
+        log10(k) = log10(C) + 3 * log10(phi) - 2 * log10(1 - phi)
+        
+    where C is a scaling constant (in mD) that encompasses grain size, shape, 
+    and tortuosity. Here we use a typical representative constant for 
+    consolidated sandstones.
+    """
+    phi = X[:, 0]
+    
+    # Representative scaling constant C in millidarcy (mD)
+    C = 1.0e4  
+    
+    # Clip porosity to avoid log(0) or division by zero
+    phi = np.clip(phi, 1e-5, 0.99)
+    
+    log_k = np.log10(C) + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+    
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(k) using the Kozeny-Carman equation.
+    
+    The standard closed-form relationship is:
+        k = C * phi^3 / (1 - phi)^2
+    where C is a lithology-dependent constant (fitted coefficient)
+    incorporating grain size, shape factor, and tortuosity.
+    
+    In decadic log space:
+        log10(k) = log10(C) + 3*log10(phi) - 2*log10(1 - phi)
+    """
+    phi = X[:, 0]
+    # Clip to avoid log(0) or division by zero
+    phi = np.clip(phi, 1e-6, 1.0 - 1e-6)
+    
+    # Fitted constant for typical sandstone (mD)
+    C = 1e4  # mD
+    
+    log_k = np.log10(C) + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+    return log_k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = X[:, 0]
+    
+    # Kozeny-Carman equation is the most canonical closed-form physical 
+    # relationship between permeability (k) and porosity (phi) alone:
+    # k = C * (phi^3) / ((1 - phi)^2)
+    # Taking the decadic logarithm (log10) to match the target variable:
+    # log10(k) = log10(C) + 3*log10(phi) - 2*log10(1 - phi)
+    
+    # Assuming a representative constant C for typical clastic rocks
+    C = 1.0e5
+    
+    # Avoid log(0) or negative values just in case, though phi is in [0, 1)
+    phi = np.clip(phi, 1e-6, 1 - 1e-6)
+    
+    log_k = np.log10(C) + 3.0 * np.log10(phi) - 2.0 * np.log10(1.0 - phi)
+    
+    return log_k

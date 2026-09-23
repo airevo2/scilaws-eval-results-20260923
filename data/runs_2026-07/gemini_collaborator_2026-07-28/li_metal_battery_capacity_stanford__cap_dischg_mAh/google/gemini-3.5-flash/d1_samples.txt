@@ -1,0 +1,230 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    cycle_index = X[:, 0]
+    efc = X[:, 1]
+    Q_0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+    group = X[:, 7]
+
+    # Map group (1-based index) to design-specific degradation factors
+    g_idx = np.clip(group.astype(int) - 1, 0, 3)
+    group_factor = np.array([1.0, 1.15, 0.85, 1.05])[g_idx]
+
+    # Reference test conditions
+    v_high_ref = 4.2
+    v_low_ref = 2.8
+    i_cv_ref = 0.02
+
+    # Initial capacity scaling factor based on the operating voltage window and CV cutoff
+    cap_factor_init = (
+        1.0
+        + 0.08 * (V_high - v_high_ref)
+        - 0.05 * (V_low - v_low_ref)
+        - 0.15 * (I_CV - i_cv_ref)
+    )
+
+    # Degradation rate coefficient (accelerated by high charging rates and high voltage cutoffs)
+    alpha = (
+        0.0001
+        * (1.0 + 0.5 * I_chg + 2.5 * (V_high - v_high_ref))
+        * group_factor
+    )
+
+    # Power-law exponent representing mixed diffusion-limited SEI growth and linear aging mechanisms
+    beta = 0.75
+
+    # Capacity retention model based on Equivalent Full Cycles (EFC)
+    capacity_retention = np.exp(-alpha * (efc**beta))
+
+    # Calculate actual discharge capacity in mAh
+    Q_dis = Q_0 * cap_factor_init * capacity_retention
+
+    return Q_dis
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the per-cycle discharge capacity (Q_dis) in mAh using a
+
+    semi-empirical capacity degradation model based on power-law SEI growth
+    and operating conditions (voltage window and C-rate).
+
+    Inputs:
+    - X[:, 0] = cycle_index (k)
+    - X[:, 1] = efc (EFC)
+    - X[:, 2] = nominal_capacity_mAh (Q_0)
+    - X[:, 3] = v_cutoff_low_V (V_low)
+    - X[:, 4] = v_cutoff_high_V (V_high)
+    - X[:, 5] = i_cutoff_crate (I_CV)
+    - X[:, 6] = i_chg_crate_max (I_chg)
+    - X[:, 7] = group (g)
+    """
+    # Extract variables
+    efc = X[:, 1]
+    Q_0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_chg = X[:, 6]
+
+    # 1. Initial capacity correction based on voltage window
+    # Nominal capacity is typically rated for a 4.2V to 3.0V window (width = 1.2V).
+    # A wider voltage window accesses more state-of-charge (SoC) range.
+    V_window_ref = 1.2
+    V_window_actual = V_high - V_low
+    Q_initial = Q_0 * (1.0 + 0.15 * (V_window_actual - V_window_ref))
+
+    # 2. Capacity degradation modeled via power-law kinetics (SEI growth)
+    # The degradation rate (alpha) increases with higher charge voltage and higher C-rates.
+    alpha = 0.006 * (
+        1.0 + 1.5 * np.maximum(0, V_high - 4.2) + 0.3 * (I_chg - 0.2)
+    )
+    beta = 0.5  # Classical diffusion-limited SEI growth exponent
+
+    # Calculate discharge capacity
+    Q_dis = Q_initial * (1.0 - alpha * (efc**beta))
+
+    # Ensure capacity does not drop below zero
+    return np.maximum(Q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the per-cycle discharge capacity (Q_dis) in mAh using a semi-empirical
+
+    electrochemistry-based capacity degradation and utilization model.
+
+    Inputs:
+    - X[:, 0] = cycle_index (k)
+    - X[:, 1] = efc (EFC)
+    - X[:, 2] = nominal_capacity_mAh (Q_0)
+    - X[:, 3] = v_cutoff_low_V (V_low)
+    - X[:, 4] = v_cutoff_high_V (V_high)
+    - X[:, 5] = i_cutoff_crate (I_CV)
+    - X[:, 6] = i_chg_crate_max (I_chg)
+    - X[:, 7] = group (g)
+    """
+    # Extract inputs
+    efc = X[:, 1]
+    Q_0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+    group = X[:, 7]
+
+    # 1. Capacity Utilization Factor (f_window)
+    # Models how the active electrochemical window (voltage cutoffs and C-rates)
+    # scales the nominal capacity Q_0.
+    # Nominal reference state: V_high = 4.2V, V_low = 2.8V, I_CV = 0.02C.
+    f_window = (
+        1.0
+        + 1.2 * (V_high - 4.2)
+        - 0.8 * (V_low - 2.8)
+        - 0.05 * (I_chg - 0.2)
+        - 0.15 * (I_CV - 0.02)
+    )
+
+    # Ensure utilization factor is physically bounded
+    f_window = np.clip(f_window, 0.5, 1.2)
+
+    # 2. Capacity Fade Factor (f_fade)
+    # Models the loss of active lithium inventory (LLI) and active material (LAM).
+    # Power-law model based on EFC (diffusion-limited SEI growth exponent ~0.55).
+    # Degradation accelerates at higher charge voltages and varies by design group.
+    beta = 0.55
+    base_fade_rate = 0.0015 + 0.008 * np.maximum(0.0, V_high - 4.0) ** 2
+    group_factor = 1.0 + 0.05 * (group - 1)
+
+    f_fade = base_fade_rate * group_factor * (efc**beta)
+
+    # Limit capacity fade to reasonable physical limits (e.g., max 80% fade)
+    f_fade = np.clip(f_fade, 0.0, 0.8)
+
+    # 3. Calculate final discharge capacity
+    Q_dis = Q_0 * f_window * (1.0 - f_fade)
+
+    return np.maximum(0.0, Q_dis)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract input variables
+    efc = X[:, 1]
+    Q_0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+
+    # Voltage window scaling factor (relative to nominal 4.2V - 3.0V window)
+    f_voltage = 1.0 + 0.15 * (V_high - 4.2) - 0.08 * (V_low - 3.0)
+
+    # CV cutoff current scaling factor (smaller CV cutoff increases capacity slightly)
+    f_cutoff = 1.0 - 0.3 * (I_CV - 0.02)
+
+    # Initial capacity scaled by nominal capacity and operational window parameters
+    Q_init = Q_0 * f_voltage * f_cutoff
+
+    # Power-law degradation parameters (SEI growth and mechanical degradation)
+    # Accelerated degradation occurs at higher charge rates and higher voltage cutoffs
+    beta = 0.75
+    alpha = 0.0008 * (1.0 + 0.5 * (I_chg - 0.2)) * (1.0 + 2.0 * (V_high - 4.2))
+
+    # Calculate discharge capacity
+    Q_dis = Q_init * (1.0 - alpha * np.power(efc, beta))
+
+    # Discharge capacity cannot be negative
+    return np.maximum(Q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    cycle_index = X[:, 0]
+    efc = X[:, 1]
+    Q_0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+    group = X[:, 7]
+
+    # Standard electrochemical capacity fade model based on SEI growth (t^0.5 dependency)
+    # and linear active material loss (t^1 dependency).
+    # We scale the rate of degradation slightly based on the voltage window (V_high - V_low)
+    # and charge C-rate, which accelerate capacity loss.
+    v_window = V_high - V_low
+    degradation_rate = 0.005 * (v_window / 1.3) * (1.0 + 0.1 * I_chg)
+
+    # Capacity fade fraction
+    capacity_fade = degradation_rate * np.sqrt(efc) + 0.0001 * efc
+
+    # Available capacity fraction based on operating voltage limits and CV cutoff current
+    # A narrower voltage window or higher CV cutoff reduces the initial discharge capacity.
+    initial_capacity_fraction = (
+        1.0 - 0.15 * (4.2 - V_high) - 0.1 * (V_low - 2.8) - 0.2 * I_CV
+    )
+
+    # Predicted discharge capacity
+    Q_dis = Q_0 * initial_capacity_fraction * (1.0 - capacity_fade)
+
+    # Ensure capacity does not drop below zero
+    return np.maximum(0.0, Q_dis)

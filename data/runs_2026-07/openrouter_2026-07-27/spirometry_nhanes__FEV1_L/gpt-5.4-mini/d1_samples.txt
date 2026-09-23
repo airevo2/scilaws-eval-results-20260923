@@ -1,0 +1,55 @@
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    # Common reference equation (women; height in cm, age in years)
+    return 0.433 * height_cm - 0.029 * age - 2.49
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height = X[:, 1]
+    # Commonly used reference equation form for adult FEV1 (litres), height in cm, age in years
+    return 0.045 * height - 0.022 * age - 3.6
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Commonly used reference equation for adult FEV1 (all sexes pooled here is not standard;
+    # the most cited closed-form equations are sex-specific. Since only age and height are given,
+    # use a generic linear approximation based on height and age that is often seen in reference form.
+    # This is a pragmatic stand-in when sex is unavailable.
+    fev1 = 0.0414 * height_cm - 0.0244 * age - 2.190
+    
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+
+    # Commonly used reference equation form for adult FEV1 in litres
+    # (age in years, height in cm)
+    return 0.0414 * height_cm - 0.0244 * age - 2.190
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Common reference equation for adult FEV1 using age and height
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    return 0.0414 * height_cm - 0.0244 * age - 2.190

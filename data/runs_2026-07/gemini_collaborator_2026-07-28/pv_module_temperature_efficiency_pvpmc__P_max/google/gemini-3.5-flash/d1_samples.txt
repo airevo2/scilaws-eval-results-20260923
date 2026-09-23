@@ -1,0 +1,179 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = G (Plane-of-array irradiance, W/m^2)
+    # X[:, 1] = T_c (Module temperature, deg C)
+    # X[:, 2] = WS (Wind speed, m/s)
+    # X[:, 3] = AM (Air mass, dimensionless)
+    G = X[:, 0]
+    T_c = X[:, 1]
+    AM = X[:, 3]
+
+    # Nominal STC Parameters for a typical crystalline silicon module
+    P_stc = 250.0  # Rated power at STC [W]
+    G_ref = 1000.0  # Reference irradiance [W/m^2]
+    T_ref = 25.0  # Reference temperature [deg C]
+    gamma = -0.0041  # Temperature coefficient of power [1/deg C]
+
+    # Air Mass modifier (SAPM generic crystalline silicon polynomial)
+    a0 = 0.98485
+    a1 = 0.03456
+    a2 = -0.01522
+    a3 = 0.00263
+    a4 = -0.000174
+
+    f_AM = a0 + a1 * AM + a2 * AM**2 + a3 * AM**3 + a4 * AM**4
+    f_AM = np.clip(f_AM, 0.0, 1.1)
+
+    # Osterwald model for maximum power with temperature and air mass corrections
+    P_mp = P_stc * (G / G_ref) * f_AM * (1.0 + gamma * (T_c - T_ref))
+
+    # Power output cannot be negative
+    P_mp = np.maximum(0.0, P_mp)
+
+    return P_mp
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = G_W_m2 (G) [W/m²]
+    # X[:, 1] = T_module_C (T_c) [deg C]
+    # X[:, 2] = WS_m_s (WS) [m/s]
+    # X[:, 3] = air_mass (AM) [dimensionless]
+
+    G = X[:, 0]
+    T_c = X[:, 1]
+    AM = X[:, 3]
+
+    # Standard representative parameters for a crystalline silicon PV module
+    P_stc = 250.0  # Nominal maximum power at STC [W]
+    gamma = -0.0041  # Temperature coefficient of power [1/deg C]
+    T_ref = 25.0  # Reference cell temperature [deg C]
+    G_ref = 1000.0  # Reference irradiance [W/m²]
+
+    # Air mass modifier (empirical polynomial for typical silicon PV modules)
+    # accounts for spectral variations relative to AM1.5G
+    a0, a1, a2, a3, a4 = 0.9975, 0.0073, -0.0164, 0.0038, -0.0003
+    f_AM = a0 + a1 * AM + a2 * AM**2 + a3 * AM**3 + a4 * AM**4
+
+    # Osterwald model modified with spectral air mass correction
+    P_mp = P_stc * (G / G_ref) * (1.0 + gamma * (T_c - T_ref)) * f_AM
+
+    # Power cannot be negative (night/low-light threshold)
+    return np.maximum(0.0, P_mp)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    G = X[:, 0]  # Plane-of-array irradiance (W/m^2)
+    Tc = X[:, 1]  # Module temperature (deg C)
+    WS = X[:, 2]  # Wind speed (m/s)
+    AM = X[:, 3]  # Absolute air mass
+
+    # Reference parameters for a typical crystalline silicon PV module
+    P_ref = 250.0  # Nominal STC maximum power (W)
+    G_ref = 1000.0  # Reference irradiance (W/m^2)
+    T_ref = 25.0  # Reference cell temperature (deg C)
+    gamma = -0.004  # Temperature coefficient of power (1/deg C)
+
+    # Air mass spectral correction (Sandia PV Performance Model polynomial for silicon)
+    a0 = 0.9975
+    a1 = 0.0073
+    a2 = -0.0104
+    a3 = 0.0017
+    a4 = -0.0001
+    f_AM = a0 + a1 * AM + a2 * AM**2 + a3 * AM**3 + a4 * AM**4
+    f_AM = np.clip(f_AM, 0.0, 1.1)
+
+    # PVsyst / Sandia-based maximum power point relationship
+    P_mp = P_ref * (G / G_ref) * (1.0 + gamma * (Tc - T_ref)) * f_AM
+
+    # Ensure power is non-negative
+    P_mp = np.maximum(P_mp, 0.0)
+
+    return P_mp
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    G = X[:, 0]  # Irradiance (W/m²)
+    T_module = X[:, 1]  # Back-of-module temperature (°C)
+    WS = X[:, 2]  # Wind speed (m/s)
+    AM = X[:, 3]  # Absolute air mass
+
+    # Reference parameters for a typical crystalline silicon PV module
+    P_STC = 245.0  # Nominal STC maximum power (W)
+    gamma = -0.0041  # Temperature coefficient of power (1/°C)
+    T_ref = 25.0  # STC temperature (°C)
+    G_ref = 1000.0  # STC irradiance (W/m²)
+
+    # Estimate cell temperature from back-of-module temperature.
+    # At STC (1000 W/m²), the cell is typically ~3°C warmer than the back-of-module.
+    T_cell = T_module + (G / G_ref) * 3.0
+
+    # Spectral correction function f1(AM) using Sandia PV Performance Model
+    # coefficients for a standard silicon module
+    a0 = 0.9975
+    a1 = 0.0073
+    a2 = -0.0164
+    a3 = 0.0041
+    a4 = -0.00035
+    f_AM = a0 + a1 * AM + a2 * AM**2 + a3 * AM**3 + a4 * AM**4
+
+    # Osterwald model for PV MPP power with spectral and temperature corrections
+    P_mp = P_STC * (G / G_ref) * (1.0 + gamma * (T_cell - T_ref)) * f_AM
+
+    # Ensure no negative power during transient/low-light conditions
+    return np.maximum(0.0, P_mp)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = G (irradiance, W/m^2)
+    # X[:, 1] = T_c (module temperature, deg C)
+    # X[:, 2] = WS (wind speed, m/s)
+    # X[:, 3] = AM (air mass, dimensionless)
+
+    G = X[:, 0]
+    T_c = X[:, 1]
+    AM = X[:, 3]
+
+    # Standard Test Conditions (STC) reference values
+    P_stc = 250.0  # Nominal module power at STC [W]
+    G_stc = 1000.0  # Reference irradiance [W/m^2]
+    T_stc = 25.0  # Reference cell temperature [deg C]
+    gamma = -0.0041  # Temperature coefficient of power [1/deg C]
+
+    # Air mass modifier (Sandia PV Array Performance Model polynomial for c-Si)
+    a0 = 0.9975
+    a1 = 0.0073
+    a2 = -0.0164
+    a3 = 0.0030
+    a4 = -0.00017
+    f_AM = a0 + a1 * AM + a2 * AM**2 + a3 * AM**3 + a4 * AM**4
+
+    # Osterwald model with spectral (air mass) correction
+    P_mp = P_stc * (G / G_stc) * f_AM * (1.0 + gamma * (T_c - T_stc))
+
+    # Ensure power is non-negative
+    P_mp = np.maximum(P_mp, 0.0)
+
+    return P_mp

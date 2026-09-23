@@ -1,0 +1,94 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry aboveground biomass (AGB) of tropical trees.
+    Uses the pantropical allometric model from Chave et al. (2014):
+    AGB = 0.0673 * (rho * D^2 * H)^0.976
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    
+    agb_kg = 0.0673 * np.power(rho * np.power(D, 2) * H, 0.976)
+    
+    return agb_kg
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry aboveground biomass (AGB) of individual tropical trees 
+    using the Chave et al. (2014) pantropical allometric equation.
+    
+    Inputs:
+    X[:, 0] = wood_density (rho) [g/cm^3]
+    X[:, 1] = diameter_cm (D) [cm]
+    X[:, 2] = height_m (H) [m]
+    
+    Returns:
+    1-D numpy array of AGB [kg]
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    
+    # Chave et al. (2014) pantropical model (Equation 4)
+    # AGB = 0.0673 * (rho * D^2 * H)^0.976
+    agb_kg = 0.0673 * (rho * (D ** 2) * H) ** 0.976
+    
+    return agb_kg
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry total aboveground biomass (AGB) of individual tropical trees
+    based on the Chave et al. (2014) pantropical allometric equation (without environmental stress).
+    
+    Inputs:
+    X[:, 0] = wood_density (rho) [g/cm^3]
+    X[:, 1] = diameter_cm (D) [cm]
+    X[:, 2] = height_m (H) [m]
+    
+    Output:
+    AGB [kg]
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    
+    # Chave et al. (2014) pantropical model: AGB = 0.0673 * (rho * D^2 * H)^0.976
+    agb = 0.0673 * (rho * (D ** 2) * H) ** 0.976
+    
+    return agb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    
+    # Chave et al. (2014) pantropical allometric equation for aboveground biomass
+    agb = 0.0673 * (rho * D**2 * H)**0.976
+    
+    return agb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    # Chave et al. (2014) pantropical allometric model for aboveground biomass
+    agb = 0.0673 * (rho * (D ** 2) * H) ** 0.976
+    return agb

@@ -1,0 +1,132 @@
+import numpy as np
+
+def predict(X):
+    # Gordon-Ng (GN) thermodynamic chiller model.
+    #
+    # The GN model expresses the reciprocal COP as a reversible (Carnot-like)
+    # term plus internal-entropy and heat-loss corrections that scale with
+    # the cooling load Q_e:
+    #
+    #   1/COP = -1 + T_ci/T_ei
+    #           + a1 * (1/Q_e)                       # heat-leak / offset term
+    #           + a2 * T_ci/(T_ei*Q_e)               # internal entropy production
+    #           + a3 * (T_ci - T_ei)/(T_ei*Q_e)      # finite-rate heat-exchange term
+    #
+    # and the requested quantity is simply (1/COP) - 1.
+
+    T_ei = X[:, 0]   # evaporator inlet temperature [K]
+    T_ci = X[:, 1]   # condenser inlet temperature [K]
+    Q_e  = X[:, 2]   # evaporator cooling load [kW]
+
+    # Fitted GN coefficients (representative values)
+    a1 = 12.0
+    a2 = 15.0
+    a3 = 20.0
+
+    inv_COP = (-1.0
+               + T_ci / T_ei
+               + a1 * (1.0 / Q_e)
+               + a2 * T_ci / (T_ei * Q_e)
+               + a3 * (T_ci - T_ei) / (T_ei * Q_e))
+
+    return inv_COP - 1.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gordon-Ng (GN) universal thermodynamic chiller model.
+
+    The GN model expresses the reciprocal COP as a Carnot-like reversible
+    term plus loss terms that scale with 1/Q_evap:
+
+        1/COP = -1 + T_ci/T_ei
+                + a0/Q_e
+                + a1 * T_ci/(T_ei * Q_e)
+                + a2 * (T_ci - T_ei)/T_ei
+
+    so that
+
+        1/COP - 1 = -2 + T_ci/T_ei
+                    + a0/Q_e
+                    + a1 * T_ci/(T_ei * Q_e)
+                    + a2 * (T_ci - T_ei)/T_ei
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e  = X[:, 2]
+
+    # Fitted GN-model coefficients (representative values)
+    a0 = 20.0      # heat-leak / internal-entropy term [kW]
+    a1 = -5.0      # cross term [kW]
+    a2 = 1.0       # temperature-ratio loss factor [-]
+
+    inv_COP = (-1.0
+               + T_ci / T_ei
+               + a0 / Q_e
+               + a1 * T_ci / (T_ei * Q_e)
+               + a2 * (T_ci - T_ei) / T_ei)
+
+    return inv_COP - 1.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Reversible (Carnot) refrigeration cycle relationship:
+    # COP_Carnot = T_cold / (T_hot - T_cold)
+    # => 1/COP = (T_hot - T_cold) / T_cold
+    # => 1/COP - 1 = (T_hot - 2*T_cold) / T_cold
+    T_ei = X[:, 0]   # evaporator (cold-side) inlet temperature [K]
+    T_ci = X[:, 1]   # condenser (hot-side) inlet temperature [K]
+
+    inv_COP = (T_ci - T_ei) / T_ei
+    return inv_COP - 1.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Reversible (Carnot) refrigeration-cycle relationship.
+    # Cooling COP_Carnot = T_ei / (T_ci - T_ei)
+    # => 1/COP = (T_ci - T_ei)/T_ei = T_ci/T_ei - 1
+    # => 1/COP - 1 = T_ci/T_ei - 2
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    return T_ci / T_ei - 2.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gordon-Ng universal thermodynamic chiller model.
+
+    The reversible (Carnot) baseline for a chiller is
+        1/COP = T_cond/T_evap - 1   ->   1/COP - 1 = T_ci/T_ei - 2
+    with three physically-motivated loss terms:
+      - internal entropy production   ~ a1 * (T_ei / Q_e)
+      - heat-exchanger / leakage loss ~ a2 * (T_ci - T_ei)/(T_ei * Q_e)
+      - finite-rate (load) losses      ~ a3 * (Q_e / T_ci)
+    """
+    T_ei = X[:, 0]   # evaporator (chilled water) inlet temp [K]
+    T_ci = X[:, 1]   # condenser (cooling water) inlet temp [K]
+    Q_e  = X[:, 2]   # evaporator cooling load [kW]
+
+    # Fitted Gordon-Ng coefficients (representative values)
+    a1 =  2.5e-1
+    a2 =  1.2e+2
+    a3 =  6.0e-4
+
+    carnot = T_ci / T_ei - 2.0
+
+    loss = (a1 * (T_ei / Q_e)
+            + a2 * ((T_ci - T_ei) / (T_ei * Q_e))
+            + a3 * (Q_e / T_ci))
+
+    return carnot + loss

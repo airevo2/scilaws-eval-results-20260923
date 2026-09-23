@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    # Mannucci et al. (2010) Fundamental Metallicity Relation
+    # 12 + log(O/H) as a 2nd-order polynomial in m = log(M*)-10 and s = log(SFR)
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    m = log_Mstar - 10.0
+    s = log_SFR
+
+    oh = (8.90
+          + 0.37 * m
+          - 0.14 * s
+          - 0.19 * m**2
+          + 0.12 * m * s
+          - 0.054 * s**2)
+
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mannucci et al. (2010) Fundamental Metallicity Relation (FMR)
+    # 12 + log(O/H) as a quadratic surface in (log M*, log SFR)
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    m = log_Mstar - 10.0   # mass offset
+    s = log_SFR            # SFR term
+
+    oh = (8.90
+          + 0.37 * m
+          - 0.14 * s
+          - 0.19 * m**2
+          + 0.12 * m * s
+          - 0.054 * s**2)
+
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mannucci et al. (2010) Fundamental Metallicity Relation (FMR)
+    # 12 + log(O/H) = 8.90 + 0.37 m - 0.14 s - 0.19 m^2 + 0.12 m s - 0.054 s^2
+    # with m = log(M*) - 10 and s = log(SFR)
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    m = log_Mstar - 10.0
+    s = log_SFR
+
+    oh = (8.90
+          + 0.37 * m
+          - 0.14 * s
+          - 0.19 * m**2
+          + 0.12 * m * s
+          - 0.054 * s**2)
+
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mannucci et al. (2010) Fundamental Metallicity Relation (FMR)
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    m = log_Mstar - 10.0   # normalized stellar mass
+    s = log_SFR            # log SFR
+
+    oh = (8.90
+          + 0.37 * m
+          - 0.14 * s
+          - 0.19 * m**2
+          + 0.12 * m * s
+          - 0.054 * s**2)
+
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mannucci et al. (2010) Fundamental Metallicity Relation (FMR)
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    m = log_Mstar - 10.0
+    s = log_SFR
+
+    oh = (8.90
+          + 0.37 * m
+          - 0.14 * s
+          - 0.19 * m**2
+          + 0.12 * m * s
+          - 0.054 * s**2)
+
+    return oh

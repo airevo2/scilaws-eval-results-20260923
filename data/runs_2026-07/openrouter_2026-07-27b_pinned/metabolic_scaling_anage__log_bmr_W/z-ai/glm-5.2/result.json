@@ -1,0 +1,26 @@
+{
+  "task": "metabolic_scaling_anage__log_bmr_W",
+  "model": "z-ai/glm-5.2",
+  "type": "typeI",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "kleiber_1932",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "rubner_1883",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

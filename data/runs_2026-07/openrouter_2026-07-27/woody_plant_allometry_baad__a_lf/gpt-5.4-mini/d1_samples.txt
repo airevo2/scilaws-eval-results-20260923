@@ -1,0 +1,63 @@
+import numpy as np
+
+def predict(X):
+    # Common closed-form allometric form for leaf area as a power-law of sapwood area and height:
+    # A_L = c * A_S^a * H^b
+    # Coefficients are representative canonical values used in forest allometry.
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    c = 0.1
+    a = 1.0
+    b = 1.0
+    return c * (A_S ** a) * (H ** b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    # Commonly used closed-form allometric relationship:
+    # Leaf area scales with sapwood area and height:
+    # A_L = c * A_S * H
+    c = 1.0
+    return c * A_S * H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]  # sapwood cross-sectional area at breast height
+    H = X[:, 1]    # total plant height
+    
+    # Common whole-plant leaf area allometry:
+    # A_L = k * A_S * H
+    # Using the canonical pipe-model-like form with no fitted intercept.
+    k = 1.0
+    return k * A_S * H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]
+    H = X[:, 1]
+    # Common sapwood-area / height allometry for whole-plant leaf area:
+    # A_L = c * A_S * H
+    c = 0.5
+    return c * A_S * H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Common pipe-model / allometric form for leaf area:
+    # A_L = k * A_S * H
+    k = 1.0
+    return k * X[:, 0] * X[:, 1]

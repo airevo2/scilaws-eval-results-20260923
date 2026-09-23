@@ -1,0 +1,73 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts time-averaged eruption-column top height (H_top) in km above vent level
+    using the widely cited Mastin et al. (2009) buoyant plume scaling relationship.
+    
+    H_top = 0.35 * MER^0.25
+    where MER is the mass eruption rate in kg/s.
+    """
+    MER = X[:, 0]
+    H_top = 0.35 * np.power(MER, 0.25)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict eruption-column top height (km above vent) from mass eruption rate.
+    
+    Uses the Mastin et al. (2009) empirical power-law scaling:
+        H_top = 0.29 * MER^0.25
+    where H_top is in km above vent level and MER is in kg/s.
+    """
+    MER = X[:, 0]
+    H_top = 0.29 * np.power(MER, 0.25)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the time-averaged eruption-column top height (H_top) in km 
+    above vent level using the empirical power-law relationship from 
+    Mastin et al. (2009).
+    """
+    MER = np.asarray(X[:, 0], dtype=float)
+    # Mastin et al. (2009): H = 2.00 * MER^0.241
+    H_top = 2.00 * np.power(MER, 0.241)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    MER = X[:, 0]
+    # Sparks et al. (1997) empirical plume height scaling:
+    # H = 8.2 * (MER / 1e6)^0.25
+    # where H is in km above vent and MER is in kg/s
+    H_top_km_avl = 8.2 * np.power(MER / 1.0e6, 0.25)
+    return H_top_km_avl
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the time-averaged eruption-column top height (H_top) in km above vent level.
+    Uses the standard buoyant-plume scaling law (Morton, Taylor, Turner 1956) 
+    as empirically parameterized in classic volcanology literature (e.g., Sparks et al., 1997).
+    
+    H_top = 0.31 * MER^0.25
+    where MER is the mass eruption rate in kg/s.
+    """
+    MER = X[:, 0]
+    H_top = 0.31 * np.power(MER, 0.25)
+    return H_top

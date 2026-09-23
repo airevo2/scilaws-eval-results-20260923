@@ -1,0 +1,138 @@
+task_id: weir_flow_tilting_pugh__discharge
+domain: engineering / hydraulics
+license: CC0-1.0
+
+# Type II — cluster = experimental weir configuration (one distinct theta, p, b
+# combination per experiment). The discharge coefficient (Fr_h intercept and
+# slope in the Pugh 2025 formulation, or C_D correction in the Fenton
+# formulation) varies per cluster and must be fit per weir configuration.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot. Science framing only.
+context: >-
+  Weirs are hydraulic structures used to control and measure water flow in
+  open channels. For a sharp-crested weir, the total volumetric discharge
+  depends on the upstream head above the crest and the weir geometry. The
+  classical framework expresses the dimensionless weir Froude number as a
+  function of the head-to-height ratio h/p, which captures the transition
+  from a weir-like flow (where the crest height dominates) to a sill-like
+  free overfall (where it does not). Within the practical weir regime, this
+  relationship is approximately linear. When the weir plate is tilted from
+  vertical, the effective discharge coefficient changes with inclination
+  angle, so the same functional form applies but with per-configuration
+  empirical constants that shift with tilt angle, weir height, and crest
+  width.
+
+target:
+  name: Q_m3s
+  symbol: Q
+  unit: m³ s⁻¹
+  description: Total volumetric discharge measured by calibrated current meter in a laboratory flume over a tilting sharp-crested weir.
+  range: [0.001410, 0.084120]
+
+inputs:
+  - name: h_m
+    symbol: h
+    unit: m
+    description: Water surface elevation above the weir crest, measured 0.8 m upstream of the crest (upstream head over weir).
+    range: [0.018, 0.1393]
+  - name: p_m
+    symbol: p
+    unit: m
+    description: Height of the weir crest above the horizontal channel bed (weir height).
+    range: [0.065, 0.15]
+  - name: b_m
+    symbol: b
+    unit: m
+    description: Length of the weir crest in the transverse direction (channel width at the crest).
+    values: [0.3, 1.0]
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Cluster = experiment (weir configuration with distinct theta, p, b).
+# Train/test boundary: every 3rd experiment (lexicographic A-O) is held out.
+# Test clusters: C (theta=36.4°), F (50.0°), I (64.0°), L (33.0°), O (90.0°).
+# Within each test cluster, rows are sorted by h ascending; first 60% form
+# test_fit (low-h fit regime), last 40% form test_test (high-h OOD scored).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 303
+n_test_fit: 81
+n_test_test: 56
+n_clusters_train: 10
+n_clusters_test: 5
+
+# Note: 15 total experimental clusters (experiments A–O); 5 held out for test
+# (K_test=5 < 9). This is acknowledged as a small test set for a Type II task;
+# the task remains valid and the per-cluster OOD is genuine (unseen theta
+# configurations). FM-T7 demotion threshold (K_test < 9) applies but the
+# practical effect is limited — all 5 test clusters are distinct weir angles
+# spread across the theta range and well-supported (n>=20 rows each).
+
+# Candidate prior constants — the `priors` prompt slot.
+# g is consumed by both reference formulas. The 2/3 factor is structural
+# (Poleni derivation). The Rehbock coefficients 0.605 and 0.080 are
+# formula-specific parameters documented in the literature.
+priors:
+  - name: g
+    value: 9.81
+    unit: m s⁻²
+    description: Standard gravitational acceleration used in weir discharge equations.
+    source: Pugh 2025 §2, PDF p. E31-9; Fenton 2015 Eq. 21.
+    _role: candidate
+  - name: rehbock_intercept
+    value: 0.605
+    unit: dimensionless
+    description: Rehbock (1929) empirical intercept of the C_D linear fit for full-width vertical weirs; C_D = 0.605 + 0.080*(H/P).
+    source: Fenton 2015 §6.3 after Eq. 24 (PDF p. 11); Pugh 2025 §5.1.
+    _role: distractor
+  - name: rehbock_slope
+    value: 0.080
+    unit: dimensionless
+    description: Rehbock (1929) slope of the C_D linear fit with H/P for full-width vertical weirs.
+    source: Fenton 2015 §6.3 after Eq. 24 (PDF p. 11); Pugh 2025 §5.1.
+    _role: distractor
+  - name: pugh_fr_intercept
+    value: 0.576
+    unit: dimensionless
+    description: Pugh 2025 Eq. 5.1 Fr_h intercept for a vertical sharp-crested weir; equals (2*sqrt(2)/3)*0.611.
+    source: Pugh 2025 Eq. 5.1, PDF p. E31-13.
+    _role: candidate
+  # fenton_cd_intercept=0.589 REMOVED 2026-06-02 (full audit): it equalled
+  # fenton_2015 LAW_CONSTANTS["C0"]=0.589 → an FM-H1/C12 LAW-in-priors leak
+  # (exposed one of the four C_D discovery-target coefficients as a candidate).
+  # Removed to enforce LAW ∩ priors = ∅. pugh_fr_intercept=0.576 is NOT a leak
+  # (0.576 is LOCAL a0 in pugh_2025, LAW={}) and stays as a legitimate candidate.
+
+# === Reference baselines ===
+references:
+  - id: pugh_2025
+    label: "Pugh 2025 — Fr_h = a0 + a1*(h/p); Q = Fr_h*sqrt(g)*h^(3/2)*b; OLS per cluster"
+    formula_file: formulas/pugh_2025.py
+    reference_pdf: reference/pugh_2025.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 2
+    measured: {rmse: 0.000351, r2: 0.9997}
+  - id: fenton_2015
+    label: "Fenton 2015 (Kindsvater-Carter) — Q=(2/3)*(C_D_Fenton+delta_C)*sqrt(2g)*b*(h+k_H)^(3/2); delta_C per cluster"
+    formula_file: formulas/fenton_2015.py
+    reference_pdf: reference/fenton_2015_weirs.pdf
+    n_law_constants: 4
+    n_other_constants: 3
+    n_local_params: 1
+    measured: {rmse: 0.000616, r2: 0.9989}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        4
+  max_local_params:         2
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.000351     # pugh_2025 pooled rmse (strongest reference)

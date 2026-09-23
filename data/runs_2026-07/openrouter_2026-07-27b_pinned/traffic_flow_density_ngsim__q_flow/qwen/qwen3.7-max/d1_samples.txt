@@ -1,0 +1,64 @@
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    v_f = 90.0  # free-flow speed in km/h
+    k_j = 150.0 # jam density in veh/km/lane
+    
+    # Greenshields' parabolic fundamental diagram
+    q = v_f * k * (1.0 - k / k_j)
+    
+    return np.maximum(q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    v_f = 100.0  # Free-flow speed (km/h)
+    k_j = 200.0  # Jam density (veh/km/lane)
+    q = v_f * k * (1.0 - k / k_j)
+    return np.maximum(q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    
+    # Greenshields' parabolic fundamental diagram parameters
+    v_f = 100.0  # Free-flow speed in km/h (approx 62 mph)
+    k_j = 150.0  # Jam density in veh/km/lane (approx 241 veh/mi/lane)
+    
+    # Greenshields model: q = v_f * k * (1 - k / k_j)
+    q = v_f * k * (1.0 - k / k_j)
+    
+    # Flow cannot be negative
+    return np.maximum(q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    v_f = 100.0  # Free-flow speed (km/h)
+    k_j = 150.0  # Jam density (veh/km/lane)
+    
+    # Greenshields parabolic fundamental diagram
+    q = v_f * k * (1.0 - k / k_j)
+    
+    return np.maximum(q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    v_f = 100.0  # Free-flow speed (km/h)
+    k_j = 140.0  # Jam density (veh/km/lane)
+    q = v_f * k * (1.0 - k / k_j)
+    return q

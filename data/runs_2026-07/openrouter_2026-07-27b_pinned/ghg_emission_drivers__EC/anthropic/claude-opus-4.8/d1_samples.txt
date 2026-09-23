@@ -1,0 +1,204 @@
+import numpy as np
+
+def predict(X):
+    # Kaya identity / IPAT approach:
+    #   Primary energy = Total GDP * Energy intensity
+    # Total GDP = (GDP per capita) * (Population)
+    # Energy intensity (TJ per USD) is modeled with mild dependences on
+    # affluence, urbanization, density, age structure and climate
+    # (heating/cooling demand rising away from a comfort temperature).
+
+    A     = X[:, 0]   # GDP per capita [USD]
+    P     = X[:, 1]   # population [persons]
+    f_act = X[:, 2]   # working-age share [%]
+    rho   = X[:, 3]   # population density [persons/km2]
+    f_urb = X[:, 4]   # urban share [%]
+    T     = X[:, 5]   # mean annual temperature [C]
+
+    # Total economic output in USD
+    GDP_total = A * P
+
+    # Baseline energy intensity [TJ per USD] ~ 6e-6 (world average order)
+    I0 = 6.0e-6
+
+    # Affluence effect: energy intensity declines slightly as economies
+    # mature (weak negative elasticity on per-capita GDP)
+    aff = (A / 10000.0) ** (-0.10)
+
+    # Working-age / activity share (more economically active -> more energy)
+    act = (f_act / 60.0) ** 0.20
+
+    # Urbanization effect
+    urb = (f_urb / 50.0) ** 0.10
+
+    # Density effect (denser -> slightly more efficient)
+    dens = (rho / 100.0) ** (-0.03)
+
+    # Climate effect: demand rises away from a ~18 C comfort temperature
+    climate = 1.0 + 0.010 * (T - 18.0) ** 2 / 100.0
+
+    intensity = I0 * aff * act * urb * dens * climate
+
+    EC = GDP_total * intensity
+    return EC
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT-type multiplicative model for national primary energy consumption:
+    #   I_E = a * P^b * A^c * f_active^d * rho^e * f_urban^g * exp(h*(T-Tref))
+    # (log-linear form, the most commonly cited canonical relationship linking
+    #  affluence, population and structural factors to energy use)
+    A        = X[:, 0]   # GDP per capita (USD)
+    P        = X[:, 1]   # population (persons)
+    f_active = X[:, 2]   # working-age share (%)
+    rho      = X[:, 3]   # population density (persons/km2)
+    f_urban  = X[:, 4]   # urban share (%)
+    T        = X[:, 5]   # mean annual temperature (deg C)
+
+    # Fitted coefficients (typical STIRPAT-scale values, energy in TJ)
+    a = 3.0e-4     # scaling constant
+    b = 1.00       # population elasticity (~unity)
+    c = 0.85       # affluence elasticity
+    d = 0.30       # working-age effect
+    e = -0.05      # density (efficiency) effect
+    g = 0.10       # urbanization effect
+    h = -0.010     # temperature effect (heating demand at low T)
+    Tref = 15.0
+
+    ln_I = (np.log(a)
+            + b * np.log(P)
+            + c * np.log(A)
+            + d * np.log(f_active)
+            + e * np.log(rho)
+            + g * np.log(f_urban)
+            + h * (T - Tref))
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT model (extended Kaya/IPAT identity):
+    #   I = a * P^b * A^c * ... * exp(...)
+    # Impact I here is annual primary energy consumption EC [TJ].
+    # Population P, affluence A (GDP per capita), plus modifying
+    # socio-demographic and climatic terms enter multiplicatively.
+
+    A = X[:, 0]   # GDP per capita [USD]
+    P = X[:, 1]   # total population [persons]
+    fa = X[:, 2]  # working-age fraction [%]
+    rho = X[:, 3] # population density [persons/km2]
+    fu = X[:, 4]  # urban fraction [%]
+    T = X[:, 5]   # mean annual temperature [degC]
+
+    # guard against non-positive values
+    A = np.clip(A, 1e-6, None)
+    P = np.clip(P, 1e-6, None)
+    fa = np.clip(fa, 1e-6, None)
+    rho = np.clip(rho, 1e-6, None)
+    fu = np.clip(fu, 1e-6, None)
+
+    # fitted (illustrative canonical) coefficients
+    a = 3.0e-4      # scaling constant
+    b = 1.00        # population elasticity (near unity)
+    c = 0.75        # affluence (GDP/capita) elasticity
+    d = 0.30        # working-age share
+    e = -0.05       # density (efficiency of dense settlement)
+    f = 0.10        # urbanization
+    g = -0.010      # temperature (heating demand at low T)
+
+    lnI = (np.log(a)
+           + b * np.log(P)
+           + c * np.log(A)
+           + d * np.log(fa)
+           + e * np.log(rho)
+           + f * np.log(fu)
+           + g * T)
+
+    return np.exp(lnI)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Primary energy consumption via the STIRPAT / Kaya-identity framework.
+
+    Energy consumption (Impact) is modeled as a multiplicative power-law
+    function of Population, Affluence (GDP per capita) and modifying
+    "Technology/structure" factors (working-age share, density, urbanization,
+    climate):
+
+        I = a * P^b * A^c * f_active^d * rho^e * f_urban^g * exp(h*T)
+
+    This is the standard STIRPAT extension of the IPAT identity
+    (Dietz & Rosa; York, Rosa & Dietz).  The leading behaviour reduces to
+    the Kaya identity: total energy ~ (energy intensity) * P * A.
+    """
+    A        = X[:, 0]   # GDP per capita [USD]
+    P        = X[:, 1]   # population [persons]
+    f_active = X[:, 2]   # working-age share [%]
+    rho      = X[:, 3]   # population density [/km2]
+    f_urban  = X[:, 4]   # urban share [%]
+    T        = X[:, 5]   # mean annual temperature [C]
+
+    # --- fitted STIRPAT coefficients ---
+    a = 6.0e-6      # scale (approx. energy intensity, TJ per USD of total GDP)
+    b = 1.00        # population elasticity (~unit, Kaya)
+    c = 0.90        # affluence elasticity
+    d = 0.10        # working-age structure
+    e = -0.03       # density (efficiency of dense settlement)
+    g = 0.15        # urbanization
+    h = -0.010      # heating-demand temperature effect
+
+    I_E = (a
+           * np.power(P, b)
+           * np.power(A, c)
+           * np.power(np.clip(f_active, 1e-6, None), d)
+           * np.power(np.clip(rho, 1e-6, None), e)
+           * np.power(np.clip(f_urban, 1e-6, None), g)
+           * np.exp(h * T))
+
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kaya-identity-based closed form:
+    #   EC = (Energy/GDP) * (GDP/capita) * Population
+    # with mild elasticities and a climate (heating/cooling) modifier.
+    A = X[:, 0]   # GDP per capita [USD]
+    P = X[:, 1]   # total population [persons]
+    fa = X[:, 2]  # working-age fraction [%]
+    rho = X[:, 3] # population density [pers/km2]
+    fu = X[:, 4]  # urban fraction [%]
+    T = X[:, 5]   # mean annual temperature [C]
+
+    # Total GDP (USD)
+    GDP_total = A * P
+
+    # Base energy intensity ~ 6e-6 TJ per USD (world-average primary energy / GDP)
+    k = 6.0e-6
+
+    # Elasticities (near unity for total GDP; income slightly < 1 -> intensity falls with wealth)
+    a_income = -0.10   # energy intensity declines with rising per-capita income
+    b_active = 0.15    # more working-age share -> more economic energy use
+    c_urban = 0.05     # urbanization effect
+    d_climate = 0.010  # heating-degree effect: colder -> more energy per |18-T|
+
+    EC = (k
+          * GDP_total
+          * (A / 10000.0) ** a_income
+          * (fa / 60.0) ** b_active
+          * (fu / 50.0) ** c_urban
+          * np.exp(d_climate * np.abs(18.0 - T)))
+
+    return EC

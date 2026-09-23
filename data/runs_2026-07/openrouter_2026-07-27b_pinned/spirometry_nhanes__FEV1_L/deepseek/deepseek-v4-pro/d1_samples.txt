@@ -1,0 +1,93 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict FEV1 (litres) from age (years) and height (cm).
+    
+    Uses the average of the widely cited Crapo et al. (1981) sex-specific 
+    reference equations to provide a unisex approximation:
+        Male:   FEV1 = 0.0414 * height - 0.0244 * age - 2.19
+        Female: FEV1 = 0.0342 * height - 0.0255 * age - 1.58
+    Average coefficients:
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    fev1 = 0.0378 * height_cm - 0.02495 * age - 1.885
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts FEV1 (L) from age (years) and height (cm) using the Crapo (1981)
+    reference equation for adult males. This is one of the most commonly cited
+    closed-form spirometric prediction equations.
+    
+    FEV1 = 0.0414 * height_cm - 0.0244 * age - 2.19
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    fev1 = 0.0414 * height_cm - 0.0244 * age - 2.19
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict FEV1 (L) from age (yr) and height (cm) using the 
+    widely cited Crapo et al. (1981) reference equation for adult males.
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    # Crapo RO, Morris AH, Gardner RM. Am Rev Respir Dis 1981; 123:659-664.
+    # FEV1 (L) = 0.0414 * height_cm - 0.0244 * age - 2.190
+    fev1 = 0.0414 * height_cm - 0.0244 * age - 2.190
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts FEV1 (L) from age (years) and height (cm) using the
+    NHANES III reference equation for Caucasian males (Hankinson et al., 1999).
+    This is a standard closed-form polynomial widely used in spirometry.
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Coefficients from NHANES III for Caucasian males
+    fev1 = (0.5536
+            - 0.01303 * age
+            - 0.000172 * age**2
+            + 0.00014098 * height_cm**2)
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict FEV1 (L) using the NHANES III spirometry reference equation
+    for Caucasian males (Hankinson et al., 1999, AJRCCM).
+    
+    Input X: 2-D numpy array with columns:
+        X[:, 0] = age (years)
+        X[:, 1] = height (cm)
+    Output: 1-D numpy array of predicted FEV1 in liters.
+    """
+    age = X[:, 0]
+    height = X[:, 1]
+    
+    # NHANES III coefficients for Caucasian males
+    fev1 = (0.5536 
+            - 0.01303 * age 
+            + 0.000172 * age**2 
+            + 0.00014098 * height**2)
+    return fev1

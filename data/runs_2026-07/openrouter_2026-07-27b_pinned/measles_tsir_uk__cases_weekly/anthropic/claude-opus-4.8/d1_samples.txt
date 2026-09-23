@@ -1,0 +1,227 @@
+import numpy as np
+
+def predict(X):
+    # TSIR (Time-series SIR) model for measles (Finkenstadt & Grenfell 2000; Bjornstad et al. 2002)
+    #
+    #   E[I_t] = beta_s * I_{t-1}^alpha * S_{t-1}
+    #
+    # with S_{t-1} = Sbar + z_{t-1}, where z is the reconstructed susceptible deviation
+    # and Sbar is the mean number of susceptibles (a small fraction of the population).
+
+    I_prev = np.asarray(X[:, 0], dtype=float)
+    s      = np.asarray(X[:, 1], dtype=float).astype(int)
+    logpop = np.asarray(X[:, 3], dtype=float)
+    z      = np.asarray(X[:, 4], dtype=float)
+
+    N = 10.0 ** logpop
+
+    # Homogeneity ("mixing") exponent, canonically just below 1.
+    alpha = 0.97
+
+    # Mean susceptible fraction of the population (typically a few percent).
+    Sbar_frac = 0.035
+    S_prev = Sbar_frac * N + z
+    S_prev = np.clip(S_prev, 1.0, None)
+
+    # Seasonal transmission coefficient beta_s, one value per 2-week interval (26/yr).
+    # Canonical school-term / holiday driven seasonality: modest sinusoidal variation
+    # about a mean set so that R0 ~ 15-17 for measles.
+    beta_mean = 15.0 / (Sbar_frac * np.mean(N))  # scale so beta*Sbar ~ R0
+    # normalized seasonal shape (26 biweeks), high in school terms, low in summer
+    weeks = np.arange(1, 27)
+    seasonal = 1.0 + 0.25 * np.cos(2.0 * np.pi * (weeks - 1) / 26.0)
+    beta_table = beta_mean * seasonal
+    beta_s = beta_table[(s - 1) % 26]
+
+    I_t = beta_s * np.power(np.clip(I_prev, 0.0, None), alpha) * S_prev
+
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # TSIR (time-series SIR) model for measles, the canonical closed form:
+    #   E[I_t] = beta_s * I_{t-1}^alpha * S_{t-1}
+    # where S_{t-1} = Sbar + z_t  is the reconstructed susceptible pool,
+    # beta_s is the seasonal (biweekly) transmission rate, and alpha (~0.97)
+    # is the mixing/homogeneity exponent.
+
+    I_prev = X[:, 0].astype(float)
+    biweek = X[:, 1].astype(int)
+    log_pop = X[:, 3].astype(float)
+    z = X[:, 4].astype(float)
+
+    N = np.power(10.0, log_pop)
+
+    # Homogeneity exponent (commonly reported ~0.95-0.98)
+    alpha = 0.97
+
+    # Mean susceptible fraction (~ typical measles endemic level, few percent)
+    Sbar_frac = 0.035
+    Sbar = Sbar_frac * N
+
+    # Reconstructed susceptibles
+    S_prev = Sbar + z
+    S_prev = np.clip(S_prev, 1.0, None)
+
+    # Seasonal transmission coefficients beta_s for the 26 biweeks
+    # (school-term forcing: higher in term, lower in summer/holidays).
+    # Values scaled so that mean(beta_s)*Sbar ~ R0-ish per generation.
+    base = 1.0e-5
+    seasonal = np.array([
+        1.24, 1.14, 1.20, 1.26, 1.30, 1.18, 1.05, 0.98, 1.02, 1.10,
+        1.16, 1.22, 1.18, 1.10, 1.00, 0.90, 0.78, 0.70, 0.82, 0.95,
+        1.05, 1.15, 1.25, 1.35, 1.40, 1.30
+    ])
+    beta_s = base * seasonal[(biweek - 1) % 26]
+
+    I_t = beta_s * np.power(np.maximum(I_prev, 0.0) + 1e-6, alpha) * S_prev
+
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # TSIR (Time-series SIR) model for measles (Finkenstadt & Grenfell 2000;
+    # Bjornstad, Finkenstadt & Grenfell 2002).
+    #
+    # Expected new cases:
+    #     E[I_t] = beta_s * I_{t-1}^alpha * S_{t-1}
+    #
+    # with reconstructed susceptibles  S_{t-1} = Sbar + z_t,
+    # seasonal (biweekly) transmission rate beta_s, and mixing exponent alpha ~ 1.
+
+    I_prev = np.asarray(X[:, 0], dtype=float)
+    s      = np.asarray(X[:, 1], dtype=float).astype(int)
+    logN   = np.asarray(X[:, 3], dtype=float)
+    z      = np.asarray(X[:, 4], dtype=float)
+
+    N = np.power(10.0, logN)
+
+    # Homogeneity (mixing) exponent, canonically slightly below 1.
+    alpha = 0.97
+
+    # Mean susceptible fraction of the population (typical measles value ~3-5%).
+    Sbar_frac = 0.035
+    Sbar = Sbar_frac * N
+
+    # Reconstructed susceptibles (deviation z_t about the mean level).
+    S_prev = Sbar + z
+    S_prev = np.clip(S_prev, 1.0, None)
+
+    # Seasonal transmission coefficients beta_s (26 biweeks), normalized so the
+    # mean ~ 1 with school-term forcing (higher in term, lower in summer).
+    # Values scaled to give R0 ~ 15-17 on average.
+    phase = 2.0 * np.pi * (np.arange(1, 27)) / 26.0
+    beta_profile = 1.0 + 0.30 * np.cos(phase)          # seasonal forcing shape
+    beta_bar = 17.0 / Sbar_frac / np.power(10.0, 0.0)  # baseline scale
+    # Overall transmission constant (per-susceptible), tuned to mean R0.
+    beta_const = 1.0e-5
+    beta_s_full = beta_const * beta_profile
+
+    idx = np.clip(s - 1, 0, 25)
+    beta_s = beta_s_full[idx]
+
+    # Expected cases this interval.
+    I_prev_safe = np.clip(I_prev, 0.0, None)
+    lam = beta_s * np.power(I_prev_safe + 1e-8, alpha) * S_prev
+
+    return np.clip(lam, 0.0, None)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Time-series SIR (TSIR) model for measles (Bjornstad, Finkenstadt & Grenfell 2002)
+    #
+    #   E[I_t] = beta_s * S_{t-1} * I_{t-1}^alpha
+    #
+    # with S_{t-1} = Sbar + z_{t-1}, where z is the susceptible-deviation proxy
+    # and Sbar is the (unknown) mean number of susceptibles, expressed here as a
+    # small fraction of the population N.  beta_s is the seasonally-varying
+    # transmission rate (26 biweekly values), and alpha (~0.97) is the mixing
+    # exponent accounting for discretization / heterogeneity.
+
+    I_prev = X[:, 0].astype(float)
+    biweek = X[:, 1].astype(int)
+    log_pop = X[:, 3].astype(float)
+    z = X[:, 4].astype(float)
+
+    N = np.power(10.0, log_pop)
+
+    # Homogeneity exponent (canonical value close to 1)
+    alpha = 0.97
+
+    # Mean susceptible fraction of the population (~3.5%)
+    Sbar = 0.035 * N
+
+    # Reconstructed susceptibles
+    S_prev = Sbar + z
+    S_prev = np.clip(S_prev, 1.0, None)
+
+    # Seasonal transmission coefficients beta_s (26 biweeks), scaled so that
+    # R0 ~ beta_bar * Sbar is on the order of ~15-18 for measles.
+    # Normalized profile (school-term forcing) with mean ~1.
+    season_profile = np.array([
+        1.24, 1.26, 1.22, 1.14, 1.05, 0.98, 0.92, 0.88, 0.86, 0.85,
+        0.88, 0.93, 1.00, 1.08, 1.14, 1.16, 1.12, 1.02, 0.90, 0.80,
+        0.74, 0.78, 0.90, 1.05, 1.18, 1.24
+    ])
+    beta_bar = 15.0 / Sbar  # sets mean R0 ~ 15
+    beta_s = beta_bar * season_profile[(biweek - 1) % 26]
+
+    I_t = beta_s * S_prev * np.power(np.clip(I_prev, 0.0, None), alpha)
+
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # TSIR (time-series SIR) model for measles (Finkenstadt & Grenfell 2000)
+    # Expected cases:  I_t = beta_s * I_{t-1}^alpha * S_{t-1}
+    # with S_{t-1} = Sbar + z_t   (susceptible reconstruction)
+
+    I_prev = X[:, 0].astype(float)      # I_{t-1}
+    biweek = X[:, 1].astype(int)        # seasonal index 1..26
+    # births    = X[:, 2]               # not needed once z_t is supplied
+    log_pop = X[:, 3].astype(float)     # log10 N
+    z = X[:, 4].astype(float)           # susceptible deviation proxy
+
+    N = 10.0 ** log_pop
+
+    # Homogeneity exponent (close to 1, canonical value)
+    alpha = 0.97
+
+    # Mean susceptible fraction of the population (typically a few percent)
+    Sbar_frac = 0.035
+    Sbar = Sbar_frac * N
+
+    # Reconstructed susceptibles
+    S_prev = Sbar + z
+    S_prev = np.clip(S_prev, 1.0, None)
+
+    # Seasonal transmission coefficients beta_s (26 biweeks), scaled by mean pop.
+    # Canonical school-term forced pattern: high in term, low in summer holidays.
+    # Values here are representative mean-normalized contact rates.
+    beta_season = np.array([
+        1.24, 1.26, 1.30, 1.28, 1.20, 1.15, 1.10, 1.08, 1.05, 1.02,
+        1.00, 0.98, 0.95, 0.90, 0.85, 0.80, 0.78, 0.82, 0.95, 1.05,
+        1.12, 1.18, 1.22, 1.24, 1.25, 1.23
+    ])
+    # Overall transmission scale so that mean R ~ 1 at equilibrium
+    beta0 = 1.0 / Sbar_frac / N.mean() if N.size > 0 else 1.0
+
+    idx = np.clip(biweek - 1, 0, 25)
+    beta = beta0 * beta_season[idx]
+
+    # Expected new cases
+    I_t = beta * (I_prev ** alpha) * S_prev
+
+    return np.clip(I_t, 0.0, None)

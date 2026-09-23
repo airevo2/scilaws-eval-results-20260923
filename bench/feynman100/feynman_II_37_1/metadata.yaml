@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Magnetic moment"
+    symbol: "mom"
+    unit: ""
+    description: "Magnetic moment"
+  - name: "Magnetic field"
+    symbol: "B"
+    unit: ""
+    description: "Magnetic field"
+  - name: "Dimensionless"
+    symbol: "chi"
+    unit: ""
+    description: "Dimensionless"

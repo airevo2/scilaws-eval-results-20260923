@@ -1,0 +1,71 @@
+import numpy as np
+
+def predict(X):
+    Q2 = np.asarray(X)[:, 0]
+    # Standard dipole form factor ratio for the proton electric Sachs form factor:
+    # G_E / G_D ≈ 1 for the canonical dipole parametrization
+    return np.ones_like(Q2, dtype=float)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = np.asarray(X)[:, 0]
+    # Commonly used Kelly-style / polarization-transfer-inspired parameterization
+    # for the ratio GE/GD:
+    # GE/GM ≈ (1 - 0.13 Q^2) / (1 + 0.031 Q^2 + 0.0005 Q^4)
+    # and with the standard dipole-related ratio often approximated in the same
+    # spirit by a simple linear falloff for GE/GD:
+    return 1.0 - 0.142 * Q2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    # Standard widely used linear fit for the proton form-factor ratio:
+    # mu_p * G_E / G_M ≈ 1 - 0.13 Q^2  (Q^2 in GeV^2)
+    # with the dipole form factor G_D(Q^2) = 1 / (1 + Q^2/0.71)^2.
+    # A common closed-form approximation for G_E / G_D is taken as:
+    #   G_E / G_D ≈ 1 / (1 + Q^2/0.71)^2 * [1 - 0.13 Q^2] * (G_M / (μ_p G_D))^{-1}
+    # but since the requested quantity is G_E / G_D and the standard
+    # commonly cited parameterization for G_E itself is the dipole form
+    # modified by the polarization-transfer ratio, we return:
+    mu_p = 2.79284734463
+    GD = 1.0 / (1.0 + Q2 / 0.71)**2
+    GE_over_GD = (1.0 - 0.13 * Q2) * mu_p / 2.79284734463
+    return GE_over_GD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = np.asarray(X)[:, 0]
+    # Standard dipole: G_D = 1 / (1 + Q^2/0.71)^2
+    # Commonly used empirical fit for the proton electric form factor ratio:
+    #   G_E / G_D ≈ 1 - 0.13 Q^2
+    return 1.0 - 0.13 * Q2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard commonly used closed-form parameterization for the proton
+    electric form factor ratio G_E / G_D as a function of Q^2.
+
+    Uses the empirical linear fit:
+        mu_p * G_E / G_M = 1 - 0.13 Q^2
+    and the standard dipole form:
+        G_D = 1 / (1 + Q^2 / 0.71)^2
+
+    Here we return G_E / G_D in the common approximation
+        G_E / G_D ≈ 1 - 0.13 Q^2
+    which is the standard simple closed-form ratio often quoted for this quantity.
+    """
+    Q2 = np.asarray(X)[:, 0]
+    return 1.0 - 0.13 * Q2

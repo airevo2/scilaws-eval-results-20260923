@@ -1,0 +1,121 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the refractive index of ethylene glycol based on wavelength and temperature.
+    Uses the standard Cauchy dispersion relation with a linear thermo-optic coefficient.
+    
+    Parameters:
+    X : numpy.ndarray
+        2-D array where:
+        X[:, 0] is the vacuum wavelength in micrometres (lambda_um).
+        X[:, 1] is the temperature in degrees Celsius (temperature_C).
+        
+    Returns:
+    n : numpy.ndarray
+        1-D array of predicted refractive indices.
+    """
+    lambda_um = X[:, 0]
+    temperature_C = X[:, 1]
+    
+    # Cauchy equation coefficients for ethylene glycol
+    # n(lambda, T) = A + B / lambda^2 + C * T
+    # Calibrated to n_D ~ 1.4318 at 20 °C (589.3 nm) and dn/dT ~ -2.6e-4 /°C
+    A = 1.4241
+    B = 0.0045
+    C = -0.00026
+    
+    n = A + B / (lambda_um**2) + C * temperature_C
+    
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]  # vacuum wavelength in micrometres
+    T = X[:, 1]    # temperature in degrees Celsius
+
+    # Cauchy dispersion relation with linear thermo-optic correction
+    # Reference: n_D(20 C) = 1.4318, dn/dT ~ -1e-4 /C, Abbe number ~ 55
+    A = 1.4220       # Cauchy A coefficient
+    B = 0.00411      # Cauchy B coefficient [um^2]
+    dn_dT = -0.0001  # thermo-optic coefficient [1/degC]
+
+    n = A + B / lam**2 + dn_dT * T
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]  # vacuum wavelength in micrometres
+    T = X[:, 1]    # temperature in degrees Celsius
+
+    # Cauchy dispersion relation with linear thermo-optic correction
+    # n(lambda, T) = A + B / lambda^2 + (dn/dT) * (T - T_ref)
+    #
+    # Coefficients for ethylene glycol:
+    #   A, B chosen so that n_D(20 C) = 1.4318 at 589.3 nm
+    #   and Abbe number V_D ~ 52 (moderate dispersion)
+    #   dn/dT = -4.0e-4 /C  (widely cited thermo-optic coefficient)
+    A = 1.4193
+    B = 0.00435        # um^2
+    dn_dT = -0.00040   # 1/degC
+    T_ref = 20.0       # degC
+
+    n = A + B / lam**2 + dn_dT * (T - T_ref)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Refractive index of ethylene glycol as a function of wavelength and temperature.
+    
+    Uses a Cauchy-type dispersion relation with linear thermo-optic correction:
+        n(lambda, T) = A + B / lambda^2 + C * T
+    
+    Coefficients derived from known reference values:
+        n_D(20 C) = 1.4318 at 589.3 nm
+        Abbe number V_D ~ 50
+        Thermo-optic coefficient dn/dT ~ -2.86e-4 /degC
+    """
+    lam = X[:, 0]  # vacuum wavelength in micrometres
+    T   = X[:, 1]  # temperature in degrees Celsius
+
+    A = 1.4245        # constant term
+    B = 4.524e-3      # Cauchy dispersion coefficient (um^2)
+    C = -2.86e-4      # thermo-optic coefficient (1/degC)
+
+    n = A + B / lam**2 + C * T
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]  # vacuum wavelength in micrometres
+    T = X[:, 1]    # temperature in degrees Celsius
+
+    # Cauchy dispersion equation with linear thermo-optic correction
+    # n(lambda, T) = A + B / lambda^2 + C / lambda^4 + dn_dT * (T - T_ref)
+    #
+    # Coefficients fitted to standard ethylene glycol data at T_ref = 20 °C:
+    #   n_D(0.5893 um) = 1.4318,  n_F(0.4861 um) = 1.4370,
+    #   n_C(0.6563 um) = 1.4294,  n_e(0.5461 um) = 1.4338
+    # Thermo-optic coefficient dn/dT ~ -4.0e-4 /°C (sodium D line)
+
+    A     = 1.4180
+    B     = 0.00530      # um^2
+    C     = -0.000180    # um^4
+    dn_dT = -4.0e-4      # 1/degC
+    T_ref = 20.0         # degC
+
+    n = A + B / lam**2 + C / lam**4 + dn_dT * (T - T_ref)
+    return n

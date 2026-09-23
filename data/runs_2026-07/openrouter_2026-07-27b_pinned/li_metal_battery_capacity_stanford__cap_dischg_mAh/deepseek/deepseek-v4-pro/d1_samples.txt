@@ -1,0 +1,291 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form estimate of per-cycle discharge capacity Q_dis [mAh]
+    based on SEI growth and active material loss models.
+    Uses a square-root (SEI) + linear (active material) fade model.
+    Coefficients are typical for Li-ion cells and depend on group, voltage,
+    charge rate, and CV termination current.
+    """
+    # Unpack columns
+    k          = X[:, 0]   # cycle index (not used directly, EFC is preferred)
+    efc        = X[:, 1]   # equivalent full cycles
+    Q0         = X[:, 2]   # nominal capacity mAh
+    V_low      = X[:, 3]   # lower cutoff V
+    V_high     = X[:, 4]   # upper cutoff V
+    I_CV       = X[:, 5]   # CV termination current (fraction of 1C)
+    I_chg      = X[:, 6]   # charge current C-rate upper bound
+    group      = X[:, 7].astype(int)  # design group 1..4
+
+    # --- Group-specific base fade coefficients (fractional) ---
+    # per sqrt(EFC) (SEI growth)
+    a_sqrt = np.array([0.0008, 0.0010, 0.0012, 0.0015])  
+    # per EFC (active material loss / lithium inventory loss)
+    b_lin  = np.array([1e-5, 2e-5, 3e-5, 4e-5])
+
+    # --- Acceleration factors based on operating conditions ---
+    V_ref   = 4.2       # reference upper voltage
+    gamma_V = 1.5       # sensitivity to V_high (higher -> faster degradation)
+
+    V_low_ref   = 2.8   # reference lower cutoff
+    gamma_Vlow  = 0.5   # sensitivity: deeper discharge (lower V_low) -> more degradation
+
+    I_chg_ref   = 0.2   # reference charge C-rate
+    gamma_Ichg  = 1.0   # higher charge current -> more degradation
+
+    I_CV_ref    = 0.05  # reference CV termination current
+    gamma_ICV   = -0.5  # higher termination current -> shorter CV -> less degradation
+
+    # Index for group-specific coefficients (1-based to 0-based)
+    idx = group - 1
+
+    # Compute acceleration multipliers (same for both sqrt and linear terms)
+    mult_Vhigh  = np.exp(gamma_V    * (V_high - V_ref))
+    mult_Vlow   = np.exp(gamma_Vlow * (V_low_ref - V_low))
+    mult_Ichg   = 1.0 + gamma_Ichg * (I_chg - I_chg_ref)
+    mult_ICV    = 1.0 + gamma_ICV * (I_CV - I_CV_ref)
+
+    # Combined fade coefficients for each sample
+    a = a_sqrt[idx] * mult_Vhigh * mult_Vlow * mult_Ichg * mult_ICV
+    b = b_lin[idx]  * mult_Vhigh * mult_Vlow * mult_Ichg * mult_ICV
+
+    # Standard square-root + linear fade model (fractional loss relative to Q0)
+    # Q_dis = Q0 * (1 - a*sqrt(EFC) - b*EFC)
+    Q_dis = Q0 * (1.0 - a * np.sqrt(np.maximum(efc, 0)) - b * efc)
+
+    # Physical bounds: capacity cannot exceed nominal or drop below zero
+    Q_dis = np.clip(Q_dis, 0.0, Q0)
+
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh] using a standard
+    semi-empirical power-law fade model with stress-factor acceleration.
+    """
+    # Extract columns (cycle_index not used directly; EFC is the primary aging metric)
+    efc = X[:, 1]          # Equivalent Full Cycles
+    q0 = X[:, 2]           # Nominal capacity [mAh]
+    v_low = X[:, 3]        # Lower cutoff voltage [V]
+    v_high = X[:, 4]       # Upper cutoff voltage [V]
+    i_cv = X[:, 5]         # CV termination current [C-rate]
+    i_chg = X[:, 6]        # Max charge C-rate
+    group = X[:, 7].astype(int) - 1  # group label 1..4 -> 0..3
+
+    # --- Fitted model parameters ---
+    # Group-specific base fade coefficient [dimensionless per EFC^beta]
+    k_group = np.array([0.008, 0.006, 0.010, 0.004])
+    k = k_group[group]
+
+    # Fade exponent (0.5 corresponds to diffusion-limited SEI growth)
+    beta = 0.5
+
+    # Reference (standard) operating conditions
+    V_HIGH_REF = 4.2
+    V_LOW_REF = 3.0
+    I_CHG_REF = 0.5
+    I_CV_REF = 0.05
+
+    # --- Stress acceleration factors ---
+    # Higher upper cutoff voltage strongly accelerates fade (exponential)
+    f_v = np.exp(6.0 * (v_high - V_HIGH_REF))
+
+    # Higher charge C-rate accelerates fade (power law)
+    f_i = (i_chg / I_CHG_REF) ** 0.5
+
+    # Lower CV termination current increases time at high voltage, accelerating fade
+    f_cv = (I_CV_REF / i_cv) ** 0.2
+
+    # Lower lower cutoff voltage (deeper discharge) slightly accelerates fade
+    f_low = np.exp(-0.5 * (v_low - V_LOW_REF))
+
+    # --- Fractional capacity loss ---
+    d = k * (efc ** beta) * f_v * f_i * f_cv * f_low
+    d = np.clip(d, 0.0, 0.99)   # keep loss between 0 % and 99 %
+
+    # --- Predicted discharge capacity ---
+    q_dis = q0 * (1.0 - d)
+    return np.maximum(q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh] using a standard
+    square-root-of-EFC (equivalent full cycles) aging model with stress
+    factors from voltage limits, charge current, and CV cutoff.
+
+    Q_dis = Q0 * (1 - k * sqrt(EFC))
+    where k is a linear combination of operating conditions and group.
+    """
+    # Unpack columns
+    cycle = X[:, 0]          # not used directly (aging depends on EFC)
+    efc = X[:, 1]
+    Q0 = X[:, 2]             # nominal capacity [mAh]
+    V_low = X[:, 3]          # lower voltage cutoff [V]
+    V_high = X[:, 4]         # upper voltage cutoff [V]
+    I_CV = X[:, 5]           # CV termination current [C-rate]
+    I_chg = X[:, 6]          # max charge C-rate
+    group = X[:, 7].astype(int)   # design group 1..4
+
+    # --- Model coefficients (named constants) ---
+    # Base degradation rate per sqrt(EFC)
+    BASE_K = 0.005
+
+    # Sensitivity to upper voltage (per volt above 4.2 V)
+    COEF_VHIGH = 0.002
+
+    # Sensitivity to lower voltage (per volt below 3.0 V)
+    COEF_VLOW = -0.001
+
+    # Sensitivity to max charge C-rate (per 1C above 0.3C)
+    COEF_ICHG = 0.003
+
+    # Sensitivity to CV termination current (per 0.01C above 0.03C)
+    COEF_ICV = 0.001
+
+    # Group-specific offset (additive to degradation rate k)
+    GROUP_OFFSET = np.array([0.0, 0.001, -0.001, 0.002])  # for groups 1-4
+
+    # Compute per-sample degradation rate k
+    k = (BASE_K
+         + COEF_VHIGH * (V_high - 4.2)
+         + COEF_VLOW * (V_low - 3.0)
+         + COEF_ICHG * (I_chg - 0.3)
+         + COEF_ICV * (I_CV - 0.03))
+
+    # Add group-specific offset
+    k += GROUP_OFFSET[group - 1]
+
+    # Ensure degradation rate is non-negative
+    k = np.maximum(k, 0.0)
+
+    # Predicted discharge capacity
+    Q_dis = Q0 * (1.0 - k * np.sqrt(efc))
+
+    # Physical bounds: capacity cannot exceed Q0 or go below zero
+    Q_dis = np.clip(Q_dis, 0.0, Q0)
+
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity (mAh) using the standard dual-mechanism
+    capacity fade model:  Q_dis = Q0 - A * sqrt(EFC) - B * EFC
+    with coefficients varying by design group and key stress factors
+    (upper cutoff voltage and maximum charge C-rate).
+    """
+    # Unpack columns
+    k        = X[:, 0]        # cycle index (not directly used but available)
+    EFC      = X[:, 1]        # equivalent full cycle count
+    Q0       = X[:, 2]        # nominal discharge capacity [mAh]
+    V_low    = X[:, 3]        # lower voltage cutoff [V]
+    V_high   = X[:, 4]        # upper voltage cutoff [V]
+    I_CV     = X[:, 5]        # CV termination current [fraction of 1C]
+    I_chg    = X[:, 6]        # max charge C-rate bound
+    group    = X[:, 7].astype(int)  # cell design group [1, 4]
+    
+    # --------------------------------------------------------------------
+    # Fitted coefficients (placeholders – replace with calibrated values)
+    # Baseline degradation rates per group
+    A0 = np.array([0.020, 0.025, 0.015, 0.030])   # SEI sqrt term (mAh)
+    B0 = np.array([0.0010, 0.0015, 0.0008, 0.0020])  # LAM linear term (mAh)
+    
+    # Stress sensitivities (centered on typical mid-values)
+    V_ref = 4.25
+    I_ref = 0.50
+    a_V   = 0.10   # relative increase in A per volt above V_ref
+    a_I   = 0.05   # relative increase in A per unit C-rate above I_ref
+    b_V   = 0.005  # relative increase in B per volt
+    b_I   = 0.002  # relative increase in B per unit C-rate
+    # --------------------------------------------------------------------
+    
+    idx = group - 1  # zero-based group index
+    A = A0[idx] * (1.0 + a_V * (V_high - V_ref) + a_I * (I_chg - I_ref))
+    B = B0[idx] * (1.0 + b_V * (V_high - V_ref) + b_I * (I_chg - I_ref))
+    
+    # Compute predicted discharge capacity (mAh)
+    Q_dis = Q0 - A * np.sqrt(np.maximum(EFC, 0.0)) - B * EFC
+    
+    # Capacity cannot be negative
+    return np.maximum(Q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis (mAh) using a standard empirical
+    power-law capacity fade model.  The model assumes that capacity loss follows
+    a power law in equivalent full cycles (EFC), with the degradation rate
+    modulated by voltage cutoffs, charge C‑rate, and group‑specific offsets.
+    
+    Q_dis = Q_initial * (1 - k * EFC^z)
+    where
+        Q_initial = Q0 * (1 + δ_Q_group)
+        k = exp(c0 + c1*V_high + c2*V_low + c3*I_CV + c4*I_chg + c_group)
+    """
+    # ---- Model constants (typical values for Li‑ion cells) ----
+    # power-law exponent (diffusion‑limited SEI growth ~0.5)
+    Z = 0.5
+
+    # baseline log‑degradation rate at reference conditions
+    C0 = -5.4
+
+    # sensitivities to stress factors
+    C_V_HIGH = 2.0    # higher upper cutoff voltage accelerates degradation
+    C_V_LOW  = -3.0   # lower lower cutoff (deeper DOD) increases degradation
+    C_I_CV   = 0.5    # small effect of CV termination current
+    C_I_CHG  = 1.2    # higher charge C‑rate increases degradation
+
+    # group‑specific offsets in log‑degradation rate (groups 1..4)
+    C_GROUP = np.array([0.0, 0.1, -0.1, 0.05])
+
+    # group‑specific initial capacity adjustments (fraction of Q0)
+    DELTA_Q_GROUP = np.array([0.0, 0.005, -0.003, 0.002])
+
+    # ---- Extract features ----
+    # column indices: 0=cycle_index, 1=efc, 2=nominal_capacity_mAh,
+    # 3=v_cutoff_low_V, 4=v_cutoff_high_V, 5=i_cutoff_crate,
+    # 6=i_chg_crate_max, 7=group
+    efc   = X[:, 1]
+    Q0    = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV  = X[:, 5]
+    I_chg = X[:, 6]
+    group = X[:, 7].astype(int)  # integer 1..4
+
+    # ---- Compute initial capacity with group adjustment ----
+    # (clip group index to 0..3 for safety)
+    g_idx = np.clip(group - 1, 0, 3)
+    Q_initial = Q0 * (1.0 + DELTA_Q_GROUP[g_idx])
+
+    # ---- Compute degradation rate k ----
+    log_k = (C0 +
+             C_V_HIGH * V_high +
+             C_V_LOW  * V_low +
+             C_I_CV   * I_CV +
+             C_I_CHG  * I_chg +
+             C_GROUP[g_idx])
+    k = np.exp(log_k)
+
+    # ---- Capacity fade (power law) ----
+    fade = k * np.power(efc, Z)
+    # Ensure fade does not exceed 1 (capacity can't go negative)
+    fade = np.clip(fade, 0.0, 0.999)
+    Q_dis = Q_initial * (1.0 - fade)
+
+    return Q_dis

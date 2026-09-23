@@ -1,0 +1,134 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the cumulative areal density of Mars craters N(>=D) [km^-2]
+
+    using a standard power-law cumulative size-frequency distribution (SFD).
+
+    Parameters:
+    - X: 2-D numpy array where X[:, 0] is D_lower_km (D_lo) [km]
+
+    Returns:
+    - 1-D numpy array of cumulative crater densities [km^-2]
+    """
+    D_lo = X[:, 0]
+
+    # Standard Mars cumulative power-law parameters:
+    # A corresponds to N(>=1 km) of ~2.65e-3 km^-2 (typical Mars global density)
+    # B is the standard cumulative power-law exponent of ~1.8
+    A = 0.00265
+    B = 1.8
+
+    return A * (D_lo**-B)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the cumulative areal density of Mars craters, N(>=D) [km^-2],
+
+    for Mars craters with diameter at or above the bin's lower edge.
+
+    Parameters:
+    X : ndarray of shape (n_samples, 3)
+        X[:, 0] = D_lower_km (D_lo) [km]
+        X[:, 1] = D_upper_km (D_up) [km] (distractor)
+        X[:, 2] = D_geomean_km (D_gm) [km] (distractor)
+
+    Returns:
+    ndarray of shape (n_samples,)
+        Cumulative crater density N(>=D) in km^-2.
+    """
+    # Extract the primary input: the lower diameter threshold
+    D_lo = X[:, 0]
+
+    # Convert to log10 space
+    log_D = np.log10(D_lo)
+
+    # Standard quadratic fit in log-log space representing the global
+    # observed cumulative size-frequency distribution (SFD) of Mars craters.
+    log_N = -0.28 * (log_D**2) - 0.95 * log_D - 2.57
+
+    # Convert back from log10 space to get cumulative density in km^-2
+    return 10**log_N
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the cumulative areal density of Mars craters N(>=D) [km^-2]
+    using the standard power-law cumulative size-frequency distribution (SFD).
+
+    Input:
+    - X: 2-D numpy array where X[:, 0] is D_lower_km (D_lo) [km]
+    """
+    D_lo = X[:, 0]
+
+    # Standard power-law cumulative SFD for Mars craters: N(>=D) = C * D^(-alpha)
+    # Calibrated to the global Mars crater population (e.g., Robbins 2012),
+    # where the cumulative density at D >= 1 km is ~0.0026 km^-2 and the
+    # average power-law index (slope) across the diameter range is ~1.85.
+    C = 0.0026
+    alpha = 1.85
+
+    N_cum = C * (D_lo**-alpha)
+    return N_cum
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the cumulative areal density of Mars craters N(>=D) [km^-2]
+
+    using the standard Neukum (2001) Mars Production Function (MPF) shape,
+    scaled to match the global Mars crater population (Robbins & Hynek, 2012)
+    where the cumulative density at D >= 1 km is approximately 2.67e-3 km^-2.
+    """
+    D_lo = X[:, 0]
+    log_D = np.log10(D_lo)
+
+    # Neukum (2001) Mars Production Function coefficients
+    # a0 is adjusted to match the global Mars crater density at D >= 1 km (~2.67e-3 km^-2)
+    a = [
+        -2.574,  # a0 (scaled from Neukum's 1 Ga reference value of -3.0768)
+        -2.626,  # a1
+        0.3396,  # a2
+        0.7432,  # a3
+        -0.0931,  # a4
+        -0.2858,  # a5
+        0.0153,  # a6
+        0.0516,  # a7
+        -0.00078,  # a8
+        -0.0041,  # a9
+        -0.000044,  # a10
+        0.000122,  # a11
+    ]
+
+    log_N = np.zeros_like(log_D)
+    for i, coeff in enumerate(a):
+        log_N += coeff * (log_D**i)
+
+    return 10**log_N
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is D_lower_km (D_lo)
+    D = X[:, 0]
+
+    # Standard quadratic fit in log10-log10 space for the global Mars crater cumulative SFD
+    log10_D = np.log10(D)
+    log10_N = -0.21 * (log10_D**2) - 1.37 * log10_D - 2.57
+
+    return 10**log10_N

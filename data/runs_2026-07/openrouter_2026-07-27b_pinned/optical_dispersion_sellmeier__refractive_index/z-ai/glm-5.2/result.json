@@ -1,0 +1,35 @@
+{
+  "task": "optical_dispersion_sellmeier__refractive_index",
+  "model": "z-ai/glm-5.2",
+  "type": "typeII",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "cauchy_1836_eq15",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "cauchy_1836_eq55",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "sellmeier_1871",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

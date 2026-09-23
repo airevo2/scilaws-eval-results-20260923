@@ -1,0 +1,100 @@
+task_id: tree_height_diameter_chave__height_m
+domain: biology / forest_ecology
+license: CC-BY-4.0
+
+# Type II — cluster = forest site (plot). Per-cluster intercept offset delta
+# is fitted per site because bioclimatic stress covariate E is absent from
+# the released CSV (requires raster join not performed here).
+type: typeII
+has_group_id: true
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# Cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emitted for forward-compat.
+
+# Cluster summary
+n_clusters_train: 47
+n_clusters_test: 11
+n_rows_per_cluster_min: 11
+n_rows_per_cluster_median: 60
+n_rows_per_cluster_max: 175
+
+# Background knowledge — science framing only; no task instructions or column list.
+context: >-
+  Tropical trees vary enormously in how tall they grow relative to their
+  trunk diameter: a stem of a given diameter may be a short, dense-wood
+  savanna tree or a tall, light-wood canopy giant depending on where it
+  grows. The relationship between total height H and diameter at breast
+  height D (the H:D allometry) is roughly log-linear to log-quadratic
+  across species and sites, but the intercept shifts with local environment —
+  sites subject to stronger seasonal drought and temperature variability tend
+  to produce shorter trees at any given diameter. Allometric equations fitted
+  across pantropical forest inventory plots are widely used to estimate tree
+  height when direct measurement is impractical, and to propagate height
+  into aboveground biomass models.
+
+target:
+  name: height_m
+  symbol: H
+  unit: m
+  description: Total tree height in metres, directly measured by clinometer, hypsometer, or direct felling from a pantropical direct-harvest dataset (real measurement, not modelled).
+  range: [1.2, 70.7]
+
+inputs:
+  - name: DBH_cm
+    symbol: D
+    unit: cm
+    description: Trunk diameter at breast height (130 cm above ground, or above buttresses), measured in centimetres. Inclusion threshold is D >= 5 cm.
+    range: [5.0, 212.0]
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Cluster = forest plot / site (58 sites from Chave 2014 pantropical harvest).
+# Train sites (47) contribute all their rows. Test sites (11) are entirely
+# absent from train.csv. Within each test site, rows are sorted by DBH
+# ascending and INTERLEAVED by rank: even-rank rows -> test_fit, odd-rank
+# rows -> test_test. Both windows span the full DBH range, so the per-cluster
+# delta is calibrated on the same size regime it is scored on (interpolation,
+# not large-tree extrapolation; FM-T-P-axis).
+# Holdout is region-stratified (Africa / Latin America / SE Asia-Oceania),
+# every 5th site per region by lexicographic group_id.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 3297
+n_test_fit: 357
+n_test_test: 350
+
+# === Reference baselines ===
+references:
+  - id: chave_2014
+    label: "2014 pantropical log-quadratic H:D sub-model (Eqn 6a, GCB 2014)"
+    formula_file: formulas/chave_2014.py
+    reference_pdf: reference/chave_2014.pdf
+    n_law_constants: 4
+    n_other_constants: 4
+    n_local_params: 1
+    measured: {rmse: 3.3885, r2: 0.8989}
+  - id: feldpausch_2011
+    label: "2011 pantropical log-log H:D, geography-only form (Table A2, Biogeosciences)"
+    formula_file: formulas/feldpausch_2011.py
+    reference_pdf: reference/feldpausch_2011.pdf
+    n_law_constants: 2
+    n_other_constants: 6
+    n_local_params: 1
+    measured: {rmse: 3.5561, r2: 0.8886}
+
+# === v2 anti-dump caps (derived by evaluate.py from reference bank) ===
+caps:
+  max_law_constants:        4
+  max_local_params:         1
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      10
+
+# === Scoring ===
+metric: rmse
+# best_baseline = chave_2014 pooled rmse (also the mean-per-cluster argmin →
+# the harness 0.5 anchor; pooled & mean-pc agree, so verify_task §8.12 passes).
+# Updated 2026-06-03: within-cluster split changed from DBH-60/40 extrapolation
+# to DBH-rank interleaved (FM-T-P-axis fix); chave 4.5606 -> 3.3885.
+best_baseline: 3.3885

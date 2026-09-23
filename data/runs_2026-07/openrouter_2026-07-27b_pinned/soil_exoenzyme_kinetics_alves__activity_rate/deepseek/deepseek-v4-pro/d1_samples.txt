@@ -1,0 +1,95 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard Michaelis-Menten equation for enzyme activity rate.
+    
+    v = Vmax * S / (Km + S)
+    
+    S : substrate concentration (uM) from X[:, 0].
+    Vmax, Km : kinetic parameters (not given, using placeholders).
+    """
+    S = X[:, 0]
+    VMAX = 1.0      # placeholder (nmol g^-1 h^-1)
+    KM = 50.0        # placeholder (uM), typical value for illustration
+    v = VMAX * S / (KM + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict enzyme activity rate v (nmol g^-1 h^-1) from substrate concentration S (uM)
+    using the Michaelis-Menten equation: v = Vmax * S / (Km + S).
+    Typical soil enzyme kinetic parameters are used as default constants.
+    """
+    S = X[:, 0]  # substrate concentration in uM
+
+    # Representative kinetic parameters for a generic soil enzyme
+    # (values are order-of-magnitude estimates from fluorometric soil enzyme assays)
+    VMAX = 200.0   # nmol g^-1 h^-1
+    KM = 50.0      # uM
+
+    v = VMAX * S / (KM + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Michaelis-Menten kinetics: v = Vmax * S / (Km + S)
+    S = X[:, 0]                        # substrate concentration [uM]
+    Vmax = 1500.0                      # maximum activity [nmol g^-1 h^-1] (typical soil enzyme)
+    Km = 200.0                         # half-saturation constant [uM] (typical for MUF/AMC substrates)
+    v = Vmax * S / (Km + S)            # activity rate [nmol g^-1 h^-1]
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Michaelis-Menten kinetics: v = Vmax * S / (Km + S)
+    # Fitted coefficients (typical values for soil enzymes, e.g., beta-glucosidase)
+    VMAX = 100.0   # nmol g^-1 h^-1
+    KM = 100.0     # uM
+    S = X[:, 0]    # substrate concentration in uM
+    v = VMAX * S / (KM + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict fluorometric enzyme activity rate v [nmol g^-1 h^-1]
+    from substrate concentration S [uM] using the standard
+    Michaelis–Menten equation: v = Vmax * S / (Km + S).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = substrate_conc (S) in uM.
+
+    Returns
+    -------
+    v : np.ndarray, shape (n_samples,)
+        Predicted activity rate in nmol g^-1 h^-1.
+    """
+    # Extract substrate concentration
+    S = X[:, 0]
+
+    # Typical Michaelis–Menten parameters for soil fluorometric assays
+    # (e.g., β-glucosidase, acid phosphatase, leucine aminopeptidase).
+    # These are representative values; actual values would be obtained
+    # by fitting to calibration data.
+    Vmax = 500.0   # nmol g^-1 h^-1
+    Km = 100.0     # uM
+
+    # Michaelis–Menten rate equation
+    v = Vmax * S / (Km + S)
+    return v

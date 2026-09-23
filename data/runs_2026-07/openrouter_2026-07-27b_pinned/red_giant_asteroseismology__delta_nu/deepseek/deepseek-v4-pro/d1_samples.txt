@@ -1,0 +1,200 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict large frequency separation Δν (uHz) using standard asteroseismic scaling relations.
+
+    Inputs:
+        X : 2-D numpy array with columns:
+            X[:, 0] : nu_max (uHz)
+            X[:, 1] : T_eff (K)
+            X[:, 2] : [Fe/H] (dex)
+            X[:, 3] : phase (0=unclassified, 1=RGB, 2=HeB)
+    Returns:
+        1-D array of Δν (uHz).
+    """
+    # Unpack columns
+    nu_max = X[:, 0]
+    Teff   = X[:, 1]
+    FeH    = X[:, 2]
+    phase  = X[:, 3]
+
+    # Solar reference values (Kjeldsen & Bedding 1995, Huber et al. 2011)
+    NU_MAX_SUN    = 3090.0   # uHz
+    DELTA_NU_SUN  = 135.1    # uHz
+    TEFF_SUN      = 5777.0   # K
+
+    # Standard exponents from empirical scaling (Stello et al. 2009, Hekker et al. 2013)
+    A_NU   = 0.78   # power-law index for ν_max
+    B_TEFF = 0.41   # power-law index for T_eff
+    C_FEH  = 0.03   # metallicity coefficient (dex)
+
+    # Evolutionary phase correction: HeB stars have ~3% larger Δν at fixed ν_max, T_eff
+    # (Mosser et al. 2014, Vrard et al. 2016)
+    F_HEB = 0.03    # fractional increase for phase == 2
+
+    # Base scaling relation
+    delta_nu = (DELTA_NU_SUN *
+                (nu_max / NU_MAX_SUN) ** A_NU *
+                (Teff / TEFF_SUN) ** B_TEFF *
+                10.0 ** (C_FEH * FeH))
+
+    # Apply HeB offset (RGB and unclassified are baseline)
+    delta_nu *= 1.0 + F_HEB * (phase == 2)
+
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X is a 2-D array with columns:
+    # X[:, 0] = nu_max [uHz]
+    # X[:, 1] = Teff [K]
+    # X[:, 2] = FeH [dex]
+    # X[:, 3] = phase (0=unclassified, 1=RGB, 2=HeB)
+
+    nu_max = X[:, 0]
+    Teff = X[:, 1]
+    FeH = X[:, 2]
+    phase = X[:, 3]
+
+    # Solar reference values (standard seismic scaling)
+    nu_max_sun = 3090.0    # uHz
+    delta_nu_sun = 135.1   # uHz
+    Teff_sun = 5777.0      # K
+
+    # Theoretical exponents from homology scaling:
+    # delta_nu ∝ sqrt(mean density), nu_max ∝ g / sqrt(Teff)
+    # → delta_nu ∝ nu_max^{3/4} Teff^{3/8} when eliminating M,R
+    alpha = 0.75
+    beta = 0.375
+
+    # Empirical corrections commonly applied in Kepler/APOKASC analyses
+    # Metallicity term: delta_nu ∝ 10^{c * [Fe/H]}, c ≈ -0.04
+    c_feh = -0.04
+
+    # Evolutionary‑phase offset for He‑burning stars (phase==2)
+    # HeB stars have slightly larger delta_nu at fixed nu_max, Teff
+    # Offset factor ~10^{0.021} ≈ 1.05
+    offset_heB = 0.021   # in dex (log10)
+
+    # Base scaling relation
+    delta_nu_base = delta_nu_sun * (nu_max / nu_max_sun)**alpha * (Teff / Teff_sun)**beta
+
+    # Metallicity correction
+    feh_factor = 10.**(c_feh * FeH)
+
+    # Phase correction: HeB offset, RGB/unclassified unchanged
+    phase_factor = np.where(phase == 2, 10.**offset_heB, 1.0)
+
+    # Predicted large frequency separation
+    delta_nu = delta_nu_base * feh_factor * phase_factor
+
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard scaling relation for the large frequency separation Δν in red giants.
+    
+    Parameters
+    ----------
+    X : 2-D numpy array
+        Columns: X[:,0] = ν_max [μHz], X[:,1] = T_eff [K], 
+        X[:,2] = [Fe/H] [dex] (unused), X[:,3] = phase (unused).
+    
+    Returns
+    -------
+    delta_nu : 1-D numpy array
+        Δν in μHz.
+    """
+    # Solar reference values (Kjeldsen & Bedding 1995; typical values)
+    NU_MAX_SUN  = 3100.0   # μHz
+    TEFF_SUN    = 5777.0   # K
+    DELTA_NU_SUN = 135.1   # μHz
+
+    nu_max = X[:, 0]
+    teff   = X[:, 1]
+
+    # Canonical scaling: Δν ∝ ν_max^0.75 * T_eff^0.25
+    delta_nu = (
+        DELTA_NU_SUN
+        * (nu_max / NU_MAX_SUN) ** 0.75
+        * (teff / TEFF_SUN) ** 0.25
+    )
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the large frequency separation delta_nu (uHz) from global
+    observables using the standard asteroseismic scaling relation
+    corrected for metallicity and evolutionary phase.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 4)
+        Columns:
+            X[:,0] = nu_max       [uHz]
+            X[:,1] = T_eff        [K]
+            X[:,2] = [Fe/H]       [dex]
+            X[:,3] = phase        (0=unclassified, 1=RGB, 2=HeB)
+
+    Returns
+    -------
+    delta_nu : ndarray, shape (n_samples,)
+        Predicted large frequency separation in uHz.
+    """
+    # Extract columns
+    nu_max = X[:, 0]
+    Teff   = X[:, 1]
+    FeH    = X[:, 2]
+    phase  = X[:, 3]
+
+    # Solar reference values and exponents from classical scaling
+    NU_MAX_SUN   = 3090.0    # uHz
+    T_EFF_SUN    = 5777.0    # K
+    DELTA_NU_SUN = 135.1     # uHz
+    EXP_NU       = 0.75      # 3/4
+    EXP_TEFF     = 0.375     # 3/8 (from Δν ∝ sqrt(ρ) and ν_max ∝ g/sqrt(Teff))
+    METAL_COEF   = 0.03      # approximate linear dependence on [Fe/H]
+    HEB_FACTOR   = 0.95      # ~5% lower Δν for helium-burning stars
+
+    # Standard scaling relation
+    delta_nu = DELTA_NU_SUN * (nu_max / NU_MAX_SUN)**EXP_NU \
+                             * (Teff / T_EFF_SUN)**EXP_TEFF
+
+    # Metallicity correction (linear in FeH)
+    delta_nu *= (1.0 + METAL_COEF * FeH)
+
+    # Evolutionary phase correction:
+    # Phase 1 (RGB) and Phase 0 (unclassified) → no change
+    # Phase 2 (HeB) → factor 0.95
+    delta_nu *= np.where(phase == 2, HEB_FACTOR, 1.0)
+
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict delta_nu (in uHz) from nu_max using the widely cited empirical
+    power-law relation for red giants (e.g., Stello et al. 2009, AN, 330, 53).
+    The relation is delta_nu = 0.27 * nu_max**0.77 for nu_max in uHz.
+    This canonical closed-form uses only nu_max; the other inputs (Teff, FeH,
+    phase) are not required for this standard estimate but are accepted for
+    interface compatibility.
+    """
+    nu_max = X[:, 0]          # in uHz
+    delta_nu = 0.27 * np.power(nu_max, 0.77)
+    return delta_nu

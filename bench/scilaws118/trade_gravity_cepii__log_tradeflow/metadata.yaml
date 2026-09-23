@@ -1,0 +1,114 @@
+task_id: trade_gravity_cepii__log_tradeflow
+domain: social_science / international_economics
+license: etalab-2.0
+
+# Type I — gravity formulas apply a single global parameter set across all
+# (origin, destination, year) observations; no per-dyad refit.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only: no column listing, no constants.
+context: >-
+  This task is drawn from international economics, which studies the volume of merchandise trade exchanged between pairs of countries.
+
+target:
+  name: log_tradeflow
+  symbol: "ln X_{ij}"
+  unit: "log(thousands current USD)"
+  description: Natural log of the bilateral export flow from origin to destination country
+               (BACI reconciled trade value, thousands of current USD, FOB-equivalent).
+  range: [-6.91, 20.04]
+
+inputs:
+  - name: log_gdp_o
+    symbol: "ln Y_i"
+    unit: "log(current USD)"
+    description: Natural log of origin-country GDP in current US dollars.
+    range: [9.42, 23.79]
+  - name: log_gdp_d
+    symbol: "ln Y_n"
+    unit: "log(current USD)"
+    description: Natural log of destination-country GDP in current US dollars.
+    range: [9.42, 23.79]
+  - name: log_dist
+    symbol: "ln d_{ij}"
+    unit: "log(km)"
+    description: Natural log of the bilateral population-weighted great-circle distance between most-populated cities.
+    range: [2.07, 9.90]
+  - name: contig
+    symbol: "c_{ij}"
+    unit: ""
+    description: Binary indicator equal to 1 if origin and destination share a land border, 0 otherwise.
+    values: [0, 1]
+  - name: comlang_off
+    symbol: "l_{ij}"
+    unit: ""
+    description: Binary indicator equal to 1 if origin and destination share an official language, 0 otherwise.
+    values: [0, 1]
+  - name: col_dep_ever
+    symbol: "k_{ij}"
+    unit: ""
+    description: Binary indicator equal to 1 if origin and destination ever had a colonial or dependency relationship, 0 otherwise.
+    values: [0, 1]
+  - name: fta_wto
+    symbol: "r_{ij}"
+    unit: ""
+    description: Binary indicator equal to 1 if the pair is covered by a WTO-notified regional trade agreement, 0 otherwise.
+    values: [0, 1]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv   # year <= 2016 — in-sample gravity era
+  test:  data/test.csv    # year > 2016 — post-disruption temporal OOD
+
+n_train: 470769
+n_test: 109477
+
+# Temporal OOD split: train on 1996–2016, test on 2017–2020. The post-2016
+# period covers structural disruptions (Brexit, US-China trade war, COVID) that
+# challenge the stability of gravity calibrations from the pre-disruption era.
+
+# Reference-baseline bank
+references:
+  - id: anderson_vanwincoop_2003
+    label: Anderson & van Wincoop 2003 — structural gravity with unit income elasticities (Eq. 17)
+    formula_file: formulas/anderson_vanwincoop_2003.py
+    reference_pdf: reference/anderson_vanwincoop_2003.pdf
+    n_law_constants: 5    # beta_dist, beta_contig, beta_comlang, beta_col, beta_fta
+    n_other_constants: 1  # beta_0 (data-fit intercept)
+    n_local_params: 0
+    measured:
+      rmse: 2.8655
+      r2: 0.5790
+  - id: head_mayer_2014
+    label: Head & Mayer 2014 — naive gravity with free GDP elasticities a, b (Eq. 4 + Table 4)
+    formula_file: formulas/head_mayer_2014.py
+    reference_pdf: reference/head_mayer_2014.pdf
+    n_law_constants: 7    # a, b, beta_dist, beta_contig, beta_comlang, beta_col, beta_fta
+    n_other_constants: 1  # beta_0 (data-fit intercept)
+    n_local_params: 0
+    measured:
+      rmse: 2.8515
+      r2: 0.5831
+
+caps:
+  max_law_constants: 7
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a colonial-or-dependency-link reduction in bilateral trade frictions"
+  - "includes a common-official-language reduction in bilateral trade frictions"
+  - "includes a shared-land-border reduction in bilateral trade frictions"
+  - "includes a trade-agreement reduction in bilateral trade frictions"
+  - "includes trade-promoting effects of both origin-country and destination-country economic size"
+  - "includes trade-suppressing geographic-distance resistance"
+
+best_baseline: 2.8515    # head_mayer_2014 — rmse (lower is better); regenerated 2026-05-30

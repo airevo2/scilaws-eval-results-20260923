@@ -1,0 +1,26 @@
+{
+  "task": "exoplanet_mass_radius__R",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "bashi_2017",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "chen_2016",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

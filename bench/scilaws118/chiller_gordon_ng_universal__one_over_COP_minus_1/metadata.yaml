@@ -1,0 +1,102 @@
+task_id: chiller_gordon_ng_universal__one_over_COP_minus_1
+domain: engineering
+license: CC0-1.0
+
+# Type II -- cluster = one chiller test run (a fault condition or normal baseline).
+# The three Gordon-Ng thermodynamic parameters are fit per cluster (LOCAL);
+# the structural form is the LAW (here LAW = {} -- the form is the claim, there
+# is no universal numerical constant to recover).
+# (2026-06-02 audit re-build: converted from a legacy v1 train/val/test layout to
+#  the v2 Type II three-file layout; target changed to the clean 1/COP-1 quantity
+#  that matches the task_id; formula moved into the formulas/ v2 contract.)
+type: typeII
+has_group_id: true
+
+# Background knowledge -- science framing only; no column listing, no formula form.
+context: >-
+  A vapor-compression chiller cools water by evaporating a refrigerant at low
+  temperature and rejecting heat at a higher condenser temperature, driven by a
+  compressor. Its efficiency is summarised by the coefficient of performance
+  (COP), the ratio of cooling delivered to electrical work consumed. The COP of a
+  given machine falls as the temperature lift between the chilled-water and
+  condenser-water circuits grows, and changes with the cooling load: at very low
+  or very high load the machine runs away from its most efficient operating point.
+  Real machines also suffer irreversibilities -- internal entropy generation,
+  parasitic heat leaks, and finite heat-exchanger conductances -- whose magnitudes
+  differ from unit to unit and shift further when a fault (fouling, low refrigerant
+  charge, reduced flow, non-condensable gas) is present. Characterising how COP
+  depends on the operating point underpins chiller commissioning, energy
+  benchmarking, and model-based fault detection.
+
+target:
+  name: one_over_COP_minus_1
+  symbol: "1/COP - 1"
+  unit: dimensionless
+  description: >-
+    Reciprocal coefficient of performance minus one, 1/COP - 1, where
+    COP = Q_evap/W_comp is the MEASURED coefficient of performance (Q_evap from the
+    evaporator enthalpy balance flow*cp*dT; W_comp the metered compressor power).
+    A directly measured performance quantity, not a formula output.
+  range: [-0.80, -0.44]
+
+inputs:
+  - name: T_ei
+    symbol: T_ei
+    unit: K
+    description: Evaporator (chilled-water) inlet temperature [K]. Converted from degF.
+    range: [278.9, 291.0]
+  - name: T_ci
+    symbol: T_ci
+    unit: K
+    description: Condenser (cooling-water) inlet temperature [K]. Converted from degF.
+    range: [288.1, 303.4]
+  - name: Q_e
+    symbol: Q_e
+    unit: kW
+    description: Evaporator cooling load [kW]. Computed as Evap_Tons * 3.51685.
+    range: [62.3, 372.7]
+
+# Priors -- empty. LAW_CONSTANTS is empty (form-discovery Type II) and there is no
+# given/derived/structural numerical constant to expose. Present for schema symmetry.
+priors: []
+
+# Dataset -- v2 Type II three-file layout, cluster holdout.
+# Cluster = one ASHRAE RP-1043 test run of the 90-ton York YT centrifugal chiller
+# (Purdue test stand) under a specific fault condition or normal baseline.
+# Cluster holdout: sort usable cluster names; every 3rd (0-indexed) -> test.
+# Within each test cluster: rows sorted by Q_e (load); interleaved even-index ->
+# test_fit, odd-index -> test_test, so both splits span the full load range
+# (needed for Gordon-Ng parameter identifiability).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 1026
+n_test_fit: 252
+n_test_test: 234
+n_clusters_train: 38
+n_clusters_test: 18
+
+# Reference baseline bank. LAW={} (the Gordon-Ng FORM is the claim); the three
+# Gordon-Ng coefficients are per-cluster LOCAL params.
+references:
+  - id: gordon_ng_sreedharan2001
+    label: "Gordon-Ng universal chiller model (Sreedharan 2001 Eq. 5.5) -- Delta_S_T, Q_leak_eqv, R per cluster"
+    formula_file: formulas/gordon_ng_sreedharan2001.py
+    reference_pdf: reference/sreedharan_2001_lbnl_thesis.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # Delta_S_T, Q_leak_eqv, R
+    measured:
+      rmse: 0.011506
+      r2: 0.973135
+
+# v2 anti-dump caps (filled from evaluate.py reference derived_caps)
+caps:
+  max_law_constants: 0
+  max_local_params: 3
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+metric: rmse
+best_baseline: 0.011506

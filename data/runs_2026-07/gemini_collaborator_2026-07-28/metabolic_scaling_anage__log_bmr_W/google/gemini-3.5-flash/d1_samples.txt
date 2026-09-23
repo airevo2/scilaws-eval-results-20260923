@@ -1,0 +1,84 @@
+import numpy as np
+
+def predict(X):
+    # X[:, 0] is the adult body mass in grams
+    body_mass_g = X[:, 0]
+    
+    # Convert body mass to kilograms
+    body_mass_kg = body_mass_g / 1000.0
+    
+    # Kleiber's Law: BMR (Watts) = a * (M_kg ** 0.75)
+    # Standard coefficient 'a' for mammals is ~3.39 Watts/kg^0.75 (equivalent to 70 kcal/day/kg^0.75)
+    bmr_W = 3.39 * (body_mass_kg ** 0.75)
+    
+    # Return the base-10 logarithm of BMR in Watts
+    return np.log10(bmr_W)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] is body mass in grams (M)
+    # Convert body mass to kilograms (M_kg)
+    M_kg = X[:, 0] / 1000.0
+    
+    # Kleiber's Law: BMR (W) = 3.39 * (M_kg ** 0.75)
+    # 3.39 W/kg^0.75 is the standard SI equivalent of Kleiber's 70 kcal/day/kg^0.75
+    bmr_W = 3.389 * (M_kg ** 0.75)
+    
+    # Return base-10 logarithm of BMR
+    return np.log10(bmr_W)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] is adult body mass in grams (M)
+    M_g = X[:, 0]
+    
+    # Convert body mass to kilograms
+    M_kg = M_g / 1000.0
+    
+    # Kleiber's Law standard scaling for mammals:
+    # BMR ≈ 70 kcal/day * M_kg^0.75
+    # Convert kcal/day to Watts: 1 kcal/day ≈ 0.04843 Watts
+    # 70 * 0.04843 ≈ 3.39 Watts for a 1 kg mammal
+    # BMR (W) = 3.39 * M_kg^0.75
+    
+    log10_bmr_W = np.log10(3.39) + 0.75 * np.log10(M_kg)
+    
+    return log10_bmr_W
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs: X[:, 0] = body_mass_g (M) [g]
+    # Standard Kleiber's Law for mammalian basal metabolic rate (BMR):
+    # B (W) = 3.39 * (M_kg ** 0.75), where M_kg = M / 1000
+    body_mass_g = X[:, 0]
+    body_mass_kg = body_mass_g / 1000.0
+    log10_bmr_W = np.log10(3.39) + 0.75 * np.log10(body_mass_kg)
+    return log10_bmr_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] is body mass in grams
+    body_mass_g = X[:, 0]
+    
+    # Convert body mass to kilograms
+    body_mass_kg = body_mass_g / 1000.0
+    
+    # Kleiber's Law: BMR (Watts) = 3.39 * (M_kg ** 0.75)
+    # This is derived from the standard 70 kcal/day scaling constant:
+    # 70 kcal/day * (4184 J / kcal) / (86400 s / day) ≈ 3.39 Watts
+    bmr_W = 3.39 * np.power(body_mass_kg, 0.75)
+    
+    return np.log10(bmr_W)

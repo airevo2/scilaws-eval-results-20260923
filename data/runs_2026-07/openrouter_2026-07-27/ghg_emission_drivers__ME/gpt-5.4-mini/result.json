@@ -1,0 +1,35 @@
+{
+  "task": "ghg_emission_drivers__ME",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "environmental_science ",
+  "formulas": [
+    {
+      "formula": "vazquez_2022_bms",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "vazquez_2022_stirpat",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "york_2003",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

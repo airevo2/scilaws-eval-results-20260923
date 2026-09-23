@@ -1,0 +1,90 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict tree height (H) in metres from diameter at breast height (D) in cm.
+    Uses the pantropical height-diameter allometry from Chave et al. (2005)
+    for moist forests: ln(H) = 0.893 + 0.760*ln(D) - 0.0340*(ln(D))^2
+    """
+    D = X[:, 0]
+    # coefficients from Chave et al. (2005) Oecologia 145:87-99
+    a = 0.893
+    b = 0.760
+    c = -0.0340
+    lnD = np.log(D)
+    lnH = a + b * lnD + c * lnD**2
+    H = np.exp(lnH)
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total tree height H (m) from diameter at breast height D (cm)
+    using the standard pantropical allometric power function H = a * D^b.
+    Coefficients are typical for tropical moist forests.
+    """
+    D = X[:, 0]
+    # Fitted coefficients (pantropical average)
+    a = 2.34   # scaling coefficient (units: m / cm^b)
+    b = 0.53   # allometric exponent (dimensionless)
+    H = a * np.power(D, b)
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total tree height H (m) from DBH D (cm) using the pantropical
+    height-diameter allometric model of Chave et al. (2014, Global Change Biology)
+    with the environmental stress parameter E set to 0 (average conditions).
+    Model: H = exp(0.893 + 0.760 * ln(D) - 0.0340 * (ln(D))^2)
+    """
+    D = X[:, 0]
+    lnD = np.log(D)
+    lnH = 0.893 + 0.760 * lnD - 0.0340 * lnD**2
+    return np.exp(lnH)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts total tree height H (m) from diameter at breast height D (cm)
+    using the pantropical height-diameter allometry from Chave et al. (2014)
+    (Improved allometric models to estimate the aboveground biomass of tropical trees.
+    Global Change Biology, 20, 3177-3190). The model without environmental stress (E=0):
+    ln(H) = 0.893 + 0.760 * ln(D) - 0.0340 * (ln(D))^2
+    """
+    D = X[:, 0]  # DBH in cm
+    # Coefficients for the pantropical log-quadratic model (E=0)
+    a = 0.893
+    b = 0.760
+    c = -0.0340
+    
+    lnD = np.log(D)
+    lnH = a + b * lnD + c * lnD**2
+    H = np.exp(lnH)
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total tree height (H, in metres) from diameter at breast height (D, in cm)
+    using the pantropical height-diameter allometry of Chave et al. (2014) with
+    environmental stress set to zero (average conditions).
+
+    Chave et al. (2014) Global Change Biology 20: 3177-3190.
+    """
+    D = X[:, 0]  # DBH_cm
+    # ln(H) = 0.893 - 0 + 0.760*ln(D) - 0.0340*(ln(D))^2
+    H = np.exp(0.893 + 0.760 * np.log(D) - 0.0340 * np.log(D)**2)
+    return H

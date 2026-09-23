@@ -1,0 +1,156 @@
+import numpy as np
+
+def predict(X):
+    """
+    Dominant post-merger GW spectral peak frequency f2 [kHz] of a BNS remnant.
+
+    Uses the quasi-universal relation (Bernuzzi et al. 2015-type) in which the
+    dimensionless, mass-rescaled peak frequency (M * f2) is a monotonic function
+    of the binary tidal coupling constant kappa_2^T. Larger tidal coupling
+    (less compact stars) yields lower f2.
+
+    Geometric-to-physical conversion:
+        f2[kHz] = (M f2) * (c^3 / (G Msun)) / (2*pi ... ) folded into constant.
+        With G*Msun/c^3 = 4.925e-6 s, a dimensionless (M f2) maps to
+        f2[kHz] = (M f2) * 203.0 / M.
+    """
+    M     = X[:, 0]      # total mass [Msun]
+    kap2t = X[:, 2]      # tidal coupling constant kappa_2^T
+
+    # Quasi-universal dimensionless fit: (M * f2) as function of kappa_2^T
+    A = 0.0672
+    B = 0.0416
+    Mf2 = A / (1.0 + B * np.sqrt(np.clip(kap2t, 0.0, None)))
+
+    # Convert dimensionless (M f2) to physical frequency in kHz
+    f2 = Mf2 * 203.0 / M
+
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dominant post-merger GW spectral peak frequency f2 [kHz] of a BNS remnant.
+
+    Uses the quasi-universal relation between the dimensionless post-merger
+    angular frequency (M*omega2) and the tidal coupling constant kappa2^T
+    (Bernuzzi et al. 2015; Dietrich et al.). f2 then follows by de-scaling
+    with the total mass:
+          f2 = (M*omega2) / (2*pi * M * t_sun)
+    where t_sun = G*M_sun/c^3 = 4.925490947e-6 s.
+    """
+    M    = X[:, 0]          # total mass [M_sun]
+    kap2 = X[:, 2]          # tidal coupling constant kappa2^T
+
+    t_sun = 4.925490947e-6  # s, geometric solar-mass time
+
+    # Quasi-universal fit for the dimensionless post-merger frequency M*omega2,
+    # a monotonically decreasing function of the tidal coupling constant.
+    a = 0.2949
+    b = 6.85e-4
+    M_omega2 = a / (1.0 + b * kap2)
+
+    # De-scale to physical frequency and convert Hz -> kHz.
+    f2_Hz = M_omega2 / (2.0 * np.pi * M * t_sun)
+    f2_kHz = f2_Hz / 1.0e3
+
+    return f2_kHz
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Quasi-universal relation for the dominant post-merger spectral peak f2.
+
+    Following the tidal quasi-universal relations for BNS post-merger
+    (Bernuzzi, Dietrich, Nagar 2015; Rezzolla & Takami 2016), the peak
+    frequency is controlled almost entirely by the tidal coupling
+    constant kappa_2^T and scales inversely with the total mass:
+
+        f2 [kHz] = A(kappa) / (M / M_sun)
+
+    where A(kappa) is a slowly varying (quasi-universal) function that
+    decreases with increasing tidal coupling (softer/larger-deformability
+    remnants -> lower f2).
+    """
+    M     = X[:, 0]        # total gravitational mass [M_sun]
+    kap2t = X[:, 2]        # combined tidal coupling constant kappa_2^T
+
+    # protect against non-physical negatives
+    kap2t = np.clip(kap2t, 1.0, None)
+    x = np.sqrt(kap2t)
+
+    # quasi-universal amplitude A(kappa) in units of kHz * M_sun
+    # (calibrated form: high f2 for small kappa, low f2 for large kappa)
+    A = 12.20 - 0.230 * x + 0.00120 * kap2t
+
+    f2 = A / M            # [kHz]
+
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dominant post-merger GW spectral peak frequency f2 [kHz] of a BNS remnant.
+
+    Quasi-universal relation (Bernuzzi, Dietrich, Nagar-type fit):
+    the dimensionless product (M * f2) is a nearly EOS-independent function
+    of the tidal coupling constant kappa2^T.  We fit M*f2 as a low-order
+    polynomial in kappa2^T and then divide by the total mass to get f2.
+    """
+    M      = X[:, 0]      # total gravitational mass [M_sun]
+    kappa  = X[:, 2]      # combined tidal coupling constant kappa2^T
+
+    # Geometric conversion: 1 M_sun in seconds
+    T_sun = 4.925490947e-6   # [s]
+
+    # Quasi-universal fit for the dimensionless quantity (M * f2)_geom
+    # M*f2 decreases with increasing tidal coupling (softer -> higher f2 at fixed M)
+    Mf2 = 4.283e-2 - 6.107e-5 * kappa + 3.44e-8 * kappa**2
+
+    # Convert dimensionless (M*f2) back to physical frequency:
+    # (M/M_sun)*T_sun * f2[Hz] = Mf2  ->  f2[Hz] = Mf2 / (M*T_sun)
+    f2_Hz = Mf2 / (M * T_sun)
+
+    # Return in kHz
+    return f2_Hz / 1.0e3
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dominant post-merger GW spectral peak frequency f2 [kHz] of a BNS remnant.
+
+    Uses the quasi-universal relation between the dimensionless post-merger
+    frequency (M*omega2) and the tidal coupling constant kappa2T
+    (Bernuzzi, Dietrich, Nagar; Takami, Rezzolla, Baiotti style fit).
+    f2 scales inversely with total mass and decreases with tidal coupling.
+    """
+    M    = X[:, 0]          # total mass [M_sun]
+    kap2t = X[:, 2]         # tidal coupling constant kappa2T
+
+    # Solar mass in seconds (G*M_sun/c^3)
+    T_sun = 4.925491e-6
+
+    # Quasi-universal dimensionless post-merger angular frequency M*omega2
+    # (rational fit in the tidal coupling constant)
+    a0, a1 = 0.320, 0.0
+    b1, b2 = 7.0e-4, 0.0
+    Momega2 = (a0 + a1 * kap2t) / (1.0 + b1 * kap2t + b2 * kap2t**2)
+
+    # Convert dimensionless M*omega2 to physical frequency f2 [kHz]
+    # omega2 = 2*pi*f2 ;  M in seconds = M[M_sun]*T_sun
+    f2_Hz = Momega2 / (2.0 * np.pi * M * T_sun)
+    f2_kHz = f2_Hz / 1.0e3
+
+    return f2_kHz

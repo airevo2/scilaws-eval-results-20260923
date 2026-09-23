@@ -1,0 +1,150 @@
+import numpy as np
+
+def predict(X):
+    # Normalized-enthalpy scaling for conduction-mode laser melt-pool depth
+    # (Rubenchik / King / Hann model).  Depth ~ beam radius * normalized enthalpy.
+    P = X[:, 0].astype(float)          # laser power [W]
+    V = X[:, 1].astype(float) * 1e-3   # scan velocity [m/s]
+    D = X[:, 2].astype(float) * 1e-6   # beam D4sigma diameter [m]
+    a = D / 2.0                        # effective beam radius [m]
+
+    # Representative thermophysical properties (stainless/Ni-type alloy)
+    A     = 0.35        # absorptivity
+    rho   = 8000.0      # density [kg/m^3]
+    Cp    = 500.0       # specific heat [J/kg/K]
+    Tm    = 1700.0      # melting temperature [K]
+    alpha = 5.0e-6      # thermal diffusivity [m^2/s]
+
+    # Normalized enthalpy  dH/hs = A P / (rho Cp Tm sqrt(pi alpha V a^3))
+    dH = A * P / (rho * Cp * Tm * np.sqrt(np.pi * alpha * V * a**3))
+
+    # Melt-pool depth (empirical proportionality with threshold)
+    C0 = 0.70           # geometric prefactor
+    dHth = 3.0          # melting threshold in normalized enthalpy
+    depth_m = C0 * a * np.maximum(dH - dHth, 0.0)
+
+    return depth_m * 1e6   # convert to micrometers
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Melt-pool depth from the normalized-enthalpy (King et al. 2014) model.
+    # d ~ a * (Delta H / h_s), where Delta H / h_s is the normalized enthalpy
+    # deposited in the melt pool.
+
+    P = X[:, 0].astype(float)            # W
+    V = X[:, 1].astype(float) * 1e-3     # mm/s -> m/s
+    D = X[:, 2].astype(float) * 1e-6     # um   -> m  (D4sigma)
+    a = D / 2.0                          # 1/e^2-based effective radius
+
+    # --- Material constants (typical stainless-steel / Ni-alloy powder bed) ---
+    A     = 0.35        # effective absorptivity
+    rho   = 7950.0      # kg/m^3
+    Cp    = 500.0       # J/(kg K)
+    Tm    = 1700.0      # K (melting temperature above ambient)
+    alpha = 5.0e-6      # m^2/s thermal diffusivity
+
+    h_s = rho * Cp * Tm                      # J/m^3, enthalpy at melting
+
+    # Normalized enthalpy (dimensionless)
+    dH_over_hs = (A * P) / (h_s * np.sqrt(np.pi * alpha * V * a**3))
+
+    # Depth proportional to beam radius times normalized enthalpy
+    C = 0.33
+    d = C * a * dH_over_hs                    # in meters
+
+    return d * 1e6                           # convert m -> um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Melt-pool depth from the normalized-enthalpy model (King et al., 2014)
+    # dH/hs = A*P / (rho*Cp*Tm*sqrt(pi*alpha*V*sigma^3))
+    # Depth scales with beam radius times a power of the normalized enthalpy.
+
+    P = X[:, 0].astype(float)            # W
+    V = X[:, 1].astype(float) * 1e-3     # mm/s -> m/s
+    sigma = X[:, 2].astype(float) * 1e-6 / 2.0  # D4sigma um -> radius m
+
+    # Material properties (Ti-6Al-4V, commonly cited)
+    A     = 0.35        # absorptivity
+    rho   = 4420.0      # kg/m^3
+    Cp    = 700.0       # J/(kg K)
+    Tm    = 1928.0      # K (melting temperature)
+    alpha = 2.9e-6      # m^2/s thermal diffusivity
+
+    hs = rho * Cp * Tm  # volumetric enthalpy at melting
+
+    # Normalized enthalpy
+    dH_hs = (A * P) / (hs * np.sqrt(np.pi * alpha * V * sigma**3))
+
+    # Melt-pool depth (empirical: depth ~ scales with beam radius * enthalpy)
+    # d ≈ C * sigma * dH_hs
+    C = 0.18
+    d = C * sigma * dH_hs
+
+    return d * 1e6   # m -> um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Normalized-enthalpy (Hann/King) closed-form model for laser melt-pool depth.
+    # d/a is proportional to the normalized enthalpy DH/hs above a threshold.
+    P = np.asarray(X[:, 0], dtype=float)          # laser power [W]
+    V = np.asarray(X[:, 1], dtype=float) * 1e-3   # scan velocity [m/s]
+    D = np.asarray(X[:, 2], dtype=float) * 1e-6   # beam D4sigma diameter [m]
+
+    a = D / 2.0                                   # effective beam radius [m]
+
+    # Representative thermophysical properties (e.g. 316L-type alloy)
+    A     = 0.35        # absorptivity
+    rho   = 7900.0      # density [kg/m^3]
+    Cp    = 500.0       # specific heat [J/kg/K]
+    Tm    = 1700.0      # melting temperature [K]
+    T0    = 300.0       # ambient temperature [K]
+    k     = 15.0        # thermal conductivity [W/m/K]
+    alpha = k / (rho * Cp)          # thermal diffusivity [m^2/s]
+    hs    = rho * Cp * (Tm - T0)    # enthalpy at melting [J/m^3]
+
+    # Normalized enthalpy (Rai/Hann scaling): DH/hs
+    dH = (A * P) / (hs * np.sqrt(np.pi * alpha * a**3 * V))
+
+    # Hann-type conversion to melt-pool depth: d = a * (DH/hs) / (pi*e)
+    d = a * dH / (np.pi * np.e)     # [m]
+
+    return np.maximum(d * 1e6, 0.0)  # [um]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # --- inputs ---
+    P = X[:, 0].astype(float)              # laser power [W]
+    V = X[:, 1].astype(float) * 1e-3       # scan velocity [m/s]
+    a = X[:, 2].astype(float) * 1e-6 / 2.0 # beam radius [m] (D4sigma/2)
+
+    # --- material properties (typical austenitic steel, e.g. 316L) ---
+    A     = 0.35        # effective absorptivity [-]
+    rho   = 7950.0      # density [kg/m^3]
+    Cp    = 500.0       # specific heat [J/(kg K)]
+    alpha = 5.0e-6      # thermal diffusivity [m^2/s]
+    Tm    = 1700.0      # melting temperature [K]
+    T0    = 300.0       # ambient/preheat temperature [K]
+
+    hs = rho * Cp * (Tm - T0)             # enthalpy at melting [J/m^3]
+
+    # --- normalized enthalpy (King et al.) ---
+    dH_hs = (A * P) / (hs * np.sqrt(np.pi * alpha * V * a**3))
+
+    # --- melt-pool depth: scales with beam radius times normalized enthalpy ---
+    C_scale = 0.30      # geometric proportionality constant [-]
+    d = C_scale * a * dH_hs               # depth [m]
+
+    return d * 1e6                        # convert to micrometers

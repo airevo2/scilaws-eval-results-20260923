@@ -1,0 +1,68 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    # Standard Langmuir isotherm for adsorption uptake
+    q_max = 1.0
+    b = 1.0
+    return q_max * b * P / (1.0 + b * P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = np.asarray(X)[:, 0]
+
+    # Langmuir isotherm: q = q_sat * b P / (1 + b P)
+    # Generic coefficients (placeholders; no fitted data provided)
+    q_sat = 1.0   # mmol/g
+    b = 1.0       # 1/bar
+
+    return q_sat * (b * P) / (1.0 + b * P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = np.asarray(X)[:, 0]
+    # Standard single-site Langmuir isotherm:
+    # q = q_sat * b * P / (1 + b * P)
+    q_sat = 1.0  # mmol/g
+    b = 1.0      # 1/bar
+    return q_sat * b * P / (1.0 + b * P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict equilibrium CO2 uptake q [mmol/g] from pressure P [bar]
+    using a standard Langmuir isotherm:
+        q = qmax * b * P / (1 + b * P)
+    """
+    P = np.asarray(X)[:, 0]
+
+    # Generic Langmuir parameters (no fitted data provided).
+    # Replace these with fitted values if available.
+    qmax = 1.0   # mmol/g
+    b = 1.0      # 1/bar
+
+    q = qmax * (b * P) / (1.0 + b * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = np.asarray(X)[:, 0]
+    
+    # Langmuir isotherm (most common closed-form for equilibrium adsorption)
+    q_max = 1.0   # mmol/g
+    b = 1.0       # bar^-1
+    
+    q = (q_max * b * P) / (1.0 + b * P)
+    return q

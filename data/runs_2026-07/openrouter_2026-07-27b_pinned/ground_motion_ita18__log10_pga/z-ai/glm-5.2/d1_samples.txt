@@ -1,0 +1,308 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(RotD50 PGA) in cm/s^2 using the Bindi et al. (2014)
+    ground-motion prediction equation for Europe and the Middle East.
+    
+    The GMPE is originally formulated for log10(PGA) in g; the result
+    is converted to cm/s^2 by adding log10(981.0).
+    Coefficients correspond to PGA (T = 0.01 s).
+    """
+    # Fitted coefficients (Bindi et al., 2014)
+    a      = -0.820
+    b1     =  0.252
+    b2     = -0.009
+    c1     = -1.000
+    c2     = -0.0015
+    f1     =  0.030      # focal depth term
+    s_B    =  0.307      # EC8 site class B
+    s_C    =  0.567      # EC8 site class C
+    s_D    =  0.815      # EC8 site class D
+    s_E    =  0.000      # EC8 site class E (treated as reference A)
+    f_N    = -0.080      # Normal faulting
+    f_R    =  0.080      # Reverse faulting
+    f_SS   =  0.000      # Strike-slip faulting (reference)
+    
+    M      = X[:, 0]
+    R      = X[:, 1]
+    h      = X[:, 2]
+    ec8_B  = X[:, 4]
+    ec8_C  = X[:, 5]
+    ec8_D  = X[:, 6]
+    ec8_E  = X[:, 7]
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    sof_SS = X[:, 10]
+    
+    # Avoid log10(0) for near-zero distances
+    R = np.where(R <= 0.0, 1e-5, R)
+    
+    # log10(PGA) in g
+    log10_pga_g = (a
+                   + b1 * M
+                   + b2 * M**2
+                   + c1 * np.log10(R)
+                   + c2 * R
+                   + f1 * h
+                   + s_B * ec8_B
+                   + s_C * ec8_C
+                   + s_D * ec8_D
+                   + s_E * ec8_E
+                   + f_N * sof_NF
+                   + f_R * sof_TF
+                   + f_SS * sof_SS)
+    
+    # Convert from g to cm/s^2 (1 g = 981 cm/s^2)
+    log10_pga = log10_pga_g + np.log10(981.0)
+    
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(PGA) [log10(cm/s^2)] using a standard shallow crustal 
+    Ground Motion Model (GMM) functional form.
+    
+    The functional form follows the canonical quadratic-in-magnitude and 
+    log-distance saturation framework widely used in seismology (e.g., 
+    Abrahamson & Silva, Boore & Atkinson, Akkar & Bommer). Site effects 
+    are modeled via EC8 class dummy variables (relative to Class A), and 
+    style-of-faulting effects are modeled via dummy variables (relative 
+    to strike-slip).
+    """
+    # Unpack inputs
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+    
+    E_N = X[:, 8]
+    E_R = X[:, 9]
+    E_SS = X[:, 10]
+
+    # Standard generic coefficients for a shallow crustal GMM
+    c1 = -2.0      # Intercept
+    c2 = 0.6       # Linear magnitude term
+    c3 = -0.03     # Quadratic magnitude term (magnitude saturation)
+    c4 = -1.5      # Geometric spreading term
+    c5 = 0.1       # Distance saturation parameter
+    c6 = 0.5       # Magnitude scaling for distance saturation
+    c7 = -0.002    # Anelastic attenuation term
+    c8 = 0.015     # Hypocentral depth scaling
+
+    # Site amplification coefficients (relative to EC8 Class A rock)
+    s_A = 0.0
+    s_B = 0.10
+    s_C = 0.20
+    s_D = 0.30
+    s_E = 0.15
+
+    # Style-of-faulting coefficients (relative to Strike-Slip)
+    f_SS = 0.0
+    f_NF = -0.05
+    f_RF = 0.05
+
+    # Effective distance incorporating magnitude saturation
+    R_eff = np.sqrt(R**2 + (c5 * np.exp(c6 * Mw))**2)
+    
+    # To prevent log10(0) or invalid values for R_eff
+    R_eff = np.maximum(R_eff, 1.0)
+
+    # Calculate log10(PGA)
+    log10_pga = (
+        c1 + 
+        c2 * Mw + 
+        c3 * Mw**2 + 
+        c4 * np.log10(R_eff) + 
+        c7 * R + 
+        c8 * h +
+        s_A * C_A + s_B * C_B + s_C * C_C + s_D * C_D + s_E * C_E +
+        f_NF * E_N + f_RF * E_R + f_SS * E_SS
+    )
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(PGA) [log10(cm/s^2)] using a standard European-style 
+    Ground Motion Prediction Equation (GMPE) functional form.
+    
+    Inputs:
+    X[:, 0] = Mw (Moment magnitude)
+    X[:, 1] = R_km (Joyner-Boore distance in km)
+    X[:, 2] = depth_km (Hypocentral depth in km)
+    X[:, 3:8] = EC8 site class indicators (A, B, C, D, E)
+    X[:, 8:11] = Style-of-faulting indicators (NF, TF, SS)
+    """
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    
+    # Base coefficients (representative of Akkar & Bommer 2010 style form)
+    c1 = -1.438
+    c2 = 0.681
+    c3 = -0.045
+    c4 = -2.405
+    c5 = 0.188
+    
+    # Site class coefficients (typical amplification relative to a reference class)
+    S_A = -0.10
+    S_B = 0.00
+    S_C = 0.15
+    S_D = 0.30
+    S_E = 0.10
+    
+    # Style-of-faulting coefficients (typical adjustment relative to strike-slip)
+    F_N = -0.10
+    F_R = 0.12
+    F_SS = 0.00
+    
+    # Standard functional form:
+    # log10(PGA) = c1 + c2*M + c3*M^2 + (c4 + c5*M)*log10(sqrt(R^2 + h^2)) + Site + SoF
+    R_eff = np.sqrt(R**2 + h**2)
+    
+    log10_pga = (c1 + c2 * Mw + c3 * Mw**2 + 
+                 (c4 + c5 * Mw) * np.log10(R_eff) + 
+                 X[:, 3] * S_A + X[:, 4] * S_B + X[:, 5] * S_C + 
+                 X[:, 6] * S_D + X[:, 7] * S_E + 
+                 X[:, 8] * F_N + X[:, 9] * F_R + X[:, 10] * F_SS)
+                 
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(PGA) (log10(cm/s^2)) using a standard quadratic magnitude 
+    scaling and geometric spreading functional form, commonly used in 
+    shallow crustal seismology (e.g., Akkar & Bommer style models).
+    
+    Inputs:
+    X[:, 0] = Mw (Moment magnitude)
+    X[:, 1] = R_km (Joyner-Boore distance in km)
+    X[:, 2] = depth_km (Hypocentral depth in km)
+    X[:, 3:8] = EC8 site classes A, B, C, D, E
+    X[:, 8:11] = Style of faulting: NF, TF, SS
+    """
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    
+    ec8_A = X[:, 3]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    # sof_SS = X[:, 10]  # Reference class, coefficient = 0
+    
+    # Base model coefficients (using typical Akkar & Bommer 2010-like values)
+    c1 = -1.773
+    c2 = 0.615
+    c3 = -0.025
+    c4 = -2.377
+    c5 = 0.285
+    
+    # Site coefficients (EC8 class A typically used as reference, s_A = 0)
+    s_A = 0.0
+    s_B = 0.10
+    s_C = 0.20
+    s_D = 0.30
+    s_E = 0.15
+    
+    # Style-of-faulting coefficients (Strike-slip typically used as reference, f_SS = 0)
+    f_N = 0.0
+    f_R = 0.10
+    
+    # Distance term incorporating hypocentral depth
+    R_eff = np.sqrt(R**2 + h**2)
+    
+    log10_pga = (c1 + 
+                 c2 * Mw + 
+                 c3 * Mw**2 + 
+                 (c4 + c5 * Mw) * np.log10(R_eff) + 
+                 s_A * ec8_A + 
+                 s_B * ec8_B + 
+                 s_C * ec8_C + 
+                 s_D * ec8_D + 
+                 s_E * ec8_E + 
+                 f_N * sof_NF + 
+                 f_R * sof_TF)
+                 
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(PGA) (RotD50) in cm/s^2 using a standard ground-motion 
+    prediction equation (GMPE) functional form (e.g., Akkar & Bommer 2010 style).
+    """
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    
+    # EC8 Site Classes
+    S_A = X[:, 3]
+    S_B = X[:, 4]
+    S_C = X[:, 5]
+    S_D = X[:, 6]
+    S_E = X[:, 7]
+    
+    # Style of Faulting
+    FN = X[:, 8]
+    FR = X[:, 9]
+    SS = X[:, 10]
+    
+    # Canonical functional form coefficients (illustrative/typical constants)
+    c1 = 1.0          # intercept
+    c2 = 0.5          # linear magnitude scaling
+    c3 = -0.02        # quadratic magnitude scaling
+    c4 = -1.5         # base distance scaling
+    c5 = 0.2          # magnitude-dependent distance scaling
+    c6 = 5.0          # pseudo-depth for distance saturation (km)
+    c7 = -0.001       # anelastic attenuation
+    c8 = 0.01         # hypocentral depth scaling
+    
+    # Site amplification terms (relative to reference class A)
+    sA = 0.0
+    sB = 0.1
+    sC = 0.2
+    sD = 0.3
+    sE = 0.15
+    
+    # Style-of-faulting terms (relative to strike-slip)
+    fn = -0.1         # Normal faulting
+    fr = 0.1          # Reverse/Thrust faulting
+    fss = 0.0         # Strike-slip faulting
+    
+    # Effective distance incorporating pseudo-depth saturation
+    R_eff = np.sqrt(R**2 + c6**2)
+    
+    # Standard closed-form GMPE relationship
+    log10_pga = (c1 + c2 * Mw + c3 * Mw**2 + 
+                 (c4 + c5 * Mw) * np.log10(R_eff) + 
+                 c7 * R + c8 * h +
+                 fn * FN + fr * FR + fss * SS +
+                 sA * S_A + sB * S_B + sC * S_C + sD * S_D + sE * S_E)
+                 
+    return log10_pga

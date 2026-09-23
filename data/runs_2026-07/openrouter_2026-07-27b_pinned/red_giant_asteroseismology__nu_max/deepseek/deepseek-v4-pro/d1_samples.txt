@@ -1,0 +1,138 @@
+import numpy as np
+
+def predict(X):
+    # Standard seismic scaling relation (Kjeldsen & Bedding 1995)
+    # nu_max ∝ g / sqrt(T_eff).  Combined with delta_nu ∝ sqrt(rho)
+    # gives nu_max = nu_max,sun * (delta_nu/delta_nu,sun)^(4/3) *
+    #                (T_eff/T_eff,sun)^(-0.5) * (M/M_sun)^(1/3).
+    # The canonical closed form assumes a solar mass (M = 1 M_sun).
+    # Fe/H and evolutionary phase are not used in this basic relation.
+    delta_nu = X[:, 0]   # μHz
+    Teff     = X[:, 1]   # K
+    # Solar reference values
+    nu_max_sun = 3090.0   # μHz
+    delta_nu_sun = 135.1  # μHz
+    Teff_sun = 5777.0     # K
+    M_sun = 1.0           # M_sun
+    M = 1.0               # assume solar mass
+    nu_max = nu_max_sun * (delta_nu / delta_nu_sun)**(4./3.) * \
+             (Teff / Teff_sun)**(-0.5) * (M / M_sun)**(1./3.)
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Unpack inputs
+    delta_nu = X[:, 0]   # μHz
+    Teff     = X[:, 1]   # K
+    FeH      = X[:, 2]   # dex
+    phase    = X[:, 3]   # 0, 1, 2
+    
+    # Solar reference values
+    nu_max_sun = 3090.0     # μHz
+    delta_nu_sun = 135.1    # μHz
+    Teff_sun = 5777.0       # K
+    
+    # Determine mass scaling factor based on evolutionary phase and metallicity.
+    # Typical masses for giants: ~1.5 Msun for RGB, ~0.9 Msun for HeB (red clump),
+    # with a weak metallicity dependence.
+    mass = np.where(phase == 1, 1.5 * (10.0**(0.1 * FeH)),  # RGB
+            np.where(phase == 2, 0.9 * (10.0**(0.1 * FeH)),  # HeB
+                     1.2 * (10.0**(0.1 * FeH))))             # unclassified
+    
+    # Asteroseismic scaling relation: nu_max = nu_max_sun * M^(1/3) * (Δν/Δν_sun)^(4/3) * (T_eff/T_eff_sun)^(-0.5)
+    nu_max = nu_max_sun * mass**(1.0/3.0) * (delta_nu / delta_nu_sun)**(4.0/3.0) * (Teff / Teff_sun)**(-0.5)
+    
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ν_max (μHz) from Δν, T_eff, [Fe/H], and evolutionary phase
+    using the standard asteroseismic scaling relation with a mass term
+    that depends on phase and a mild metallicity correction.
+    """
+    # Solar reference values (SYD pipeline, Yu et al. 2018)
+    NUMAX_SUN = 3090.0    # μHz
+    DELTA_NU_SUN = 135.1  # μHz
+    TEFF_SUN = 5777.0     # K
+
+    # Typical masses (in solar units) for each evolutionary phase
+    MASS_RGB = 1.0   # hydrogen-shell-burning RGB
+    MASS_HEB = 1.6   # helium-burning (red clump / secondary-clump)
+    MASS_OTHER = 1.2 # unclassified
+
+    # Extract columns
+    delta_nu = X[:, 0]
+    Teff = X[:, 1]
+    FeH = X[:, 2]
+    phase = X[:, 3].astype(int)
+
+    # Assign mass based on phase
+    mass = np.where(phase == 1, MASS_RGB,
+                    np.where(phase == 2, MASS_HEB, MASS_OTHER))
+
+    # Optional: include a slight metallicity trend in mass
+    mass = mass + 0.1 * FeH
+
+    # Metallicity correction factor (following e.g. Miglio et al. 2013)
+    metallicity_corr = 10.0 ** (0.05 * FeH)
+
+    # The closed-form scaling relation:
+    # ν_max = ν_max,⊙  * (Δν/Δν⊙)^(4/3) * (Teff/Teff⊙)^(-1/2) * (M/M⊙)^(1/3)
+    # multiplied by the metallicity correction.
+    numax = (NUMAX_SUN
+             * (delta_nu / DELTA_NU_SUN) ** (4.0 / 3.0)
+             * (Teff / TEFF_SUN) ** (-0.5)
+             * (mass) ** (1.0 / 3.0)
+             * metallicity_corr)
+
+    return numax
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ν_max (μHz) from Δν, Teff, [Fe/H], and evolutionary phase.
+    Uses the standard asteroseismic scaling relation combined with a
+    mass estimate based on evolutionary phase.
+    """
+    # Unpack columns
+    delta_nu = X[:, 0]        # Δν in μHz
+    Teff     = X[:, 1]        # T_eff in K
+    FeH      = X[:, 2]        # [Fe/H] in dex
+    phase    = X[:, 3]        # evolutionary phase (0,1,2)
+
+    # Solar reference values (commonly adopted in asteroseismology)
+    NU_MAX_SUN = 3090.0       # μHz (approx solar ν_max)
+    DELTA_NU_SUN = 135.0      # μHz (approx solar Δν)
+    TEFF_SUN = 5777.0         # K
+
+    # Typical stellar mass (in M_⊙) for each evolutionary phase.
+    # 0 = unclassified, 1 = RGB, 2 = HeB (red-clump/secondary-clump)
+    MASS_RGB = 0.90           # typical low-mass RGB star
+    MASS_HeB = 1.50           # typical He-burning star (clump)
+    MASS_UNC = 1.00           # fallback for unclassified
+
+    # Mass estimate per star (no metallicity dependence here)
+    mass = np.where(phase == 1, MASS_RGB,
+                    np.where(phase == 2, MASS_HeB, MASS_UNC))
+
+    # Scaling relation:  ν_max ∝ M^(1/3) * Δν^(4/3) * Teff^(-1/2)
+    #   ν_max = ν_max,⊙ * (Δν/Δν_⊙)^(4/3) * (M/M_⊙)^(1/3) * (Teff/Teff_⊙)^(-0.5)
+    nu_max = (NU_MAX_SUN
+              * (delta_nu / DELTA_NU_SUN) ** (4.0 / 3.0)
+              * (mass) ** (1.0 / 3.0)
+              * (Teff / TEFF_SUN) ** (-0.5))
+
+    return nu_max
+
+=====
+

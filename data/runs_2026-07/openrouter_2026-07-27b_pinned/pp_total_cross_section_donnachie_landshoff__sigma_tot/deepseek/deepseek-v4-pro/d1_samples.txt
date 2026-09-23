@@ -1,0 +1,101 @@
+import numpy as np
+
+def predict(X):
+    # Donnachie-Landshoff (1992) Regge-Pomeron parametrization for
+    # total proton-proton cross section (valid for s in GeV^2)
+    s = X[:, 0]
+    A = 21.70      # mb
+    B = 56.08      # mb
+    epsilon = 0.0808
+    eta = 0.4525
+    return A * s**epsilon + B * s**(-eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the total proton-proton hadronic cross-section sigma_tot [mb]
+    as a function of Mandelstam s [GeV^2] using the Donnachie-Landshoff
+    parameterization.
+    """
+    s = X[:, 0]
+    # Donnachie-Landshoff model parameters
+    A = 21.70       # mb
+    B = 56.08       # mb
+    epsilon = 0.0808
+    eta = 0.4525
+    
+    sigma_tot = A * s**epsilon + B * s**(-eta)
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] is s in GeV^2
+    s = X[:, 0]
+    
+    # Convert s in GeV^2 to sqrt(s) in GeV
+    sqrt_s = np.sqrt(s)
+    
+    # Parameters from the Donnachie-Landshoff model 
+    # (Pomeron + Reggeon parametrization, often cited for pp total cross-section)
+    # sigma_tot = X * s^epsilon + Y * s^{-eta}
+    # with s in GeV^2, cross-section in mb
+    
+    # Pomeron term: X * (s/s0)^epsilon
+    X_pom = 21.70   # mb
+    epsilon = 0.0808
+    s0 = 1.0        # GeV^2, reference scale
+    
+    # Reggeon term: Y * (s/s0)^{-eta}
+    Y_reg = 98.39   # mb
+    eta = 0.4525
+    
+    sigma_tot = X_pom * (s / s0) ** epsilon + Y_reg * (s / s0) ** (-eta)
+    
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total proton-proton hadronic cross-section sigma_tot [mb] 
+    at a given center-of-mass energy squared s [GeV^2].
+    
+    Uses the standard Donnachie-Landshoff (DL) parametrization:
+    sigma_tot(s) = X * s^epsilon + Y * s^{-eta}
+    with epsilon ~ 0.0808 (Pomeron intercept - 1), eta ~ 0.4525 (Reggeon intercept - 1),
+    X ~ 21.70 mb, Y ~ 56.08 mb (fitted to high-energy pp data).
+    Coefficients are for s in GeV^2.
+    """
+    s = X[:, 0]  # s in GeV^2
+    
+    # DL parametrization coefficients (Donnachie & Landshoff, Phys.Lett.B 296 (1992) 227)
+    X_coeff = 21.70   # mb
+    Y_coeff = 56.08   # mb
+    epsilon = 0.0808
+    eta = 0.4525
+    
+    sigma_tot = X_coeff * s**epsilon + Y_coeff * s**(-eta)
+    
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Donnachie–Landshoff parameterization (PLB 296, 1992)
+    # σ_tot(s) = A * s^ε + B * s^{-η}   [mb]  with s in GeV²
+    s = X[:, 0]
+    A = 21.7   # mb
+    B = 56.1   # mb
+    epsilon = 0.0808
+    eta = 0.4525
+    return A * s**epsilon + B * s**(-eta)

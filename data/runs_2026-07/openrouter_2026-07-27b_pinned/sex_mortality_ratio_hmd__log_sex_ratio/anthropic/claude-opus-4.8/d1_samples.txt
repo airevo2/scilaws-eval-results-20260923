@@ -1,0 +1,113 @@
+import numpy as np
+
+def predict(X):
+    # Glei-Horiuchi (2007) type description of the log sex ratio of mortality.
+    # The excess male mortality (ln alpha) rises through early-mid adulthood,
+    # peaks in the 50s-60s, then declines toward older ages, and shows a mild
+    # secular increase over calendar time.
+    #
+    # Canonical closed form: a quadratic (hump-shaped) function of age plus a
+    # linear calendar-year term.
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Center the covariates for numerical stability
+    x0 = 60.0    # approximate age of peak male excess mortality
+    t0 = 1950.0  # reference calendar year
+
+    # Fitted coefficients (typical published magnitudes)
+    b0 =  0.45          # baseline log sex ratio at peak
+    b1 = -0.00035       # curvature of the age hump (concave => peak near x0)
+    b2 =  0.0015        # mild secular increase over time
+
+    ln_alpha = b0 + b1 * (x - x0) ** 2 + b2 * (t - t0)
+    return ln_alpha
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Log sex ratio of mortality, ln(m_male / m_female), as a function of age.
+
+    Canonical description (following Glei & Horiuchi 2007 and the widely-cited
+    empirical regularity): the log sex ratio of adult death rates rises to a
+    mid-life peak (excess male mortality, roughly ages 55-65) and then declines
+    steadily toward older ages, becoming small (converging toward zero) near the
+    end of life. This inverted-U shape is well captured by a quadratic in age.
+
+    ln(alpha) = b0 + b1 * x + b2 * x^2
+
+    Coefficients are representative values that place the maximum near age ~60
+    with a peak log-ratio of about 0.55 (male rates ~1.7x female), declining at
+    both younger-adult and older ages.
+    """
+    x = X[:, 0].astype(float)
+
+    b0 = -1.20
+    b1 = 0.0585
+    b2 = -0.000489
+
+    return b0 + b1 * x + b2 * x**2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # log_sex_ratio ln(m_male/m_female) as function of age and year.
+    # Standard demographic pattern: sex ratio of mortality rises through
+    # young-adult/middle ages, peaks near ~60, then converges (declines) at
+    # very old ages -> quadratic-in-age form. Modest secular trend in year.
+    #
+    # Closed-form: ln alpha = b0 + b1*(x-60) + b2*(x-60)^2 + b3*(t-1950)
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    xc = x - 60.0
+    tc = t - 1950.0
+
+    b0 =  0.55      # peak level of log sex ratio near age 60
+    b1 = -0.004     # near-flat slope at the peak
+    b2 = -0.00035   # downward curvature (convergence at old ages)
+    b3 =  0.0015    # slight secular increase over calendar time
+
+    return b0 + b1 * xc + b2 * xc**2 + b3 * tc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Glei-Horiuchi (2007) type description of the sex-ratio of mortality.
+    # The log sex ratio of death rates typically rises through mid-adult ages,
+    # peaks around late 50s-60s (the "accident/cardiovascular hump"),
+    # then declines toward old age (mortality convergence).
+    # A canonical closed form is a quadratic in age (an inverted parabola),
+    # capturing the rise-then-fall pattern.
+    age = X[:, 0]
+
+    # Coefficients (illustrative canonical values):
+    # peak of ln(alpha) ~ 0.55 around age ~ 62, declining to near 0 by age 95.
+    b0 = -0.85      # intercept
+    b1 = 0.045      # linear age term
+    b2 = -0.00036   # quadratic age term (curvature, negative -> hump)
+
+    log_alpha = b0 + b1 * age + b2 * age**2
+    return log_alpha
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Glei-Horiuchi (2007) style: log sex ratio of mortality rises then
+    # declines with age (hump-shaped), roughly peaking in middle adulthood.
+    # Standard closed form: quadratic in age.
+    # ln(alpha) = b0 + b1*age + b2*age^2
+    age = X[:, 0].astype(float)
+    b0 = -0.60
+    b1 = 0.030
+    b2 = -0.00025
+    return b0 + b1 * age + b2 * age**2

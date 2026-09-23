@@ -1,0 +1,88 @@
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)  # age
+    t = X[:, 1].astype(float)  # calendar year
+
+    # Gompertz-like age pattern with a simple period effect on the level
+    # ln(m_x,t) = a + b*(x - 30) + c*(t - 1950)
+    a = -7.0
+    b = 0.09
+    c = -0.005
+
+    return a + b * (x - 30.0) + c * (t - 1950.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Standard Gompertz-Makeham / age-period log-mortality form:
+    # log m(x,t) = a + b*x + c*(t - t0)
+    # Here we use a simple canonical linear age + period specification.
+    a = -10.0
+    b = 0.09
+    c = -0.01
+    t0 = 1985.0
+
+    return a + b * x + c * (t - t0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)   # age
+    t = X[:, 1].astype(float)   # year
+
+    # Gompertz-like age pattern with a linear period trend and a small age-period interaction
+    # Standard closed-form log mortality specification:
+    # ln m(x,t) = a + b*x + c*t + d*x*t
+    a = -10.0
+    b = 0.10
+    c = -0.01
+    d = 0.0
+
+    return a + b * x + c * t + d * x * t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Gompertz-Makeham style age-pattern for adult central death rates:
+    # ln(m_x) = a + b*x + c*(t - t0)
+    # This is a standard closed-form demographic mortality relationship.
+    # Since no data are provided, use a generic canonical form with
+    # unspecified fitted constants set to widely used placeholder values.
+    a = -9.0
+    b = 0.09
+    c = -0.01
+    t0 = 2000.0
+
+    return a + b * x + c * (t - t0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)  # age
+    t = X[:, 1].astype(float)  # calendar year
+
+    # Gompertz-Makeham-style log mortality surface:
+    # ln m(x,t) = a + b*x + c*(t - t0)
+    # using a simple canonical linear age trend in log mortality,
+    # plus a period trend to capture general mortality decline over time.
+    a = -11.0
+    b = 0.085
+    c = -0.015
+    t0 = 1950.0
+
+    return a + b * x + c * (t - t0)

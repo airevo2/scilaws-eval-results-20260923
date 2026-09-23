@@ -1,0 +1,152 @@
+import numpy as np
+
+def predict(X):
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    B = X[:, 2]
+    log_pop = X[:, 3]
+    z = X[:, 4]
+
+    # Standard measles biweekly incidence model (essentially a seasonal autoregressive transmission form):
+    # I_t = beta_s * I_{t-1}^alpha * (z_t / N)^theta * B_t^phi
+    # Here we use the commonly cited simplified closed-form with seasonality absorbed into beta_s
+    # and the susceptible-deviation proxy z_t as the driver of incidence.
+    #
+    # A canonical deterministic approximation is:
+    # I_t = beta(s) * I_{t-1}^alpha * z_t / N
+    # with beta(s) periodic in biweek and N = 10^(log_pop).
+
+    N = 10.0 ** log_pop
+
+    # Seasonal transmission coefficient indexed by biweek.
+    # A common closed-form representation is a sinusoidal seasonal forcing:
+    # beta(s) = beta0 * (1 + beta1 * cos(2*pi*(s - phi)/26))
+    beta0 = 0.0005
+    beta1 = 0.20
+    phi = 1.0
+    beta_s = beta0 * (1.0 + beta1 * np.cos(2.0 * np.pi * (s - phi) / 26.0))
+
+    alpha = 0.97
+    theta = 1.0
+    phi_b = 0.0
+
+    I_t = beta_s * (np.maximum(I_prev, 0.0) ** alpha) * (np.maximum(z, 0.0) ** theta) * (np.maximum(B, 0.0) ** phi_b) / N
+
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard historical measles "seasonally forced susceptible-incidence" form:
+    # I_t = beta_t * I_{t-1} * (z_t / N)
+    # with beta_t often modeled as a seasonal term.
+    #
+    # Here we use a common closed-form approximation for the seasonal contact rate:
+    # beta_t = beta0 + beta1 * cos(2*pi*s/26)
+    #
+    # and N = 10^(log_pop).
+
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    B = X[:, 2]
+    log_pop = X[:, 3]
+    z = X[:, 4]
+
+    N = 10.0 ** log_pop
+
+    # Canonical seasonal forcing for measles transmission
+    beta0 = 2.5
+    beta1 = 1.5
+    beta_t = beta0 + beta1 * np.cos(2.0 * np.pi * s / 26.0)
+
+    I_t = beta_t * I_prev * (z / N)
+
+    # Cases cannot be negative
+    return np.maximum(I_t, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    B = X[:, 2]
+    log_pop = X[:, 3]
+    z = X[:, 4]
+
+    # Commonly used measles biweekly transmission model form:
+    # I_t = beta_t * I_{t-1}^alpha * N^{-nu} * S_t
+    # with seasonal beta_t and susceptible proxy S_t approximated by z_t + B_t.
+    beta0 = 0.0  # placeholder baseline on log scale, not identifiable without data
+    beta1 = 0.0  # seasonal amplitude placeholder
+    alpha = 1.0
+    nu = 0.0
+
+    # Seasonal forcing (canonical cosine form)
+    beta_t = np.exp(beta0 + beta1 * np.cos(2.0 * np.pi * (s - 1.0) / 26.0))
+
+    # Population size
+    N = 10.0 ** log_pop
+
+    # Susceptible pool proxy
+    S_t = np.maximum(z + B, 0.0)
+
+    I_t = beta_t * (I_prev ** alpha) * (N ** (-nu)) * S_t
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    B = X[:, 2]
+    log_pop = X[:, 3]
+    z = X[:, 4]
+
+    # Standard measles time-series form: autoregressive term + seasonality + susceptible pool effects
+    # (a commonly used closed-form specification in epidemiological forecasting)
+    return np.exp(
+        -1.0
+        + 0.6 * np.log1p(I_prev)
+        + 0.08 * np.sin(2 * np.pi * s / 26.0)
+        + 0.02 * np.cos(2 * np.pi * s / 26.0)
+        + 0.00015 * B
+        + 0.10 * (log_pop - 5.0)
+        + 0.00001 * z
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    B = X[:, 2]
+    log_pop = X[:, 3]
+    z = X[:, 4]
+
+    N = 10.0 ** log_pop
+
+    # Standard measles incidence model:
+    # I_t = beta_s * I_{t-1} * S_t / N
+    # with S_t approximated by births accumulation minus cases accumulation
+    # and a seasonal transmission term beta_s represented by a cosine forcing.
+    #
+    # Since no fitted data are provided, use a canonical closed-form seasonally forced
+    # mass-action form with a latent susceptible proxy z.
+    beta0 = 24.0
+    amp = 0.25
+    phase = 2.0 * np.pi * (s - 1.0) / 26.0
+    beta_s = beta0 * (1.0 + amp * np.cos(phase))
+
+    S_t = np.maximum(z, 0.0)
+
+    I_t = beta_s * I_prev * S_t / np.maximum(N, 1.0)
+
+    return I_t

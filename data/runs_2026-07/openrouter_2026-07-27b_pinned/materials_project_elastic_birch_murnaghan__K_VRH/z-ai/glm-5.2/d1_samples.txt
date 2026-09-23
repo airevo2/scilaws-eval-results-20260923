@@ -1,0 +1,89 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict Voigt-Reuss-Hill bulk modulus K_VRH [GPa] from atomic volume,
+    average atomic mass, mass density, and crystal system.
+
+    The primary relationship is Anderson's empirical rule: the product of
+    bulk modulus and atomic volume is approximately constant for a wide
+    variety of crystalline solids (B * V_a ≈ const).  A representative
+    value for inorganic materials is ~2000 GPa·Å^3.  A small symmetry
+    correction is applied because the Voigt-Reuss-Hill average of the
+    single-crystal elastic tensor depends weakly on crystal class.
+    """
+    V = X[:, 0]          # atomic volume [Å^3]
+    cs = X[:, 3]         # crystal system id (2=monoclinic ... 7=cubic)
+
+    # Anderson's constant (GPa·Å^3)
+    C = 2000.0
+
+    # Inverse-volume scaling (standard zeroth-order estimate)
+    K = C / V
+
+    # Minor symmetry correction: cubic (+~2.5 %) vs monoclinic (-~2.5 %)
+    # relative to the mid-range symmetry (cs ≈ 4.5)
+    K *= 1.0 + 0.01 * (cs - 4.5)
+
+    # Ensure non-negative output
+    return np.maximum(K, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Voigt-Reuss-Hill average polycrystalline bulk modulus (K_VRH)
+    using the standard empirical scaling law based on atomic volume.
+    
+    The most commonly cited canonical form for bulk modulus scaling in solids 
+    relates K to the atomic volume via a power law (e.g., from cohesive energy 
+    density or Lennard-Jones/Cohen scaling): K ∝ V_a^(-4/3). 
+    For simplicity and physical robustness, we use this universal scaling.
+    
+    Inputs:
+    X[:, 0] = V_atomic_A3 (V_a) [angstrom^3]
+    X[:, 1] = M_avg_amu (M_avg) [amu]
+    X[:, 2] = density_g_cm3 (rho) [g/cm^3]
+    X[:, 3] = crystal_system_id (cs)
+    """
+    V_a = X[:, 0]
+    
+    # Empirical constant derived from typical cohesive energy densities
+    # Typical K ~ 100-200 GPa for V_a ~ 10-20 A^3
+    C = 2000.0  # GPa * A^4
+    
+    # K_VRH = C * V_a^(-4/3)
+    K_VRH = C * np.power(V_a, -4.0 / 3.0)
+    
+    return K_VRH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Voigt-Reuss-Hill average polycrystalline bulk modulus (K_VRH)
+    using a standard empirical scaling relationship. 
+    
+    For many solids, the bulk modulus scales inversely with the atomic volume 
+    (a generalization of the Grover-Getting-Rhode and related empirical power-law 
+    relations), which can be roughly approximated as K ~ C / V_a.
+    """
+    V_a = X[:, 0]
+    
+    # Empirical scaling constant in GPa * Å^3
+    C = 2000.0 
+    
+    K_VRH = C / V_a
+    
+    return K_VRH
+
+=====
+
+
+
+=====
+

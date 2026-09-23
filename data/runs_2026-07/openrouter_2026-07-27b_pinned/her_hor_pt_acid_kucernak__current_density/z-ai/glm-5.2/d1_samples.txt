@@ -1,0 +1,201 @@
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    eta = X[:, 0]      # Overpotential [V]
+    T = X[:, 1]        # Temperature [K]
+    P_H2 = X[:, 2]     # H2 partial pressure [bar]
+    c_acid = X[:, 3]   # Acid concentration [mol dm-3]
+    
+    # Physical constants
+    R = 8.314          # Gas constant [J mol-1 K-1]
+    F = 96485.33212    # Faraday constant [C mol-1]
+    
+    # Kinetic parameters for Pt HOR/HER
+    alpha = 0.5        # Transfer coefficient (symmetric)
+    j00 = 0.001        # Standard exchange current density at ref conditions [A cm-2]
+    Ea = 18000.0       # Activation energy [J mol-1]
+    T_ref = 298.15     # Reference temperature [K]
+    P_ref = 1.0        # Reference pressure [bar]
+    c_ref = 1.0        # Reference concentration [mol dm-3]
+    
+    # Exchange current density with dependencies on T, P_H2, and c_acid
+    # Typical reaction orders for HOR/HER on Pt: ~0.5 for H2, ~0.5 for H+ (or 0 depending on RDS)
+    j0 = j00 * (P_H2 / P_ref)**0.5 * (c_acid / c_ref)**0.5 * \
+         np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+    
+    # Butler-Volmer equation
+    # Positive eta -> anodic (HOR), Negative eta -> cathodic (HER)
+    j = j0 * (np.exp(alpha * F * eta / (R * T)) - np.exp(-(1.0 - alpha) * F * eta / (R * T)))
+    
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+    
+    # Physical constants
+    F = 96485.33212  # Faraday constant, C mol-1
+    R = 8.314462618  # Universal gas constant, J mol-1 K-1
+    
+    # Kinetic parameters (typical canonical values for Pt HOR/HER)
+    j00 = 1.0e-4     # Pre-exponential factor for exchange current density, A cm-2
+    alpha = 0.5      # Symmetric charge transfer coefficient
+    Ea = 18000.0     # Apparent activation energy, J mol-1
+    m = 0.5          # Reaction order with respect to H2
+    n = 0.5          # Reaction order with respect to H+
+    
+    # Exchange current density with Arrhenius temperature dependence and mass-action kinetics
+    j0 = j00 * (P_H2**m) * (c_acid**n) * np.exp(-Ea / (R * T))
+    
+    # Standard Butler-Volmer equation
+    j = j0 * (np.exp(alpha * F * eta / (R * T)) - np.exp(-(1.0 - alpha) * F * eta / (R * T)))
+    
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the current density (j) for the HOR/HER on Pt using the 
+    standard Butler-Volmer equation.
+    
+    Inputs:
+    X[:, 0] = eta [V] (Overpotential vs RHE)
+    X[:, 1] = T [K] (Temperature)
+    X[:, 2] = P_H2 [bar] (H2 partial pressure)
+    X[:, 3] = c_acid [mol dm-3] (HClO4 concentration)
+    
+    Output:
+    j [A cm-2] (Current density)
+    """
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    # c_acid is included for completeness but HOR/HER on Pt in acid 
+    # typically has a reaction order of 0 with respect to H+.
+    c_acid = X[:, 3] 
+    
+    # Physical constants
+    F = 96485.33212  # Faraday constant [C mol-1]
+    R = 8.314462618  # Universal gas constant [J mol-1 K-1]
+    
+    # Standard kinetic parameters for Pt HOR/HER
+    alpha_a = 0.5  # Anodic transfer coefficient
+    alpha_c = 0.5  # Cathodic transfer coefficient
+    j00 = 0.1      # Standard exchange current density at 298.15 K and 1 bar [A cm-2]
+    Ea = 18000     # Apparent activation energy [J mol-1]
+    T_ref = 298.15 # Reference temperature [K]
+    
+    # Exchange current density dependence on temperature and H2 pressure
+    # Assuming a Heyrovsky-Volmer or Tafel-Volmer mechanism, reaction order w.r.t H2 is ~0.5 to 1.0.
+    # Using 0.5 as a commonly cited order.
+    j0 = j00 * (P_H2 / 1.0)**0.5 * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+    
+    # Butler-Volmer equation
+    j = j0 * (np.exp(alpha_a * F * eta / (R * T)) - np.exp(-alpha_c * F * eta / (R * T)))
+    
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Mass-transport-corrected Butler-Volmer equation for HOR/HER on Pt.
+    
+    j = j0 * [exp(alpha*F*eta/RT) - exp(-(1-alpha)*F*eta/RT)] /
+        [1 + (j0/j_lim) * exp(alpha*F*eta/RT)]
+    
+    j0 depends on T (Arrhenius) and P_H2 (0.5 order, Tafel-Volmer).
+    j_lim is the H2-diffusion-limited anodic current.
+    """
+    # Physical constants
+    F = 96485.0          # C mol^-1
+    R = 8.314            # J mol^-1 K^-1
+    n = 2                # electrons per H2
+    
+    # Reference state
+    T_ref = 298.15       # K
+    P_ref = 1.0          # bar
+    c_ref = 0.5          # mol dm^-3
+    
+    # Kinetic parameters (typical Pt/HClO4)
+    j0_ref = 0.30e-3     # A cm^-2 at T_ref, P_ref, c_ref
+    Ea_j0 = 12.0e3       # J mol^-1
+    alpha = 0.5          # transfer coefficient
+    m = 0.5              # reaction order in H2
+    p = 0.0              # reaction order in acid (RHE scale)
+    
+    # Mass-transport parameters
+    D_ref = 4.5e-5       # cm^2 s^-1 at T_ref
+    Ea_D = 16.0e3        # J mol^-1
+    k_H_ref = 7.8e-7     # mol cm^-3 bar^-1 at T_ref
+    dH_sol = -4.5e3      # J mol^-1
+    delta = 1.0e-3       # cm, effective diffusion layer thickness
+    
+    # Extract inputs
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+    
+    # Exchange current density
+    j0 = j0_ref * (P_H2 / P_ref)**m * (c_acid / c_ref)**p * \
+         np.exp(-Ea_j0 / R * (1.0/T - 1.0/T_ref))
+    
+    # H2 solubility and diffusivity
+    k_H = k_H_ref * np.exp(-dH_sol / R * (1.0/T - 1.0/T_ref))
+    D = D_ref * np.exp(-Ea_D / R * (1.0/T - 1.0/T_ref))
+    C_H2 = k_H * P_H2  # mol cm^-3
+    
+    # Anodic limiting current (H2 diffusion)
+    j_lim = n * F * D * C_H2 / delta  # A cm^-2
+    
+    # Butler-Volmer with mass-transport correction
+    RT = R * T
+    exp_a = np.exp(alpha * F * eta / RT)
+    exp_c = np.exp(-(1.0 - alpha) * F * eta / RT)
+    
+    j = j0 * (exp_a - exp_c) / (1.0 + (j0 / j_lim) * exp_a)
+    
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    # c_acid = X[:, 3] is omitted as HOR/HER in acidic media is canonically zero-order in H+
+    
+    # Physical constants
+    F = 96485.33212  # C mol-1
+    R = 8.314462618  # J mol-1 K-1
+    
+    # Kinetic and thermodynamic parameters
+    j0_ref = 0.45e-3  # A cm-2, reference exchange current density
+    alpha = 0.5       # Charge transfer coefficient
+    gamma = 0.5       # Reaction order with respect to H2
+    P_ref = 1.0       # bar
+    T_ref = 298.15    # K
+    Ea = 15000.0      # J mol-1, activation energy
+    
+    # Exchange current density with P_H2 and T dependence
+    j0 = j0_ref * (P_H2 / P_ref)**gamma * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+    
+    # Butler-Volmer equation
+    j = j0 * (np.exp(alpha * F * eta / (R * T)) - np.exp(-(1 - alpha) * F * eta / (R * T)))
+    
+    return j

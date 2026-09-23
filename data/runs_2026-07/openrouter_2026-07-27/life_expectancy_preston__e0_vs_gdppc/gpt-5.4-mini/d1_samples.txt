@@ -1,0 +1,68 @@
+import numpy as np
+
+def predict(X):
+    # Preston (1975)-style log-linear relationship between life expectancy and income:
+    # e0 = a + b * ln(gdppc)
+    a = 20.5
+    b = 10.0
+    gdppc = np.asarray(X)[:, 0]
+    return a + b * np.log(gdppc)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Preston-style cross-sectional relationship between life expectancy at birth
+    and national income per head.
+
+    Canonical closed-form form:
+        e0 = 28 + 19 * ln(gdppc)
+
+    where gdppc is in constant 1963 USD.
+    """
+    gdppc = np.asarray(X)[:, 0]
+    return 28.0 + 19.0 * np.log(gdppc)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    gdp_pc = np.asarray(X)[:, 0].astype(float)
+    # Preston (1975)-style logarithmic relationship between life expectancy and income.
+    # Canonical form: e0 = a + b * ln(gdppc)
+    # Commonly cited approximation from the Preston curve:
+    return 28.0 + 3.0 * np.log(gdp_pc)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Preston-type log-linear relationship between life expectancy at birth and GDP per capita.
+    Common closed-form approximation:
+        e0 = a + b * ln(gdppc)
+    with canonical Preston (1975)-style coefficients for the original income metric.
+    """
+    x = np.asarray(X, dtype=float)
+    gdppc = x[:, 0]
+    
+    a = 26.9
+    b = 5.9
+    
+    return a + b * np.log(gdppc)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Y = np.asarray(X)[:, 0].astype(float)
+    # Preston (1975)-style income-longevity relationship:
+    # e0 = a + b * ln(gdppc)
+    a = 28.0
+    b = 11.0
+    return a + b * np.log(Y)

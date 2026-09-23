@@ -1,0 +1,91 @@
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period (time) trend
+    # ln(m_x,t) = alpha + beta * x + gamma * (t - t_ref)
+    alpha = -9.20
+    beta = 0.085
+    gamma = -0.010
+    ref_year = 1950.0
+    
+    log_m = alpha + beta * age + gamma * (year - ref_year)
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the central period death rate (ln m) 
+    for adults using the Gompertz law of mortality with a linear time trend.
+    
+    ln m(x, t) = alpha + beta * x + gamma * t
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz parameters with linear period effect
+    alpha = 10.0    # Intercept
+    beta = 0.085    # Gompertz slope (rate of aging)
+    gamma = -0.01   # Annual mortality improvement rate
+    
+    log_m = alpha + beta * age + gamma * year
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period (time) trend
+    # ln(m) = alpha + beta * age + gamma * year
+    alpha = 19.2    # Intercept
+    beta = 0.085    # Gompertz aging rate (slope of log-mortality with age)
+    gamma = -0.015  # Annual rate of mortality improvement
+    
+    return alpha + beta * age + gamma * year
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period effect
+    # ln(m_{x,t}) = alpha + beta * x + gamma * (t - t_ref)
+    alpha = -9.45     # Base log-mortality intercept (reference year)
+    beta = 0.085      # Gompertz slope (rate of aging)
+    gamma = -0.008    # Period effect (average annual decline in log-mortality)
+    t_ref = 1950.0    # Reference calendar year
+    
+    ln_m = alpha + beta * age + gamma * (year - t_ref)
+    return ln_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz law of mortality with a linear period (time) trend
+    # ln(m_{x,t}) = a + b * x + c * (t - t_ref)
+    
+    a = -9.0       # Extrapolated baseline log mortality at age 0 in reference year
+    b = 0.085      # Gompertz slope (rate of aging, typically ~0.08-0.09 for humans)
+    c = -0.015     # Annual mortality improvement rate (period effect)
+    t_ref = 2000.0 # Reference calendar year
+    
+    ln_m = a + b * age + c * (year - t_ref)
+    
+    return ln_m

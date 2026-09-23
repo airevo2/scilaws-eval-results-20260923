@@ -1,0 +1,176 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract temperature T in degrees Celsius
+    T = X[:, 0]
+
+    # Parameters for the asymmetric Gaussian thermal performance curve
+    T_opt = 37.0
+    sigma_low = 12.0
+    sigma_high = 4.5
+    OD_max = 0.65
+
+    # Apply asymmetric standard deviations for temperatures below and above optimum
+    sigma = np.where(T < T_opt, sigma_low, sigma_high)
+
+    # Calculate OD600 after 24h
+    OD = OD_max * np.exp(-0.5 * ((T - T_opt) / sigma) ** 2)
+
+    return np.maximum(0.0, OD)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract temperature (T) in Celsius
+    T = X[:, 0]
+    
+    # Cardinal temperatures for E. coli BW25113 under sub-lethal stress
+    T_min = 10.0
+    T_opt = 37.0
+    T_max = 45.5
+    OD_opt = 0.8  # Typical peak OD600 under sub-lethal antibiotic background
+    
+    # Yan and Hunt Beta Model parameter
+    alpha = (T_opt - T_min) / (T_max - T_opt)
+    
+    # Initialize output array
+    OD = np.zeros_like(T, dtype=float)
+    
+    # Calculate OD600 only within the viable temperature range
+    viable = (T > T_min) & (T < T_max)
+    T_viable = T[viable]
+    
+    factor1 = (T_max - T_viable) / (T_max - T_opt)
+    factor2 = (T_viable - T_min) / (T_opt - T_min)
+    
+    OD[viable] = OD_opt * factor1 * (factor2 ** alpha)
+    
+    return np.maximum(OD, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract temperature T in degrees Celsius
+    T = X[:, 0]
+
+    # Cardinal temperatures for E. coli growth under sub-lethal stress
+    T_min = 15.0  # Minimum temperature for growth
+    T_opt = 37.0  # Optimal growth temperature
+    T_max = 45.5  # Maximum temperature (growth arrest at >= 46 degC)
+    OD_opt = 0.8  # Characteristic optimal OD600 under sub-lethal antibiotic background
+
+    # Rosso Cardinal Temperature Model with Inflection (CTMI)
+    numerator = (T - T_max) * (T - T_min) ** 2
+    denominator = (T_opt - T_min) * (
+        (T_opt - T_min) * (T - T_opt)
+        - (T_opt - T_max) * (T_opt + T_min - 2.0 * T)
+    )
+
+    # Avoid division by zero or invalid operations
+    with np.errstate(divide="ignore", invalid="ignore"):
+        f = numerator / denominator
+
+    # Apply boundary conditions: growth is zero outside [T_min, T_max]
+    f = np.where((T <= T_min) | (T >= T_max), 0.0, f)
+    f = np.nan_to_num(f, nan=0.0)
+
+    # Calculate predicted OD600
+    OD = OD_opt * f
+
+    # Ensure output is strictly non-negative
+    return np.maximum(OD, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the optical density at 600 nm after 24 h of incubation (OD24h)
+
+    for E. coli BW25113 as a function of temperature T under a sub-lethal
+    antibiotic background, using the Rosso Cardinal Temperature Model with
+    Gravity (CTMI).
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the temperature T in degrees Celsius.
+
+    Returns:
+    - 1-D numpy array of predicted OD600 values.
+    """
+    T = np.atleast_1d(X[:, 0])
+
+    # Cardinal temperature parameters for E. coli under sub-lethal antibiotic stress
+    T_min = 12.0  # Minimum temperature for growth (°C)
+    T_opt = 37.0  # Optimal temperature for growth (°C)
+    T_max = 45.5  # Maximum temperature for growth (°C)
+    OD_opt = 1.1  # Typical peak OD600 at T_opt under sub-lethal stress
+
+    # Initialize output array with zeros (complete growth arrest)
+    OD = np.zeros_like(T)
+
+    # Mask for temperatures within the viable growth range
+    viable = (T > T_min) & (T < T_max)
+
+    # Apply the Rosso CTMI model
+    T_v = T[viable]
+    numerator = (T_v - T_max) * (T_v - T_min) ** 2
+    denominator = (T_opt - T_min) * (
+        (T_opt - T_min) * (T_v - T_opt)
+        - (T_opt - T_max) * (T_opt + T_min - 2.0 * T_v)
+    )
+
+    OD[viable] = OD_opt * (numerator / (denominator + 1e-9))
+
+    # Ensure non-negative bounds
+    return np.maximum(OD, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the OD600 after 24h of incubation for E. coli BW25113
+
+    using the canonical Rosso cardinal temperature model.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] represents the incubation temperature (T) in degC.
+
+    Returns:
+    np.ndarray
+        1-D array of predicted OD600 values.
+    """
+    T = X[:, 0]
+
+    # Cardinal temperatures for E. coli under sub-lethal antibiotic stress
+    T_min = 10.0  # Minimum growth temperature (degC)
+    T_max = 45.5  # Maximum growth temperature (degC)
+    T_opt = 37.0  # Optimal growth temperature (degC)
+    OD_opt = 0.72  # Typical maximum OD600 at 24h under optimal conditions with sub-lethal background
+
+    # Initialize OD predictions to zero
+    OD = np.zeros_like(T, dtype=float)
+
+    # Apply Rosso model to temperatures within the growth range
+    mask = (T > T_min) & (T < T_max)
+    T_m = T[mask]
+
+    numerator = (T_m - T_max) * (T_m - T_min) ** 2
+    denominator = (T_opt - T_min) * (
+        (T_opt - T_min) * (T_m - T_opt)
+        - (T_opt - T_max) * (T_opt + T_min - 2.0 * T_m)
+    )
+
+    OD[mask] = OD_opt * (numerator / (denominator + 1e-9))
+
+    # Ensure output is non-negative
+    return np.maximum(OD, 0.0)

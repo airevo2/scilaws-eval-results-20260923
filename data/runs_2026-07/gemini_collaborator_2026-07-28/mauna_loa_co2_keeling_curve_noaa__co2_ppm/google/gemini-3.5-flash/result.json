@@ -1,0 +1,44 @@
+{
+  "task": "mauna_loa_co2_keeling_curve_noaa__co2_ppm",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "bacastow_1985_quadratic",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "keeling_1960_linear",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "noaa_curve_fit_1989",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "noaa_curve_fit_k4",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    }
+  ]
+}

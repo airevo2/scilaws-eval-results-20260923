@@ -1,0 +1,26 @@
+{
+  "task": "bird_flight_speed_alerstam__Ue",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "alerstam_2007",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "alerstam_2007_empirical",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

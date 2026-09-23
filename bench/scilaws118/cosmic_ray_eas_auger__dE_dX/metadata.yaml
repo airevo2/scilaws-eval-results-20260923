@@ -1,0 +1,126 @@
+task_id: cosmic_ray_eas_auger__dE_dX
+domain: physics / astroparticle_physics
+license: CC-BY-SA-4.0
+
+# Type II — cluster = individual shower event. Each shower's longitudinal
+# profile (dE/dX as a function of slant depth X) is one cluster. The
+# Gaisser-Hillas (R,L) and Greisen baselines fit per-cluster parameters.
+type: typeII
+has_group_id: true
+
+# Forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# batch02 cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emitted for forward-compat.
+unseen_group_strategy: error
+
+context: >-
+  Ultra-high-energy cosmic rays entering the atmosphere initiate extensive
+  air showers. As the shower cascade develops through the atmosphere, the
+  secondary particles deposit energy at each atmospheric depth, producing a
+  longitudinal profile of energy deposit versus slant depth. The shape of this
+  profile — how quickly the shower builds and decays around its maximum —
+  encodes the mass composition of the primary cosmic ray and properties of
+  hadronic interactions at energies beyond accelerator reach. The standard
+  parametric form for this profile is the Gaisser-Hillas function, which
+  describes a unimodal curve peaked at the depth of maximum development. A
+  reparametrization in terms of two dimensionless shape parameters (asymmetry R
+  and width L) was introduced to reduce parameter correlations and improve
+  sensitivity to shower shape. The Auger Observatory measures these profiles
+  using fluorescence telescopes that detect the ultraviolet light emitted by
+  excited nitrogen molecules as the shower passes through the atmosphere.
+
+target:
+  name: dE_dX
+  symbol: dE/dX
+  unit: PeV/(g/cm^2)
+  description: >-
+    Energy deposit per unit slant atmospheric depth along the shower axis —
+    a raw fluorescence telescope measurement (photon counts after Cherenkov
+    inversion), NOT a Gaisser-Hillas fit prediction. Positive definite in the
+    fitting window [Xmax-300, Xmax+200] g/cm^2.
+  range: [0.001, 152.0]
+
+inputs:
+  - name: X
+    symbol: X
+    unit: g/cm^2
+    description: >-
+      Slant atmospheric depth along the shower axis, measured in g/cm^2.
+      Profile points are within the fitting window [fd_xmax-300, fd_xmax+200]
+      as specified in Aab 2019 (JCAP 2019:018), Section 4, p. 9.
+    range: [313.0, 1259.0]
+
+# Dataset — three-file v2 Type II layout.
+# Cluster holdout: every 5th shower (by sorted event_id) is held out for test.
+# Within-cluster split: rows sorted by X (ascending), then X-INTERLEAVED by rank
+# parity (even -> test_fit, odd -> test_test) so both halves span the full depth
+# range (rise + peak at Xmax + tail). Tests recovery of the profile FORM
+# (interpolation). [Changed 2026-06-02 from a first-60%/last-40% X-extrapolation
+# split that caused a §9.6 failure — see auditor_notes.]
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 257027
+n_test_fit: 32296
+n_test_test: 32000
+n_clusters_train: 2446
+n_clusters_test: 611
+n_rows_per_cluster_min: 11
+n_rows_per_cluster_median: 82
+n_rows_per_cluster_max: 589
+
+# No priors: the GH (R,L) form has no universal fixed numerical constants
+# (R and L are per-shower fitted values; Table 2 in Aab 2019 reports
+# energy-bin population means but not universal law constants).
+# schiel_2007's only LAW constant is the Greisen prefactor 0.31 (never exposed);
+# 36.7 (radiation length) and 81.0 MeV (critical energy) are OTHER physical
+# constants. The priors block is kept empty (no fabricated candidates),
+# consistent with the baseflow/coral Type II exemplars.
+
+# === Reference baselines ===
+references:
+  - id: aab_2019
+    label: Aab et al. 2019 — Gaisser-Hillas (R,L) reparametrized profile, Eq. 3.1
+    formula_file: formulas/aab_2019.py
+    reference_pdf: reference/aab_2019.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # Xmax, dEdX_max, R, L
+    measured: {rmse: 2.4479, r2: 0.8098}
+  - id: schiel_2007
+    label: Schiel & Ralston 2007 — Greisen electromagnetic cascade profile, Eq. 6
+    formula_file: formulas/schiel_2007.py
+    reference_pdf: reference/greisen_schiel_ralston_2007.pdf
+    n_law_constants: 1         # GREISEN_PREFACTOR (EPS_C_AIR_MEV + X_RAD_AIR are OTHER physical constants)
+    n_other_constants: 2       # X_RAD_AIR (used), EPS_C_AIR_MEV (inert; demoted from LAW per Direction B)
+    n_local_params: 3          # A, beta0, t0
+    measured: {rmse: 2.4974, r2: 0.8020}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        1
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 2.4479
+
+# === Auditor notes ===
+auditor_notes: >-
+  2026-06-02 audit (FM-T-P-axis / §9.6 fix): the within-cluster split was changed from
+  an X-EXTRAPOLATION split (first 60% of sorted depth -> test_fit, last 40% -> test_test)
+  to an X-INTERLEAVED split (even/odd depth-rank). Under the old split the Gaisser-Hillas
+  / Greisen profiles (which peak at Xmax ~60th percentile) were fit on the rising limb and
+  extrapolated onto the falling tail, so BOTH reference baselines scored WORSE than the
+  per-cluster mean: per-cluster R² negative for ~84% (aab_2019) / ~65% (schiel_2007) of
+  clusters, and only 16% / 35% of clusters beat the per-cluster-mean naive — a §9.6
+  failure (the harness selects/scores by MEAN PER-CLUSTER rmse, NOT the pooled R² the
+  earlier note cited; a constant-mean predictor would have out-scored the reference).
+  After the interleaved fix both baselines beat the per-cluster-mean naive in ~83% of
+  clusters (aab 505/611, schiel 509/611; mean-per-cluster RMSE 0.89 vs naive 1.05; pooled
+  R² 0.81/0.80). best_baseline is now aab_2019 (the direct Gaisser-Hillas form). Also:
+  schiel_2007's EPS_C_AIR_MEV (81 MeV critical energy) was demoted LAW->OTHER (a physical
+  constant, and inert — beta0 is fitted directly); n_law_constants 2->1, caps.max_law 2->1.

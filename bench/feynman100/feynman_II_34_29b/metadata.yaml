@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Dimensionless"
+    symbol: "g_"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"
+  - name: "Angular momentum"
+    symbol: "Jz"
+    unit: ""
+    description: "Angular momentum"
+  - name: "Magnetic moment"
+    symbol: "mom"
+    unit: ""
+    description: "Magnetic moment"
+  - name: "Magnetic field"
+    symbol: "B"
+    unit: ""
+    description: "Magnetic field"

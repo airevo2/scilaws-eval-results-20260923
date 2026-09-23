@@ -1,0 +1,118 @@
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X[:, 0], dtype=float)
+    E = np.clip(E, 1e-6, None)
+
+    # --- 1/v thermal capture term ---
+    sigma_th = 98.65      # barn at thermal energy
+    E_th     = 0.0253     # eV
+    sigma_1v = sigma_th * np.sqrt(E_th / E)
+
+    # --- Single-level Breit-Wigner resonance at 4.9 eV ---
+    E0       = 4.906      # eV, resonance energy
+    Gamma    = 0.140      # eV, total width
+    sigma_pk = 33000.0    # barn, peak capture cross section
+    half     = 0.5 * Gamma
+    sigma_res = sigma_pk * (half * half) / ((E - E0) ** 2 + half * half) \
+                * np.sqrt(E0 / E)
+
+    sigma = sigma_1v + sigma_res
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X[:, 0], dtype=float)
+    E = np.clip(E, 1e-6, None)
+
+    # --- 1/v thermal component ---
+    E_th    = 0.0253      # eV (2200 m/s point)
+    sig_th  = 98.65       # barn, Au-197 thermal capture
+    sigma_v = sig_th * np.sqrt(E_th / E)
+
+    # --- Single-level Breit-Wigner resonance at 4.906 eV ---
+    E0      = 4.906       # eV, resonance energy
+    Gamma   = 0.140       # eV, total width
+    sig_0   = 33000.0     # barn, peak cross section
+    half    = Gamma / 2.0
+    sigma_r = sig_0 * (half**2) / ((E - E0)**2 + half**2) * np.sqrt(E0 / E)
+
+    sigma = sigma_v + sigma_r
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X[:, 0], dtype=float)
+    E = np.clip(E, 1e-6, None)
+
+    # --- 1/v thermal background ---
+    # sigma = sigma_th * sqrt(E_th / E)
+    sigma_th = 98.65      # barns at thermal
+    E_th = 0.0253         # eV
+    sigma_1v = sigma_th * np.sqrt(E_th / E)
+
+    # --- Single-level Breit-Wigner resonance at 4.9 eV ---
+    E0 = 4.906            # resonance energy (eV)
+    Gamma = 0.145         # total width (eV)
+    sigma_peak = 33000.0  # peak cross section (barns)
+
+    # BW line shape with 1/v flux factor sqrt(E0/E)
+    bw = sigma_peak * np.sqrt(E0 / E) * (0.5 * Gamma)**2 / \
+         ((E - E0)**2 + (0.5 * Gamma)**2)
+
+    sigma = sigma_1v + bw
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X[:, 0], dtype=float)
+    E = np.clip(E, 1e-6, None)
+
+    # --- 1/v thermal capture ---
+    sigma_th = 98.65      # barn at thermal energy
+    E_th     = 0.0253     # eV
+    sigma_v  = sigma_th * np.sqrt(E_th / E)
+
+    # --- Single-level Breit-Wigner resonance (4.9 eV) ---
+    E0        = 4.906     # eV, resonance energy
+    Gamma     = 0.145     # eV, total width
+    # peak capture cross section from 4pi/k^2 * g * Gn*Gg/Gamma^2
+    sigma_pk  = 29800.0   # barn
+    half      = 0.5 * Gamma
+    sigma_res = sigma_pk * np.sqrt(E0 / E) * (half**2) / ((E - E0)**2 + half**2)
+
+    sigma = sigma_v + sigma_res
+    sigma = np.clip(sigma, 1e-12, None)
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X[:, 0], dtype=float)
+    E = np.clip(E, 1e-9, None)
+
+    # ---- 1/v thermal background ----
+    sigma_th = 98.65      # barns at thermal energy
+    E_th = 0.0253         # eV
+    sigma_1v = sigma_th * np.sqrt(E_th / E)
+
+    # ---- Breit-Wigner resonance at 4.9 eV ----
+    E0 = 4.906            # eV, resonance energy
+    Gamma = 0.145         # eV, total width
+    sigma_peak = 33000.0  # barns, peak cross section
+    half = Gamma / 2.0
+    sigma_res = sigma_peak * (half**2) / ((E - E0)**2 + half**2) * np.sqrt(E0 / E)
+
+    sigma = sigma_1v + sigma_res
+    return np.log10(sigma)

@@ -1,0 +1,130 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the zonal component of the subgrid-scale eddy momentum forcing S_x
+
+    using the Zanna-Bolton parameterization.
+
+    Parameters:
+    X : 2-D numpy array
+        Input features where:
+        - X[:, 6] is d_zetaD_dx (zonal derivative of the product of relative
+          vorticity and shearing deformation)
+        - X[:, 7] is d_zetaDtilde_dy (meridional derivative of the product of
+          relative vorticity and stretching deformation)
+
+    Returns:
+    1-D numpy array
+        The predicted zonal subgrid-scale forcing S_x [m s^-2].
+    """
+    # Canonical scaling coefficient from Zanna & Bolton (2020)
+    # typical value is approximately -1.8e8 m^2
+    kappa_zb = -1.8e8
+
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    # Zanna-Bolton formulation for the zonal component of eddy momentum forcing
+    S_x = kappa_zb * (d_zetaD_dx + d_zetaDtilde_dy)
+
+    return S_x
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the zonal component of the subgrid-scale eddy momentum forcing Sx
+
+    using the Zanna-Bolton parameterization.
+
+    Parameters:
+    X : ndarray of shape (N, 8)
+        Input features:
+        - X[:, 5]: d_zeta2_dx (spatial derivative of enstrophy)
+        - X[:, 6]: d_zetaD_dx (spatial derivative of vorticity * shearing deformation)
+        - X[:, 7]: d_zetaDtilde_dy (spatial derivative of vorticity * stretching deformation)
+
+    Returns:
+    S_x : ndarray of shape (N,)
+        Zonal component of the subgrid-scale eddy momentum forcing [m s^-2]
+    """
+    # Zanna-Bolton parameterization coefficient (typical value in m^2)
+    kappa_zb = -1.8e9
+
+    # S_x = kappa_zb * ( \partial_y(\zeta \tilde{D}) - \partial_x(\zeta D) )
+    S_x = kappa_zb * (X[:, 7] - X[:, 6])
+
+    return S_x
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the zonal component of the subgrid-scale eddy momentum forcing Sx
+
+    using the Zanna-Bolton parameterization.
+
+    Inputs:
+    - X[:, 6] = d_zetaD_dx (∂(ζD)/∂x)
+    - X[:, 7] = d_zetaDtilde_dy (∂(ζD̃)/∂y)
+    """
+    # Zanna-Bolton coefficient (typical value in m^2)
+    kappa = -1.8e8
+
+    # Sx = kappa * (∂(ζD)/∂x + ∂(ζD̃)/∂y)
+    S_x = kappa * (X[:, 6] + X[:, 7])
+
+    return S_x
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the zonal component of the subgrid-scale eddy momentum forcing (S_x)
+    using the standard Zanna-Bolton (2020) parameterization.
+    
+    S_x = \kappa_{SGS} * ( \partial(\zeta D)/\partial x + \partial(\zeta \tilde{D})/\partial y )
+    
+    Inputs:
+    - X[:, 6]: d_zetaD_dx (\partial(\zeta D)/\partial x)
+    - X[:, 7]: d_zetaDtilde_dy (\partial(\zeta \tilde{D})/\partial y)
+    
+    The scaling factor \kappa_{SGS} has units of m^2 and is typically estimated 
+    to be approximately -1.8e9 m^2 for standard eddy-permitting QG simulations.
+    """
+    kappa_sgs = -1.8e9
+    
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+    
+    Sx = kappa_sgs * (d_zetaD_dx + d_zetaDtilde_dy)
+    return Sx
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the zonal component of the subgrid-scale eddy momentum forcing Sx
+
+    using the physics-informed Zanna-Bolton parameterization.
+
+    Inputs:
+    - X[:, 6] = d_zetaD_dx (∂(ζD)/∂x)
+    - X[:, 7] = d_zetaDtilde_dy (∂(ζD̃)/∂y)
+    """
+    # Zanna-Bolton coefficient (typical value in m^2 for QG simulations)
+    kappa_zb = -1.5e5
+
+    # Sx = kappa_zb * ( ∂(ζD)/∂x + ∂(ζD̃)/∂y )
+    S_x = kappa_zb * (X[:, 6] + X[:, 7])
+
+    return S_x

@@ -1,0 +1,84 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean oven-dry mass per surviving plant (g/plant) from density (plants/pot)
+    using the reciprocal yield law: w = 1 / (A + B * N).
+    """
+    A = 0.05   # intercept (g^{-1}), related to maximum plant mass at low density
+    B = 0.01   # slope (pot g^{-1} plant^{-1}), related to resource competition intensity
+    N = X[:, 0]
+    w = 1.0 / (A + B * N)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard yield-density relationship for mean plant mass (Shinozaki–Kira model):
+        w = 1 / (a + b * N)
+    where N = density (plants/pot), a and b are species-specific fitted constants.
+    The coefficients given below are illustrative placeholders.
+    """
+    # fitted constants (replace with actual values from regression)
+    a = 0.05   # intercept in reciprocal space (g⁻¹)
+    b = 0.002  # slope (g⁻¹ per plant/pot)
+
+    N = X[:, 0]          # density in plants/pot
+    w = 1.0 / (a + b * N)  # mean dry mass per plant (g/plant)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for mean mass per plant vs. density:
+    reciprocal yield law (Shinozaki–Kira / constant final yield model).
+    w = w_max / (1 + a * N)   where N = density [plants/pot].
+    """
+    N = X[:, 0]
+    # fitted coefficients (placeholders; actual values would be estimated from data)
+    w_max = 5.0   # asymptotic mean mass (g/plant) at very low density
+    a = 0.02      # crowding coefficient (pot/plant)
+    w = w_max / (1.0 + a * N)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean oven-dry mass per surviving plant (g/plant) from density (plants/pot).
+    
+    Uses the classic reciprocal yield law (Shinozaki-Kira model):
+    w = A / (1 + B * N)
+    where A is the mean mass of an isolated plant and B quantifies intraspecific competition.
+    """
+    N = X[:, 0]  # density in plants/pot
+    A = 10.0     # typical maximum mass (g) for an isolated plant
+    B = 0.1      # competition coefficient (1/pot)
+    w = A / (1.0 + B * N)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean oven-dry mass per surviving plant (g/plant) using the
+    self-thinning rule (Yoda's -3/2 power law):
+        w = a * N ^ (-3/2)
+    where N is the surviving plant density in plants/pot.
+    Parameters a and exponent are fitted constants.
+    """
+    N = X[:, 0]                 # density (plants/pot)
+    a = 100.0                   # fitted scaling constant (g/plant * (plants/pot)^1.5)
+    b = -1.5                    # canonical self-thinning exponent
+    w = a * N ** b
+    return w

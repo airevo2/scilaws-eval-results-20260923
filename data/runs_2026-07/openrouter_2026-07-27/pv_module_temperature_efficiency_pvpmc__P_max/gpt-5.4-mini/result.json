@@ -1,0 +1,17 @@
+{
+  "task": "pv_module_temperature_efficiency_pvpmc__P_max",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "dobos_2014",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

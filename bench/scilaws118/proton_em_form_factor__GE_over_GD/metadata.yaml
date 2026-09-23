@@ -1,0 +1,140 @@
+task_id: proton_em_form_factor__GE_over_GD
+domain: physics / nuclear_particle_physics
+license: CC-BY-4.0
+
+# Type I — each Q^2 measurement is an independent row; no cluster structure.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no column lists, no constants.
+context: >-
+  The proton's internal charge distribution is characterized by its electromagnetic form factors, with the dipole form factor serving as a standard reference shape, a subject in nuclear and hadronic physics.
+
+target:
+  name: GE_over_GD
+  symbol: "G_E / G_D"
+  unit: ""
+  description: Ratio of the proton electric Sachs form factor to the standard dipole form factor, measured as a function of four-momentum transfer squared.
+  range: [0.287, 1.000]
+
+inputs:
+  - name: Q2_GeV2
+    symbol: "Q²"
+    unit: GeV^2
+    description: Four-momentum transfer squared in electron-proton elastic scattering.
+    range: [0.007, 5.85]
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block added for schema symmetry with GOLD.
+priors: []
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv    # Q^2 <= 2.0 GeV^2 (low-Q^2 charge-radius regime)
+  test:  data/test.csv     # Q^2 > 2.0 GeV^2 (high-Q^2 perturbative-QCD regime)
+n_train: 37
+n_test: 10
+
+# Audit note (not shown to SR system):
+# Train/test split at Q^2 = 2.0 GeV^2. The test set (Q^2 = 2.07-5.85 GeV^2) is a
+# hard OOD probe into the high-Q^2 QCD-dominated regime where GE/GD falls steeply.
+# DATA SOURCE: Arrington, Melnitchouk & Tjon 2007, Phys. Rev. C 76, 035205, Table II.
+# These are the directly Rosenbluth-separated GE/GD values (with explicit TPE
+# corrections) that the Arrington 2007 formula was calibrated to.
+# Previous source (Ye 2018 z-expansion fit output) caused FM C9 (epoch mismatch):
+# Ye 2018 raised GE/GD systematically by 0.17-0.23 vs Arrington/Bradford calibration.
+# After data swap: arrington_2007 RMSE=0.032 (R2=0.959), bradford_2006 RMSE=0.058
+# (R2=0.863), hofstadter_1956 RMSE=0.409 (R2=-5.86, by-design null/span baseline).
+# Autonomous fix applied 2026-05-25 by sonnet-4.6 subagent.
+
+# Reference-baseline bank
+references:
+  - id: arrington_2007
+    label: "Arrington-Melnitchouk-Tjon 2007 — rational polynomial with TPE corrections, Eq.(11)"
+    formula_file: formulas/arrington_2007.py
+    reference_pdf: reference/arrington_2007.pdf
+    n_law_constants: 8    # a1, a2, a3, b1, b2, b3, b4, b5 (Table I PDF p.6)
+    n_other_constants: 2  # M_p, Lambda2
+    n_local_params: 0
+    measured:
+      rmse: 0.0317
+      r2: 0.9589
+  - id: bradford_2006
+    label: "Bradford-Bodek-Budd-Arrington 2006 — BBBA05 rational polynomial, Eq.(6)"
+    formula_file: formulas/bradford_2006.py
+    reference_pdf: reference/bradford_2006.pdf
+    n_law_constants: 4    # a1, b1, b2, b3 (Table 1 PDF p.4)
+    n_other_constants: 3  # a0, M_p, Lambda2
+    n_local_params: 0
+    measured:
+      rmse: 0.0578
+      r2: 0.8628
+  - id: hofstadter_1956
+    label: "Hofstadter 1956 — dipole null model (G_E = G_D => ratio = 1)"
+    formula_file: formulas/hofstadter_1956.py
+    reference_pdf: reference/hofstadter_1956.pdf
+    n_law_constants: 0    # ratio identically 1; no LAW constants
+    n_other_constants: 1  # Lambda2
+    n_local_params: 0
+    measured:
+      rmse: 0.4090
+      r2: -5.8632
+# === Audit re-work, 2026-05-29 (claude-opus) ===
+# Removed the kelly_2004 reference entry. It was a PHANTOM baseline added by the
+# 2026-05-27 wave-16 attempt: present in metadata only — never registered in
+# formulas/__init__.py (_STEMS had only arrington/bradford/hofstadter), absent from
+# reference_metrics.json, and its reference_pdf was null (no on-disk PDF). The
+# wave-16 self-report claimed it "added kelly entry" to reference_metrics.json, but
+# that file never contained kelly — the harness never evaluated it, so the reported
+# measured rmse=0.0450/r2=0.917 was never harness-computed. The Kelly G_Ep
+# coefficients themselves are real published values (not fabricated), but the
+# functional form is the SAME Pade [1/3] in tau as bradford_2006 (Bradford's a0=1
+# makes the two structurally identical, differing only in fitted coefficients) — an
+# F8 same-form padding baseline. The task already ships a healthy 3-baseline bank.
+# Archived to .dropped_baselines/. See VERDICT.md.
+
+auditor_notes:
+  neg_r2_disclosure:
+    severity: ACCEPTABLE_PER_E6_MIXED_BANK
+    baseline: hofstadter_1956
+    pooled_r2: -5.8632
+    pooled_rmse: 0.4090
+    best_positive_r2_baseline: arrington_2007
+    best_positive_r2: 0.9589
+    summary: >-
+      Hofstadter (1956) dipole null model yields pooled R² = -5.86 / RMSE = 0.409 on the
+      high-Q² OOD test split (Q² = 2.07–5.85 GeV²). The mixed bank satisfies §9.6 via
+      arrington_2007 (R²=0.959) and bradford_2006 (R²=0.863). Anchor-scale check:
+      RMSE (0.409) < target span (0.550) — §9.18 anchor-scale violation NOT triggered.
+      §9.14 (feature-OOD legitimate) applies.
+    citation: "AUDIT_CHECKLIST.md v0.5 §E6 (mixed-bank partial-negative-R² annotation) + data_spec §9.14 (cross-feature OOD legitimately produces negative pooled R² for null/historical baseline)"
+    root_cause: >-
+      The Hofstadter 1956 dipole baseline predicts GE/GD ≡ 1 for all Q² (ratio identically
+      1 when G_E^p = G_D). This is a by-design null model documenting the field's earliest
+      approximation (1956 exponential charge density → dipole form factor). At high Q² the
+      data shows GE/GD declining steeply below 1 (Arrington 2007 Table II, Q²=5.85 GeV²
+      gives GE/GD≈0.287 with TPE corrections). The flat prediction is catastrophically
+      wrong in the OOD high-Q² regime; the negative R² is the expected consequence of
+      using a null/span baseline on a strongly non-flat OOD test set. Docstring explicitly
+      documents the by-design degeneracy (formulas/hofstadter_1956.py lines 35-41).
+    # FM E6 annotation added by subagent L 2026-05-26 (wave-3 re-audit).
+    # Policy: §9.14 only (RMSE 0.409 < span 0.550, bank beats naive via arrington_2007).
+
+caps:
+  max_law_constants: 8
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+reference_baseline_id: arrington_2007   # strongest baseline (lowest RMSE); the metric anchor
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "represents finite spatial proton charge distribution through an electric form factor relative to the canonical dipole form"
+  - "predicted GE_over_GD equals 1 at Q2_GeV2 = 0"
+  - "predicted GE_over_GD has no poles or divergences over the physical measured Q2_GeV2 domain"
+
+best_baseline: 0.0316649    # arrington_2007 — rmse (lower is better); regenerated 2026-05-30

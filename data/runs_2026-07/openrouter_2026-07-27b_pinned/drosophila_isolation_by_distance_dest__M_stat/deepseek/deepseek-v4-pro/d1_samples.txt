@@ -1,0 +1,152 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict Rousset's M-statistic (M = F_ST / (1 - F_ST)) under isolation by distance
+    in a two-dimensional habitat.
+    
+    Standard closed-form relationship:
+        M = (1 / (4 * pi * D * sigma^2)) * ln(d) + C
+    where
+        D      = effective population density,
+        sigma^2 = mean squared parent-offspring dispersal distance,
+        C      = a constant depending on mutation rate and other factors.
+        
+    Input X:
+        X[:, 0] = log_distance_km (ln(d))
+        X[:, 1] = distance_km (d)  (not used directly in this 2D IBD formula)
+    """
+    # Biological parameters (named constants, can be replaced with fitted values)
+    D = 1.0          # effective population density (individuals per km^2)
+    sigma2 = 1.0     # mean squared dispersal distance (km^2)
+    C = 0.0          # intercept constant
+
+    # Slope of the isolation-by-distance relationship in 2D
+    slope = 1.0 / (4.0 * np.pi * D * sigma2)
+
+    # Natural log of distance (provided as X[:, 0])
+    ln_d = X[:, 0]
+
+    # Predicted M-statistic
+    M = slope * ln_d + C
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Rousset's M-statistic (M = F_ST / (1 - F_ST)) from the natural logarithm
+    of geographic distance under an isolation-by-distance model.
+
+    The standard closed-form relationship for a two-dimensional continuum is:
+        M = a + b * ln(d)
+    where d is the geographic distance in km.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        2-D array with columns:
+        X[:, 0] = log_distance_km (ln(d))
+        X[:, 1] = distance_km (d)
+
+    Returns
+    -------
+    M : np.ndarray
+        1-D array of predicted M values.
+    """
+    # Fitted coefficients (named constants)
+    a = 0.0   # intercept
+    b = 1.0   # slope for ln(distance)
+
+    # ln(d) is provided directly as X[:, 0]
+    M = a + b * X[:, 0]
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Rousset's M-statistic (M = F_ST / (1 - F_ST)) for pairs of populations
+    under isolation-by-distance in a two-dimensional habitat.
+    
+    Theoretical closed-form relationship (Rousset, 1997):
+        M ≈ slope * ln(distance) + intercept
+    where slope = 1 / (4 * pi * effective_density * sigma^2) and
+    intercept is a constant depending on the mutation/recombination model.
+    
+    Input X is a 2-D numpy array:
+        X[:, 0] : log_distance_km (ln(d))   [ln(km)]
+        X[:, 1] : distance_km (d)           [km]
+    Returns a 1-D array of predicted M values.
+    """
+    # Coefficients: these are placeholders representing the theoretical parameters.
+    # In practice they would be fitted to empirical data or derived from demographic estimates.
+    SLOPE = 1.0      # 1 / (4 * pi * D_e * sigma^2)
+    INTERCEPT = 0.0  # constant offset
+
+    log_d = X[:, 0]          # natural logarithm of distance in km (already supplied)
+    M = SLOPE * log_d + INTERCEPT
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Rousset's M-statistic (M = F_ST / (1 - F_ST)) for pairs of populations
+    under isolation by distance in a two-dimensional continuous habitat.
+
+    The standard closed-form relationship is:
+        M = (1 / (4 * pi * D * sigma^2)) * ln(d) + constant
+    where:
+        D       = effective population density (individuals per km^2)
+        sigma^2 = mean square parent-offspring distance (km^2)
+        d       = great-circle distance between populations (km)
+
+    Input:
+        X : 2-D numpy array
+            X[:, 0] = log_distance_km = ln(d)
+            X[:, 1] = distance_km = d   (not used in this canonical form)
+
+    Returns:
+        1-D numpy array of M values.
+    """
+    # Typical values for a continuous population (e.g., density = 1 ind/km^2, sigma = 1 km)
+    D = 1.0          # effective population density (ind/km^2)
+    sigma2 = 1.0     # mean square parent-offspring distance (km^2)
+    const = 0.0      # additive constant (often negligible or absorbed in fitting)
+
+    slope = 1.0 / (4.0 * np.pi * D * sigma2)
+    M = slope * X[:, 0] + const
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Rousset's linearised differentiation statistic M = F_ST / (1 - F_ST)
+    under isolation by distance in a two-dimensional continuum.
+    
+    The standard closed-form relationship is:
+        M = a + b * ln(distance)
+    where b = 1 / (4 * pi * D * sigma^2),
+    D = population density, sigma^2 = dispersal variance,
+    and a is a constant depending on mutation rate and habitat shape.
+    
+    Here we use default theoretical coefficients (D=1, sigma^2=1, a=0).
+    """
+    # Named constants (fitted or theoretical coefficients)
+    D = 1.0          # population density
+    sigma2 = 1.0     # dispersal variance
+    a = 0.0          # intercept
+    b = 1.0 / (4.0 * np.pi * D * sigma2)  # slope
+
+    # X[:, 0] is log_distance_km = ln(d)
+    return a + b * X[:, 0]

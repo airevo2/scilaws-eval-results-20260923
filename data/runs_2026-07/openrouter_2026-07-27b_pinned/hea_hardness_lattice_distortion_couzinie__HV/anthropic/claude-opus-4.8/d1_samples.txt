@@ -1,0 +1,112 @@
+import numpy as np
+
+def predict(X):
+    # Vickers hardness of refractory/complex-concentrated HEAs
+    # Common empirical linear-correlation form:
+    # HV ≈ a + b·delta + c·VEC + d·dHmix
+    #
+    # Physical rationale:
+    #  - Larger atomic-size mismatch (delta) => stronger solid-solution
+    #    strengthening / lattice distortion => higher hardness.
+    #  - Lower VEC favors BCC (harder) structures; higher VEC favors FCC
+    #    (softer) => negative VEC coefficient.
+    #  - More negative dHmix => stronger bonding => higher hardness
+    #    (positive coefficient means less-negative dHmix lowers HV).
+
+    delta = X[:, 0]
+    VEC   = X[:, 1]
+    dHmix = X[:, 2]
+
+    a =  600.0   # intercept [kgf/mm^2]
+    b =   45.0   # per % delta
+    c =  -80.0   # per VEC unit
+    d =   -6.0   # per kJ/mol dHmix
+
+    HV = a + b * delta + c * VEC + d * dHmix
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Empirical linear correlation for Vickers hardness of HEAs.
+    # Hardness increases with lattice distortion (delta) and with more
+    # negative mixing enthalpy (stronger bonding), and depends on VEC
+    # (BCC-forming low-VEC alloys are generally harder).
+    HV = (150.0
+          + 55.0 * delta          # lattice-distortion (solid-solution) strengthening
+          - 60.0 * VEC            # BCC (low VEC) harder than FCC (high VEC)
+          - 6.0 * dHmix           # more negative dHmix -> harder
+          + 400.0)
+
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Empirical linear correlation commonly cited for HEA Vickers hardness
+    # HV ~ base + contribution from lattice distortion (delta),
+    # electronic bonding (VEC), and mixing enthalpy (dHmix)
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Solid-solution / lattice-distortion strengthening dominates:
+    # hardness rises with atomic-size mismatch delta,
+    # BCC-forming (low VEC) alloys are harder than FCC,
+    # more negative dHmix promotes ordering/stability -> higher hardness.
+    HV = 150.0 \
+         + 45.0 * delta \
+         - 60.0 * VEC \
+         - 5.0 * dHmix
+
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Empirical linear model for Vickers hardness of HEAs
+    # HV increases with lattice distortion (delta) and stronger (more negative) mixing enthalpy,
+    # and depends on VEC (BCC alloys, lower VEC, tend to be harder).
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Canonical linear regression-type form:
+    # HV = a + b*delta + c*VEC + d*dHmix
+    a = 300.0    # baseline hardness
+    b = 45.0     # lattice distortion strengthening
+    c = -60.0    # BCC (low VEC) harder than FCC
+    d = -6.0     # more negative dHmix -> harder
+
+    HV = a + b * delta + c * VEC + d * dHmix
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Empirical linear correlation for Vickers hardness of HEAs
+    # HV increases with lattice distortion (delta) and solid-solution
+    # stability (more negative dHmix), and depends on VEC (BCC vs FCC).
+    delta = X[:, 0]
+    VEC   = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Baseline plus contributions from each descriptor.
+    HV = (150.0
+          + 40.0 * delta        # lattice-distortion strengthening
+          - 30.0 * VEC          # higher VEC -> softer FCC tendency
+          - 5.0 * dHmix)        # more negative dHmix -> harder solid solution
+
+    return HV

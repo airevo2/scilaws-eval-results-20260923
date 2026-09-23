@@ -1,0 +1,55 @@
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    a = 1.0
+    w = a * N ** (-1.5)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    a = 1.0  # Placeholder for the per-cluster parameter
+    b = 1.5  # Yoda's -3/2 self-thinning exponent
+    return a * N**(-b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Yoda's -3/2 power law of self-thinning (canonical density-mass allometry)
+    # w = a * N^(-3/2)
+    a = 5.0   # intercept (g/plant at N=1), absorbs pot-area scaling
+    b = 1.5   # self-thinning exponent
+    w = a * np.power(N, -b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # a is the per-cluster parameter (absorbing the pot area constant and species-specific intercept)
+    # -1.5 is the canonical -3/2 self-thinning exponent (Yoda's law)
+    a = 1.0 
+    w = a * np.power(N, -1.5)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Standard self-thinning rule (Yoda's -3/2 power law)
+    # w = a * N^b
+    a = 1.0  # Placeholder for the per-cluster intercept (absorbs pot area scalar)
+    b = -1.5 # Canonical self-thinning exponent
+    w = a * (N ** b)
+    return w

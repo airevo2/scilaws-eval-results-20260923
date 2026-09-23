@@ -1,0 +1,35 @@
+{
+  "task": "ecoli_growth_curve_chemically_defined__od600",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "zwietering_1990_gompertz",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "zwietering_1990_logistic",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "zwietering_1990_richards",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

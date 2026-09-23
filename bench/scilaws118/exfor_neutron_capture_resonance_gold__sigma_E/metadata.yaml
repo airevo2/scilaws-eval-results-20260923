@@ -1,0 +1,130 @@
+task_id: exfor_neutron_capture_resonance_gold__sigma_E
+domain: physics / nuclear_reactions
+license: CC-BY-4.0    # EXFOR experimental nuclear-reaction data (IAEA-NDS) — CC-BY
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  The neutron-capture cross section quantifies how strongly a nucleus absorbs an incident neutron, a measured quantity in experimental nuclear physics.
+
+target:
+  name: log10_sigma_b
+  symbol: log10(sigma)
+  unit: log10(barn)
+  description: Base-10 logarithm of the Au-197(n,gamma) inclusive capture cross section in barns.  The log transform is needed because sigma spans >5 decades from the thermal background (~10-100 b) to the 4.9 eV resonance peak (~33,000 b).  Range -1.18 to 4.45 in the E < 50 eV window.
+  range: [-1.184, 4.446]
+
+inputs:
+  - name: E_eV
+    symbol: E
+    unit: eV
+    description: Incident neutron kinetic energy in electronvolts.  The single SR feature — both the 1/v law and the Breit-Wigner resonance are univariate functions of E.  Spans 0.04 meV (sub-thermal) to ~50 eV in this window.
+    range: [3.99e-05, 49.975]
+
+# NOTE: the target is NOT circular.  sigma is the experimentally MEASURED
+# cross section (EXFOR), E is the independently-set incident neutron
+# energy; sigma is not derived from E.  The 1/v + Breit-Wigner structure
+# is genuine nuclear physics to be discovered.  Multiple EXFOR
+# experiments measure at overlapping energies (real inter-experiment
+# scatter), so the relation is noisy, not an algebraic identity.
+# Constant columns target_Z=79, target_A=197 (single nuclide) and the
+# provenance metadata (exfor_entry_id, first_author, year) are dropped —
+# only (log10_sigma_b, E_eV) are released.
+
+# Dataset — Type I, two-file flat layout.  Source: all experimental
+# Au-197(n,gamma)Au-198 inclusive sub-entries from the EXFOR database
+# (IAEA-NDS exfortables_py mirror; Otuka et al. 2014), parsed to
+# (log10_sigma_b, E_eV).  v2 RESTRICTS to the E < 50 eV window (after de-duplicating identical (E,sigma) pairs; thermal +
+# the single 4.9 eV s-wave resonance; the next resonances at
+# 60.3/78.7/107 eV are above the cutoff), where the cross section has a
+# genuine compact closed form (1/v + single Breit-Wigner).  The v1
+# sibling spanned the full energy range (to 15 MeV) with a cross-regime
+# split, which is NOT a well-posed closed-form task: the full sigma(E) is
+# a 1/v background plus a comb of resonances at quantum level energies
+# (not a closed-form function of E), so no single closed form spans it
+# (v1 baselines all scored NMSE > 1).  Random 80/20 split
+# (np.random.default_rng(0)); both the thermal and resonance regions
+# appear in train and test.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 1732
+n_test:  433
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: au197_resonance_energy
+    value: 4.906
+    unit: eV
+    description: Energy of the dominant low-energy s-wave resonance of Au-197; a candidate for E_R in the Breit-Wigner term.
+    source: Mughabghab 'Atlas of Neutron Resonances' 6th ed. 2018 (reproduced in ENDF/B-VIII.0, JEFF-3.3, JENDL-5 within ~0.5%).
+    _role: candidate
+  - name: au197_resonance_width
+    value: 0.1372
+    unit: eV
+    description: Total width Gamma_total = Gamma_n + Gamma_gamma of the 4.906 eV resonance; a candidate for the Breit-Wigner width.
+    source: Mughabghab 2018 (Gamma_n = 15.2 meV, Gamma_gamma = 122 meV).
+    _role: candidate
+  - name: one_over_v_exponent
+    value: -0.5
+    unit: dimensionless
+    description: The 1/v-law exponent of energy in the s-wave low-energy limit (sigma ∝ E^(-1/2)).
+    source: Bohr & Wheeler 1939 / Wigner-Eisenbud compound-nucleus theory.  A candidate for the background power-law exponent.
+    _role: candidate
+  - name: au197_thermal_sigma
+    value: 98.66
+    unit: barn
+    description: Thermal (0.0253 eV) capture cross section of Au-197 (a neutron-flux standard).
+    source: Mughabghab 2018.  Sets the 1/v background scale; a candidate for the cross-section normalisation.
+    _role: candidate
+
+# === Reference baselines ===
+references:
+  - id: constant_sigma
+    label: Constant log10(sigma) = a0 (Type I, frozen; train mean)
+    formula_file: formulas/constant_sigma.py
+    reference_pdf: reference/zerkin_pritychenko_2018_exfor.pdf
+    n_law_constants: 1         # A0
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 1.0598}
+  - id: one_over_v
+    label: 1/v law log10(sigma) = A_V - 0.5·log10(E) (Type I, frozen; slope fixed at -1/2, intercept pre-fit on v2 train)
+    formula_file: formulas/one_over_v.py
+    reference_pdf: reference/zerkin_pritychenko_2018_exfor.pdf
+    n_law_constants: 1         # A_V
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.8398}
+  - id: one_over_v_plus_breit_wigner
+    label: 1/v + single-level Breit-Wigner resonance (Type I, frozen; SV,SR,E_R,G pre-fit on v2 train)
+    formula_file: formulas/one_over_v_plus_breit_wigner.py
+    reference_pdf: reference/zerkin_pritychenko_2018_exfor.pdf
+    n_law_constants: 4         # SV, SR, E_R, G
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.3297}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        4
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on log10_sigma_b (log10 barn)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted log10_sigma_b is determined by E_eV alone"
+  - "outside the 4.9 eV resonance region, predicted cross section decreases as E_eV increases"
+  - "predicted resonance structure below 50 eV contains no more than the single isolated 4.9 eV peak"
+  - "predicted 4.9 eV resonance peak remains finite rather than singular"
+
+best_baseline: 0.3297     # one_over_v_plus_breit_wigner — best of three rungs on v2 test

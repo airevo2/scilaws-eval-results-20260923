@@ -1,0 +1,79 @@
+import numpy as np
+
+def predict(X):
+    # Somigliana closed-form normal gravity on the WGS84 ellipsoid
+    phi = np.radians(X[:, 0])
+    ge = 9.7803253359      # normal gravity at equator [m/s^2]
+    gp = 9.8321849378      # normal gravity at poles   [m/s^2]
+    a = 6378137.0          # semi-major axis [m]
+    b = 6356752.314245     # semi-minor axis [m]
+    k = (b * gp - a * ge) / (a * ge)
+    e2 = (a**2 - b**2) / a**2
+    sin2 = np.sin(phi)**2
+    gamma = ge * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Somigliana closed-form normal gravity on the WGS84 ellipsoid surface
+    phi = np.radians(X[:, 0])
+    
+    # WGS84 constants
+    gamma_e = 9.7803253359   # normal gravity at equator [m/s^2]
+    k = 0.00193185265241     # Somigliana constant
+    e2 = 0.00669437999014    # first eccentricity squared
+    
+    sin2 = np.sin(phi)**2
+    gamma = gamma_e * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Somigliana closed-form normal gravity on the WGS84 ellipsoid surface
+    phi = np.radians(X[:, 0])
+    ge = 9.7803253359      # normal gravity at equator [m/s^2]
+    k = 0.00193185265241   # Somigliana's constant
+    e2 = 0.00669437999014  # first eccentricity squared (WGS84)
+    sin2 = np.sin(phi)**2
+    gamma = ge * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Somigliana closed-form normal gravity on the WGS84 ellipsoid
+    phi = np.radians(X[:, 0])
+    ge = 9.7803253359       # normal gravity at equator [m/s^2]
+    k = 0.00193185265241    # Somigliana constant
+    e2 = 0.00669437999014   # first eccentricity squared (WGS84)
+    sin2 = np.sin(phi)**2
+    gamma = ge * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Somigliana closed-form normal gravity on the WGS84 ellipsoid surface
+    phi = np.radians(X[:, 0])
+    ge = 9.7803253359      # normal gravity at equator [m/s^2]
+    gp = 9.8321849378      # normal gravity at poles [m/s^2]
+    a = 6378137.0          # semi-major axis [m]
+    b = 6356752.3142       # semi-minor axis [m]
+    e2 = (a**2 - b**2) / a**2  # first eccentricity squared
+
+    k = (b * gp) / (a * ge) - 1.0
+    sin2 = np.sin(phi)**2
+
+    gamma = ge * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    return gamma

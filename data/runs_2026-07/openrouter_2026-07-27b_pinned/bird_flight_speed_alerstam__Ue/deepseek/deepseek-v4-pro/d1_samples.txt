@@ -1,0 +1,138 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean equivalent airspeed (Ue) at sea-level density [m/s]
+    for migratory flapping flight based on the aerodynamic lift equation.
+
+    Input X is a 2-D numpy array:
+    X[:, 0] = mass_kg    [kg]
+    X[:, 1] = wing_area_m2 [m^2]
+
+    Returns a 1-D numpy array of Ue [m/s].
+    """
+    m = X[:, 0]
+    S = X[:, 1]
+
+    # Physical constants
+    g = 9.81          # gravitational acceleration [m/s^2]
+    rho0 = 1.225      # sea-level air density [kg/m^3]
+
+    # Typical lift coefficient for cruising/flapping flight (Pennycuick 2008)
+    C_L = 1.0
+
+    # Lift balances weight: m*g = 0.5 * rho0 * S * C_L * Ue^2
+    Ue = np.sqrt((2.0 * m * g) / (rho0 * S * C_L))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean equivalent airspeed (Ue) corrected to sea-level density
+    for migratory flapping flight, based on body mass and wing area.
+    
+    Uses the standard aerodynamic equation with a default lift coefficient
+    for maximum-range flight (Pennycuick 1989, 2008):
+        Ue = sqrt( 2 * m * g / (rho_0 * S * C_L) )
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 2)
+        X[:, 0] = body mass [kg]
+        X[:, 1] = wing area [m^2]
+    
+    Returns
+    -------
+    Ue : np.ndarray, shape (n_samples,)
+        Equivalent airspeed [m/s]
+    """
+    # Physical constants
+    g = 9.81           # acceleration of gravity [m/s^2]
+    rho_0 = 1.225      # air density at sea level [kg/m^3]
+    C_L = 0.25         # lift coefficient typical for maximum-range migratory flight
+    
+    m = X[:, 0]        # mass in kg
+    S = X[:, 1]        # wing area in m^2
+    
+    Ue = np.sqrt(2.0 * m * g / (rho_0 * S * C_L))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean equivalent airspeed (Ue) at sea-level density
+    for migratory flapping flight from body mass and wing area.
+
+    Uses Pennycuick's standard allometric equation for maximum range speed.
+    (Pennycuick, C.J. 1989. Bird Flight Performance: A Practical Calculation Manual)
+
+    Parameters
+    ----------
+    X : 2-D numpy array
+        X[:, 0] = mass_kg (m) [kg]
+        X[:, 1] = wing_area_m2 (S) [m^2]
+
+    Returns
+    -------
+    Ue : 1-D numpy array
+        Mean equivalent airspeed [m/s]
+    """
+    m = X[:, 0]  # body mass [kg]
+    S = X[:, 1]  # wing area [m^2]
+
+    # Maximum range speed (equivalent airspeed) from Pennycuick (1989)
+    Ue = 7.14 * m**0.26 * S**-0.42
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean equivalent airspeed Ue_ms [m/s] from body mass and wing area.
+    
+    Input X is a 2D numpy array with columns:
+        X[:, 0] = mass_kg (m) [kg]
+        X[:, 1] = wing_area_m2 (S) [m^2]
+    
+    Returns a 1D numpy array of Ue_ms [m/s].
+    
+    The formula used is the theoretical maximum-range equivalent airspeed 
+    from Pennycuick's standard aerodynamic model (Pennycuick 2008), 
+    corrected to sea-level air density.
+    """
+    # Physical constants
+    g = 9.81          # acceleration due to gravity [m/s^2]
+    rho0 = 1.225      # sea-level air density [kg/m^3]
+    k = 1.1           # induced drag factor (default for birds)
+    CD0 = 0.08        # zero-lift body drag coefficient (default for birds)
+    
+    m = X[:, 0]       # body mass [kg]
+    S = X[:, 1]       # wing area [m^2]
+    
+    # Maximum-range equivalent airspeed
+    Ue = np.sqrt((2.0 * m * g) / (rho0 * S)) * (k / CD0)**0.25
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean equivalent airspeed (m/s) from mass (kg) and wing area (m^2)
+    using the allometric relationship from Alerstam et al. (2007) Proc. R. Soc. B.
+    """
+    m = X[:, 0]       # mass_kg
+    S = X[:, 1]       # wing_area_m2
+    k = 10.7          # fitted scaling coefficient
+    a = 0.32          # fitted exponent for mass
+    b = -0.32         # fitted exponent for wing area
+    return k * (m ** a) * (S ** b)

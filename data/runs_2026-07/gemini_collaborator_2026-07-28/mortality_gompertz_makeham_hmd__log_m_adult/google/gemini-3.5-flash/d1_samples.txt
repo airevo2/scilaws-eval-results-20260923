@@ -1,0 +1,153 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (ln m)
+
+    for adults using a bilinear Gompertz model with a time trend.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = year (t) [1751 to 2025]
+
+    Returns:
+    - 1-D numpy array of ln m
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Reference year set to 1900
+    t_diff = year - 1900
+
+    # Bilinear Gompertz parameters calibrated to historical mortality data
+    c0 = -7.28
+    c1 = 0.066
+    c2 = -0.0276
+    c3 = 0.00022
+
+    log_m = c0 + c1 * age + c2 * t_diff + c3 * age * t_diff
+    return log_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is age (x), 30 to 95
+    # X[:, 1] is year (t), 1751 to 2025
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Standard Gompertz model with a log-linear time trend:
+    # ln m(x, t) = a + b * x + c * t
+    # where:
+    # - b (~0.085) is the Gompertz rate of aging
+    # - c (~-0.007) is the historical annual rate of mortality decline
+    # - a is the intercept calibrated for global historical human mortality
+    a = 4.2
+    b = 0.085
+    c = -0.007
+
+    log_m = a + b * age + c * year
+    return log_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (log_m_adult)
+
+    using a log-linear Gompertz model with a historical time trend.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = year (t) [1751 to 2025]
+
+    Returns:
+    - 1-D numpy array of ln m
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Canonical log-linear Gompertz model parameters:
+    # ln m(x, t) = beta_0 + beta_1 * x + beta_2 * t
+    # where beta_1 is the aging rate (Gompertz slope ~ 0.08)
+    # and beta_2 is the historical rate of mortality decline (~ -0.01 per year)
+    beta_0 = 11.2
+    beta_1 = 0.081
+    beta_2 = -0.0105
+
+    return beta_0 + beta_1 * x + beta_2 * t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (ln m)
+
+    for adults (ages 30 to 95) using a Gompertz model with a log-linear
+    historical time trend.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] = age (x) [years], range 30 to 95
+        - X[:, 1] = year (t) [years], range 1751 to 2025
+
+    Returns:
+    np.ndarray
+        1-D array of predicted ln m values.
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Gompertz-linear time trend model: ln m(x, t) = a + b*x - g*(t - t_0)
+    # Using standard demographic constants:
+    # Rate of aging (b) approx 0.085
+    # Rate of mortality decline (g) approx 0.010 per year
+    # Baseline intercept at age 0 for year 1950 is approx -9.65
+    # ln m(x, t) = -9.65 + 0.085 * x - 0.010 * (t - 1950)
+    # This simplifies to: ln m(x, t) = 9.85 + 0.085 * x - 0.010 * t
+
+    ln_m = 9.85 + 0.085 * x - 0.010 * t
+
+    return ln_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (ln m)
+
+    for adults using a bilinear model in age and calendar year.
+
+    Parameters:
+    X : numpy.ndarray
+        2-D array where:
+        - X[:, 0] = age (x) [30 to 95]
+        - X[:, 1] = year (t) [1751 to 2025]
+
+    Returns:
+    numpy.ndarray
+        1-D array of ln m.
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Standard bilinear approximation coefficients for historical human mortality
+    beta_0 = 25.88
+    beta_1 = -0.266
+    beta_2 = -0.0180
+    beta_3 = 0.000179
+
+    log_m = beta_0 + beta_1 * x + beta_2 * t + beta_3 * x * t
+    return log_m

@@ -1,0 +1,146 @@
+task_id: measles_tsir_uk__cases_weekly
+domain: biology / epidemiology
+license: GPL-2.0-or-later
+
+# Type II — cluster = UK city.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Measles is a childhood infectious disease whose transmission dynamics in pre-vaccine populations are studied in epidemiology.
+
+target:
+  name: cases_weekly
+  symbol: I_t
+  unit: cases
+  description: Reported measles case count in a 2-week interval within one city.
+  range: [0, 7192]
+
+inputs:
+  - name: cases_prev
+    symbol: I_{t-1}
+    unit: cases
+    description: Reported measles case count in the immediately preceding 2-week interval in the same city.
+    range: [0.0, 7192.0]
+  - name: biweek
+    symbol: s
+    unit: ""
+    description: Seasonal index of the 2-week interval within a year, integer 1..26 repeating annually.
+    range: [1, 26]
+  - name: births_biweek
+    symbol: B
+    unit: individuals
+    description: Births into the city's population during the 2-week interval, linearly interpolated from annual census birth counts.
+    range: [0.73, 2718.33]
+  - name: log_pop
+    symbol: log10 N
+    unit: ""
+    description: Base-10 log of the city's annual mid-year population.
+    range: [3.29, 6.54]
+  - name: z_t
+    symbol: z
+    unit: individuals
+    description: Susceptible-deviation proxy — running cumulative biweekly births minus running cumulative biweekly cases from the start of the city's record.
+    range: [-6.23, 664077.18]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-city-out)
+# plus a temporal within-test split (first half years / second half years).
+# 20 UK cities with a complete demographic panel split 13 train / 7 test.
+# Test cities are unseen during form discovery; for each test city, fit()
+# sees its first half of years and predict() is scored on the second half
+# — matching Finkenstadt & Grenfell's own fit-early / forecast-late
+# validation design and testing whether the per-city TSIR parameters
+# (beta_s, alpha, S_0) remain stationary across the post-war demographic
+# transition. None of the reference formulas uses calendar year as an
+# input, so temporal extrapolation does not push a year-dependent law off
+# its domain.
+data_files:
+  train:     data/train.csv        # 13 train cities, all years
+  test_fit:  data/test_fit.csv     # 7 test cities, first-half years
+  test_test: data/test_test.csv    # 7 test cities, second-half years
+n_train:     7111
+n_test_fit:  1820
+n_test_test: 2009
+n_clusters_train: 13
+n_clusters_test:  7
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: tsir_density_exponent_alpha
+    value: 0.97
+    unit: dimensionless
+    description: Density-dependent / homogeneity exponent in the TSIR transmission equation for pre-vaccination UK measles.
+    source: Grenfell, Bjornstad & Kappey (2001), Nature 414:716-723, Methods PDF p. 7 — universal value 0.97 across analysed locations. The reference baselines except grenfell_2001 re-estimate alpha per city.
+    _role: candidate
+  - name: tsir_susceptible_fraction
+    value: 0.035
+    unit: dimensionless
+    description: Universal Sbar / N ratio for pre-vaccination UK measles.
+    source: Becker & Grenfell (2017) tsiR package, PDF p. 3 §1.2.
+    _role: candidate
+
+# === Reference baselines ===
+# Four Fourier-reduced TSIR variants spanning two functional families.
+# log-linear / exp-susceptibility:
+#   finkenstadt_2000  — closed-form OLS; 5 LOCAL.
+# linear-additive S:
+#   grenfell_2001     — alpha = 0.97 frozen; 1 LAW + 4 LOCAL.
+#   bjornstad_2002    — alpha per city; 5 LOCAL.
+#   becker_2017       — S_bar tied to N via sbar_frac; 5 LOCAL; uses log_pop.
+references:
+  - id: finkenstadt_2000
+    label: Finkenstadt & Grenfell (2000) linearised TSIR, exp-susceptibility (closed-form OLS)
+    formula_file: formulas/finkenstadt_2000.py
+    reference_pdf: reference/finkenstadt_2000.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 5         # b0, b1, b2, alpha, gamma
+    measured: {r2: 0.7602, rmse: 117.43}   # mean per-cluster
+  - id: grenfell_2001
+    label: Grenfell, Bjornstad & Kappey (2001) spatial TSIR, alpha=0.97 frozen (nonlinear LS)
+    formula_file: formulas/grenfell_2001.py
+    reference_pdf: reference/grenfell_2001.pdf
+    n_law_constants: 1        # alpha
+    n_other_constants: 0
+    n_local_params: 4         # b0, b1, b2, s_bar
+    measured: {r2: 0.7806, rmse: 118.33}   # mean per-cluster
+  - id: bjornstad_2002
+    label: Bjornstad, Finkenstadt & Grenfell (2002) TSIR, alpha per city (nonlinear LS)
+    formula_file: formulas/bjornstad_2002.py
+    reference_pdf: reference/bjornstad_2002.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 5         # b0, b1, b2, alpha, s_bar
+    measured: {r2: 0.7591, rmse: 120.14}   # mean per-cluster
+  - id: becker_2017
+    label: Becker & Grenfell (2017) tsiR-package TSIR, S_bar tied to N (nonlinear LS)
+    formula_file: formulas/becker_2017.py
+    reference_pdf: reference/becker_2017.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 5         # b0, b1, b2, alpha, sbar_frac
+    measured: {r2: 0.7626, rmse: 129.52}   # mean per-cluster
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        1
+  max_local_params:         5
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: r2                # mean per-cluster R² (scale-free across small/big cities)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a repeating annual school-calendar seasonal contact-rate effect"
+  - "includes susceptible availability replenished by births and depleted by prior infections"
+  - "includes transmission seeded by the preceding interval's infected cases, allowing nonlinear density-dependent scaling"
+  - "predicted case counts are non-negative"
+  - "predicted new cases do not exceed the available susceptible population"
+
+best_baseline: 0.7806     # grenfell_2001 (alpha=0.97 frozen), mean per-cluster r2

@@ -1,0 +1,100 @@
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    
+    # Canonical power-law approximation for the Mars cumulative crater 
+    # size-frequency distribution (SFD) for D >= 1 km.
+    # N(>=D) = N1 * D^(-b)
+    # N1 is the approximate global cumulative density at D = 1 km.
+    # b is the standard cumulative slope for Mars craters in this diameter range.
+    N1 = 2.5e-3  
+    b = 2.0      
+    
+    N_cum = N1 * (D ** -b)
+    return N_cum
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the cumulative areal density of Mars craters N(>=D) [km^-2].
+    
+    Uses the standard canonical power-law approximation for the Martian 
+    crater Size-Frequency Distribution (SFD) for D >= 1 km.
+    """
+    D_lower = X[:, 0]
+    
+    # Canonical power-law parameters for Mars global cumulative SFD (D > 1 km)
+    # N(>=D) = C * D^(-b)
+    C = 2.5e-3  # Cumulative density at D = 1 km [km^-2]
+    b = 1.8     # Cumulative slope (often cited between -1.8 and -2.0 for Mars)
+    
+    N_cum = C * (D_lower ** -b)
+    
+    return N_cum
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D_lower = X[:, 0]
+    # Canonical power-law approximation for the cumulative Martian crater SFD (D >= 1 km)
+    # N(>=D) = c * D^-b
+    c = 2.64e-3
+    b = 1.8
+    return c * (D_lower ** -b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the cumulative areal density of Mars craters N(>=D) using the 
+    standard power-law approximation for the global crater size-frequency 
+    distribution (SFD).
+    
+    Inputs:
+    - X[:, 0]: D_lower_km (primary input, threshold diameter D)
+    - X[:, 1]: D_upper_km (distractor)
+    - X[:, 2]: D_geomean_km (distractor)
+    
+    Returns:
+    - N_cum: Cumulative crater density in km^-2
+    """
+    D = X[:, 0]
+    
+    # Global Mars crater population power-law fit (e.g., Robbins & Hynek 2012)
+    # N(>=D) = C * D^(-b)
+    # C is derived from ~384,000 craters >= 1km over Mars' surface area (~1.448e8 km^2)
+    # b is the canonical cumulative slope for large craters on heavily cratered bodies
+    C = 2.655e-3  
+    b = 2.0       
+    
+    N_cum = C * (D ** -b)
+    
+    return N_cum
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    logD = np.log10(D)
+    
+    # Standard Neukum Production Function (NPF) for Mars
+    # Canonical polynomial fit in log10-log10 space (e.g., Ivanov 2001 / Neukum et al. 2001 scaled for Mars)
+    a0 = -2.913
+    a1 = -3.5575
+    a2 = 0.7810
+    a3 = -0.0865
+    a4 = 0.0045
+    
+    logN = a0 + a1 * logD + a2 * logD**2 + a3 * logD**3 + a4 * logD**4
+    
+    return 10**logN

@@ -1,0 +1,163 @@
+import numpy as np
+
+def predict(X):
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+    
+    # Burton et al. (1975) coefficients
+    a = 1.5          # injection efficiency [nT/hr / (mV/m)]
+    b = 7.26         # pressure correction coefficient [nT / nPa^{1/2}]
+    tau = 4.0        # ring-current decay time constant [hr]
+    E0 = 0.5         # threshold electric field [mV/m]
+    
+    # Rectified injection rate Q [nT/hr]
+    Ey_eff = np.maximum(Ey - E0, 0.0)
+    Q = -a * Ey_eff
+    
+    # Pressure-corrected Dst* (removes magnetopause current contribution)
+    Dst_star = Dst - b * np.sqrt(P_dyn)
+    
+    # Burton equation: dDst*/dt = Q - Dst*/tau
+    # (dDst/dt approximated by dDst*/dt, neglecting dP/dt)
+    dDst_dt = Q - Dst_star / tau
+    
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+    
+    # Canonical Burton et al. (1975) model coefficients
+    a = 7.7        # Ring current injection efficiency [nT hr^-1 (mV/m)^-1]
+    b = 7.26       # Magnetopause current pressure correction coefficient [nT nPa^-1/2]
+    tau = 4.0      # Ring current decay time constant [hr]
+    Ethresh = 0.5  # Threshold dawn-to-dusk electric field [mV/m]
+    
+    # Pressure-corrected Dst (Dst0)
+    Dst0 = Dst - b * np.sqrt(P_dyn)
+    
+    # Ring current injection function Q
+    Q = np.where(Ey > Ethresh, -a * (Ey - Ethresh), 0.0)
+    
+    # Burton equation: dDst0/dt = Q - Dst0 / tau
+    dDst_dt = Q - Dst0 / tau
+    
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Burton et al. (1975) model for the Dst tendency.
+    
+    The standard first-order ODE for the pressure-corrected Dst* is:
+        dDst*/dt = Q - Dst*/tau
+    with:
+        Dst* = Dst - b * sqrt(P_dyn)
+        Q   = -c * (Ey - E_c)   for Ey > E_c, else 0
+    Because instantaneous solar-wind data do not provide dP_dyn/dt, the raw
+    dDst/dt is approximated by dDst*/dt (the pressure-derivative term is
+    omitted, as is conventional in single-step operational formulations).
+    
+    Canonical coefficients:
+        b   = 7.26   nT / nPa^{1/2}
+        E_c = 0.5    mV/m
+        c   = 4.4    nT / (mV/m * hr)
+        tau = 8.0    hr
+    """
+    Dst   = X[:, 0]
+    Ey    = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Burton / Siscoe coefficients
+    b   = 7.26      # nT / nPa^{1/2}
+    E_c = 0.5       # mV/m
+    c   = 4.4       # nT / (mV/m * hr)
+    tau = 8.0       # hr
+
+    # Pressure-corrected Dst (ring-current component)
+    Dst_star = Dst - b * np.sqrt(np.maximum(P_dyn, 0.0))
+
+    # Injection rate: zero below threshold, linear above
+    Q = -c * np.maximum(Ey - E_c, 0.0)
+
+    # Closed-form tendency
+    dDst_dt = Q - Dst_star / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Inputs
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+    # V_sw, Bz_GSM, n_sw, B_mag, T_sw are available but not needed
+    # for the standard Burton et al. (1975) formulation.
+
+    # Pressure-corrected Dst: Dst* = Dst - b * sqrt(P_dyn)
+    b = 7.26  # nT / (nPa)^0.5
+    Dst_star = Dst - b * np.sqrt(P_dyn)
+
+    # Ring-current injection term (source)
+    Eth = 0.49  # mV/m
+    a = 4.4     # nT/hr per (mV/m)
+    Q = -a * np.maximum(Ey - Eth, 0.0)
+
+    # Decay time constant (hours)
+    tau = np.where(Dst_star > -50.0, 8.0, 4.0)
+
+    # Burton differential equation: dDst*/dt = Q - Dst*/tau
+    # (pressure is assumed steady over the hour, so dDst/dt ≈ dDst*/dt)
+    dDst_dt = Q - Dst_star / tau
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Burton, McPherron, and Russell (1975) empirical model for the
+    hourly tendency of the Dst index.
+
+    The standard differential equation is:
+
+        dDst/dt = Q - Dst / tau
+
+    where:
+      - tau is the ring-current decay time constant,
+      - Q = -b * (Ey - Ec) * H(Ey - Ec) is the injection rate,
+        active only when the dawn-dusk electric field Ey exceeds
+        the reconnection threshold Ec.
+
+    Constants are the canonical values from the original BMR study.
+    """
+    Dst = X[:, 0]   # observed Dst [nT]
+    Ey  = X[:, 1]   # solar wind dawn-dusk electric field [mV/m]
+
+    # Canonical BMR coefficients
+    tau = 3.0       # decay time constant [hr]
+    b   = 7.7       # injection efficiency [nT / (hr * mV/m)]
+    Ec  = 0.5       # threshold electric field [mV/m]
+
+    # Ring-current injection: negative when Ey > Ec (storm main phase)
+    Q = -b * np.maximum(Ey - Ec, 0.0)
+
+    # Recovery / decay of the ring current
+    decay = -Dst / tau
+
+    # Total tendency
+    dDst_dt = decay + Q
+    return dDst_dt

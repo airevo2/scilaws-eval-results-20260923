@@ -1,0 +1,176 @@
+import numpy as np
+
+def predict(X):
+    # Inputs
+    E     = X[:, 0]        # per-base strength parameter (proxy for stacking / H-bonding)
+    N     = X[:, 1]        # sequence length (bp)
+    salt  = X[:, 2]        # [Na+] in Molar
+    Cdna  = X[:, 3]        # total strand concentration in Molar
+
+    # Gas constant (kcal/mol/K)
+    R = 1.987e-3
+
+    # ---------------------------------------------------------------
+    # Nearest-neighbor thermodynamic form of the melting temperature:
+    #
+    #        Tm(K) = ΔH° / ( ΔS° + R * ln(C_T / x) )
+    #
+    # The duplex enthalpy/entropy are built from the per-base strength
+    # parameter E scaled by the number of stacked dinucleotide steps
+    # (N-1), plus helix-initiation terms.  A Schildkraut–Lifson type
+    # 16.6*log10([Na+]) electrostatic (salt) correction is added, and
+    # the result is converted from Kelvin to Celsius.
+    # ---------------------------------------------------------------
+
+    steps = np.maximum(N - 1.0, 1.0)
+
+    # Enthalpy (kcal/mol) and entropy (kcal/mol/K), initiation + stacking
+    dH = -0.2 - 8.0 * E * steps                    # kcal/mol  (negative)
+    dS = -0.0057 - 0.0215 * E * steps              # kcal/mol/K (negative)
+
+    # For non-self-complementary duplexes x = 4
+    x = 4.0
+
+    Tm_K = dH / (dS + R * np.log(Cdna / x))
+
+    # Convert to Celsius and apply salt correction
+    Tm_C = Tm_K - 273.15 + 16.6 * np.log10(salt)
+
+    return Tm_C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Nearest-neighbor duplex melting temperature (SantaLucia-type closed form)
+    #
+    #   Tm = ( ΔH° ) / ( ΔS° + R * ln( C_T / x ) )  - 273.15   [°C]
+    #   with a log10([Na+]) salt correction (Schildkraut-Lifson / Marmur-Doty style)
+    #
+    # E is the per-base "strength" parameter (sum of overlapping dinucleotide-step
+    # strengths divided by length), so the total duplex strength scales as E*(N-1),
+    # which we map linearly onto ΔH° and �δS°.
+
+    E    = X[:, 0]          # dimensionless per-base strength
+    N    = X[:, 1]          # length in bp
+    salt = X[:, 2]          # [Na+] in M
+    C    = X[:, 3]          # total strand concentration in M
+
+    R = 1.987               # cal / (mol*K)
+
+    # number of stacked dinucleotide steps
+    n_steps = np.maximum(N - 1.0, 1.0)
+
+    # Total thermodynamic parameters from the per-base strength E
+    # (kcal/mol for ΔH°, cal/(mol*K) for ΔS°)
+    dH0 = 1000.0 * (0.20 + 0.90 * E) * n_steps          # cal/mol
+    dS0 = (5.0 + 2.30 * E) * n_steps + 0.0              # cal/(mol*K)
+
+    # For non-self-complementary duplexes x = 4
+    x = 4.0
+
+    # Melting temperature in Kelvin at 1 M Na+
+    Tm_K = dH0 / (dS0 + R * np.log(C / x))
+
+    # Convert to Celsius and apply salt correction
+    Tm_C = Tm_K - 273.15 + 16.6 * np.log10(salt)
+
+    return Tm_C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Khandelwal & Bhyravabhotla (2010) phenomenological model
+    # for DNA duplex melting temperature.
+    E    = X[:, 0]          # per-base strength parameter
+    N    = X[:, 1]          # sequence length (bp)
+    salt = X[:, 2]          # [Na+] in Molar
+    # C_DNA (X[:, 3]) not used in the canonical closed form
+
+    Tm = (7.35 * E
+          + 17.34 * np.log(N)
+          + 4.96  * np.log(salt)
+          + 0.89  * (np.log(salt))**2
+          - 25.42)
+    return Tm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    DNA duplex melting temperature via a nearest-neighbor thermodynamic
+    (van't Hoff) closed form with a Schildkraut-Lifson salt correction.
+
+        Tm(K) = dH / (dS + R * ln(C_DNA / x))
+        Tm(C) = Tm(K) - 273.15 + 16.6 * log10([Na+])
+
+    The per-base "strength" E scales the total enthalpy/entropy of the
+    (N-1) stacked dinucleotide steps.
+    """
+    E    = X[:, 0]            # per-base strength (encodes H-bond + stacking)
+    N    = X[:, 1]            # length in bp
+    salt = X[:, 2]            # [Na+] in M
+    C    = X[:, 3]            # total strand concentration in M
+
+    R = 1.987                 # cal / (mol * K)
+    x = 4.0                   # for non-self-complementary duplex (C_T/4)
+
+    # Total thermodynamic parameters from per-base strength over (N-1) steps
+    dH = -1150.0 * E * (N - 1.0)     # cal / mol
+    dS = -3.20  * E * (N - 1.0)      # cal / (mol * K)
+
+    # van't Hoff melting temperature at 1 M Na+
+    Tm_K = dH / (dS + R * np.log(C / x))
+
+    # Convert to Celsius and apply salt correction
+    Tm_C = Tm_K - 273.15 + 16.6 * np.log10(salt)
+
+    return Tm_C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Closed-form DNA duplex melting temperature (Tm) prediction.
+
+    Based on the nearest-neighbor two-state thermodynamic relation
+
+            Tm(K) = ΔH° / (� ΔS° + R * ln(C_T / x) )
+
+    where the per-sequence enthalpy and entropy are built from the
+    per-base "strength" parameter E (E already encodes the average
+    dinucleotide-step stacking / H-bond contribution), scaled by the
+    number of base pairs N.  A Schildkraut–Lifson type logarithmic
+    salt correction is then applied, together with the total-strand
+    concentration dependence contained in the R*ln(C_T/4) term.
+    """
+    E    = X[:, 0].astype(float)   # per-base strength parameter [-]
+    N    = X[:, 1].astype(float)   # length [bp]
+    salt = X[:, 2].astype(float)   # [Na+] [M]
+    C    = X[:, 3].astype(float)   # total strand concentration [M]
+
+    R = 1.987  # cal / (mol*K)
+
+    # --- Nearest-neighbor thermodynamic parameters from strength E ---
+    # Effective total enthalpy and entropy (magnitudes) built per base pair.
+    # Coefficients are canonical NN-scale averages (cal/mol and cal/mol/K).
+    dH = 8000.0 * E * (N - 1.0)          # |ΔH°| in cal/mol
+    dS = 22.0   * E * (N - 1.0) + 108.0  # |ΔS°| in cal/mol/K (initiation term)
+
+    # For non-self-complementary duplexes the factor x = 4
+    Tm_1M = dH / (dS + R * np.log(C / 4.0))   # Tm at 1 M Na+ in Kelvin
+
+    # --- Salt correction (Schildkraut–Lifson, logarithmic in [Na+]) ---
+    Tm_salt = Tm_1M + 16.6 * np.log10(salt)   # shift in Kelvin/°C
+
+    # Convert Kelvin -> Celsius
+    Tm_C = Tm_salt - 273.15
+
+    return Tm_C

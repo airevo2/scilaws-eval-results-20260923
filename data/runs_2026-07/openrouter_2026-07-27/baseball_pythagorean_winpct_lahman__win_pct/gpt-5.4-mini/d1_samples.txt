@@ -1,0 +1,51 @@
+import numpy as np
+
+def predict(X):
+    R = X[:, 0].astype(float)
+    RA = X[:, 1].astype(float)
+    # Pythagorean expectation (standard baseball form)
+    exponent = 2.0
+    return (R ** exponent) / (R ** exponent + RA ** exponent)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0].astype(float)
+    RA = X[:, 1].astype(float)
+    # Pythagorean expectation (common baseball form, exponent ~2)
+    return (R ** 2) / (R ** 2 + RA ** 2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0].astype(float)
+    RA = X[:, 1].astype(float)
+    
+    # Pythagorean expectation (baseball):
+    # W% = RS^gamma / (RS^gamma + RA^gamma), with gamma commonly ~2
+    gamma = 2.0
+    return (R ** gamma) / (R ** gamma + RA ** gamma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0].astype(float)
+    RA = X[:, 1].astype(float)
+    # Pythagorean expectation (classic baseball form)
+    gamma = 2.0
+    return (R ** gamma) / ((R ** gamma) + (RA ** gamma))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0].astype(float)
+    RA = X[:, 1].astype(float)
+    return (R**2) / (R**2 + RA**2)

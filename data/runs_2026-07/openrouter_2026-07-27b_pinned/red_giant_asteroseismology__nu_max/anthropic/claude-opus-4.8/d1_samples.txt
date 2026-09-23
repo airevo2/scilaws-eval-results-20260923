@@ -1,0 +1,72 @@
+import numpy as np
+
+def predict(X):
+    # Canonical Delta_nu - nu_max scaling relation (Stello et al. 2009):
+    #   Delta_nu / Delta_nu_sun = (nu_max / nu_max_sun)^alpha
+    # Inverting: nu_max = nu_max_sun * (Delta_nu / Delta_nu_sun)^(1/alpha)
+    dnu = X[:, 0]
+
+    nu_max_sun = 3090.0    # uHz
+    dnu_sun = 135.1        # uHz
+    alpha = 0.772          # commonly cited power-law exponent
+
+    nu_max = nu_max_sun * (dnu / dnu_sun) ** (1.0 / alpha)
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Solar reference values (SYD pipeline / Yu+2018)
+    numax_sun = 3090.0   # uHz
+    dnu_sun   = 135.1    # uHz
+    # Canonical Delta-nu -- nu_max scaling relation:
+    #   Delta_nu / Delta_nu_sun = (nu_max / nu_max_sun)^0.75
+    # inverted to solve for nu_max:
+    dnu = X[:, 0]
+    numax = numax_sun * (dnu / dnu_sun) ** (1.0 / 0.75)
+    return numax
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical Delta_nu - nu_max scaling relation (Stello et al. 2009):
+    #   Delta_nu = 0.263 * nu_max^0.772
+    # Invert to solve for nu_max given Delta_nu.
+    delta_nu = X[:, 0]
+    a = 0.263
+    b = 0.772
+    nu_max = (delta_nu / a) ** (1.0 / b)
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical Delta_nu - nu_max scaling relation (Stello et al. 2009; Yu et al. 2018)
+    # Delta_nu = alpha * nu_max^beta  =>  nu_max = (Delta_nu / alpha)^(1/beta)
+    alpha = 0.267
+    beta = 0.764
+    delta_nu = X[:, 0]
+    nu_max = (delta_nu / alpha) ** (1.0 / beta)
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical Stello et al. (2009) empirical relation between
+    # the large frequency separation and the frequency of maximum power:
+    #     Delta_nu = alpha * nu_max**beta
+    # with alpha = 0.263 uHz, beta = 0.772 (nu_max in uHz).
+    # Inverting gives nu_max as a function of Delta_nu.
+    alpha = 0.263
+    beta = 0.772
+    delta_nu = X[:, 0]
+    nu_max = (delta_nu / alpha) ** (1.0 / beta)
+    return nu_max

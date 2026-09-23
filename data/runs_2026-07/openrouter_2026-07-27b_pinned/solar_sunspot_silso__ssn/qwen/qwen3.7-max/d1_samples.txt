@@ -1,0 +1,81 @@
+import numpy as np
+
+def predict(X):
+    """
+    The International Sunspot Number (R_I) is an observational index defined 
+    by the relationship R_I = k * (10*g + s), where g is the number of sunspot 
+    groups, s is the number of individual spots, and k is an observer scaling factor. 
+    
+    Because the solar dynamo is a chaotic, non-linear system, there is no 
+    deterministic, closed-form physical equation to predict the exact monthly 
+    SSN purely as a function of time (decimal year, year, month). 
+    
+    In the absence of group/spot counts or cycle-phase inputs, the standard 
+    canonical baseline (climatological mean) for the ISN v2.0 dataset is returned.
+    """
+    # Long-term mean of the SILSO ISN v2.0 monthly sunspot number (1749-present)
+    R_I_mean = 50.0 
+    
+    return np.full(X.shape[0], R_I_mean)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    There is no standard closed-form analytical relationship for the 
+    monthly mean International Sunspot Number (ISN v2.0) as a function 
+    of time. Sunspot numbers are an empirical, quasi-periodic, and 
+    chaotic time series governed by the highly non-linear magnetohydrodynamic 
+    processes of the solar dynamo. Therefore, it cannot be predicted by 
+    a deterministic closed-form equation of (t, year, month).
+    """
+    return np.full(X.shape[0], np.nan)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    The Monthly mean total International Sunspot Number (ISN v2.0) is an 
+    empirical, chaotic time series driven by the solar dynamo. There is 
+    no standard deterministic closed-form relationship to predict it 
+    purely as a function of time (the solar cycle period and amplitude 
+    vary stochastically, causing any simple periodic function to 
+    accumulate severe phase errors over centuries). 
+    
+    The most scientifically defensible closed-form (zeroth-order) 
+    prediction given only time inputs is the long-term climatological 
+    mean of the ISN v2.0 record.
+    """
+    return np.full(X.shape[0], 82.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Canonical sinusoidal approximation for the ~11-year Schwabe solar cycle
+    # Since SSN is a chaotic, quasi-periodic time series, a simple harmonic 
+    # model is the standard closed-form approximation when only time is given.
+    period = 11.0
+    mean_val = 50.0
+    amp = 50.0
+    phase = 2 * np.pi * (t - 1749.0) / period
+    return np.maximum(0, mean_val + amp * np.sin(phase))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Approximate 11-year Schwabe cycle (sinusoidal climatological model)
+    # Long-term mean ~ 50, Amplitude ~ 50, Period ~ 11.0 years
+    period = 11.0
+    phase = 1750.0
+    ssn = 50.0 + 50.0 * np.sin(2.0 * np.pi * (t - phase) / period)
+    return np.maximum(ssn, 0.0)

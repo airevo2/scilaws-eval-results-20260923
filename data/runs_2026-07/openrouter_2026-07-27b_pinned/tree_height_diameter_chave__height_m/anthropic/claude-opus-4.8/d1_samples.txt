@@ -1,0 +1,78 @@
+import numpy as np
+
+def predict(X):
+    # Feldpausch et al. (2012) pantropical monotonic Weibull height-diameter model:
+    #   H = a * (1 - exp(-b * D^c))
+    D = X[:, 0].astype(float)
+    a = 50.0   # asymptotic height (m)
+    b = 0.0417 # rate parameter
+    c = 0.836  # shape parameter
+    H = a * (1.0 - np.exp(-b * np.power(D, c)))
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Pantropical height-diameter relationship (Chave et al. 2014 style
+    log-quadratic model): ln(H) = a + b*ln(D) + c*(ln(D))^2
+    """
+    D = np.asarray(X[:, 0], dtype=float)
+    lnD = np.log(D)
+    a, b, c = 0.4358, 0.8734, -0.0630
+    lnH = a + b * lnD + c * lnD**2
+    return np.exp(lnH)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Power-law (allometric) height-diameter model, the most commonly
+    cited closed form for tropical direct-harvest data:
+
+        H = a * D^b
+
+    equivalently  ln(H) = ln(a) + b * ln(D)
+    """
+    D = X[:, 0]
+    a = 1.9   # scaling coefficient
+    b = 0.6   # allometric exponent
+    H = a * np.power(D, b)
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Pantropical tree height–diameter relationship.
+    Weibull form (Feldpausch et al. 2011/2012 type):
+        H = a * (1 - exp(-b * D**c))
+    """
+    D = X[:, 0]
+    a = 50.0    # asymptotic maximum height (m)
+    b = 0.0420  # rate parameter
+    c = 0.784   # shape parameter
+    H = a * (1.0 - np.exp(-b * np.power(D, c)))
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Pantropical height–diameter relationship (Feldpausch et al. 2012 form):
+        ln(H) = a + b*ln(D) + c*(ln(D))^2
+    a second-order log-log polynomial that saturates at large diameters.
+    """
+    D = np.asarray(X[:, 0], dtype=float)
+    lnD = np.log(D)
+    a, b, c = 0.893, 0.760, -0.0340
+    lnH = a + b * lnD + c * lnD**2
+    return np.exp(lnH)

@@ -1,0 +1,108 @@
+import numpy as np
+
+def predict(X):
+    # Sharpe-Schoolfield thermal performance model (high-temperature deactivation)
+    T = np.asarray(X[:, 0], dtype=float) + 273.15  # deg C -> Kelvin
+
+    k = 8.617333262e-5   # Boltzmann constant [eV/K]
+
+    # Fitted / typical coefficients
+    B0   = 1.0    # rate scale (unit-absorbing constant per cluster)
+    E    = 0.65   # activation energy [eV]
+    Eh   = 2.0    # high-temperature deactivation energy [eV]
+    Th   = 305.0  # temperature of half deactivation [K]
+    Tref = 283.15 # reference temperature [K]
+
+    # Arrhenius rise
+    rise = np.exp((E / k) * (1.0 / Tref - 1.0 / T))
+    # High-temperature inactivation
+    decay = 1.0 + np.exp((Eh / k) * (1.0 / Th - 1.0 / T))
+
+    P = B0 * rise / decay
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Sharpe-Schoolfield thermal performance model (high-temperature inactivation)
+    # T converted from Celsius to Kelvin
+    T = X[:, 0] + 273.15
+
+    k = 8.617e-5          # Boltzmann constant (eV/K)
+    B0 = 1.0              # rate at reference temperature (scale absorbs units)
+    T_ref = 293.15        # reference temperature (K) ~20 C
+    E = 0.65              # activation energy (eV)
+    E_D = 3.5             # deactivation energy (eV)
+    T_D = 305.0           # temperature at which half the enzymes are inactive (K)
+
+    boltzmann = np.exp(-E / k * (1.0 / T - 1.0 / T_ref))
+    inactivation = 1.0 + np.exp(E_D / k * (1.0 / T_D - 1.0 / T))
+
+    P = B0 * boltzmann / inactivation
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Sharpe-Schoolfield thermal performance model (high-temperature deactivation form)
+    T = X[:, 0] + 273.15          # convert Celsius to Kelvin
+    k = 8.617333262e-5            # Boltzmann constant [eV/K]
+
+    # Fitted / canonical coefficients
+    B0  = 1.0        # rate scale parameter (absorbs each experiment's units)
+    E   = 0.65       # activation energy [eV]
+    Eh  = 3.5        # high-temperature deactivation energy [eV]
+    Th  = 305.0      # temperature of half high-temp deactivation [K]
+    Tref = 293.15    # reference temperature [K]
+
+    boltzmann = np.exp(-E / k * (1.0 / T - 1.0 / Tref))
+    inactivation = 1.0 + np.exp(Eh / k * (1.0 / Th - 1.0 / T))
+
+    P = B0 * boltzmann / inactivation
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Sharpe-Schoolfield thermal performance model (high-temperature deactivation)
+    T = X[:, 0] + 273.15          # convert Celsius to Kelvin
+    k = 8.617333262e-5            # Boltzmann constant [eV/K]
+
+    # Fitted coefficients (named constants)
+    B0   = 1.0        # trait value at reference temperature (scale parameter)
+    E    = 0.65       # activation energy [eV]
+    Eh   = 3.5        # high-temperature deactivation energy [eV]
+    Th   = 305.0      # temperature at which half of enzymes are deactivated [K]
+    Tref = 293.15     # reference temperature [K]
+
+    boltzmann = np.exp(-E / k * (1.0 / T - 1.0 / Tref))
+    inactivation = 1.0 + np.exp(Eh / k * (1.0 / Th - 1.0 / T))
+
+    return B0 * boltzmann / inactivation
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Sharpe-Schoolfield thermal performance model (Boltzmann-Arrhenius with high-T inactivation)
+    T = X[:, 0] + 273.15          # convert Celsius to Kelvin
+    k = 8.617333262145e-5         # Boltzmann constant [eV/K]
+
+    # Fitted / typical constants
+    P0   = 1.0        # scale parameter (per-cluster unit absorbs actual scale)
+    E    = 0.65       # activation energy [eV]
+    Ed   = 3.0        # deactivation energy [eV]
+    Tref = 293.15     # reference temperature [K] (20 C)
+    Td   = 305.15     # temperature of half high-T inactivation [K] (~32 C)
+
+    rise = np.exp(-E / k * (1.0 / T - 1.0 / Tref))
+    fall = 1.0 + np.exp(Ed / k * (1.0 / Td - 1.0 / T))
+
+    return P0 * rise / fall

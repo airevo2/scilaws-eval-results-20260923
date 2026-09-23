@@ -1,0 +1,132 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    m_i = X[:, 0]  # Origin resident workers (total outbound)
+    m_j = X[:, 1]  # Destination jobs (total inbound)
+    s_ij = X[:, 3]  # Intervening opportunities
+
+    # Standard Simini et al. (2012) Radiation Model formula:
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # where T_i (total outbound flow from i) is equal to m_i.
+    numerator = (m_i**2) * m_j
+    denominator = (m_i + s_ij) * (m_i + m_j + s_ij)
+
+    # Avoid division by zero (though inputs are typically > 0)
+    T_ij = np.zeros_like(m_i)
+    valid = denominator > 0
+    T_ij[valid] = numerator[valid] / denominator[valid]
+
+    # Return log10(T_ij + 1)
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract features
+    m_i = X[:, 0]  # Origin resident workers (total outbound)
+    m_j = X[:, 1]  # Destination jobs (total inbound)
+    d_ij = X[:, 2]  # Distance (not needed for the radiation model itself, but provided)
+    s_ij = X[:, 3]  # Intervening opportunities
+
+    # Standard Radiation Model formula:
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # where T_i (total outbound commuters from i) is equal to m_i.
+    numerator = m_i**2 * m_j
+    denominator = (m_i + s_ij) * (m_i + m_j + s_ij)
+
+    # Calculate T_ij, handling potential division by zero (though denominator > 0 in practice)
+    T_ij = np.zeros_like(m_i, dtype=float)
+    valid = denominator > 0
+    T_ij[valid] = numerator[valid] / denominator[valid]
+
+    # Return log10(T_ij + 1)
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    m_i = X[:, 0]  # Origin resident workers (total outbound)
+    m_j = X[:, 1]  # Destination jobs
+    s_ij = X[:, 3]  # Intervening opportunities
+
+    # Simini et al. (2012) Radiation Model:
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # Where T_i (total outbound commuters from i) is equal to m_i.
+    numerator = (m_i**2) * m_j
+    denominator = (m_i + s_ij) * (m_i + m_j + s_ij)
+
+    # Prevent division by zero (though typical ranges are > 0)
+    denominator = np.where(denominator == 0, 1e-9, denominator)
+
+    T_ij = numerator / denominator
+
+    # Return log10(T_ij + 1)
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log10(T_ij + 1) commuting flows using the canonical Radiation Model
+    (Simini et al., 2012), which is the standard parameter-free closed-form model 
+    incorporating intervening opportunities.
+    
+    Inputs:
+    - X[:, 0]: m_i (origin resident workers)
+    - X[:, 1]: m_j (destination jobs)
+    - X[:, 2]: d_ij (distance in km, not directly used in the radiation formula 
+                     since s_ij encodes the spatial structure)
+    - X[:, 3]: s_ij (intervening opportunities)
+    """
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    s_ij = X[:, 3]
+    
+    # Radiation model formula: T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # where the total outbound commuters T_i is equal to the origin resident workers m_i.
+    numerator = (m_i ** 2) * m_j
+    denominator = (m_i + s_ij) * (m_i + m_j + s_ij)
+    
+    # Avoid division by zero in case of edge cases
+    denominator = np.where(denominator == 0, 1e-9, denominator)
+    
+    T_ij = numerator / denominator
+    
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    m_i = X[:, 0]  # Origin resident workers (total outbound flow)
+    m_j = X[:, 1]  # Destination jobs
+    d_ij = X[:, 2]  # Distance (not explicitly used in the parameter-free radiation model)
+    s_ij = X[:, 3]  # Intervening opportunities
+
+    # Simini et al. (2012) Radiation Model formulation:
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # where T_i (total outbound flow) is m_i.
+    numerator = (m_i**2) * m_j
+    denominator = (m_i + s_ij) * (m_i + m_j + s_ij)
+
+    # Calculate flow, avoiding division by zero
+    T_ij = np.zeros_like(m_i)
+    mask = denominator > 0
+    T_ij[mask] = numerator[mask] / denominator[mask]
+
+    # Return log10(T_ij + 1)
+    return np.log10(T_ij + 1)

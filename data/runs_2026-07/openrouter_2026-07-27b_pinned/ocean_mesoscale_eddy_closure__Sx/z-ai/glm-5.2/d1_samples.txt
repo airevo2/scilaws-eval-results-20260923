@@ -1,0 +1,48 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the zonal component of the subgrid-scale eddy momentum forcing (S_x)
+    based on the divergence of the Leonard/Reynolds stress tensor in quasi-geostrophic flows.
+    
+    The closed-form relationship is derived from the leading-order Leonard stress 
+    parameterization for a top-hat (or similar) filter, which in 2D non-divergent QG flow 
+    can be expressed in terms of the coarse-grained vorticity and deformation rates:
+    
+    tau_xx ~ (Delta^2 / 48) * (zeta^2 - 2 * zeta * D)
+    tau_xy ~ (Delta^2 / 24) * (zeta * Dtilde)
+    
+    S_x = -d(tau_xx)/dx - d(tau_xy)/dy
+        = -(Delta^2 / 48) * d(zeta^2)/dx 
+          + (Delta^2 / 24) * d(zeta*D)/dx 
+          - (Delta^2 / 24) * d(zeta*Dtilde)/dy
+    """
+    # The filter width squared (Delta^2) acts as the scaling coefficient.
+    # It is set to 1.0 here, representing the canonical non-dimensional form 
+    # or a fitted constant coefficient.
+    Delta2 = 1.0 
+    
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+    
+    Sx = - (Delta2 / 48.0) * d_zeta2_dx \
+         + (Delta2 / 24.0) * d_zetaD_dx \
+         - (Delta2 / 24.0) * d_zetaDtilde_dy
+         
+    return Sx
+
+=====
+
+
+
+=====
+
+
+
+=====
+
+
+
+=====
+

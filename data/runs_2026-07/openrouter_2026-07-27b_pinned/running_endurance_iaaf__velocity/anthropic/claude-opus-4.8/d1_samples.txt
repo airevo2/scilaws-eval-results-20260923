@@ -1,0 +1,97 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0].astype(float)
+    s_M = X[:, 1].astype(float)
+
+    # Riegel-type endurance power law: T = a * d^b  (b ~ 1.07)
+    # => velocity v = d / T = c * d^(1 - b) = c * d^p, with p ~ -0.10
+    #
+    # Fitted (men) reference points:
+    #   100 m  -> ~10.4 m/s
+    #   marathon (42195 m) -> ~5.8 m/s
+    c = 16.4      # velocity scale constant [m/s at 1 m], men
+    p = -0.098    # endurance decay exponent
+
+    v_men = c * np.power(d, p)
+
+    # Women's records are ~10% slower on average across distances
+    sex_factor = np.where(s_M >= 0.5, 1.0, 0.90)
+
+    return v_men * sex_factor
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Average race velocity vs. distance follows a power-law (Riegel-type)
+    endurance model:  T = a * d^E  =>  v = d/T = (1/a) * d^(1-E) = A * d^(-b).
+    A sex factor scales women's records ~10% slower than men's.
+    """
+    d = np.asarray(X[:, 0], dtype=float)
+    s_M = np.asarray(X[:, 1], dtype=float)
+
+    A = 16.2        # velocity scale [m/s at 1 m, extrapolated]
+    b = 0.096       # fatigue exponent (Riegel E - 1 ~ 0.096)
+    base = 0.90     # women's relative level
+    dsex = 0.10     # men's increment
+
+    v = A * np.power(d, -b) * (base + dsex * s_M)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0].astype(float)
+    s_M = X[:, 1].astype(float)
+
+    # Power-law (Riegel-type) speed-distance relationship for world records:
+    #   time  ~ a * d^1.10   ->   velocity = d/time ~ C * d^(-0.10)
+    C = 16.3          # men reference scale [ (m/s) * m^0.0965 ]
+    k = -0.0965       # fatigue/endurance exponent
+    female_factor = 0.89   # women ~11% slower than men
+
+    v = C * np.power(d, k)
+    v = v * np.where(s_M >= 0.5, 1.0, female_factor)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0].astype(float)
+    s_M = X[:, 1].astype(float)
+
+    # Riegel-type endurance power law: T = a * d^b  =>  v = d/T = (1/a) * d^(1-b)
+    # With b ~ 1.096 the velocity exponent is p = 1 - b ~ -0.096
+    p = -0.096
+
+    # Reference speed coefficient (men); women ~11% slower
+    c_men = 16.2
+    sex_factor = 0.89 + 0.11 * s_M   # 1.00 for men, 0.89 for women
+
+    v = c_men * sex_factor * np.power(d, p)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0].astype(float)
+    s_M = X[:, 1].astype(float)
+
+    # Riegel-type power law: race time T = a * d^b  (b ~ 1.06),
+    # hence average velocity v = d / T = (1/a) * d^(1-b) = C * d^p
+    p = -0.098          # fatigue exponent (1 - Riegel b)
+    C_men = 16.4        # speed scale for men
+    sex_factor = 0.90   # women run ~90% of men's speed
+
+    C = C_men * (s_M + (1.0 - s_M) * sex_factor)
+    v = C * np.power(d, p)
+    return v

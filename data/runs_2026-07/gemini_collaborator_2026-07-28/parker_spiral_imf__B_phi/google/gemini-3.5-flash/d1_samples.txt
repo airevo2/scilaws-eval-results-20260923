@@ -1,0 +1,128 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    B_r = X[:, 0]  # radial magnetic field component [nT]
+    v_sw = X[:, 1]  # solar wind speed [km/s]
+    r = X[:, 2]  # heliocentric distance [AU]
+
+    # Physical constants
+    omega = 2.7e-6  # Solar angular rotation rate [rad/s]
+    AU_in_km = 1.495978707e8  # 1 Astronomical Unit [km]
+
+    # Parker spiral relationship: B_phi = - B_r * (omega * r) / v_sw
+    # Convert heliocentric distance from AU to km to match v_sw in km/s
+    B_phi = -B_r * (omega * r * AU_in_km) / v_sw
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = B_r [nT]
+    # X[:, 1] = v_sw [km/s]
+    # X[:, 2] = r [AU]
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r = X[:, 2]
+
+    # Solar sidereal rotation rate (rad/s)
+    omega = 2.87e-6
+    # 1 Astronomical Unit in kilometers
+    AU_to_km = 1.495978707e8
+
+    # Parker spiral relationship: B_phi = - B_r * (omega * r) / v_sw
+    # where r is converted from AU to km to match v_sw in km/s
+    omega_r = omega * (r * AU_to_km)
+    B_phi = -B_r * (omega_r / v_sw)
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = B_r (nT)
+    # X[:, 1] = v_sw (km/s)
+    # X[:, 2] = r (AU)
+
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+
+    # Solar sidereal rotation angular velocity (rad/s)
+    # Based on a solar rotation period of ~25.38 days
+    omega = 2.865e-6
+
+    # Convert heliocentric distance from AU to km
+    AU_to_km = 1.495978707e8
+    r_km = r_AU * AU_to_km
+
+    # Parker spiral formula: B_phi = - B_r * (omega * r) / v_sw
+    B_phi = -B_r * (omega * r_km) / v_sw
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = B_r [nT]
+    # X[:, 1] = v_sw [km/s]
+    # X[:, 2] = r [AU]
+
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+
+    # Sidereal angular velocity of the Sun at the equator (rad/s)
+    omega = 2.87e-6
+
+    # 1 Astronomical Unit in kilometers
+    AU_to_km = 1.495978707e8
+
+    # Convert heliocentric distance from AU to km
+    r_km = r_AU * AU_to_km
+
+    # Parker spiral relationship for the azimuthal component of IMF:
+    # B_phi = - B_r * (omega * r) / v_sw
+    B_phi = -B_r * (omega * r_km) / v_sw
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = B_r_nT (nT)
+    # X[:, 1] = v_sw_km_s (km/s)
+    # X[:, 2] = r_AU (AU)
+
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r = X[:, 2]
+
+    # Solar sidereal rotation angular velocity (rad/s)
+    # corresponding to a rotation period of ~25.38 days
+    omega = 2.865e-6
+
+    # Convert heliocentric distance from AU to km
+    r_km = r * 1.495978707e8
+
+    # Parker spiral relationship: B_phi = - B_r * (omega * r) / v_sw
+    B_phi = -B_r * (omega * r_km) / v_sw
+
+    return B_phi

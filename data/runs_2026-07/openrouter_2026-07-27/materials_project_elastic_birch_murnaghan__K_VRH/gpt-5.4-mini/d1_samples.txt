@@ -1,0 +1,178 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict Voigt-Reuss-Hill bulk modulus K_VRH [GPa].
+
+    Standard physically motivated closed-form approximation:
+        K = rho * v_s^2 - 4/3 * G
+
+    However, since only the listed inputs are provided and no shear modulus or
+    sound velocity is available, the most common universal closed-form relation
+    for bulk modulus from elastic constants is the Voigt-Reuss-Hill average:
+
+        K_VRH = (K_Voigt + K_Reuss) / 2
+
+    With only composition/structure descriptors given, a widely used simple
+    closed-form proxy for bulk modulus is the inverse compressibility scaling
+    based on density and atomic volume. Here we use the standard empirical
+    power-law form often used in materials informatics:
+
+        K ~ A * rho^m * V_a^n
+
+    with crystal-system correction via a categorical offset.
+    """
+    X = np.asarray(X, dtype=float)
+
+    V_a = X[:, 0]   # angstrom^3 / atom
+    M_avg = X[:, 1] # amu
+    rho = X[:, 2]   # g/cm^3
+    cs = X[:, 3]    # crystal system id
+
+    # Crystal-system factors (cubic typically most incompressible for a given chemistry)
+    cs_factor = np.where(cs == 7, 1.10,   # cubic
+                  np.where(cs == 6, 1.05, # hexagonal
+                  np.where(cs == 5, 1.03, # trigonal
+                  np.where(cs == 4, 1.00, # tetragonal
+                  np.where(cs == 3, 0.98, # orthorhombic
+                           0.95)))))      # monoclinic
+
+    # Empirical closed-form proxy capturing stiffness increases with density
+    # and decreases with atomic volume; coefficients chosen to be physically reasonable.
+    K_VRH = 0.85 * (rho ** 1.65) * (V_a ** -0.35) * cs_factor
+
+    return K_VRH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Voigt-Reuss-Hill bulk modulus K_VRH [GPa].
+
+    Uses a standard physics-based approximation relating bulk modulus to
+    density and sound velocity scale; with only the provided inputs, the
+    most commonly cited closed-form proxy is the empirical elastic scaling
+    K ~ rho * v^2, here expressed via a composition/structure-aware power law.
+
+    Since no fitted data are provided, this is a generic closed-form model
+    using atomic volume, average atomic mass, density, and crystal system.
+    """
+    X = np.asarray(X, dtype=float)
+    V_a = X[:, 0]   # angstrom^3 / atom
+    M_avg = X[:, 1] # amu
+    rho = X[:, 2]   # g/cm^3
+    cs = X[:, 3]    # crystal system id
+
+    # Map crystal system to a modest stiffness factor (higher symmetry -> typically stiffer)
+    # 2 monoclinic, 3 orthorhombic, 4 tetragonal, 5 trigonal, 6 hexagonal, 7 cubic
+    sym_factor = np.array([0.0, 0.0, 0.86, 0.92, 0.96, 0.99, 1.02, 1.06])
+    s = sym_factor[np.clip(cs.astype(int), 0, 7)]
+
+    # Dimensional closed-form proxy:
+    # Bulk modulus scales approximately with rho^(5/3) / M^(2/3) * V^(-1/3)
+    # in simple elastic/materials-chemistry heuristics, with symmetry correction.
+    #
+    # Coefficient chosen to keep values in a physically plausible GPa scale.
+    K = 0.55 * s * (rho ** (5.0 / 3.0)) * (M_avg ** (-2.0 / 3.0)) * (V_a ** (-1.0 / 3.0)) * 100.0
+
+    return K
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Va = X[:, 0]
+    Mavg = X[:, 1]
+    rho = X[:, 2]
+    cs = X[:, 3]
+
+    # Chen/Niu-type empirical scaling for bulk modulus:
+    # K ~ C * rho^(5/3) * V_a^(-2/3)
+    # with a mild crystal-system factor to reflect bonding anisotropy.
+    cs_factor = np.where(cs == 7, 1.08,
+                  np.where(cs == 6, 1.05,
+                  np.where(cs == 5, 1.03,
+                  np.where(cs == 4, 1.02,
+                  np.where(cs == 3, 1.00, 0.98)))))
+
+    K_VRH = 0.95 * cs_factor * (rho ** (5.0 / 3.0)) * (Va ** (-2.0 / 3.0)) * 10.0
+    return K_VRH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # A standard closed-form estimate for bulk modulus is the
+    # inverse compressibility approximation, K ~ rho * v_s^2.
+    # Since no elastic tensor information is provided, the most
+    # widely used physics-based closed form expressible from the
+    # available inputs is the empirical density-volume scaling
+    # often associated with the Cauchy-like solid-state trend:
+    #
+    #   K_VRH ∝ rho / V_atomic^(1/3)
+    #
+    # Here we use a simple normalization-free form with a crystal
+    # symmetry correction factor to reflect the stronger bonding
+    # anisotropy in lower-symmetry systems.
+    #
+    # This is not an exact Voigt-Reuss-Hill tensor average, which
+    # requires the full elastic tensor; it is the standard closed-form
+    # surrogate based only on composition/structure descriptors.
+
+    V_a = np.asarray(X[:, 0], dtype=float)   # angstrom^3
+    rho = np.asarray(X[:, 2], dtype=float)   # g/cm^3
+    cs = np.asarray(X[:, 3], dtype=float)    # crystal system id
+
+    # Symmetry factor: higher symmetry -> slightly stiffer on average
+    sym_factor = np.where(cs == 7, 1.12,   # cubic
+                   np.where(cs == 6, 1.08,  # hexagonal
+                   np.where(cs == 5, 1.06,  # trigonal
+                   np.where(cs == 4, 1.04,  # tetragonal
+                   np.where(cs == 3, 1.02,  # orthorhombic
+                            1.00)))))       # monoclinic
+
+    # Empirical closed-form surrogate in GPa
+    K_VRH = 35.0 * sym_factor * rho / np.cbrt(V_a)
+
+    return K_VRH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Voigt-Reuss-Hill bulk modulus from a physically motivated closed-form
+    approximation. For polycrystalline solids, the bulk modulus scales with
+    density and sound velocity; a simple canonical surrogate is the material
+    stiffness scale  ~ rho * v^2. Using only the provided inputs, we use a
+    power-law form consistent with elastic scaling:
+        K ~ A * rho^alpha * V_a^beta * M_avg^gamma * f(cs)
+    with a crystal-system factor f(cs) that mildly increases stiffness for
+    higher-symmetry lattices.
+    """
+    X = np.asarray(X, dtype=float)
+
+    Va = X[:, 0]      # angstrom^3 per atom
+    M = X[:, 1]       # amu
+    rho = X[:, 2]     # g/cm^3
+    cs = X[:, 3]      # crystal system id
+
+    # Map crystal system to a mild symmetry factor.
+    # 2 monoclinic, 3 orthorhombic, 4 tetragonal, 5 trigonal, 6 hexagonal, 7 cubic
+    sym_factor = np.where(cs == 2, 0.92,
+                  np.where(cs == 3, 0.96,
+                  np.where(cs == 4, 1.00,
+                  np.where(cs == 5, 1.03,
+                  np.where(cs == 6, 1.05,
+                  np.where(cs == 7, 1.08, 1.00))))))
+
+    # Canonical elastic scaling surrogate (dimensionally fitted to GPa).
+    # Heavier density and smaller atomic volume typically imply larger bulk modulus.
+    K = 7.5 * (rho ** 1.15) * (M ** 0.05) * (Va ** -0.85) * sym_factor
+
+    return K

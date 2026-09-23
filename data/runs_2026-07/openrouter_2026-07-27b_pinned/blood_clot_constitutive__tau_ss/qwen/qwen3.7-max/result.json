@@ -1,0 +1,35 @@
+{
+  "task": "blood_clot_constitutive__tau_ss",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "ogden_1972",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "sugerman_2021_fung",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "sugerman_2021_yeoh",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

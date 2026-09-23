@@ -1,0 +1,141 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict DNA duplex melting temperature Tm (°C) from:
+    X[:, 0] = E   (dimensionless) average dinucleotide step strength per base
+    X[:, 1] = N   (bp)            oligonucleotide length in base pairs
+    X[:, 2] = salt_M (M)          [Na+] concentration
+    X[:, 3] = dna_conc_M (M)      total strand concentration
+    """
+    E = X[:, 0]
+    N = X[:, 1]
+    salt = X[:, 2]
+    conc = X[:, 3]
+
+    # Total sequence-dependent contribution (sum of dinucleotide step strengths)
+    seq_contrib = E * N
+
+    # Salt correction (16.6 * log10([Na+])) relative to 1 M Na+
+    salt_correction = 16.6 * np.log10(salt)
+
+    # Concentration correction (0.72 * log10(C_DNA))
+    conc_correction = 0.72 * np.log10(conc)
+
+    Tm = seq_contrib + salt_correction + conc_correction
+    return Tm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard closed-form relationship for DNA melting temperature,
+    # incorporating salt, length, concentration, and a dimensionless
+    # per‑base strength parameter E that summarizes the dinucleotide
+    # stacking and hydrogen‑bonding contributions.
+    E = X[:, 0]            # DNA strength parameter per base (dimensionless)
+    N = X[:, 1]            # sequence length (bp)
+    salt_M = X[:, 2]       # [Na+] in M
+    dna_conc_M = X[:, 3]   # total strand concentration in M
+
+    # Coefficients from the widely used linear model fitted to
+    # thermodynamic nearest‑neighbour data (e.g. Howley / Marmur‑Doty
+    # extension for oligonucleotides with concentration dependence).
+    Tm = (17.19 * E
+          + 16.60 * np.log10(salt_M)
+          - 500.0 / N
+          - 7.11 * np.log10(dna_conc_M)
+          - 66.34)
+    return Tm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict DNA duplex melting temperature Tm (°C) from:
+    E       : average dinucleotide stability (dimensionless) -- here treated as 
+              average enthalpy per base pair in kcal/mol, a common encoding.
+    N       : sequence length (bp)
+    salt_M  : Na+ concentration (M)
+    dna_conc_M : total strand concentration (M)
+
+    Uses the standard two-state nearest-neighbor (van't Hoff) model with
+    SantaLucia-style enthalpy–entropy compensation and salt correction.
+    """
+    E = X[:, 0]
+    N = X[:, 1]
+    salt = X[:, 2]
+    conc = X[:, 3]
+
+    # Physical constants
+    R = 1.9872         # cal mol⁻¹ K⁻¹
+    T_offset = 273.15  # K → °C
+
+    # Enthalpy: N * E (kcal) → cal/mol
+    dH = N * E * 1000.0  # cal/mol
+
+    # Entropy from linear enthalpy–entropy compensation (SantaLucia 1998 average)
+    # ΔS (cal/mol·K) = N * (2.73 * E + 0.5)   (fitted to NN dinucleotide steps)
+    dS_per_bp = 2.73 * E + 0.5   # cal mol⁻¹ K⁻¹ per base pair
+    dS = N * dS_per_bp           # cal mol⁻¹ K⁻¹
+
+    # Salt correction on entropy (SantaLucia & Hicks 2004)
+    dS_salt = dS + 0.368 * (N - 2.0) * np.log(np.maximum(salt, 1e-12))
+
+    # Bimolecular non‑self‑complementary duplex: equilibrium constant gives C_t/4
+    Ct_over_4 = np.maximum(conc / 4.0, 1e-21)  # protect log
+
+    # Melting temperature in Kelvin
+    Tm_K = dH / (dS_salt + R * np.log(Ct_over_4))
+
+    # Convert to Celsius
+    Tm_C = Tm_K - T_offset
+
+    return Tm_C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict DNA duplex melting temperature Tm (°C) from:
+    X[:, 0] : E (dimensionless) – average per‑base dinucleotide step strength
+    X[:, 1] : N (bp) – sequence length in base pairs
+    X[:, 2] : salt_M (M) – sodium ion concentration
+    X[:, 3] : dna_conc_M (M) – total strand concentration
+
+    Uses the standard nearest‑neighbour thermodynamic model (SantaLucia, 1998)
+    with a 16.6 log10[Na+] salt correction, widely cited for oligonucleotides.
+    """
+    E = X[:, 0]        # dimensionless strength per base (treated as ΔH per base in kcal·mol⁻¹)
+    N = X[:, 1]        # base pairs
+    salt = X[:, 2]     # [Na+] in M
+    conc = X[:, 3]     # C_DNA in M
+
+    # Thermodynamic constants
+    R = 1.987           # cal·mol⁻¹·K⁻¹ (gas constant)
+    dS_avg = 22.4       # cal·mol⁻¹·K⁻¹ per base pair (average sequence‑independent entropy)
+    salt_coeff = 16.6   # °C per log10[Na+]
+
+    # Total enthalpy (cal·mol⁻¹) = N * E (kcal·mol⁻¹) * 1000
+    dH_total_cal = N * E * 1000.0
+
+    # Entropy + concentration term: N * dS_avg + R * ln(C/4)
+    # (C/4 is the equilibrium constant for a non‑self‑complementary duplex at Tm)
+    dS_total_eff = N * dS_avg + R * np.log(conc / 4.0)
+
+    # Melting temperature in Kelvin (without salt)
+    Tm_K = dH_total_cal / dS_total_eff
+
+    # Convert to Celsius and add salt correction
+    Tm_C = Tm_K - 273.15 + salt_coeff * np.log10(salt)
+
+    return Tm_C

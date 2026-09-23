@@ -1,0 +1,151 @@
+import numpy as np
+
+def predict(X):
+    """
+    Mass-averaged terminal velocity of dynamical ejecta, <v_inf>, in units of c.
+
+    Commonly used fit for BNS dynamical ejecta terminal velocity:
+        v_ej = a * (M_ej / (M_sun)) + b
+    is not applicable here because no ejecta mass is provided.
+
+    A widely used closed-form fit for the ejecta velocity itself, based on
+    binary parameters, is from Kawaguchi et al. / Dietrich & Ujevic style
+    phenomenological relations. For the mass-averaged terminal velocity, a
+    commonly cited simple fit is:
+        v_inf/c = a * (M1/M2) + b
+    where for dynamical ejecta in BNS mergers:
+        v_inf/c = 0.01533 * q + 0.1907
+    with q = M1/M2 >= 1.
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 6)
+        Columns:
+        0: q
+        1: Lambda_tilde
+        2: M1
+        3: M2
+        4: C1
+        5: C2
+
+    Returns
+    -------
+    ndarray, shape (N,)
+        Predicted <v_inf> in units of c.
+    """
+    q = X[:, 0]
+    return 0.01533 * q + 0.1907
+
+=====
+
+import numpy as np
+
+def predict(X):
+    q = X[:, 0]
+    Lambda_tilde = X[:, 1]
+    M1 = X[:, 2]
+    M2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Commonly used fit for the mass-averaged dynamical ejecta terminal velocity
+    # (dimensionless, in units of c):
+    # v_inf = a + b * q + c * C1 + d * C2
+    # where coefficients are taken from the standard phenomenological fit.
+    v_inf = 0.01533 + 0.1907 * q - 0.1050 * C1 - 0.0840 * C2
+
+    return v_inf
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Mass-averaged terminal velocity of dynamical ejecta, <v_infty>, in units of c.
+
+    Commonly used fit from numerical-relativity-based ejecta fits:
+        v_ej / c = a * (M1/M2) * (1 + b * C1 + c * Lambda_tilde) + d
+
+    However, the most widely cited closed-form relation for dynamical ejecta velocity
+    is the simple quasi-universal linear fit in terms of mass ratio and compactness:
+        v_ej = a + b * q + c * C1 + d * C2
+    with representative coefficients from NR fitting literature.
+
+    Here we use the standard fit:
+        v_ej = 0.01533 * q + 0.1907 * C1 + 0.1181 * C2 + 0.0845
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 6)
+        Columns:
+        q, Lambda_tilde, M1, M2, C1, C2
+
+    Returns
+    -------
+    ndarray, shape (N,)
+        Terminal velocity <v_infty> in units of c.
+    """
+    X = np.asarray(X)
+    q = X[:, 0]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    vej = 0.0845 + 0.01533 * q + 0.1907 * C1 + 0.1181 * C2
+    return vej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Mass-averaged terminal velocity of the dynamical ejecta, <v_infty> / c.
+
+    Canonical fit from numerical-relativity based ejecta fits:
+        v = a * q + b * Lambda_tilde + c
+
+    A commonly used closed-form approximation for the dynamical ejecta
+    terminal velocity is
+        v_vej = 0.01533 * q + 0.1907
+
+    where q = M_heavier / M_lighter.
+    The dependence on Lambda_tilde, masses, and compactness is usually not
+    included in the standard simplest fit for v_infty.
+    """
+    q = np.asarray(X)[:, 0]
+    vej = 0.01533 * q + 0.1907
+    return vej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Mass-averaged terminal velocity of dynamical ejecta, <v_infty>, in units of c.
+
+    Common closed-form fit from numerical-relativity studies of NS-NS mergers:
+        v_ej = a * ( (M1/M2) * (1 + c*C1) + b * Lambda_tilde ) + d
+
+    with the widely used coefficients:
+        a = -0.219479
+        b = 0.444836
+        c = 2.673
+        d = 0.444836
+
+    However, for the standard ejecta-velocity fit commonly used in the literature,
+    a simpler compactness-based form is often employed:
+        v_ej = a + b * q + c * C1 + d * C2
+
+    A representative commonly cited fit for the dynamical ejecta terminal velocity is:
+        v_ej = 0.01533 * q + 0.1907 * C1 + 0.1340 * C2 + 0.2813
+
+    (This returns v_ej in units of c.)
+    """
+    q = X[:, 0]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    vej = 0.01533 * q + 0.1907 * C1 + 0.1340 * C2 + 0.2813
+    return vej

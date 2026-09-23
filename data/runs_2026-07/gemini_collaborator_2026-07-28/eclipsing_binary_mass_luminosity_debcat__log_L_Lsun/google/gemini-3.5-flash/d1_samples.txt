@@ -1,0 +1,156 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is log_M_Msun (log10(M/Msun))
+    # X[:, 1] is metallicity (distractor, ignored)
+    log_M = X[:, 0]
+
+    # Standard piecewise empirical Mass-Luminosity Relation (MLR)
+    # Boundaries in solar masses: 0.43, 2.0, 20.0
+    conds = [
+        log_M < np.log10(0.43),
+        (log_M >= np.log10(0.43)) & (log_M < np.log10(2.0)),
+        (log_M >= np.log10(2.0)) & (log_M < np.log10(20.0)),
+        log_M >= np.log10(20.0),
+    ]
+
+    funcs = [
+        lambda x: 2.3 * x + np.log10(0.23),
+        lambda x: 4.0 * x,
+        lambda x: 3.5 * x + np.log10(1.5),
+        lambda x: 1.0 * x + np.log10(3200.0),
+    ]
+
+    return np.piecewise(log_M, conds, funcs)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is log10(M/Msun)
+    log_M = X[:, 0]
+
+    # Standard piecewise empirical Mass-Luminosity Relation (MLR)
+    # Mass thresholds in solar units: 0.43, 2.0, 20.0
+    # Equivalent to log10(M) thresholds: -0.3665, 0.3010, 1.3010
+    conds = [
+        log_M < -0.36653,
+        (log_M >= -0.36653) & (log_M < 0.30103),
+        (log_M >= 0.30103) & (log_M < 1.30103),
+        log_M >= 1.30103,
+    ]
+
+    # L = 0.23 * M^2.3  => log10(L) = 2.3 * log10(M) + log10(0.23)
+    # L = M^4.0        => log10(L) = 4.0 * log10(M)
+    # L = 1.5 * M^3.5  => log10(L) = 3.5 * log10(M) + log10(1.5)
+    # L = 32000 * M    => log10(L) = 1.0 * log10(M) + log10(32000)
+    funcs = [
+        lambda x: 2.3 * x + np.log10(0.23),
+        lambda x: 4.0 * x,
+        lambda x: 3.5 * x + np.log10(1.5),
+        lambda x: 1.0 * x + np.log10(32000),
+    ]
+
+    return np.piecewise(log_M, conds, funcs)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract log10(M/M_sun)
+    log_M = X[:, 0]
+
+    # Define standard transition mass boundaries in log10 space
+    m1 = np.log10(0.43)
+    m2 = np.log10(2.0)
+    m3 = np.log10(20.0)
+
+    # Calculate continuous offsets based on the solar normalization (log_L = 0 when log_M = 0)
+    # The standard scaling relations are:
+    # L ~ M^2.3  for M < 0.43
+    # L ~ M^4.0  for 0.43 <= M < 2.0
+    # L ~ M^3.5  for 2.0 <= M < 20.0
+    # L ~ M^1.0  for M >= 20.0
+    c1 = 1.7 * m1
+    c3 = 0.5 * m2
+    c4 = 2.5 * m3 + c3
+
+    # Define conditions for piecewise mass-luminosity relation
+    condlist = [
+        log_M < m1,
+        (log_M >= m1) & (log_M < m2),
+        (log_M >= m2) & (log_M < m3),
+        log_M >= m3,
+    ]
+
+    funclist = [
+        lambda m: 2.3 * m + c1,
+        lambda m: 4.0 * m,
+        lambda m: 3.5 * m + c3,
+        lambda m: 1.0 * m + c4,
+    ]
+
+    return np.piecewise(log_M, condlist, funclist)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract log10(M/Msun) from the first column
+    log_M = X[:, 0]
+
+    # Standard piecewise Mass-Luminosity Relation (MLR) for main-sequence stars:
+    # 1. M < 0.43 Msun     => L = 0.23 * M^2.3
+    # 2. 0.43 <= M < 2 Msun => L = M^4.0
+    # 3. 2 <= M < 20 Msun   => L = 1.5 * M^3.5
+    # 4. M >= 20 Msun       => L = 3200 * M
+
+    conds = [
+        log_M < np.log10(0.43),
+        (log_M >= np.log10(0.43)) & (log_M < np.log10(2.0)),
+        (log_M >= np.log10(2.0)) & (log_M < np.log10(20.0)),
+        log_M >= np.log10(20.0),
+    ]
+
+    funcs = [
+        lambda x: 2.3 * x + np.log10(0.23),
+        lambda x: 4.0 * x,
+        lambda x: 3.5 * x + np.log10(1.5),
+        lambda x: 1.0 * x + np.log10(3200),
+    ]
+
+    return np.piecewise(log_M, conds, funcs)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is log_M_Msun (log10(M/Msun))
+    log_m = X[:, 0]
+    m = 10**log_m
+
+    # Standard piecewise mass-luminosity relation
+    condlist = [
+        m < 0.43,
+        (m >= 0.43) & (m < 2.0),
+        (m >= 2.0) & (m < 20.0),
+        m >= 20.0,
+    ]
+
+    funclist = [
+        lambda x: 2.3 * x + np.log10(0.23),
+        lambda x: 4.0 * x,
+        lambda x: 3.5 * x + np.log10(1.5),
+        lambda x: 1.0 * x + np.log10(3200.0),
+    ]
+
+    return np.piecewise(log_m, condlist, funclist)

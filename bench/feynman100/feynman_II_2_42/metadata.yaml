@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Power"
+  symbol: "Pwr"
+  unit: ""
+  description: "Power"
+inputs:
+  - name: "Thermal conductivity"
+    symbol: "kappa"
+    unit: ""
+    description: "Thermal conductivity"
+  - name: "Temperature"
+    symbol: "T1"
+    unit: ""
+    description: "Temperature"
+  - name: "Temperature"
+    symbol: "T2"
+    unit: ""
+    description: "Temperature"
+  - name: "Area"
+    symbol: "A"
+    unit: ""
+    description: "Area"
+  - name: "Length"
+    symbol: "d"
+    unit: ""
+    description: "Length"

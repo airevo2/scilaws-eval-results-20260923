@@ -1,0 +1,172 @@
+import numpy as np
+
+def predict(X):
+    # Butler-Volmer for the hydrogen oxidation/evolution reaction (HOR/HER)
+    # on Pt, with pressure-dependent exchange current density.
+    #
+    # j = j0(T, P_H2) * [ exp(alpha_a F eta / RT) - exp(-alpha_c F eta / RT) ]
+    # j0 = j0_ref * (P_H2/P_ref)^m * exp( -Ea/R * (1/T - 1/T_ref) )
+
+    eta   = X[:, 0]          # V vs RHE (overpotential)
+    T     = X[:, 1]          # K
+    P_H2  = X[:, 2]          # bar
+    # c_acid = X[:, 3]       # not used in the canonical closed form
+
+    # Physical constants
+    F = 96485.0              # C/mol
+    R = 8.314462             # J/mol/K
+
+    # Fitted / canonical kinetic parameters (per real Pt area from upd-H)
+    j0_ref   = 0.45          # A/cm2   exchange current density at reference conditions
+    T_ref    = 298.15        # K
+    P_ref    = 1.0           # bar
+    Ea       = 18000.0       # J/mol   activation energy for HOR/HER on Pt
+    m        = 0.5           # H2 reaction order
+    alpha_a  = 0.5           # anodic transfer coefficient
+    alpha_c  = 0.5           # cathodic transfer coefficient
+
+    # Exchange current density
+    j0 = j0_ref * (P_H2 / P_ref) ** m * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+
+    f = F / (R * T)
+    j = j0 * (np.exp(alpha_a * f * eta) - np.exp(-alpha_c * f * eta))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Constants
+    F = 96485.0          # C/mol
+    R = 8.314            # J/mol/K
+    P_ref = 1.0          # bar (reference H2 partial pressure)
+
+    eta   = X[:, 0]      # V vs RHE (overpotential)
+    T     = X[:, 1]      # K
+    P_H2  = X[:, 2]      # bar
+    # c_acid = X[:, 3]   # not used in canonical Butler-Volmer form
+
+    # Fitted / typical Pt HOR-HER parameters (per real Pt area)
+    j0_298 = 0.45        # A/cm^2, exchange current density at 298 K, 1 bar H2
+    Ea     = 18000.0     # J/mol, activation energy for exchange current
+    m      = 0.5         # reaction order in H2 partial pressure
+    alpha_a = 0.5        # anodic transfer coefficient
+    alpha_c = 0.5        # cathodic transfer coefficient
+    T_ref  = 298.15      # K
+
+    # Temperature- and pressure-dependent exchange current density
+    j0 = (j0_298
+          * (P_H2 / P_ref) ** m
+          * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref)))
+
+    # Butler-Volmer equation (positive = anodic / HOR)
+    j = j0 * (np.exp(alpha_a * F * eta / (R * T))
+              - np.exp(-alpha_c * F * eta / (R * T)))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Physical constants
+    F = 96485.0        # C/mol
+    R = 8.314          # J/(mol K)
+
+    eta   = X[:, 0]    # V vs RHE (overpotential)
+    T     = X[:, 1]    # K
+    P_H2  = X[:, 2]    # bar
+    c     = X[:, 3]    # mol/dm3 (not used in canonical BV form)
+
+    # --- Fitted / literature constants ---
+    j0_ref   = 0.45    # A/cm2 (real Pt area) exchange current density at T_ref, P_ref
+    T_ref    = 298.15  # K
+    P_ref    = 1.0     # bar
+    Ea       = 16000.0 # J/mol, apparent activation energy of j0
+    gamma    = 0.5     # H2 reaction order
+    alpha_a  = 0.5     # anodic transfer coefficient
+    alpha_c  = 0.5     # cathodic transfer coefficient
+
+    # Temperature dependence of exchange current density (Arrhenius)
+    j0 = j0_ref * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+
+    # H2 partial-pressure (reaction-order) dependence
+    j0 = j0 * (P_H2 / P_ref) ** gamma
+
+    # Butler-Volmer relation (positive = anodic / HOR)
+    f = F / (R * T)
+    j = j0 * (np.exp(alpha_a * f * eta) - np.exp(-alpha_c * f * eta))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Physical constants
+    F = 96485.0      # C/mol
+    R = 8.314        # J/(mol K)
+
+    eta   = X[:, 0]  # V vs RHE (= overpotential)
+    T     = X[:, 1]  # K
+    P_H2  = X[:, 2]  # bar
+    c     = X[:, 3]  # mol/dm3 (not used in canonical BV form)
+
+    # Reference conditions
+    P_ref  = 1.0     # bar
+    T_ref  = 298.15  # K
+
+    # Kinetic parameters (per real Pt area, from UPD-H)
+    j0_ref = 0.60          # A/cm2, exchange current density at ref conditions
+    Ea     = 20000.0       # J/mol, activation energy
+    alpha_a = 0.5          # anodic transfer coefficient
+    alpha_c = 0.5          # cathodic transfer coefficient
+    gamma   = 0.5          # H2 reaction order
+
+    # Temperature-dependent exchange current density (Arrhenius)
+    j0 = j0_ref * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+
+    # Pressure dependence of exchange current density
+    j0 = j0 * (P_H2 / P_ref) ** gamma
+
+    # Butler-Volmer equation
+    j = j0 * (np.exp(alpha_a * F * eta / (R * T))
+              - np.exp(-alpha_c * F * eta / (R * T)))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Butler-Volmer for HOR/HER on Pt (symmetric, alpha_a = alpha_c = 0.5)
+    # with H2 reaction-order 0.5 and Arrhenius temperature dependence of j0.
+    eta   = X[:, 0]          # V vs RHE (overpotential)
+    T     = X[:, 1]          # K
+    P_H2  = X[:, 2]          # bar
+    c_HClO4 = X[:, 3]        # mol/dm3 (weak effect, ignored in canonical form)
+
+    F = 96485.0              # C/mol
+    R = 8.314               # J/mol/K
+
+    # Reference exchange current density (per real Pt area) at T_ref, P_ref
+    j0_ref = 0.45            # A/cm2
+    T_ref  = 298.15          # K
+    P_ref  = 1.0             # bar
+    Ea     = 18000.0         # J/mol  (activation energy of j0)
+    m      = 0.5             # H2 reaction order
+    alpha_a = 0.5
+    alpha_c = 0.5
+
+    # Exchange current density
+    j0 = j0_ref * (P_H2 / P_ref)**m * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+
+    f = F / (R * T)
+    j = j0 * (np.exp(alpha_a * f * eta) - np.exp(-alpha_c * f * eta))
+
+    return j

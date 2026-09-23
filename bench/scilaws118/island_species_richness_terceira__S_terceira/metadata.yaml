@@ -1,0 +1,109 @@
+task_id: island_species_richness_terceira__S_terceira
+domain: biology / community_ecology
+license: CC-BY-4.0
+
+# Type I -- each row is an independent pitfall-trap site; no cluster structure.
+type: typeI
+has_group_id: false
+
+# Background knowledge -- the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  In island biogeography and conservation ecology, arthropod species richness is the number of distinct species recorded at survey sites on Terceira Island in the Azores.
+
+target:
+  name: S_terceira
+  symbol: S
+  unit: ""
+  description: Arthropod species richness per 1-ha pitfall-trap site on Terceira Island, Azores.
+  range: [0.0, 11.0]
+
+inputs:
+  - name: d
+    symbol: D
+    unit: ""
+    description: Anthropogenic habitat-modification index — degree of disturbance along the gradient from undisturbed native forest to intensively managed pasture.
+    range: [14.70, 76.92]
+  - name: h
+    symbol: H
+    unit: m
+    description: Altitude above sea level.
+    range: [13.95, 934.86]
+  - name: p
+    symbol: P
+    unit: mm/yr
+    description: Mean annual precipitation.
+    range: [1015.40, 3474.00]
+  - name: t
+    symbol: T
+    unit: degC
+    description: Mean annual temperature.
+    range: [12.00, 18.35]
+  - name: sl
+    symbol: Sl
+    unit: degrees
+    description: Terrain slope.
+    range: [0.40, 21.91]
+
+# Dataset -- Type I two-file layout
+data_files:
+  train: data/train.csv  # representative fold (sorted-by-D, not every-3rd); spans full gradient
+  test:  data/test.csv   # representative fold (every 3rd site along sorted disturbance gradient)
+
+n_train: 34
+n_test:  18
+
+# Reference-baseline bank
+references:
+  - id: cardoso_2020
+    label: "Cardoso 2020 -- SR dominant formula S = a/D - b (23 of 25 SR runs, PDF p. 4)"
+    formula_file: formulas/cardoso_2020.py
+    reference_pdf: reference/cardoso_2020.pdf
+    n_law_constants:   2   # a, b
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 1.8312
+      r2: 0.5878
+  - id: cardoso_2020_glm
+    label: "Cardoso 2020 -- GLM baseline S = exp(a + bH - cP - dD) (PDF p. 4)"
+    formula_file: formulas/cardoso_2020_glm.py
+    reference_pdf: reference/cardoso_2020.pdf
+    n_law_constants:   4   # a, b, c, d
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 1.5886
+      r2: 0.6898
+
+# Split note (re-split 2026-05-29): Cardoso 2020 Case Study 2 used 5-fold random
+# CV with representative folds (not a held-out OOD regime). We mirror that with a
+# deterministic systematic split along the sorted disturbance gradient (every 3rd
+# site -> test); both folds span the full S range [0,11]. This recovers the
+# paper's own cross-validated fit (cardoso_2020 test R^2 ~0.59 vs paper 0.60).
+# A prior wave-16 Tier-3 OOD split (train D<50 / test D>=50) was degenerate -- the
+# high-D test regime is near-constant (S~1, std 0.77), giving spurious negative R^2
+# where a constant predictor beat every formula (non-discriminative, FM-A4-adjacent).
+# The wave-16 arrhenius_1921 baseline that "improved" that anchor was dropped
+# (it gamed the metric by being near-constant; ISLAND-area ISAR coeffs misapplied
+# to site-level data via a fabricated area proxy). See VERDICT.md / __init__.py.
+
+caps:
+  max_law_constants:       4
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include a negative effect of anthropogenic habitat disturbance on arthropod species richness (richness decreases as the disturbance index increases)"
+  - "include a positive effect of altitude (elevation) on arthropod species richness"
+  - "include a negative effect of annual precipitation on arthropod species richness"
+  - "predicted arthropod species richness is non-negative"
+
+best_baseline: 1.58862    # cardoso_2020_glm — rmse (lower is better); regenerated 2026-05-30

@@ -1,0 +1,184 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = age (x) [years]
+    # X[:, 1] = year (t) [years]
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Siler mortality model with logistically decaying parameters over calendar time
+    # to represent the historical demographic transition.
+
+    # Infant/child mortality parameters
+    a1 = 0.002 + 0.25 / (1.0 + np.exp((t - 1910.0) / 45.0))
+    b1 = 0.9
+
+    # Background/accident mortality parameters
+    a2 = 0.0005 + 0.012 / (1.0 + np.exp((t - 1920.0) / 50.0))
+
+    # Senescent mortality parameters
+    a3 = 0.00002 + 0.0002 / (1.0 + np.exp((t - 1940.0) / 60.0))
+    b3 = 0.085
+
+    # Siler hazard function: m(x, t) = a1*e^(-b1*x) + a2 + a3*e^(b3*x)
+    m = a1 * np.exp(-b1 * x) + a2 + a3 * np.exp(b3 * x)
+
+    # Return the natural log of the central death rate
+    return np.log(m)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate ln M(x,t)
+
+    using a time-dependent Siler mortality model.
+
+    Inputs:
+    - X: 2-D numpy array where:
+         X[:, 0] = age (x) [0 to 95]
+         X[:, 1] = year (t) [1751 to 2025]
+
+    Returns:
+    - 1-D numpy array of ln M(x,t)
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Logistic-type transition to model the historical decline of mortality
+    # s is close to 1.0 in the 18th century and declines to ~0.1 by 2025
+    s = 1.0 / (1.0 + np.exp((t - 1910.0) / 60.0))
+
+    # Siler model parameters scaled by the historical trend s
+    # 1. Infant/Child mortality component (declines rapidly with age)
+    a1 = 0.28 * (s**2.0) + 0.002
+    b1 = 1.4
+
+    # 2. Background/Accidental mortality component (constant over age)
+    a2 = 0.008 * (s**1.5) + 0.00015
+
+    # 3. Senescent mortality component (increases exponentially with age)
+    a3 = 0.00014 * (s**0.8) + 0.000018
+    b3 = 0.086
+
+    # Calculate the three Siler components
+    m_infant = a1 * np.exp(-b1 * x)
+    m_background = a2
+    m_senescent = a3 * np.exp(b3 * x)
+
+    # Total central death rate M(x,t)
+    M = m_infant + m_background + m_senescent
+
+    return np.log(M)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract age (x) and year (t) from input
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Reference year to center the time trend
+    t_ref = 1950.0
+
+    # Siler mortality model with exponentially declining parameters over time
+    # 1. Infant/childhood mortality component
+    a1 = 0.05 * np.exp(-0.015 * (t - t_ref))
+    b1 = 1.5
+
+    # 2. Background mortality component (independent of age)
+    a2 = 0.002 * np.exp(-0.01 * (t - t_ref))
+
+    # 3. Senescent/adult mortality component (Gompertz law)
+    a3 = 0.0002 * np.exp(-0.008 * (t - t_ref))
+    b3 = 0.08
+
+    # Combine components to get the central death rate M(x,t)
+    m = a1 * np.exp(-b1 * x) + a2 + a3 * np.exp(b3 * x)
+
+    # Return the natural log of the death rate
+    return np.log(m)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = age (x) [0 to 95]
+    # X[:, 1] = year (t) [1751 to 2025]
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Analytical approximation of the Lee-Carter average log-mortality curve a(x)
+    # Modeled as a combination of childhood mortality, accident hump, and senescent mortality
+    a_x = np.log(
+        np.exp(-3.3 - 2.0 * x)
+        + np.exp(-8.0 - 0.08 * (x - 20) ** 2)
+        + np.exp(-9.2 + 0.095 * x)
+    )
+
+    # Analytical approximation of the age-specific sensitivity b(x)
+    b_x = (
+        0.12 * np.exp(-0.2 * x)
+        + 0.03 * np.exp(-0.01 * (x - 20) ** 2)
+        + 0.06 * np.exp(-0.002 * x)
+    )
+
+    # Time trend k(t). Before the 20th century, mortality decline was much slower.
+    # We use a smooth transition to flatten the trend for early historical years.
+    t_eff = np.where(t < 1930, 1930 + 50 * np.tanh((t - 1930) / 50), t)
+    k_t = -0.15 * (t_eff - 1980)
+
+    # Lee-Carter relationship: ln M(x,t) = a(x) + b(x) * k(t)
+    log_m = a_x + b_x * k_t
+
+    return log_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract age (x) and calendar year (t) from input
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Reference year for the temporal trend
+    t_ref = 2000.0
+
+    # Siler mortality model parameters with exponential temporal decay
+    # Model: M(x, t) = a1*e^(-b1*x - c1*(t-t_ref)) + a2*e^(-c2*(t-t_ref)) + a3*e^(b3*x - c3*(t-t_ref))
+
+    # Infant and childhood mortality component
+    a1 = 0.015
+    b1 = 0.9
+    c1 = 0.012
+
+    # Background (age-independent) mortality component
+    a2 = 0.0012
+    c2 = 0.008
+
+    # Senescent (Gompertz) mortality component
+    a3 = 0.00004
+    b3 = 0.085
+    c3 = 0.006
+
+    # Compute individual components
+    m_child = a1 * np.exp(-b1 * x - c1 * (t - t_ref))
+    m_background = a2 * np.exp(-c2 * (t - t_ref))
+    m_senescent = a3 * np.exp(b3 * x - c3 * (t - t_ref))
+
+    # Total central death rate
+    M = m_child + m_background + m_senescent
+
+    # Return the natural log of the central death rate
+    return np.log(M)

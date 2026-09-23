@@ -1,0 +1,26 @@
+{
+  "task": "leaf_light_response_photosynthesis_schmiege__net_assimilation",
+  "model": "z-ai/glm-5.2",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "lobo_2013",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "peek_2002",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

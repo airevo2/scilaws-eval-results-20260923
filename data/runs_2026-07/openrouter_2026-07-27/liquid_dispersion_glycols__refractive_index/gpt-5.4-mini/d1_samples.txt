@@ -1,0 +1,156 @@
+import numpy as np
+
+def predict(X):
+    """
+    Refractive index of ethylene glycol as a function of vacuum wavelength (um)
+    and temperature (degC), using the commonly used Cauchy-type dispersion with
+    linear temperature dependence.
+
+    This is a standard closed-form engineering approximation, not a fundamental
+    first-principles model.
+    """
+    lam = X[:, 0]
+    T = X[:, 1]
+
+    # Commonly used Cauchy coefficients for ethylene glycol in the visible/NIR
+    # n(lambda, T0) = A + B/lambda^2 + C/lambda^4
+    A = 1.4250
+    B = 0.0078
+    C = 0.00025
+
+    # Approximate thermo-optic correction near room temperature
+    T0 = 20.0
+    dn_dT = -4.5e-4  # 1/degC, typical magnitude for ethylene glycol
+
+    n = A + B / lam**2 + C / lam**4 + dn_dT * (T - T0)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Refractive index of ethylene glycol as a function of vacuum wavelength (um)
+    and temperature (degC), using a standard dispersion + thermo-optic form.
+
+    This is a commonly used closed-form representation:
+        n(λ, T) = n_dry(λ, T_ref) + (dn/dT) * (T - T_ref)
+
+    with the room-temperature dispersion modeled by a Cauchy-type equation.
+    Coefficients below are a standard literature-style approximation suitable
+    over the visible/near-IR range.
+    """
+    lam = X[:, 0].astype(float)   # wavelength in um
+    T = X[:, 1].astype(float)     # temperature in degC
+
+    # Reference temperature
+    T0 = 20.0  # degC
+
+    # Cauchy-type dispersion for ethylene glycol at T0 (common approximation)
+    # n(λ) = A + B/λ^2 + C/λ^4
+    A = 1.4318
+    B = 0.0032
+    C = 0.00014
+
+    n_T0 = A + B / (lam ** 2) + C / (lam ** 4)
+
+    # Approximate thermo-optic coefficient for ethylene glycol
+    dn_dT = -4.0e-4  # per degC
+
+    return n_T0 + dn_dT * (T - T0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]  # wavelength in um
+    T = X[:, 1]    # temperature in C
+
+    # Commonly used dispersion/thermo-optic form for ethylene glycol:
+    # n(λ, T) = n_D(T) + (A/(λ^2)) + (B/(λ^4))
+    # with n_D(T) approximated linearly around room temperature.
+    #
+    # This is a standard closed-form Sellmeier/Cauchy-style approximation
+    # used for transparent liquids over the visible/NIR.
+    #
+    # Representative parameters for ethylene glycol:
+    #   n_D(20 C) ≈ 1.4318
+    #   dn/dT ≈ -4.0e-4 / C
+    #   A, B chosen to give a reasonable normal dispersion shape
+    #
+    # Note: exact coefficients vary by source and purity; this is a compact
+    # canonical engineering approximation.
+
+    n_D_20 = 1.4318
+    dn_dT = -4.0e-4
+
+    # Dispersion coefficients (um^2 and um^4 terms)
+    A = 0.0090
+    B = 0.00030
+
+    n_D = n_D_20 + dn_dT * (T - 20.0)
+    n = n_D + A / (lam**2) + B / (lam**4)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Refractive index of ethylene glycol as a function of wavelength (um)
+    and temperature (degC), using a standard dispersion + thermo-optic form.
+
+    Wavelength dependence: Cauchy form
+    Temperature dependence: linear decrement of refractive index
+    Coefficients are representative literature-style values for ethylene glycol
+    over the visible/near-IR and moderate temperatures.
+    """
+    lam = X[:, 0]
+    T = X[:, 1]
+
+    # Reference temperature
+    T0 = 20.0  # degC
+
+    # Cauchy coefficients for ethylene glycol at ~20 C (lambda in um)
+    A = 1.4326
+    B = 0.01075
+    C = 0.00045
+
+    # Thermo-optic coefficient (dn/dT), negative for liquids
+    dn_dT = -4.0e-4  # per degC
+
+    n0 = A + B / lam**2 + C / lam**4
+    n = n0 + dn_dT * (T - T0)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Refractive index of ethylene glycol as a function of wavelength and temperature.
+
+    Standard empirical dispersion/temperature form:
+        n(λ, T) = A0 + A1/(λ^2) + A2/(λ^4) + B*(T - 20)
+
+    where λ is in micrometres and T is in °C.
+
+    The coefficients below are representative literature-style values for ethylene glycol
+    over the visible/NIR and moderate temperature range. They give a standard closed-form
+    approximation for the refractive index.
+    """
+    lam = X[:, 0]
+    T = X[:, 1]
+
+    # Representative closed-form coefficients for ethylene glycol
+    A0 = 1.4256
+    A1 = 0.00643
+    A2 = 0.00017
+    B = -3.85e-4  # d n / dT near room temperature
+
+    n = A0 + A1 / (lam ** 2) + A2 / (lam ** 4) + B * (T - 20.0)
+    return n

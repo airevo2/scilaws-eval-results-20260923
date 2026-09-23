@@ -1,0 +1,149 @@
+import numpy as np
+
+def predict(X):
+    # Pareto top-share law:  S(p) = C * p^(1 - 1/alpha)
+    # => ln S(p) = ln C + (1 - 1/alpha) * ln p
+    #
+    # For pre-tax national income, the Pareto (inverted) coefficient alpha
+    # is typically around 1.6-1.9; take a representative alpha ~ 1.8.
+    # This gives an elasticity (1 - 1/alpha) ~ 0.44 of ln S w.r.t. ln p.
+
+    ln_p = X[:, 0]          # natural log of top fraction p
+    year = X[:, 2].astype(float)
+
+    alpha = 1.8
+    slope = 1.0 - 1.0 / alpha        # ~0.444
+
+    # Baseline constant so that S(0.10) ~ 0.35 (top-10% share ~35%)
+    # ln S = intercept + slope * ln p  -> intercept = ln(0.35) - slope*ln(0.10)
+    intercept = np.log(0.35) - slope * np.log(0.10)
+
+    # Mild secular rise in top shares over recent decades.
+    trend = 0.003 * (year - 2000.0)
+
+    return intercept + slope * ln_p + trend
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Pareto model: for a Pareto income distribution with coefficient alpha,
+    # the top-p income share obeys  S(p) = p^(1 - 1/alpha),
+    # hence   ln S(p) = (1 - 1/alpha) * ln p.
+    #
+    # alpha is the (inverted) Pareto coefficient; empirically ~1.5-2.5.
+    # We let alpha drift mildly with time and vary by region (inequality level).
+
+    ln_p   = X[:, 0].astype(float)          # ln(p)
+    year   = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Baseline Pareto coefficient and its slow time trend
+    # (inequality rising -> alpha falling over recent decades)
+    alpha0 = 2.10
+    alpha_trend = -0.006 * (year - 2000.0)   # small downward drift
+
+    # Regional adjustments to alpha (higher alpha = less concentration)
+    region = np.asarray(region).astype(str)
+    reg_adj = np.zeros_like(ln_p)
+    reg_adj[region == 'Europe']   =  0.25
+    reg_adj[region == 'Oceania']  =  0.15
+    reg_adj[region == 'Asia']     = -0.05
+    reg_adj[region == 'Americas'] = -0.20
+    reg_adj[region == 'Africa']   = -0.35
+
+    alpha = alpha0 + alpha_trend + reg_adj
+    alpha = np.clip(alpha, 1.05, 4.0)
+
+    # ln S(p) = (1 - 1/alpha) * ln p
+    ln_S = (1.0 - 1.0 / alpha) * ln_p
+    return ln_S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Pareto model for top income shares:
+    #   S(p) proportional to p^((alpha-1)/alpha)  =>  ln S(p) = (1 - 1/alpha)*ln p + const
+    # With inverted-Pareto beta = alpha/(alpha-1), slope = (alpha-1)/alpha = 1/beta.
+    # Empirically alpha ~ 1.8-2.2 for pre-tax national income, so slope ~ 0.5.
+    ln_p   = X[:, 0].astype(float)          # ln p  (the informative regressor)
+    year   = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Baseline inverted-Pareto coefficient (share ~ p^(1/beta))
+    alpha0 = 2.0
+    slope  = (alpha0 - 1.0) / alpha0        # ~0.5
+
+    # Mild secular rise in top concentration (alpha falls => slope falls) since 1980
+    slope_year = -0.0015 * (year - 2000.0)
+
+    # Region shifts in the level constant (log points)
+    region_const = {
+        'Africa':   0.05,
+        'Americas': 0.05,
+        'Asia':     0.02,
+        'Europe':  -0.05,
+        'Oceania': -0.03,
+    }
+    const = np.array([region_const.get(str(r), 0.0) for r in region], dtype=float)
+
+    # ln S(p) = 0  when p = 1 (top 100% holds all income), so intercept ~ const only
+    ln_S = (slope + slope_year) * ln_p + const
+    return ln_S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Pareto-Lorenz law for top income shares:
+    #   S(p) = p^((alpha-1)/alpha)  =>  ln S(p) = ((alpha-1)/alpha) * ln p
+    # where alpha is the Pareto coefficient. Inequality (lower alpha) has
+    # risen modestly over time; regions differ in their Pareto index.
+    ln_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Baseline Pareto index and its regional shift
+    region_alpha = {
+        "Africa":   1.65,
+        "Americas": 1.70,
+        "Asia":     1.75,
+        "Europe":   2.00,
+        "Oceania":  1.90,
+    }
+
+    alpha = np.array([region_alpha.get(str(r), 1.80) for r in region], dtype=float)
+
+    # Slow secular decline in alpha (rising top shares) since ~1980
+    alpha = alpha - 0.004 * (year - 1980.0)
+    alpha = np.clip(alpha, 1.05, 3.0)
+
+    # ln S(p) = ((alpha-1)/alpha) * ln p
+    ln_S = ((alpha - 1.0) / alpha) * ln_p
+    return ln_S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_p = X[:, 0]          # ln p
+    year  = X[:, 2]
+
+    # Pareto model for top shares:
+    #   S(p) = p^{(alpha-1)/alpha}  =>  ln S(p) = ((alpha-1)/alpha) * ln p
+    # Top-income Pareto coefficient alpha ~ 1.8 (exponent ~ 0.45),
+    # with a mild downward drift over time (rising inequality).
+    alpha0   = 1.8
+    drift    = -0.004 * (year - 2000.0)   # alpha declines ~0.004/yr
+    alpha    = alpha0 + drift
+    alpha    = np.clip(alpha, 1.2, 3.0)
+
+    exponent = (alpha - 1.0) / alpha       # (alpha-1)/alpha
+
+    lnS = exponent * log_p                  # passes through S(1)=1
+    return lnS

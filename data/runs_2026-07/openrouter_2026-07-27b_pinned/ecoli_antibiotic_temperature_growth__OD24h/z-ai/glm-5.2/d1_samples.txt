@@ -1,0 +1,163 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts OD600(24h) for E. coli BW25113 in LB broth as a function of temperature.
+    Uses the Cardinal Temperature Model with Inflection (CTMI) for the maximum 
+    specific growth rate (Rosso et al., 1993) and maps it to OD24h via a logistic 
+    growth equation.
+    """
+    T = X[:, 0]
+    
+    # CTMI parameters for E. coli
+    T_min = 4.0
+    T_opt = 39.0
+    T_max = 47.0
+    mu_opt = 1.5  # optimal growth rate (1/h)
+    
+    # Logistic growth parameters
+    K = 1.2       # carrying capacity (OD600)
+    t = 24.0      # incubation time (h)
+    
+    # Calculate maximum specific growth rate (mu_max) using CTMI
+    mu = np.zeros_like(T)
+    mask = (T > T_min) & (T < T_max)
+    T_m = T[mask]
+    
+    num = (T_m - T_max) * (T_m - T_min)**2
+    den = (T_opt - T_min) * (
+        (T_opt - T_min) * (T_m - T_opt) - 
+        (T_opt - T_max) * (T_opt + T_min - 2 * T_m)
+    )
+    
+    # Avoid division by zero or invalid values
+    valid = den != 0
+    mu[mask[valid]] = mu_opt * num[valid] / den[valid]
+    
+    # Map growth rate to OD after 24h using logistic growth
+    # OD(t) = K / (1 + exp(-mu * t))
+    OD24h = K / (1.0 + np.exp(-mu * t))
+    
+    # Ensure non-negativity
+    OD24h = np.maximum(OD24h, 0.0)
+    
+    return OD24h
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    
+    # Biological parameters for E. coli BW25113 growth in LB
+    K = 2.0          # Carrying capacity (max OD600)
+    OD0 = 0.05       # Initial OD600
+    Tmin = 5.0       # Minimum temperature for growth
+    Tmax = 46.0      # Maximum temperature for growth
+    b = 0.02         # Ratkowsky coefficient
+    c = 0.5          # Ratkowsky coefficient
+    
+    # Ratkowsky model for specific growth rate (mu)
+    sqrt_mu = b * (T - Tmin) * (1.0 - np.exp(c * (T - Tmax)))
+    sqrt_mu = np.maximum(sqrt_mu, 0.0)
+    mu = sqrt_mu ** 2
+    
+    # Logistic growth model evaluated at t = 24 hours
+    t = 24.0
+    OD24h = K / (1.0 + ((K / OD0) - 1.0) * np.exp(-mu * t))
+    
+    return OD24h
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    
+    # Ratkowsky square-root model parameters for E. coli growth
+    T_min = 5.0      # Theoretical minimum growth temperature (degC)
+    T_max = 49.0     # Theoretical maximum growth temperature (degC)
+    b = 0.05         # Empirical slope parameter
+    c = 0.5          # Empirical curvature parameter near T_max
+    
+    # Calculate theoretical growth rate using the Ratkowsky model
+    rate = np.zeros_like(T, dtype=float)
+    mask = (T > T_min) & (T < T_max)
+    rate[mask] = (b * (T[mask] - T_min) * (1.0 - np.exp(c * (T[mask] - T_max))))**2
+    
+    # OD24h is bounded by the carrying capacity of LB broth (~2.5)
+    OD24h = np.minimum(rate, 2.5)
+    
+    return OD24h
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Cardinal temperatures for E. coli BW25113 (approximate typical values)
+    T_min = 5.0
+    T_opt = 37.0
+    T_max = 46.0
+    OD_max = 1.5  # Typical carrying capacity OD600 in LB
+    
+    # Cardinal Temperature Model with Inflection (CTMI) - Rosso et al. (1995)
+    num = (T - T_max) * (T - T_min)**2
+    den = (T_opt - T_min) * ((T_opt - T_min) * (T - T_opt) - (T_opt - T_max) * (T_opt + T_min - 2 * T))
+    
+    # Safe division
+    with np.errstate(divide='ignore', invalid='ignore'):
+        ratio = np.where(den == 0, 0.0, num / den)
+        
+    OD24h = OD_max * ratio
+    
+    # Enforce biological constraints: zero growth outside [T_min, T_max]
+    OD24h = np.where((T <= T_min) | (T >= T_max), 0.0, OD24h)
+    OD24h = np.maximum(OD24h, 0.0)
+    
+    return OD24h
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600(24h) for E. coli BW25113 in LB broth as a function of
+    temperature T using a logistic growth model whose maximum specific
+    growth rate follows the Ratkowsky square-root thermal performance curve.
+    
+    Closed form:
+        mu(T) = [ b (T - T_min) (1 - exp(c (T - T_max))) ]^2
+        OD24h = K / (1 + ((K - OD0)/OD0) * exp(-mu(T) * 24))
+    """
+    T = X[:, 0]
+    
+    # --- Ratkowsky square-root model parameters (typical for E. coli) ---
+    T_min = 5.0      # degC, minimum temperature for growth
+    T_max = 46.0     # degC, maximum temperature for growth
+    b = 0.03         # (h^-1)^(1/2) degC^-1
+    c = 0.5          # degC^-1
+    
+    # --- Logistic growth parameters ---
+    OD0 = 0.01       # initial OD600
+    K = 1.0          # carrying capacity (OD600)
+    t = 24.0         # hours
+    
+    # Ratkowsky square-root of max growth rate
+    sqrt_mu = b * (T - T_min) * (1.0 - np.exp(c * (T - T_max)))
+    
+    # Growth rate is zero outside the viable temperature range
+    sqrt_mu = np.where((T > T_min) & (T < T_max), sqrt_mu, 0.0)
+    mu = sqrt_mu ** 2
+    
+    # Logistic growth evaluated at t = 24 h
+    A = (K - OD0) / OD0
+    OD24h = K / (1.0 + A * np.exp(-mu * t))
+    
+    # Enforce non-negativity by construction
+    OD24h = np.maximum(OD24h, 0.0)
+    return OD24h

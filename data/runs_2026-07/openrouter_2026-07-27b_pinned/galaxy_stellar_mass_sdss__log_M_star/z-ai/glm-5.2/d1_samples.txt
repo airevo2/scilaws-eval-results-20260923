@@ -1,0 +1,140 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M*/M_sun) for the MPA-JHU Kroupa-IMF stellar masses
+    using the Taylor et al. (2011) empirical relation:
+        log10(M*/M_sun) = 1.15 + 0.70*(g - i) - 0.4*M_i
+    where M_i is the absolute i-band magnitude (AB).
+    """
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+
+    # Absolute i-band magnitude from apparent magnitude and distance modulus
+    M_i = i - DM
+
+    # Taylor et al. (2011) color-mass relation, calibrated to MPA-JHU
+    log_M_star = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract input columns
+    u = X[:, 0]
+    g = X[:, 1]
+    r = X[:, 2]
+    i = X[:, 3]
+    z_mag = X[:, 4]
+    redshift = X[:, 5]
+    DM = X[:, 6]
+
+    # Constants
+    M_sun_r = 4.64          # Solar absolute magnitude in SDSS r-band (AB)
+    a_r = -0.222            # Bell et al. (2003) intercept, Kroupa IMF, r-band
+    b_r = 1.002             # Bell et al. (2003) slope for (g - r) color
+
+    # Absolute r-band magnitude (no K-correction; DM provided)
+    M_r = r - DM
+
+    # r-band luminosity in solar units: log10(L_r / L_sun_r)
+    log_L_r = -0.4 * (M_r - M_sun_r)
+
+    # g - r color
+    g_r = g - r
+
+    # log10(M_star / L_sun_r) from Bell et al. (2003) mass-to-light relation
+    log_ML_r = a_r + b_r * g_r
+
+    # log10(M_star / M_sun)
+    log_M_star = log_L_r + log_ML_r
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(M_star) using the empirical color-mass-to-light ratio relation.
+    
+    This implements the widely cited Taylor et al. (2011) relation (Eq. 8), 
+    which provides a robust photometric estimate of stellar mass calibrated 
+    against Kroupa IMF-based spectral fitting:
+    
+    log10(M*) = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+    
+    where M_i is the absolute i-band magnitude calculated from the apparent 
+    magnitude and distance modulus (M_i = i - DM).
+    """
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+    
+    # Calculate absolute i-band magnitude
+    M_i = i - DM
+    
+    # Taylor et al. (2011) empirical stellar mass relation
+    log_M_star = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+    
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_star/M_sun) using the standard Bell et al. (2003)
+    mass-to-light ratio vs. color relation for a Kroupa IMF.
+    
+    log10(M/L_r) = -0.306 + 1.097 * (g - r)
+    log10(L_r/L_sun) = 0.4 * (M_r_sun - M_r)
+    
+    where M_r = r - DM (K-corrections neglected in this closed-form proxy)
+    and M_r_sun = 4.64 mag (AB).
+    """
+    # Extract input columns
+    g = X[:, 1]
+    r = X[:, 2]
+    DM = X[:, 6]
+    
+    # Constants
+    M_r_sun = 4.64          # solar absolute r-band magnitude (AB)
+    a = -0.306              # Bell et al. (2003) intercept
+    b = 1.097               # Bell et al. (2003) slope for (g - r)
+    
+    # Absolute r-band magnitude (ignoring K-corrections)
+    M_r = r - DM
+    
+    # Log stellar mass
+    log_L_r = 0.4 * (M_r_sun - M_r)
+    log_ML_r = a + b * (g - r)
+    log_M_star = log_L_r + log_ML_r
+    
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_star/M_sun) using the Taylor et al. (2011) closed-form
+    relation calibrated to MPA-JHU Kroupa-IMF stellar masses:
+    
+        log10(M*) = 1.15 + 0.70*(g - i) - 0.4*M_i
+    
+    where M_i = i - DM is the absolute i-band magnitude.
+    """
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+    M_i = i - DM
+    log_mstar = 1.15 + 0.70 * (g - i) - 0.40 * M_i
+    return log_mstar

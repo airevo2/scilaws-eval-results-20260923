@@ -1,0 +1,111 @@
+task_id: ghg_emission_drivers__ME
+domain: environmental_science / climate_economics
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  This task concerns national annual methane emissions across countries and years, studied within climate and environmental policy science. Methane is a greenhouse gas released chiefly from agriculture, waste, and fossil-fuel extraction.
+
+target:
+  name: ME
+  symbol: "I_CH4"
+  unit: kg CH4
+  description: National annual CH4 emissions from all sectors excluding land-use change and forestry
+  range: [478974.0, 56670782000.0]
+
+inputs:
+  - name: GDP
+    symbol: "A"
+    unit: USD per capita (constant 2015 USD (World Bank WDI base year))
+    description: Gross domestic product per capita in constant 2015 US dollars
+    range: [166.71, 112418.0]
+  - name: TP
+    symbol: "P"
+    unit: persons
+    description: Total national population
+    range: [52597.0, 1379860000.0]
+  - name: AP
+    symbol: "AP"
+    unit: "%"
+    description: Share of population aged 15 to 64 years (working-age or active population)
+    range: [45.77, 85.25]
+  - name: DP
+    symbol: "DP"
+    unit: persons per km2
+    description: Population density as number of inhabitants per square kilometre of land area
+    range: [1.35, 6944.1]
+  - name: UR
+    symbol: "UR"
+    unit: "%"
+    description: Percentage of the total population living in urban areas
+    range: [5.27, 100.0]
+  - name: AT
+    symbol: "AT"
+    unit: "degrees C"
+    description: Annual mean surface air temperature averaged over the national territory
+    range: [-4.97, 29.78]
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block added for schema symmetry with GOLD.
+priors: []
+
+data_files:
+  train: data/train.csv   # GDP <= 20000 USD/cap (lower/middle-income regime)
+  test:  data/test.csv    # GDP > 20000 USD/cap (high-income OOD extrapolation)
+# Note: this task uses a $20,000 GDP hard threshold for train/test split. Sister task EC uses a 75th-percentile split instead — see audit/triages/ghg_emission_drivers__EC_REAUDIT_2026-05-25.md for the discussion.
+
+n_train: 3555
+n_test: 838
+
+references:
+  - id: vazquez_2022_bms
+    label: "Vazquez 2022 BMS nonlinear expression for log(ME)"
+    formula_file: formulas/vazquez_2022_bms.py
+    reference_pdf: reference/vazquez_2022.pdf
+    n_law_constants: 7
+    n_other_constants: 2
+    n_local_params: 0
+    measured:
+      smape: 0.777638
+      r2: 0.769460
+  - id: vazquez_2022_stirpat
+    label: "Vazquez 2022 modified STIRPAT log-linear formula for log(ME)"
+    formula_file: formulas/vazquez_2022_stirpat.py
+    reference_pdf: reference/vazquez_2022.pdf
+    n_law_constants: 7
+    n_other_constants: 1
+    n_local_params: 0
+    measured:
+      smape: 0.757284
+      r2: 0.907023
+  - id: york_2003
+    label: "York 2003 foundational STIRPAT (3-covariate: GDP, TP, UR)"
+    formula_file: formulas/york_2003.py
+    reference_pdf: reference/york_2003.pdf
+    n_law_constants: 4
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 1.041373
+      r2: 0.287047
+
+caps:
+  max_law_constants: 7
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: smape
+reference_baseline_id: vazquez_2022_stirpat   # strongest baseline (lowest SMAPE / highest R²); the metric anchor
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include national population size as a scale driver of methane emissions"
+  - "include per-capita income as a driver of methane-emitting economic activity"
+  - "predicted national methane emissions are non-negative"
+
+best_baseline: 0.757284    # vazquez_2022_stirpat — smape (lower is better); regenerated 2026-05-30

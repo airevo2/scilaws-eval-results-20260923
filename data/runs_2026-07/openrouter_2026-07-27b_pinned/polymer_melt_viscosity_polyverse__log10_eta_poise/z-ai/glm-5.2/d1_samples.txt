@@ -1,0 +1,254 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(eta) in poise for polymer melts.
+    
+    Combines:
+    1. WLF equation for temperature dependence relative to Tg.
+    2. Power law (3.4 exponent) for molecular weight dependence.
+    3. Cross model for shear-thinning behavior.
+    """
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    shear_rate = X[:, 2]
+    Tg = X[:, 3]
+    
+    # WLF universal constants (reference temperature = Tg)
+    C1 = 17.44
+    C2 = 51.6  # K
+    
+    # Zero-shear viscosity (log10) at Tg
+    # Power law: eta0 ~ Mw^3.4 for entangled polymers
+    A = -3.0  # Baseline intercept constant (fitted)
+    n_mw = 3.4  # Molecular weight scaling exponent
+    
+    # WLF shift factor
+    # log10(a_T) = -C1 * (T - Tg) / (C2 + T - Tg)
+    wlf_term = -C1 * (T - Tg) / (C2 + T - Tg)
+    
+    log10_eta0 = A + n_mw * log10_Mw + wlf_term
+    
+    # Cross model for shear thinning
+    # eta = eta0 / (1 + (shear_rate / gamma_c)^m)
+    m = 0.5  # Shear-thinning exponent
+    gamma_c = 1.0  # Critical shear rate (s^-1)
+    
+    shear_term = np.log10(1.0 + (shear_rate / gamma_c)**m)
+    
+    log10_eta = log10_eta0 - shear_term
+    
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    gamma_dot = X[:, 2]
+    Tg = X[:, 3]
+
+    # Universal WLF constants referenced to Tg
+    C1 = 17.44
+    C2 = 51.6  # K
+
+    # Critical molecular weight (generic ~10^4 g/mol)
+    log10_Mc = 4.0
+
+    # Baseline log10(eta0) at Tg and Mc (poise)
+    # ~10^13 poise is a typical order-of-magnitude for Tg viscosity
+    log10_eta_Tg_Mc = 13.0
+
+    # WLF temperature shift factor
+    dT = T - Tg
+    denom = C2 + dT
+    # Protect against non-melt / extrapolation regimes where denom <= 0
+    denom = np.where(denom < 1.0, 1.0, denom)
+    wlf_shift = -C1 * dT / denom
+
+    # Molecular weight dependence (piecewise power law, continuous at Mc)
+    slope = np.where(log10_Mw > log10_Mc, 3.4, 1.0)
+    log10_eta0 = log10_eta_Tg_Mc + slope * (log10_Mw - log10_Mc) + wlf_shift
+
+    # Cross model for shear thinning
+    # Plateau modulus ~1e6 Pa = 1e7 dyn/cm^2 (cgs)
+    G_N0 = 1.0e7
+    # Characteristic time tau = eta0 / G_N0 (seconds)
+    eta0 = 10.0**log10_eta0
+    tau = eta0 / G_N0
+    # Cross exponent m = 1 - n (n ~ 0.2 => m ~ 0.8)
+    m = 0.8
+    Wi = tau * gamma_dot
+    # log10(eta) = log10(eta0) - log10(1 + Wi**m)
+    shear_correction = np.log10(1.0 + Wi**m)
+    log10_eta = log10_eta0 - shear_correction
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(melt viscosity) [log10(poise)] using the standard
+    WLF temperature shift + 3.4-power molecular-weight law + Cross
+    shear-thinning model.
+    """
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    gamma_dot = X[:, 2]
+    Tg = X[:, 3]
+
+    # --- WLF universal constants (Williams, Landel & Ferry) ---
+    C1 = 17.44
+    C2 = 51.6  # K
+
+    # Reference viscosity at Tg for Mw ≈ Mc  (≈10^12 Pa·s = 10^13 poise)
+    log10_eta_g = 13.0
+
+    # Typical entanglement molecular weight
+    Mc = 3.0e4           # g/mol
+    log10_Mc = np.log10(Mc)
+
+    # Entanglement exponent (Fox–Flory / Bueche)
+    alpha = 3.4
+
+    # --- Cross model constants ---
+    # Plateau modulus G0 ≈ 1e5 Pa  →  1e6 poise
+    G0 = 1.0e6
+    # Power-law index n (typical for polymer melts)
+    n = 0.5
+    m = 1.0 - n          # Cross exponent
+
+    # Temperature shift relative to Tg (avoid singularity at/below Tg)
+    dT = T - Tg
+    dT = np.maximum(dT, 1.0e-3)
+
+    # Zero-shear viscosity (poise)
+    log10_eta0 = (log10_eta_g
+                  + alpha * (log10_Mw - log10_Mc)
+                  - C1 * dT / (C2 + dT))
+
+    eta0 = 10.0 ** log10_eta0
+
+    # Relaxation time from Rouse/reptation scaling: lambda ~ eta0 / G0
+    lam = eta0 / G0
+
+    # Cross model: eta = eta0 / [1 + (lambda * gamma_dot)^m]
+    # For gamma_dot == 0 the correction is exactly 0.
+    x = lam * gamma_dot
+    # Guard against extremely large values that could overflow
+    x = np.minimum(x, 1.0e15)
+    correction = np.log10(1.0 + x ** m)
+
+    log10_eta = log10_eta0 - correction
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form polymer melt viscosity model combining:
+      - WLF temperature dependence (referenced to Tg)
+      - Molecular-weight power law (entanglement crossover at Mc)
+      - Cross model for shear thinning
+    Returns log10(eta) in poise.
+    """
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    gamma_dot = X[:, 2]
+    Tg = X[:, 3]
+
+    # --- WLF universal constants ---
+    C1 = 17.44          # dimensionless
+    C2 = 51.6           # K
+
+    # --- Molecular-weight parameters ---
+    log10_Mc = 4.0      # log10(Mc) ~ 1e4 g/mol (typical)
+    a_ent = 3.4         # entangled regime exponent
+    a_unent = 1.0       # unentangled regime exponent
+
+    # --- Reference state: viscosity at Tg (poise) ---
+    log10_eta_Tg = 13.0  # ~10^13 poise, the "universal" Tg viscosity
+
+    # WLF shift factor
+    log10_aT = -C1 * (T - Tg) / (C2 + (T - Tg))
+
+    # Molecular-weight contribution (power law with crossover)
+    dlog_eta_Mw = np.where(
+        log10_Mw > log10_Mc,
+        a_ent * (log10_Mw - log10_Mc),
+        a_unent * (log10_Mw - log10_Mc)
+    )
+
+    # Zero-shear (Newtonian-limit) viscosity
+    log10_eta0 = log10_eta_Tg + log10_aT + dlog_eta_Mw
+
+    # --- Cross model shear thinning ---
+    # eta = eta0 / [1 + (lambda * gamma_dot)^(1-n)]
+    n = 0.5                       # power-law index
+    log10_GN = 6.0                # plateau modulus ~ 1e6 dyn/cm^2 (cgs)
+    log10_lambda = log10_eta0 - log10_GN   # characteristic time (s)
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        log10_lg = log10_lambda + np.log10(np.where(gamma_dot > 0, gamma_dot, 1.0))
+        lg_term = np.where(
+            gamma_dot > 0,
+            10.0 ** ((1.0 - n) * log10_lg),
+            0.0
+        )
+
+    log10_eta = log10_eta0 - np.log10(1.0 + lg_term)
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    shear_rate = X[:, 2]
+    Tg = X[:, 3]
+    
+    # WLF equation constants
+    C1 = 17.44
+    C2 = 51.6
+    
+    # Molecular weight dependence (entangled melt power law)
+    n = 3.4
+    # Offset constant for log10(eta) at Tg (in poise) for Mw = 1 g/mol
+    A = -3.0 
+    
+    # Cross model constants for shear thinning
+    # Plateau modulus G0 ~ 1e6 Pa = 1e7 poise
+    log10_G0 = 7.0
+    m = 0.8  # typically 1 - n_cross
+    
+    # Zero-shear viscosity at the glass transition temperature
+    log10_eta_g = A + n * log10_Mw
+    
+    # WLF temperature dependence
+    delta_T = T - Tg
+    wlf_term = -C1 * delta_T / (C2 + delta_T)
+    
+    # Zero-shear viscosity at temperature T
+    log10_eta0 = log10_eta_g + wlf_term
+    
+    # Relaxation time lambda = eta0 / G0
+    log10_lambda = log10_eta0 - log10_G0
+    lambda_dot_gamma = (10.0**log10_lambda) * shear_rate
+    
+    # Cross model shear thinning correction
+    shear_term = np.log10(1.0 + np.power(lambda_dot_gamma, m))
+    
+    # Final viscosity
+    log10_eta = log10_eta0 - shear_term
+    
+    return log10_eta

@@ -1,0 +1,26 @@
+{
+  "task": "exoplanet_mass_radius__R",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "bashi_2017",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "chen_2016",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

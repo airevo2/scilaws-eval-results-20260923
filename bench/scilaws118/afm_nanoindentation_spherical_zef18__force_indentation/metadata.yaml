@@ -1,0 +1,95 @@
+task_id: afm_nanoindentation_spherical_zef18__force_indentation
+domain: biology / biophysics
+license: CC0-1.0
+
+# Type II — cluster = one AFM force-indentation curve (one measurement site on
+# zebrafish spinal cord tissue). Each curve yields hundreds of (force, indentation)
+# rows. The per-cluster parameter is the reduced Young's modulus E*, which
+# varies across cells while the functional form (Hertz spherical contact) is
+# universal.
+type: typeII
+has_group_id: true
+
+context: >-
+  When a spherical-tipped atomic force microscopy (AFM) probe indents a soft
+  biological sample, the measured force increases nonlinearly with the
+  indentation depth. The relationship reflects the mechanical stiffness of the
+  tissue: stiffer cells resist deformation more strongly. The force-indentation
+  curve is well described by a power-law form in the contact regime, where the
+  exponent is determined by the geometry of the spherical probe and the
+  contact mechanics. The apparent stiffness differs from cell to cell and from
+  site to site across the same tissue slice, encoding biological variability
+  in the local mechanical environment.
+
+target:
+  name: force_N
+  symbol: "F"
+  unit: N
+  description: Indentation force measured by AFM cantilever deflection (N). Positive during approach contact with the sample.
+  range: [-2.03e-11, 4.04e-09]
+
+inputs:
+  - name: indentation_m
+    symbol: delta
+    unit: m
+    description: Indentation depth from the contact point (m). Positive into the sample; zero at the moment of first contact.
+    range: [1.03e-11, 1.79e-05]
+  - name: R_m
+    symbol: R
+    unit: m
+    description: Spherical AFM probe tip radius (m). Constant at 1.864e-05 m for the entire zef18 dataset (single colloidal-probe cantilever used throughout).
+    range: [1.864e-05, 1.864e-05]
+
+# Dataset — three-file v2 Type II layout, cluster-disjoint holdout.
+# Cluster = each AFM force-indentation curve (one indentation site on zebrafish
+# spinal cord tissue). Quality-filtered (user rating >= 3): 1,043 curves total.
+# Train/test boundary: every 5th curve (sorted lexicographically by HDF5 hash key)
+# is held out as a test cluster (209 test, 834 train clusters).
+# Within-cluster split: rows sorted by ascending indentation depth; every 3rd row
+# (ranks 2, 5, 8, ...) goes to test_test; remainder goes to test_fit.
+# This INTERLEAVED split ensures both fit and test windows span the full delta
+# range (FM-T-P-axis compliant: avoids hiding the h^(3/2) curvature from fit).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 836775
+n_test_fit: 142251
+n_test_test: 71017
+n_clusters_train: 834
+n_clusters_test: 209
+n_rows_per_cluster_min: 226
+n_rows_per_cluster_median: 572
+n_rows_per_cluster_max: 1922
+
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# batch02 standard cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emit for forward-compat.
+
+# === Reference baselines ===
+references:
+  - id: mendova_2024
+    label: "Mendova et al. 2024 — Hertz spherical-contact law; OLS per-curve E*"
+    formula_file: formulas/mendova_2024.py
+    reference_pdf: reference/mendova_2024.pdf
+    n_law_constants: 0       # 4/3 prefactor is an exact structural rational -> inline (not a fitted LAW constant); form-discovery, LAW={}
+    n_other_constants: 0
+    n_local_params: 1        # E_star (reduced Young's modulus, fitted per curve)
+    measured: {rmse: 1.41e-10, r2: 0.9830}
+
+# === v2 anti-dump caps — from reference_metrics.json derived_caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         1
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+# Use r2 metric: RMSE in Newton units (~1.4e-10 N) is below the harness's
+# REF_EPS=1e-4 threshold (designed for dimensionless outputs), causing all
+# clusters to be flagged non-discriminative when using rmse. R2=0.983 is
+# clearly not near-perfect (1 - R2 = 0.017 >> REF_EPS), so r2 is the
+# correct metric for this physics-unit target.
+metric: r2
+best_baseline: 0.9830   # mendova_2024 pooled R2 on test_test

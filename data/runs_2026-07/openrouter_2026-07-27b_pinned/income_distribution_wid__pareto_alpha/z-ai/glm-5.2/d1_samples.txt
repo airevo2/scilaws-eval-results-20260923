@@ -1,0 +1,180 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top income share, ln S(p), based on the 
+    standard Pareto distribution relationship:
+    
+    S(p) = p^(1 - 1/alpha)
+    ln S(p) = (1 - 1/alpha) * ln p
+    
+    where the inverse Pareto coefficient (1/alpha) varies by time and region.
+    """
+    log_p = X[:, 0]
+    year = X[:, 2]
+    region = X[:, 3]
+    
+    # Normalize year around 2000
+    t = year - 2000.0
+    
+    # Base inverse Pareto coefficient (1/alpha) ~ 0.5 (i.e., alpha ~ 2.0)
+    base_inv_alpha = 0.50
+    
+    # Secular trend: top shares have generally increased since 1980, 
+    # meaning alpha has decreased and 1/alpha has increased.
+    year_trend = 0.005 * t
+    
+    # Regional adjustments to the inverse Pareto coefficient
+    # (Americas and Oceania typically exhibit higher inequality than Europe)
+    region_effect = np.zeros_like(t, dtype=float)
+    region_effect[region == 'Americas'] = 0.15
+    region_effect[region == 'Oceania'] = 0.10
+    region_effect[region == 'Asia'] = 0.05
+    region_effect[region == 'Africa'] = 0.05
+    region_effect[region == 'Europe'] = -0.05
+    
+    inv_alpha = base_inv_alpha + year_trend + region_effect
+    
+    # Closed-form Pareto relationship: ln S(p) = (1 - 1/alpha) * ln p
+    log_top_share = (1.0 - inv_alpha) * log_p
+    
+    return log_top_share
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    log_p = np.asarray(X[:, 0], dtype=float)
+
+    # Canonical Pareto-Lorenz top-income-share relationship:
+    # S(p) = p^(1 - 1/alpha)  =>  ln S(p) = (1 - 1/alpha) * ln p.
+    ALPHA = 1.5
+    return (1.0 - 1.0 / ALPHA) * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+    
+    # Handle byte strings if present
+    if isinstance(region[0], bytes):
+        region = np.array([r.decode() for r in region])
+    
+    # Base Pareto alpha (shape parameter) by region
+    # alpha typically ranges between 1.5 and 3.0 for top incomes
+    region_alpha = {
+        'Europe': 2.2,
+        'Asia': 1.9,
+        'Africa': 1.8,
+        'Americas': 2.0,
+        'Oceania': 2.0
+    }
+    
+    # Map regions to base alpha
+    alpha = np.array([region_alpha.get(r, 2.0) for r in region])
+    
+    # Inequality trend: alpha decreases over time (meaning top shares grow)
+    # Standard trend observed from 1980 to 2023 in WID
+    alpha = alpha - 0.005 * (year - 1980)
+    
+    # Standard Pareto distribution closed-form for top share:
+    # S(p) = p^(1 - 1/alpha)
+    # ln S(p) = (1 - 1/alpha) * ln(p)
+    beta = 1.0 - 1.0 / alpha
+    log_top_share = beta * log_p
+    
+    return log_top_share
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log top income share ln S(p) using the standard Pareto distribution
+    relationship:
+        ln S(p) = (1 - 1/alpha) * ln(p)
+    where the Pareto tail index alpha varies linearly with calendar year and
+    has region-specific intercept shifts (capturing the well-documented rise
+    in top-income inequality and regional heterogeneity).
+    """
+    # --- Inputs ---
+    log_p = X[:, 0]          # ln(p)
+    # X[:, 1] = 100p is redundant with log_p; not used.
+    year = X[:, 2]           # calendar year
+    region = X[:, 3]         # WID region code (string)
+
+    # --- Canonical coefficients (stylized facts from top-incomes literature) ---
+    ALPHA_BASE_1980 = 2.0          # baseline Pareto index in 1980
+    ALPHA_YEAR_SLOPE = -0.01       # alpha declines ~0.01/yr (inequality rising)
+
+    REGION_OFFSET = {
+        'Europe':   0.20,   # historically more equal (higher alpha)
+        'Americas': -0.30,  # more unequal (lower alpha)
+        'Asia':     -0.10,
+        'Africa':    0.00,
+        'Oceania':  -0.10,
+    }
+
+    # --- Vectorized computation of alpha ---
+    # Map region strings to offsets
+    offsets = np.array([REGION_OFFSET.get(r, 0.0) for r in region])
+    alpha = ALPHA_BASE_1980 + ALPHA_YEAR_SLOPE * (year - 1980) + offsets
+
+    # Ensure alpha stays in a sensible range (1 < alpha < inf)
+    alpha = np.clip(alpha, 1.05, 10.0)
+
+    # --- Pareto exponent: 1 - 1/alpha ---
+    exponent = 1.0 - 1.0 / alpha
+
+    # --- Closed-form log top share ---
+    log_top_share = exponent * log_p
+    return log_top_share
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts ln S(p) based on the Pareto distribution.
+    
+    The canonical closed-form relationship for top income shares under the Pareto law is:
+        ln S(p) = a * ln(p)
+    where a = (alpha - 1) / alpha = 1 - 1/alpha, and alpha is the Pareto tail index.
+    
+    The tail index a varies by year and region. We model a as:
+        a(t, region) = a_base + a_t * (t - 1980) + a_region
+    """
+    log_p = X[:, 0]
+    year = X[:, 2]
+    region = X[:, 3]
+    
+    # Base Pareto coefficient (implies alpha ~ 1.67 in 1980)
+    a_base = 0.40
+    
+    # Time trend: inequality has generally increased since 1980 (a increases as alpha decreases)
+    a_t = 0.0075
+    time_trend = a_t * (year - 1980)
+    
+    # Regional fixed effects on the Pareto coefficient
+    region_effect = np.zeros_like(year, dtype=float)
+    region_effect[region == 'Americas'] = 0.10
+    region_effect[region == 'Asia'] = 0.05
+    region_effect[region == 'Oceania'] = 0.08
+    region_effect[region == 'Africa'] = 0.02
+    region_effect[region == 'Europe'] = 0.00
+    
+    # Calculate the Pareto coefficient a
+    a = a_base + time_trend + region_effect
+    
+    # Canonical Pareto law for top shares
+    log_top_share = a * log_p
+    
+    return log_top_share

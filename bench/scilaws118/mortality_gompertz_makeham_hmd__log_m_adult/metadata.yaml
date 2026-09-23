@@ -1,0 +1,135 @@
+task_id: mortality_gompertz_makeham_hmd__log_m_adult
+domain: social_science / demography
+license: CC-BY-4.0
+
+# Type II — cluster = country (HMD code).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task is from demography, concerning the central adult death rate by age and calendar year recorded in the national life tables of the Human Mortality Database (HMD).
+
+target:
+  name: log_m_adult
+  symbol: ln m
+  unit: ""
+  description: Natural log of the central period death rate at single-year age resolution (Total sex, 1×1 configuration).
+  range: [-9.293722, 0.524812]
+
+inputs:
+  - name: age
+    symbol: x
+    unit: years
+    description: Single-year integer age of the cohort, 30 to 95 inclusive.
+    range: [30, 95]
+  - name: year
+    symbol: t
+    unit: years
+    description: Calendar year of observation, 1751 to 2025.
+    range: [1751, 2025]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-country-out).
+# 42 countries split 28 train / 14 test. Test countries are never seen during
+# form discovery; for each test country, fit() sees its first 50% of years
+# (test_fit, temporal prefix) and predict() is scored on the remaining 50%
+# (test_test, temporal suffix). Both cross-cluster and cross-time
+# generalisation are exercised.
+data_files:
+  train:     data/train.csv        # 28 train countries, all years
+  test_fit:  data/test_fit.csv     # 14 test countries, early-half years
+  test_test: data/test_test.csv    # 14 test countries, late-half years
+n_train:     177703
+n_test_fit:   43362
+n_test_test:  43824
+n_clusters_train: 28
+n_clusters_test:  14
+
+# Candidate prior constants — the `priors` prompt slot. This task's
+# reference formulas (the Gompertz log-linear form, with optional year
+# drift) fit everything per cluster on the test_fit window; no external
+# constants are load-bearing. The distractors below are parameters of
+# the full Heligman-Pollard 1980 8-parameter formula that the reduced
+# adult-Gompertz form deliberately drops — in-domain quantities that
+# do not belong to this benchmark's formulas.
+priors:
+  - name: hp1980_infant_mortality_A
+    value: 0.0025
+    unit: dimensionless
+    description: Heligman-Pollard 1980 infant-mortality level (~q_0), mid-range of paper Table 1.
+    source: HP 1980 Table 1, PDF p. 58 (A ∈ 0.0014–0.0034 across calibrations). Belongs to the infant-mortality term, not the adult-Gompertz form.
+    _role: distractor
+  - name: hp1980_accident_hump_F
+    value: 25.0
+    unit: years
+    description: Location (centre) of the young-adult accident-mortality hump.
+    source: HP 1980 Table 1 (F ∈ ~18–53 across calibrations). The hump is below age 30 and outside this benchmark's age range.
+    _role: distractor
+  - name: hp1980_curvature_K
+    value: 1.0
+    unit: dimensionless
+    description: Curvature parameter of the senescent term in HP 1980 models 2 and 3.
+    source: HP 1980 Tables 2-3 (K ∈ ~0.78–2.42). When K=1 the senescent term reduces to pure Gompertz, which is what this benchmark uses.
+    _role: distractor
+
+# === Reference baselines ===
+# Four formulas spanning two axes of the Gompertz adult-mortality law.
+# Age-shape axis: the pure adult-Gompertz line (gompertz_age) and its
+# Gompertz-Makeham correction with an age-independent constant
+# (gompertz_makeham). Calendar-time axis: a uniform secular drift
+# (gompertz_age_year) and an age-specific drift, the rank-1 Lee-Carter
+# reduction (gompertz_age_year_interaction).
+references:
+  - id: gompertz_age
+    label: Gompertz (1825) adult-mortality log-linear form (closed-form OLS)
+    formula_file: formulas/gompertz_age.py
+    reference_pdf: reference/gompertz_1825.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # alpha, beta
+    measured: {rmse: 0.8562, r2: 0.7669}
+  - id: gompertz_makeham
+    label: Gompertz-Makeham form — Gompertz term plus an age-independent constant (nonlinear LS)
+    formula_file: formulas/gompertz_makeham.py
+    reference_pdf: reference/makeham_1860.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # A, B, beta
+    measured: {rmse: 0.8551, r2: 0.7675}
+  - id: gompertz_age_year
+    label: Gompertz form with linear calendar-year drift (closed-form OLS)
+    formula_file: formulas/gompertz_age_year.py
+    reference_pdf: reference/heligman_pollard_1980.pdf
+    n_law_constants: 0
+    n_other_constants: 1       # year_center
+    n_local_params: 3          # alpha, beta, gamma
+    measured: {rmse: 0.6772, r2: 0.8542}
+  - id: gompertz_age_year_interaction
+    label: Gompertz form with age-specific calendar drift — rank-1 Lee-Carter (1992) reduction (closed-form OLS)
+    formula_file: formulas/gompertz_age_year_interaction.py
+    reference_pdf: reference/lee_carter_1992.pdf
+    n_law_constants: 0
+    n_other_constants: 1       # year_center
+    n_local_params: 3          # alpha, beta, gamma
+    measured: {rmse: 0.7528, r2: 0.8198}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         3
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on log_m_adult
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include a Gompertz senescent mortality component that rises exponentially with adult age"
+  - "predicted log mortality is nondecreasing with age over ages 30–95 at fixed calendar year"
+  - "predicted adult central death rate has nonnegative age acceleration over ages 30–95 at fixed calendar year"
+
+best_baseline: 0.6772     # gompertz_age_year rmse on data/test_test.csv

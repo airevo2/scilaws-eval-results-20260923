@@ -1,0 +1,75 @@
+import numpy as np
+
+def predict(X):
+    # Kleiber's law: B (kcal/day) = 70 * M(kg)^0.75
+    # Convert to Watts: 1 kcal/day = 4184 J / 86400 s = 0.048426 W
+    # Convert mass: M(kg) = M(g) / 1000
+    # B(W) = 70 * (4184/86400) * (M_g/1000)^0.75
+    # log10(B_W) = log10(70 * 4184 / 86400) + 0.75 * (log10(M_g) - 3)
+    #            = log10(3.3898) - 2.25 + 0.75 * log10(M_g)
+    #            = -1.7198 + 0.75 * log10(M_g)
+    log10_M = np.log10(X[:, 0])
+    log10_B = -1.7198 + 0.75 * log10_M
+    return log10_B
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's Law canonical form: BMR = 70 * M_kg^0.75 (in kcal/day)
+    # Conversion to Watts: 1 kcal/day = 4184 J / 86400 s
+    # Mass conversion: M_kg = M_g / 1000
+    # B_W = 70 * (4184 / 86400) * (M_g / 1000)**0.75
+    # log10(B_W) = 0.75 * log10(M_g) + log10(70 * 4184 / 86400) - 2.25
+    
+    intercept = np.log10(70 * 4184 / 86400) - 2.25
+    return 0.75 * np.log10(M_g) + intercept
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's law: B (kcal/day) = 70 * M(kg)^0.75
+    # Convert to watts: 1 kcal/day = 4184 J / 86400 s
+    # M(kg) = M(g) / 1000
+    # B(W) = 70 * (4184/86400) * (M_g / 1000)^0.75
+    # log10(B_W) = log10(70 * 4184 / 86400) - 0.75*3 + 0.75*log10(M_g)
+    intercept = np.log10(70.0 * 4184.0 / 86400.0) - 0.75 * 3.0
+    log10_B = intercept + 0.75 * np.log10(M_g)
+    return log10_B
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    log10_M = np.log10(M_g)
+    # Kleiber's law: B (kcal/day) = 70 * M_kg^0.75
+    # Convert to watts: 1 kcal/day = 4184 / 86400 W
+    # B_W = 70 * (4184/86400) * (M_g / 1000)^0.75
+    # log10(B_W) = log10(70 * 4184 / 86400) + 0.75 * (log10(M_g) - 3)
+    intercept = np.log10(70.0 * 4184.0 / 86400.0) - 0.75 * 3.0  # ≈ -1.7198
+    slope = 0.75
+    return intercept + slope * log10_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's law: B (kcal/day) = 70 * M_kg^0.75
+    # Convert to watts: 1 kcal/day = 4184 / 86400 W
+    # Convert mass to kg: M_kg = M_g / 1000
+    # B_W = 70 * (4184/86400) * (M_g/1000)^0.75
+    # log10(B_W) = log10(70 * 4184 / 86400) - 0.75*3 + 0.75*log10(M_g)
+    #            = log10(3.3898) - 2.25 + 0.75*log10(M_g)
+    #            ≈ -1.7198 + 0.75 * log10(M_g)
+    log10_M = np.log10(M_g)
+    log10_B = -1.7198 + 0.75 * log10_M
+    return log10_B

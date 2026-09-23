@@ -1,0 +1,157 @@
+import numpy as np
+
+def predict(X):
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+    
+    # Gordon-Ng universal thermodynamic model coefficients (placeholders for fitted values)
+    R = 0.5
+    S = 0.01
+    A1 = 0.1
+    A2 = 0.001
+    
+    # Gordon-Ng model: 1/COP = -1 + (T_ci / T_ei) + (R / Q_e) + (S * T_ci / Q_e) + (-A1 * T_ci + A2 * T_ci**2) / (Q_e * T_ei)
+    # The target is 1/COP - 1, which simplifies to:
+    one_over_COP_minus_1 = (T_ci / T_ei) - 2.0 + (R / Q_e) + (S * T_ci / Q_e) + ((-A1 * T_ci + A2 * T_ci**2) / (Q_e * T_ei))
+    
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gordon–Ng universal thermodynamic model for a vapor-compression chiller.
+    Returns 1/COP - 1 given:
+        X[:, 0] = T_ei  (evaporator inlet temperature, K)
+        X[:, 1] = T_ci  (condenser inlet temperature, K)
+        X[:, 2] = Q_e   (evaporator cooling load, kW)
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e  = X[:, 2]
+
+    # Fitted coefficients (replace with calibrated values for a specific machine)
+    A = 1.0   # heat-leak / friction constant
+    B = 1.0   # heat-leak / friction temperature coefficient
+    C = 1.0   # evaporator heat-exchanger irreversibility coefficient
+    D = 1.0   # condenser heat-exchanger irreversibility coefficient
+
+    # Gordon–Ng form:
+    # 1/COP = -1 + (T_ci / T_ei) + (1/Q_e)*(A + B*T_ci) + Q_e*(C/T_ei + D/T_ei**2)
+    # Therefore:
+    # 1/COP - 1 = (T_ci / T_ei) - 2 + (1/Q_e)*(A + B*T_ci) + Q_e*(C/T_ei + D/T_ei**2)
+    one_over_COP_minus_1 = (
+        (T_ci / T_ei) - 2.0
+        + (1.0 / Q_e) * (A + B * T_ci)
+        + Q_e * (C / T_ei + D / T_ei**2)
+    )
+
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict 1/COP - 1 using the Gordon–Ng universal thermodynamic model
+    for vapor-compression chillers.
+
+    Inputs (X is a 2-D numpy array):
+        X[:, 0] = T_ei  Evaporator (chilled-water) inlet temperature [K]
+        X[:, 1] = T_ci  Condenser (cooling-water) inlet temperature [K]
+        X[:, 2] = Q_e   Evaporator cooling load [kW]
+
+    Returns:
+        1-D numpy array of 1/COP - 1 [dimensionless]
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e  = X[:, 2]
+
+    # Gordon–Ng universal model coefficients (placeholder values)
+    A = 1.0   # kW
+    B = 1.0   # kW·K
+    C = 1.0   # kW
+
+    # 1/COP = -1 + (T_ci/T_ei)
+    #         + (A/Q_e)*(T_ci/T_ei)
+    #         + B*(T_ci/T_ei)/(Q_e*T_ei)
+    #         + C/Q_e
+    ratio = T_ci / T_ei
+    inv_COP = (-1.0
+               + ratio
+               + (A / Q_e) * ratio
+               + (B / (Q_e * T_ei)) * ratio
+               + C / Q_e)
+
+    # Return the requested quantity: 1/COP - 1
+    return inv_COP - 1.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts 1/COP - 1 for a chiller using the ASHRAE Toolkit primary polynomial model.
+    The model relates 1/COP (W_comp / Q_evap) to evaporator inlet temp, condenser inlet temp, and cooling load.
+    """
+    T_ei = X[:, 0]  # Evaporator inlet temperature [K]
+    T_ci = X[:, 1]  # Condenser inlet temperature [K]
+    Q_e  = X[:, 2]  # Evaporator cooling load [kW]
+    
+    # Fitted coefficients for the ASHRAE primary model (1/COP = W_comp / Q_evap)
+    # These are typical placeholder coefficients; in practice, they are regressed from measured data.
+    c0 = 1.0
+    c1 = -0.01
+    c2 = 0.02
+    c3 = -0.0001
+    c4 = 0.00001
+    c5 = 0.00001
+    c6 = 0.000001
+    c7 = 0.00001
+    c8 = 0.000001
+    c9 = 0.000001
+    
+    # Calculate 1/COP
+    inv_cop = (
+        c0 + 
+        c1 * T_ei + 
+        c2 * T_ci + 
+        c3 * Q_e + 
+        c4 * T_ei**2 + 
+        c5 * T_ci**2 + 
+        c6 * Q_e**2 + 
+        c7 * T_ei * T_ci + 
+        c8 * T_ei * Q_e + 
+        c9 * T_ci * Q_e
+    )
+    
+    # Return 1/COP - 1
+    return inv_cop - 1.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+    
+    # Gordon-Ng universal thermodynamic model for chillers:
+    # 1/COP = -1 + (T_ci / T_ei) + (R / Q_e) * (T_ci / T_ei - 1) + (S * T_ci / Q_e)
+    # Therefore, 1/COP - 1 = (T_ci / T_ei) - 2 + (R / Q_e) * (T_ci / T_ei - 1) + (S * T_ci / Q_e)
+    
+    # Representative thermodynamic coefficients
+    R = 1.0  # Coefficient representing internal irreversibilities
+    S = 0.01 # Coefficient representing heat leaks
+    
+    T_ratio = T_ci / T_ei
+    Q_inv = 1.0 / Q_e
+    
+    return T_ratio - 2.0 + (R * Q_inv) * (T_ratio - 1.0) + (S * T_ci * Q_inv)

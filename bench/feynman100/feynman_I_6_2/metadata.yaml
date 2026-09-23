@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Dimensionless"
+  symbol: "f"
+  unit: ""
+  description: "Dimensionless"
+inputs:
+  - name: "Dimensionless"
+    symbol: "sigma"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Dimensionless"
+    symbol: "theta"
+    unit: ""
+    description: "Dimensionless"

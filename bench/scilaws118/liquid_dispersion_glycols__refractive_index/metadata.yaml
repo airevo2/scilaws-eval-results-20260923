@@ -1,0 +1,99 @@
+task_id: liquid_dispersion_glycols__refractive_index
+domain: physics / optics
+license: CC-BY-4.0
+
+# Type I - each row is one (wavelength, temperature) measurement from
+# ethylene glycol (EG/MEG); no cluster structure.
+type: typeI
+has_group_id: false
+
+# Background knowledge - science framing only; no column listing, no constants.
+context: >-
+  Transparent organic liquids slow light by a factor equal to their refractive
+  index, which depends on the wavelength of light and the temperature of the
+  sample. In the visible and near-infrared range, the refractive index of a
+  liquid decreases as wavelength increases and also decreases slightly as
+  temperature rises. A resonance model with ultraviolet and infrared absorption
+  poles captures both the magnitude and the curvature of the dispersion curve
+  with physically motivated parameters. The measurements were acquired with a
+  modified Abbe refractometer using a monochromator and halogen source, at ten
+  temperatures from 1 to 45 degrees Celsius and wavelengths from 394 to
+  1071 nanometres.
+
+target:
+  name: refractive_index
+  symbol: "n"
+  unit: ""
+  description: Refractive index of ethylene glycol at the given wavelength and temperature.
+  range: [1.4160, 1.4509]
+
+inputs:
+  - name: lambda_um
+    symbol: "lambda"
+    unit: um
+    description: Vacuum wavelength of light in micrometres.
+    range: [0.394, 1.071]
+  - name: temperature_C
+    symbol: "T"
+    unit: degC
+    description: Liquid temperature.
+    range: [1.0, 45.0]
+
+# Dataset - Type I two-file layout
+data_files:
+  train: data/train.csv   # lambda <= 650 nm (visible range, 394-635 nm)
+  test:  data/test.csv    # lambda > 650 nm (red + near-IR OOD range, 651-1071 nm)
+
+n_train: 230
+n_test: 170
+
+# === Reference baselines ===
+# Two candidate formulas: Jakubczyk (2023) two-pole Sellmeier + thermal correction,
+# and Cauchy (1836) isothermal three-term power series.
+references:
+  - id: jakubczyk_2023
+    label: "Jakubczyk 2023 - two-pole Sellmeier plus rational thermal correction (Eqs. 1-3)"
+    formula_file: formulas/jakubczyk_2023.py
+    reference_pdf: reference/jakubczyk_2023.pdf
+    n_law_constants: 8
+    n_other_constants: 1
+    n_local_params: 0
+    measured: {rmse: 0.0002, r2: 0.9985}
+  - id: cauchy_1836
+    label: "Cauchy 1836 - three-term isothermal dispersion power series (Eq. 55)"
+    formula_file: formulas/cauchy_1836.py
+    reference_pdf: reference/cauchy_1836.pdf
+    n_law_constants: 3
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.0040, r2: 0.1944}
+
+# Candidate prior constants - the `priors` prompt slot.
+# Audit 2026-05-29 (逐条审核, effort=max): declared the Eq.1 reference temperature (20 degC) in
+# jakubczyk_2023.OTHER_CONSTANTS (was a hidden `_T_REF` module global; n_other_constants 0->1). It is a
+# structural protocol value, not a discoverable law, so it is exposed below as the
+# `reference_temperature_sellmeier` candidate prior (OTHER_CONSTANTS->priors; not a leak vs LAW_CONSTANTS).
+priors:
+  - name: reference_temperature_sellmeier
+    value: 20.0
+    unit: degC
+    description: Reference temperature at which the Sellmeier dispersion fit is defined.
+    source: Jakubczyk et al. 2023, experimental protocol description, PDF p. 3.
+    _role: candidate
+  - name: nm_per_um_conversion
+    value: 1000.0
+    unit: nm/um
+    description: Unit conversion between nanometres and micrometres.
+    source: SI unit definition.
+    _role: distractor
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants: 8
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.0002

@@ -1,0 +1,128 @@
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    G = X[:, 0]   # Plane-of-array irradiance [W/m^2]
+    T_c = X[:, 1] # Module temperature [deg C]
+    
+    # Standard Test Conditions (STC)
+    G_stc = 1000.0  # W/m^2
+    T_stc = 25.0    # deg C
+    
+    # Typical per-module constants 
+    # (P_stc assumes a standard ~300W module; gamma is a typical power temp-coeff)
+    P_stc = 300.0   # W
+    gamma = -0.004  # 1/deg C
+    
+    # Standard closed-form relationship for maximum DC power
+    # Wind speed (WS) is ignored as T_c is directly measured (no thermal sub-model needed).
+    # Air mass (AM) is ignored as spectral corrections are secondary to the standard P_mp model.
+    P_mp = P_stc * (G / G_stc) * (1.0 + gamma * (T_c - T_stc))
+    
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_c = X[:, 1]
+    
+    # Standard Test Conditions (STC)
+    G_STC = 1000.0  # W/m^2
+    T_STC = 25.0    # deg C
+    
+    # Typical crystalline silicon module parameters
+    P_STC = 300.0   # W, nominal STC maximum power per module
+    gamma = -0.004  # 1/deg C, typical temperature coefficient for P_mp
+    
+    # Standard closed-form relationship (PVWatts / linear temperature model)
+    P_mp = P_STC * (G / G_STC) * (1.0 + gamma * (T_c - T_STC))
+    
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_c = X[:, 1]
+    
+    # Standard closed-form linear PV power model (e.g., PVWatts / simplified SAPM)
+    # P_stc and gamma are representative constants for a standard crystalline silicon module
+    P_stc = 300.0    # W, nominal DC power at Standard Test Conditions (STC)
+    gamma = -0.004   # 1/°C, typical temperature coefficient for maximum power
+    
+    # Calculate per-module maximum power point
+    P_mp = P_stc * (G / 1000.0) * (1.0 + gamma * (T_c - 25.0))
+    
+    # Power cannot be negative
+    return np.maximum(P_mp, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G   = X[:, 0]   # Plane-of-array irradiance [W/m²]
+    T_c = X[:, 1]   # Module back-of-cell temperature [°C]
+    # WS = X[:, 2]  # Wind speed [m/s] — used in thermal sub-models, not needed here
+    AM  = X[:, 3]   # Absolute air mass [-]
+
+    # ---- Reference (STC) conditions ----
+    G_ref = 1000.0   # W/m²
+    T_ref = 25.0     # °C
+
+    # ---- Module parameters (typical crystalline-Si) ----
+    P_mp0    = 250.0    # STC max-power per module [W]
+    gamma_mp = -0.004   # Temperature coeff. of P_mp [1/°C]
+
+    # ---- SAPM irradiance polynomial coefficients ----
+    C0 = 1.012
+    C1 = -0.012
+
+    # ---- SAPM spectral (air-mass) polynomial coefficients for c-Si ----
+    a0 =  0.9180
+    a1 =  0.0862
+    a2 = -0.0244
+    a3 =  0.0038
+    a4 = -0.0002
+
+    # ---- Compute correction factors ----
+    delta = G / G_ref                              # normalised irradiance
+    f_G   = C0 * delta + C1 * delta ** 2           # irradiance factor
+    f_T   = 1.0 + gamma_mp * (T_c - T_ref)         # temperature factor
+    f_AM  = (a0 + a1 * AM + a2 * AM ** 2           # spectral factor
+                + a3 * AM ** 3 + a4 * AM ** 4)
+
+    # ---- Per-module DC power at maximum-power point [W] ----
+    P_mp = P_mp0 * f_G * f_T * f_AM
+
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    G = X[:, 0]   # Plane-of-array irradiance [W/m^2]
+    T_c = X[:, 1] # Module temperature [deg C]
+    
+    # Note: Wind speed (WS) and Air Mass (AM) are available but not required 
+    # for the standard closed-form P_mp equation when T_c and G are directly known.
+    # WS is typically used for thermal modeling (e.g., Fuentes, Sandia) to find T_c,
+    # and AM is used for spectral corrections requiring module-specific coefficients.
+    
+    # Standard STC parameters (typical values for a standard crystalline silicon module)
+    P_STC = 250.0   # Nominal DC power at Standard Test Conditions [W]
+    gamma = -0.004  # Temperature coefficient of P_max [1/deg C]
+    T_STC = 25.0    # Standard Test Condition temperature [deg C]
+    G_STC = 1000.0  # Standard Test Condition irradiance [W/m^2]
+    
+    # Standard closed-form relationship for maximum power point
+    P_mp = P_STC * (G / G_STC) * (1.0 + gamma * (T_c - T_STC))
+    
+    return P_mp

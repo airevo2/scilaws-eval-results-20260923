@@ -1,0 +1,204 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln S(p) — natural log of the top p share of pre-tax national income.
+    Uses the standard Pareto tail relationship: S(p) = p^(1 - 1/α)  =>  ln S(p) = (1 - 1/α) * ln p.
+    The Pareto coefficient α is allowed to vary by region and year (a linear time trend).
+    The redundant input top_pct (X[:,1]) is ignored.
+    """
+    log_p = X[:, 0]           # ln(p)
+    year = X[:, 2]            # calendar year
+    region = X[:, 3]          # WID macro-region (string)
+
+    # Base Pareto coefficient (α) by region around year 2000 – plausible typical values
+    alpha_base = {
+        'Africa':   2.2,
+        'Americas': 1.7,
+        'Asia':     1.8,
+        'Europe':   2.0,
+        'Oceania':  1.9
+    }
+
+    # Linear time trend: α decreases by 0.005 per year (top shares rising over time)
+    alpha = np.array([alpha_base.get(r, 2.0) - 0.005 * (y - 2000) for r, y in zip(region, year)])
+
+    # Ensure α > 1 so that the top share is well-defined
+    alpha = np.clip(alpha, 1.01, None)
+
+    # Exponent in the Pareto share formula
+    exponent = 1.0 - 1.0 / alpha
+
+    # ln S(p) = exponent * ln(p)
+    return exponent * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts ln S(p), the natural log of the top-p income share,
+    using the Pareto law ln S(p) = (1 - 1/alpha) * ln(p) where alpha
+    depends on region and year in a stylized way reflecting typical
+    WID patterns (inequality rising slowly over time).
+    
+    Parameters
+    ----------
+    X : np.ndarray of shape (n, 4)
+        Columns:
+        0 - log_p_above (ln p)
+        1 - top_pct (100p)  [ignored, structurally redundant]
+        2 - year (t)
+        3 - region (str: 'Africa', 'Americas', 'Asia', 'Europe', 'Oceania')
+    
+    Returns
+    -------
+    np.ndarray of shape (n,)  : predicted ln S(p)
+    """
+    log_p = X[:, 0]          # ln(p)
+    year = X[:, 2]           # calendar year
+    region = X[:, 3]         # categorical region
+    
+    # Base Pareto coefficient alpha0 by region (rough guess for year 2000)
+    alpha0 = {
+        'Africa':   2.0,
+        'Americas': 1.6,
+        'Asia':     2.2,
+        'Europe':   2.5,
+        'Oceania':  2.0
+    }
+    
+    # Annual trend in alpha (slightly declining → rising inequality)
+    trend = -0.01   # per year
+    base_year = 2000
+    
+    # Compute alpha for each observation, ensuring > 1
+    alpha = np.array([alpha0[r] + trend * (y - base_year) for r, y in zip(region, year)])
+    alpha = np.clip(alpha, 1.001, None)   # keep slope well-defined
+    
+    # Pareto law: ln S(p) = (1 - 1/alpha) * ln p
+    slope = 1.0 - 1.0 / alpha
+    log_share = slope * log_p
+    
+    return log_share
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln(S(p)) — natural log of top-p income share — using a Pareto tail model
+    where the inverted Pareto coefficient b(t, region) = 1 - 1/alpha(t, region).
+    The relation is ln(S(p)) = (1 - 1/alpha) * ln(p).
+    alpha(t, region) is modelled as a linear trend in year plus region dummies,
+    with typical values chosen to mimic post-1980 widening of top shares.
+    """
+    # Extract inputs
+    log_p = X[:, 0]            # ln(p), the top fraction
+    year = X[:, 2]             # calendar year
+    region = X[:, 3]           # macro-region (string)
+
+    # Parameter values (illustrative, but capture the known empirical patterns)
+    alpha_base = 2.0           # Americas baseline around year 2000
+    alpha_slope = -0.01        # annual decline (top shares rose => alpha fell)
+    region_offsets = {
+        'Africa': 0.3,
+        'Americas': 0.0,
+        'Asia': 0.2,
+        'Europe': 0.7,
+        'Oceania': 0.4
+    }
+
+    # Compute alpha for each observation
+    alpha = alpha_base + alpha_slope * (year - 2000.0)
+    # Add region-specific shifts
+    region_arr = np.asarray(region, dtype=str)
+    reg_offset = np.array([region_offsets.get(r, 0.0) for r in region_arr])
+    alpha += reg_offset
+
+    # Ensure alpha > 1 (required for finite mean in Pareto)
+    alpha = np.clip(alpha, 1.01, None)
+
+    # Standard closed-form: S(p) = p^{(alpha-1)/alpha} = p^{1 - 1/alpha}
+    log_S = log_p * (1.0 - 1.0 / alpha)
+
+    return log_S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts ln S(p), the natural log of the top p share of pre-tax national income.
+
+    Standard closed-form relationship (Pareto tail): S(p) = p^(1 - 1/alpha)
+    => ln S(p) = (1 - 1/alpha) * ln(p).
+
+    The Pareto coefficient alpha is taken as a constant, which is the most commonly
+    cited basic form. Inputs year and region are not needed for this fundamental law;
+    the redundant top_pct column is also ignored.
+    """
+    # Extract ln(p) — the only needed predictor
+    log_p = X[:, 0]
+
+    # Pareto alpha (commonly estimated in the 1.5–2.5 range for top incomes)
+    ALPHA = 1.5
+    beta = 1.0 - 1.0 / ALPHA
+
+    return beta * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln S(p) — the natural log of the top p share of pre-tax national income —
+    using a standard inverted-Pareto relationship with a slope that varies by year and region.
+
+    The canonical form is: ln S(p) = (1 - 1/alpha) * ln p
+    where (1 - 1/alpha) is modelled as a linear function of year and region fixed effects.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 4)
+        Columns:
+        0 - log_p_above (ln p)
+        1 - top_pct (100p)  [redundant, not used]
+        2 - year
+        3 - region (string or integer-coded categorical)
+
+    Returns
+    -------
+    np.ndarray, shape (n_samples,)
+        ln S(p) for each row.
+    """
+    log_p = X[:, 0]
+    year = X[:, 2]
+    region = X[:, 3].astype(str)          # ensure string for comparison
+
+    # region offset relative to Americas (empirically plausible values)
+    offsets = {
+        'Africa':   0.10,
+        'Americas': 0.00,
+        'Asia':     0.05,
+        'Europe':   0.08,
+        'Oceania':  0.07
+    }
+
+    # compute region effect for each observation
+    region_effect = np.zeros_like(year)
+    for reg in np.unique(region):
+        if reg in offsets:
+            region_effect[region == reg] = offsets[reg]
+        # if an unknown region appears, leave offset as 0.0
+
+    # beta = 1 - 1/alpha, linear time trend + region effect
+    # base: Americas in 2000 -> beta = 0.37, annual change -0.002
+    beta = 0.37 - 0.002 * (year - 2000.0) + region_effect
+
+    ln_S = beta * log_p
+    return ln_S

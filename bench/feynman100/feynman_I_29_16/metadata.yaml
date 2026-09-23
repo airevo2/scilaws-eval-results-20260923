@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Length"
+  symbol: "x"
+  unit: ""
+  description: "Length"
+inputs:
+  - name: "Length"
+    symbol: "x1"
+    unit: ""
+    description: "Length"
+  - name: "Length"
+    symbol: "x2"
+    unit: ""
+    description: "Length"
+  - name: "Dimensionless"
+    symbol: "theta1"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Dimensionless"
+    symbol: "theta2"
+    unit: ""
+    description: "Dimensionless"

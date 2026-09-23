@@ -1,0 +1,91 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict discharge capacity Q [Ah] as a function of cycle index k.
+    Uses the standard empirical capacity fade model:
+    Q(k) = Q0 - A * k^z
+    where Q0 is initial capacity, A is fade rate coefficient,
+    and z is the power-law exponent (typically ~0.5 for SEI growth).
+    """
+    Q0 = 2.0      # initial capacity [Ah]
+    A = 0.05      # capacity fade coefficient [Ah/(cycle^z)]
+    z = 0.5       # power-law exponent for fade
+
+    k = X[:, 0]   # cycle index
+    Q = Q0 - A * k**z
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form model for discharge capacity fade over cycles.
+    Often, calendar/cycle aging due to SEI growth follows a square-root-of-time
+    (or cycles) dependence, giving Q(k) = Q0 - A * sqrt(k).
+    """
+    # Typical parameters for a Li-ion cell (illustrative)
+    Q0 = 2.5      # initial capacity, Ah
+    A   = 0.05    # fade coefficient, Ah / cycle^0.5
+    
+    k = X[:, 0]            # cycle index (starts at 1)
+    Q = Q0 - A * np.sqrt(k)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict discharge capacity Q [Ah] as a function of cycle index k.
+    Uses the standard power-law capacity fade model:
+        Q(k) = Q0 - A * k^z
+    with typical coefficients for a Li-ion cell.
+    """
+    k = X[:, 0]  # cycle index, starting at 1
+    Q0 = 2.0     # initial capacity [Ah]
+    A = 0.1      # fade coefficient [Ah]
+    z = 0.5      # exponent (diffusion-limited SEI growth)
+    Q = Q0 - A * k**z
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict discharge capacity per cycle Q [Ah] from cycle_index k.
+    Standard closed-form relationship: Q(k) = Q0 - A * sqrt(k)
+    based on diffusion-limited SEI growth (common Li-ion fade model).
+    """
+    # nominal initial capacity [Ah]
+    Q0 = 2.0
+    # fade coefficient [Ah / sqrt(cycle)]
+    A = 0.02
+
+    k = X[:, 0]               # cycle_index (starting at 1)
+    Q = Q0 - A * np.sqrt(k)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form capacity fade model based on diffusion-limited SEI growth.
+    Capacity loss is proportional to the square root of the cycle index.
+
+    Input:  X : 2-D numpy array, X[:, 0] = cycle_index (k), starting at 1
+    Output: Q : 1-D numpy array of discharge capacity per cycle [Ah]
+    """
+    k = X[:, 0]
+    # Typical parameters for a lithium-ion cell (e.g., 2 Ah nominal)
+    Q0 = 2.0    # initial capacity, Ah
+    alpha = 0.1 # fade coefficient, Ah / sqrt(cycle)
+    Q = Q0 - alpha * np.sqrt(k)
+    return Q

@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Angular momentum"
+  symbol: "L"
+  unit: ""
+  description: "Angular momentum"
+inputs:
+  - name: "Dimensionless"
+    symbol: "n"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"

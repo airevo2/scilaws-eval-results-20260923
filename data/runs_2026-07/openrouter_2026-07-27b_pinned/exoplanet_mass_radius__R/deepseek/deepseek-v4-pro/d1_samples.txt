@@ -1,0 +1,180 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the radius of an object in Earth radii from its mass in Earth masses
+    using the widely-cited broken power-law mass-radius relation of Chen & Kipping (2017).
+    """
+    M = X[:, 0]
+
+    # Chen & Kipping (2017) broken power-law parameters
+    M1 = 2.04
+    M2 = 132.0
+    M3 = 26600.0
+    a1 = 0.279
+    a2 = 0.589
+    a3 = -0.044
+    a4 = 0.881
+    C1 = 1.008
+
+    # Compute remaining coefficients to ensure continuity at break points
+    C2 = C1 * (M1 ** (a1 - a2))
+    C3 = C2 * (M2 ** (a2 - a3))
+    C4 = C3 * (M3 ** (a3 - a4))
+
+    # Initialize the output array
+    R = np.zeros_like(M)
+
+    # Apply piecewise power laws
+    mask1 = M < M1
+    mask2 = (M >= M1) & (M < M2)
+    mask3 = (M >= M2) & (M < M3)
+    mask4 = M >= M3
+
+    R[mask1] = C1 * (M[mask1] ** a1)
+    R[mask2] = C2 * (M[mask2] ** a2)
+    R[mask3] = C3 * (M[mask3] ** a3)
+    R[mask4] = C4 * (M[mask4] ** a4)
+
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts radius in Earth radii from mass in Earth masses using the
+    deterministic broken power-law mass-radius relation from Chen & Kipping (2017).
+    Regimes: Terran (M < 2.04 M_earth), Neptunian (2.04 ≤ M < 130 M_earth),
+    Jovian (M ≥ 130 M_earth). The relation is forced to pass through (1 M_earth, 1 R_earth).
+    """
+    M = X[:, 0]  # mass in Earth masses
+
+    # Break points (Earth masses)
+    M1 = 2.04
+    M2 = 130.0
+
+    # Power-law indices
+    alpha1 = 0.279
+    alpha2 = 0.589
+    alpha3 = -0.044
+
+    # Normalisation for the Terran regime (R = 1 at M = 1)
+    C1 = 1.0
+    # Continuity at break points
+    C2 = C1 * M1**(alpha1 - alpha2)
+    C3 = C2 * M2**(alpha2 - alpha3)
+
+    # Piecewise radius
+    R1 = C1 * M**alpha1
+    R2 = C2 * M**alpha2
+    R3 = C3 * M**alpha3
+
+    condlist = [M < M1, (M >= M1) & (M < M2), M >= M2]
+    choicelist = [R1, R2, R3]
+
+    R = np.select(condlist, choicelist)
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict radius R (in Earth radii) from mass M (in Earth masses)
+    using the deterministic broken power-law mass-radius relation
+    of Chen & Kipping (2017, ApJ, 834, 17) – the "Forecaster" relation.
+    The relation is continuous at the transition masses.
+    """
+    M = X[:, 0]
+
+    # Break points (M_earth)
+    M1 = 2.04
+    M2 = 131.4
+    M3 = 2660.0
+
+    # Power-law indices for each regime
+    alpha1 = 0.2790   # Terran
+    alpha2 = 0.589    # Neptunian
+    alpha3 = -0.044   # Jovian
+    alpha4 = 0.881    # Stellar
+
+    # Normalisation at M = 1 M_earth (Terran regime)
+    C1 = 1.008  # R_earth at M = 1 M_earth
+
+    # Compute radii at the break points to ensure continuity
+    R1 = C1 * M1**alpha1
+    R2 = R1 * (M2 / M1)**alpha2
+    R3 = R2 * (M3 / M2)**alpha3
+
+    # Vectorised piecewise computation
+    R = np.piecewise(
+        M,
+        [M < M1, (M >= M1) & (M < M2), (M >= M2) & (M < M3), M >= M3],
+        [
+            lambda m: C1 * m**alpha1,
+            lambda m: R1 * (m / M1)**alpha2,
+            lambda m: R2 * (m / M2)**alpha3,
+            lambda m: R3 * (m / M3)**alpha4
+        ]
+    )
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict radius R (in Earth radii) from mass M (in Earth masses).
+    Uses a continuous broken power-law mass-radius relation based on
+    the widely cited model of Chen & Kipping (2017), which spans
+    terrestrial planets, Neptunian worlds, gas giants, and brown dwarfs.
+
+    Regimes:
+        Terran:    M < 2.0           -> R ~ M^0.279
+        Neptunian: 2.0 <= M < 130.0  -> R ~ M^0.589
+        Jovian:    M >= 130.0        -> R ~ M^-0.044
+    The coefficients are chosen so the relation is continuous at the breakpoints.
+    """
+    M = X[:, 0]
+    R = np.empty_like(M)
+
+    # Breakpoints
+    M1 = 2.0
+    M2 = 130.0
+
+    # Power-law exponents
+    p1 = 0.279
+    p2 = 0.589
+    p3 = -0.044
+
+    # Coefficient for terrestrial regime (normalized to ~1 Earth radius at 1 Earth mass)
+    C1 = 1.008
+    # Continuity at M1 -> C2
+    R_at_M1 = C1 * M1**p1
+    C2 = R_at_M1 / M1**p2
+    # Continuity at M2 -> C3
+    R_at_M2 = C2 * M2**p2
+    C3 = R_at_M2 / M2**p3
+
+    # Apply piecewise
+    mask1 = M < M1
+    mask2 = (M >= M1) & (M < M2)
+    mask3 = M >= M2
+
+    R[mask1] = C1 * M[mask1]**p1
+    R[mask2] = C2 * M[mask2]**p2
+    R[mask3] = C3 * M[mask3]**p3
+
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict radius in Earth radii from mass in Earth masses

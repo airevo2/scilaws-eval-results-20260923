@@ -1,0 +1,81 @@
+import numpy as np
+
+def predict(X):
+    # Rousset's isolation by distance relationship (2D stepping-stone model):
+    # M = F_ST / (1 - F_ST) = a + b * ln(d)
+    # where b = 1 / (4 * pi * D * sigma^2) and a is a constant.
+    log_distance_km = X[:, 0]
+    
+    # Using generic placeholder coefficients for the linear relationship
+    intercept = 0.0
+    slope = 0.01 
+    
+    M = intercept + slope * log_distance_km
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_distance = X[:, 0]
+    # Rousset's isolation by distance model (2D habitat):
+    # M_stat = F_ST / (1 - F_ST) = a + b * ln(d)
+    a = 0.0
+    b = 1.0
+    M = a + b * log_distance
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Rousset's M statistic (F_ST / (1 - F_ST)) based on the 
+    canonical 2D isolation-by-distance relationship (Rousset, 1997).
+    
+    In a 2-dimensional habitat, M is expected to be linearly related 
+    to the natural logarithm of geographic distance:
+        M = a + b * ln(d)
+    where 'a' is the intercept and 'b' is the slope (often related to 
+    neighborhood size, Nb = 1 / b).
+    """
+    log_distance_km = X[:, 0]
+    
+    # Canonical fitted coefficients (as named constants)
+    a = 0.0   # intercept
+    b = 0.01  # slope (1 / neighborhood_size)
+    
+    M_stat = a + b * log_distance_km
+    
+    return M_stat
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rousset's isolation by distance model (2D habitats)
+    # states that F_ST / (1 - F_ST) is linearly related to ln(distance)
+    log_distance_km = X[:, 0]
+    
+    # Canonical form: M_stat = a + b * ln(d)
+    # Using standard generic coefficients (a = intercept, b = slope)
+    a = 0.0
+    b = 1.0
+    
+    M = a + b * log_distance_km
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_d = X[:, 0]
+    # Rousset's isolation-by-distance model: M = F_ST / (1 - F_ST) = a + b * ln(d)
+    a = 0.0
+    b = 0.01
+    M = a + b * log_d
+    return M

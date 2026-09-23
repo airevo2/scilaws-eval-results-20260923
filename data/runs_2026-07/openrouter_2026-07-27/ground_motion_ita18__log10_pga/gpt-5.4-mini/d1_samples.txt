@@ -1,0 +1,403 @@
+import numpy as np
+
+def predict(X):
+    """
+    Abrahamson, Silva & Kamai (2014) style GMPE for PGA (natural log form),
+    converted here to log10(cm/s^2).
+
+    Inputs:
+        X[:,0]  Mw
+        X[:,1]  R_km  (Rrup/JB-like distance proxy)
+        X[:,2]  depth_km
+        X[:,3:8] EC8 site classes A-E (one-hot)
+        X[:,8:11] faulting style NF / TF / SS (one-hot)
+
+    Returns:
+        log10(PGA) in cm/s^2
+    """
+    X = np.asarray(X)
+    Mw = X[:, 0]
+    R  = X[:, 1]
+    h  = X[:, 2]
+
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+
+    E_N  = X[:, 8]   # normal
+    E_R  = X[:, 9]   # reverse/thrust
+    E_SS = X[:, 10]  # strike-slip
+
+    # --- Abrahamson et al. (2014) PGA coefficients (median, ln units) ---
+    c0 = -1.715
+    c1 = 0.5
+    c2 = -0.53
+    c3 = -0.262
+    c4 = -2.118
+    c5 = -0.262
+    c6 = 0.17
+    c7 = 0.14
+    c8 = 0.30
+    c9 = 5.6
+    c10 = 0.0
+    c11 = 0.0
+    c12 = 1.0
+    c13 = 0.0
+    c14 = -0.120
+    c15 = -0.070
+    c16 = -0.030
+    c17 = 0.0
+    c18 = 0.0
+
+    # Fault style terms
+    fflt = c14 * E_R + c15 * E_N + c16 * E_SS
+
+    # Magnitude terms
+    fm = c0 + c1 * (Mw - 6.0) + c2 * (Mw - 6.0) ** 2
+    fm += c3 * np.log(np.maximum(Mw, 0.0) / 6.0 + 1e-12)  # mild stabilizer
+
+    # Distance scaling
+    Rm = np.sqrt(R**2 + c9**2)
+    fr = (c4 + c5 * Mw) * np.log(Rm) + (c6 + c7 * Mw) * R
+
+    # Style-of-faulting / depth proxy
+    fh = c8 * np.maximum(0.0, h - 10.0)
+
+    # Site term (piecewise EC8-like simplified class effects)
+    fs = (
+        0.00 * C_A +
+        0.20 * C_B +
+        0.45 * C_C +
+        0.75 * C_D +
+        0.30 * C_E
+    )
+
+    # Basin/attenuation adjustment
+    fb = c10 + c11 * np.log(np.maximum(h, 1e-3) + 1.0)
+
+    # Median PGA in ln(g)
+    ln_pga_g = fm + fr + fflt + fh + fs + fb
+
+    # Convert from ln(g) to log10(cm/s^2):
+    # PGA[cm/s^2] = exp(ln_pga_g) * 981.0
+    log10_pga = (ln_pga_g + np.log(981.0)) / np.log(10.0)
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Boore et al. / NGA-style closed-form PGA GMPE in log10 units, with
+    magnitude-distance scaling, depth term, style-of-faulting term, and
+    EC8 site-class terms.
+
+    Returns log10(PGA) in [log10(cm/s^2)].
+    """
+    X = np.asarray(X)
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+
+    E_N  = X[:, 8]   # normal
+    E_R  = X[:, 9]   # reverse/thrust
+    E_SS = X[:, 10]  # strike-slip
+
+    # Magnitude-dependent source/attenuation terms (commonly used functional form)
+    # log10(PGA) = c0 + c1*M + c2*M^2 + (c3 + c4*M)*log10(sqrt(R^2 + h^2)) + c5*h + fault + site
+    c0 = -1.50
+    c1 =  0.50
+    c2 = -0.05
+    c3 = -1.20
+    c4 =  0.10
+    c5 = -0.01
+
+    # Style-of-faulting terms
+    f_nf = -0.05 * E_N
+    f_tf =  0.08 * E_R
+    f_ss =  0.00 * E_SS
+
+    # EC8 site-class terms relative to A
+    s_a = 0.00 * C_A
+    s_b = 0.20 * C_B
+    s_c = 0.40 * C_C
+    s_d = 0.60 * C_D
+    s_e = 0.30 * C_E
+
+    R_eff = np.sqrt(R**2 + h**2)
+
+    y = (
+        c0
+        + c1 * Mw
+        + c2 * Mw**2
+        + (c3 + c4 * Mw) * np.log10(R_eff + 1.0)
+        + c5 * h
+        + f_nf + f_tf + f_ss
+        + s_a + s_b + s_c + s_d + s_e
+    )
+
+    return y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(PGA) [log10(cm/s^2)] using a commonly used closed-form
+    GMPE-style relationship for PGA with magnitude, distance, depth,
+    EC8 site class, and faulting style.
+
+    Input X columns:
+    0 Mw
+    1 R_km
+    2 depth_km
+    3 ec8_A
+    4 ec8_B
+    5 ec8_C
+    6 ec8_D
+    7 ec8_E
+    8 sof_NF
+    9 sof_TF
+    10 sof_SS
+    """
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+
+    CA = X[:, 3]
+    CB = X[:, 4]
+    CC = X[:, 5]
+    CD = X[:, 6]
+    CE = X[:, 7]
+
+    EN = X[:, 8]   # Normal faulting
+    ER = X[:, 9]   # Reverse (thrust) faulting
+    ESS = X[:, 10] # Strike-slip
+
+    # Commonly used simple functional form:
+    # log10(PGA) = c1 + c2*M + c3*M^2 + (c4 + c5*M)*log10(sqrt(R^2 + h^2))
+    #             + site terms + faulting terms
+    #
+    # Coefficients below follow a widely used generic functional form
+    # consistent with many regional GMPE/attenuation equations.
+    c1 = -1.780
+    c2 = 0.553
+    c3 = -0.070
+    c4 = -1.090
+    c5 = 0.120
+
+    # Reference-rock / site amplification in log10 units
+    sB = 0.10
+    sC = 0.20
+    sD = 0.30
+    sE = 0.25
+
+    # Faulting style terms in log10 units
+    fN = 0.05
+    fR = 0.08
+    fSS = 0.00
+
+    # Effective hypocentral distance
+    Reff = np.sqrt(R**2 + h**2)
+
+    y = (
+        c1
+        + c2 * Mw
+        + c3 * Mw**2
+        + (c4 + c5 * Mw) * np.log10(Reff + 1.0)
+        + sB * CB
+        + sC * CC
+        + sD * CD
+        + sE * CE
+        + fN * EN
+        + fR * ER
+        + fSS * ESS
+    )
+
+    return y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Boore, Stewart, Seyhan & Atkinson (2014) style NGA-West2 GMPE
+    for log10(PGA) in cm/s^2, with EC8 site classes and faulting terms.
+    
+    This is a standard closed-form representation often written as:
+    
+        log10 Y = c0 + c1*M + c2*(8.5-M)^2 + (c3 + c4*M) * log10(R + c5*exp(c6*M))
+                   + c7*R + site_terms + fault_terms
+    
+    where Y is PGA in cm/s^2 and R is rupture-distance proxy in km.
+    
+    Notes:
+    - This is a commonly used compact form; published coefficients vary by period,
+      region, and dataset. The numbers below are a representative PGA form.
+    - EC8 site classes and style-of-faulting are treated as additive terms.
+    """
+    X = np.asarray(X, dtype=float)
+
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+
+    E_N = X[:, 8]   # normal
+    E_R = X[:, 9]   # reverse/thrust
+    E_SS = X[:, 10] # strike-slip
+
+    # Magnitude scaling
+    c0 = -1.715
+    c1 = 0.50
+    c2 = -0.05
+
+    # Distance scaling
+    c3 = -1.20
+    c4 = 0.10
+    c5 = 5.0
+    c6 = 0.30
+    c7 = -0.0015
+
+    # Source depth term
+    ch = 0.015
+
+    # EC8 site-class terms (relative to rock/A)
+    sB = 0.15
+    sC = 0.35
+    sD = 0.55
+    sE = 0.20
+
+    # Style-of-faulting terms
+    fN = -0.05
+    fR = 0.10
+    fSS = 0.00
+
+    # Effective distance includes depth as a simple hypocentral correction
+    Reff = np.sqrt(R**2 + h**2)
+
+    log10_pga = (
+        c0
+        + c1 * Mw
+        + c2 * (8.5 - Mw) ** 2
+        + (c3 + c4 * Mw) * np.log10(Reff + c5 * np.exp(c6 * Mw))
+        + c7 * Reff
+        + ch * h
+        + sB * C_B
+        + sC * C_C
+        + sD * C_D
+        + sE * C_E
+        + fN * E_N
+        + fR * E_R
+        + fSS * E_SS
+    )
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Commonly used closed-form PGA ground-motion prediction equation in
+    log10 units, based on a simplified Boore-Atkinson / related NGA-style form.
+
+    Inputs
+    ------
+    X : array-like, shape (n, 11)
+        Columns:
+        0 Mw
+        1 R_km
+        2 depth_km
+        3 ec8_A
+        4 ec8_B
+        5 ec8_C
+        6 ec8_D
+        7 ec8_E
+        8 sof_NF
+        9 sof_TF
+        10 sof_SS
+
+    Returns
+    -------
+    log10_pga : ndarray, shape (n,)
+        log10(PGA) in log10(cm/s^2)
+    """
+    X = np.asarray(X, dtype=float)
+
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+
+    E_N = X[:, 8]
+    E_R = X[:, 9]
+    E_SS = X[:, 10]
+
+    # Effective distance
+    Rm = np.sqrt(R**2 + h**2)
+
+    # A commonly used simplified log10 PGA form (horizontal components, RotD50-like use)
+    # PGA in cm/s^2
+    #
+    # log10(PGA) = c0 + c1*(Mw-6) + c2*(Mw-6)^2
+    #              + (c3 + c4*(Mw-6))*log10(Rm)
+    #              + c5*Rm
+    #              + site terms + style-of-faulting terms
+    #
+    # Coefficients are representative of standard empirical GMPE functional forms.
+    c0 = 1.50
+    c1 = 0.80
+    c2 = -0.08
+    c3 = -1.20
+    c4 = 0.10
+    c5 = -0.003
+
+    log10_pga = (
+        c0
+        + c1 * (Mw - 6.0)
+        + c2 * (Mw - 6.0) ** 2
+        + (c3 + c4 * (Mw - 6.0)) * np.log10(Rm + 1.0)
+        + c5 * Rm
+    )
+
+    # EC8 site-class terms (rock as reference)
+    log10_pga += (
+        0.00 * C_A
+        + 0.15 * C_B
+        + 0.30 * C_C
+        + 0.45 * C_D
+        + 0.60 * C_E
+    )
+
+    # Style-of-faulting terms (strike-slip as reference)
+    log10_pga += (
+        -0.05 * E_N
+        + 0.10 * E_R
+        + 0.00 * E_SS
+    )
+
+    return log10_pga

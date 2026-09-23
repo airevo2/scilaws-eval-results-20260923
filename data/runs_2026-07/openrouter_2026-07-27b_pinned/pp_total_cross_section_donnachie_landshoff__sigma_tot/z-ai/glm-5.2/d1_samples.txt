@@ -1,0 +1,122 @@
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    
+    # Standard PDG/Block-Halzen parametrization for the pp total cross section
+    # Incorporating the Froissart bound (log^2(s) rise) and a Regge term for low energy
+    s0 = 29.1       # Scale parameter [GeV^2]
+    c0 = 35.45      # Constant term [mb]
+    c1 = -1.767     # Linear log term coefficient [mb]
+    c2 = 0.275      # Quadratic log term coefficient [mb]
+    beta = 10.2     # Regge residue [mb]
+    eta = 0.45      # Regge intercept exponent
+    
+    # Ensure s is positive to avoid log domain errors
+    s = np.where(s > 0, s, 1e-10)
+    
+    ln_s = np.log(s / s0)
+    sigma_tot = c0 + c1 * ln_s + c2 * ln_s**2 + beta * (s0 / s)**eta
+    
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    s0 = 29.1
+    Z = 35.45
+    B = 0.307
+    Y1 = 42.53
+    Y2 = 33.34
+    eta1 = 0.546
+    eta2 = 0.546
+    
+    # PDG standard fit for pp total cross-section
+    # The minus sign before Y2 corresponds to the proton-proton (pp) case
+    sigma_tot = Z + B * np.log(s / s0)**2 + Y1 * (s0 / s)**eta1 - Y2 * (s0 / s)**eta2
+    
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the total proton-proton hadronic cross-section (sigma_tot) 
+    using the standard Donnachie-Landshoff parameterization.
+    """
+    s = X[:, 0]
+    
+    # Donnachie-Landshoff coefficients for pp scattering
+    X_coeff = 21.70
+    epsilon = 0.0808
+    Y_coeff = 56.08
+    eta = 0.4525
+    
+    # sigma_tot [mb] = X * s^epsilon + Y * s^-eta
+    sigma_tot = X_coeff * np.power(s, epsilon) + Y_coeff * np.power(s, -eta)
+    
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the total proton-proton hadronic cross-section sigma_tot [mb]
+    as a function of the Mandelstam variable s [GeV^2].
+    
+    Uses the standard COMPETE collaboration parameterization (also adopted by PDG),
+    which incorporates the Froissart-Martin bound (ln^2(s) growth) and Regge-like 
+    power-law terms for low-energy behavior.
+    """
+    s = X[:, 0]
+    
+    # COMPETE fit parameters for pp scattering
+    s0 = 29.1          # Fixed scale in GeV^2
+    c0 = 35.85         # mb
+    c1 = -1.967        # mb
+    c2 = 0.237         # mb
+    beta1 = 13.07      # mb
+    beta2 = 7.74       # mb
+    eta1 = 0.447
+    eta2 = 0.546
+    
+    # To avoid log(0) or negative values, ensure s is positive
+    s = np.maximum(s, s0)
+    
+    Z = np.log(s / s0)
+    
+    sigma_tot = (c0 
+                 + c1 * Z 
+                 + c2 * Z**2 
+                 + beta1 * (s0 / s)**eta1 
+                 + beta2 * (s0 / s)**eta2)
+    
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    
+    # PDG / COMPETE collaboration parameterization for pp total cross-section
+    Z = 35.45
+    B = 0.307
+    s0 = 29.1
+    Y1 = 42.53
+    Y2 = 33.34
+    eta1 = 0.46
+    eta2 = 0.545
+    s1 = 1.0
+    
+    sigma_tot = Z + B * np.log(s / s0)**2 + Y1 * (s1 / s)**eta1 - Y2 * (s1 / s)**eta2
+    
+    return sigma_tot

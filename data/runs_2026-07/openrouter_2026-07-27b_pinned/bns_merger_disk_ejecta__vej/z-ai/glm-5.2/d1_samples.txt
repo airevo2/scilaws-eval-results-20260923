@@ -1,0 +1,25 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the mass-averaged terminal velocity of the dynamical ejecta (v_ej) in units of c.
+    Based on the standard fitting formula from Dietrich & Ujevic (2017).
+    """
+    q = X[:, 0]
+    vej = 0.15 + 0.16 * np.arctan(q - 1.2)
+    return vej
+
+=====
+
+
+
+=====
+
+
+
+=====
+
+
+
+=====
+

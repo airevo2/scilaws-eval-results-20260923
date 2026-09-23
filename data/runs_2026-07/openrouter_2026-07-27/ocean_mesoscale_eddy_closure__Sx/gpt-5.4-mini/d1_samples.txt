@@ -1,0 +1,112 @@
+import numpy as np
+
+def predict(X):
+    u = X[:, 0]
+    v = X[:, 1]
+    zeta = X[:, 2]
+    D = X[:, 3]
+    Dtilde = X[:, 4]
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    # Zonal component of the subgrid-scale eddy momentum forcing
+    Sx = -0.25 * (u * d_zeta2_dx + v * (d_zetaD_dx + d_zetaDtilde_dy))
+
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    u = X[:, 0]
+    v = X[:, 1]
+    zeta = X[:, 2]
+    D = X[:, 3]
+    Dtilde = X[:, 4]
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    # Standard 2D subgrid-scale momentum forcing form from the divergence of the Leonard/Reynolds stress tensor
+    Sx = -0.25 * (
+        d_zeta2_dx
+        + 2.0 * d_zetaD_dx
+        + 2.0 * d_zetaDtilde_dy
+    )
+
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    u = X[:, 0]
+    v = X[:, 1]
+    zeta = X[:, 2]
+    D = X[:, 3]
+    Dtilde = X[:, 4]
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    # Zonal component of the divergence of the subgrid-scale stress tensor
+    Sx = -0.25 * (u * d_zeta2_dx + 2.0 * zeta * d_zetaD_dx + v * d_zetaDtilde_dy)
+
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    u = X[:, 0]
+    v = X[:, 1]
+    zeta = X[:, 2]
+    D = X[:, 3]
+    Dtilde = X[:, 4]
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    # Standard coarse-grained QG subgrid momentum forcing form:
+    # Sx = -∂x(τ11) - ∂y(τ12), with τij modeled from second-order velocity moments.
+    # In terms of resolved kinematics, this is commonly written using the Leonard/Reynolds stress
+    # divergence representation with quadratic invariants. A canonical closed-form surrogate is:
+    return (
+        -0.25 * u * d_zeta2_dx
+        - 0.25 * v * (d_zetaD_dx + d_zetaDtilde_dy)
+        - 0.25 * zeta * (u * D + v * Dtilde)
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    u = X[:, 0]
+    v = X[:, 1]
+    zeta = X[:, 2]
+    D = X[:, 3]
+    Dtilde = X[:, 4]
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+
+    # Standard coarse-grained 2D QG SGS momentum forcing in the zonal direction
+    # based on divergence of the subgrid stress tensor:
+    #
+    # S_x = -1/2 * [ ∂x(u'^2 - v'^2) + 2 ∂y(u'v') ]
+    #
+    # In the common isotropic/stress-invariant representation using velocity-gradient
+    # invariants, this reduces to a canonical linear combination of enstrophy and
+    # strain-gradient terms:
+    Sx = (
+        -0.25 * d_zeta2_dx
+        - 0.5 * d_zetaD_dx
+        - 0.5 * d_zetaDtilde_dy
+    )
+
+    return Sx

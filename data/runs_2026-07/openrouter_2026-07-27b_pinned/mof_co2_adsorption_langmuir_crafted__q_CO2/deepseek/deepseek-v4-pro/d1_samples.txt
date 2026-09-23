@@ -1,0 +1,98 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict equilibrium CO2 adsorbed amount using single-site Langmuir isotherm.
+    
+    Parameters:
+    X : 2-D numpy array, X[:, 0] = P_bar (CO2 partial pressure in bar)
+    
+    Returns:
+    q : 1-D numpy array, adsorbed amount in mmol/g
+    """
+    P = X[:, 0]
+    
+    # Langmuir isotherm parameters (fitted constants)
+    q_sat = 8.0      # saturation capacity, mmol/g
+    b = 0.8          # Langmuir affinity constant, bar^-1
+    
+    q = q_sat * b * P / (1.0 + b * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X is a 2-D array with shape (n, 1) -> column 0: P_bar
+    P = X[:, 0]  # bar
+
+    # Langmuir isotherm parameters (typical values for CO2 on MOFs)
+    Q_SAT = 8.0    # saturation capacity, mmol/g
+    B     = 0.25   # Langmuir affinity constant, bar^-1
+
+    q = Q_SAT * B * P / (1.0 + B * P)   # mmol/g
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Langmuir isotherm for CO2 adsorption on a MOF.
+    q = Q_max * b * P / (1 + b * P)
+    P is pressure in bar, q is in mmol/g.
+    Parameters are typical values for a MOF at ~298 K.
+    """
+    P = X[:, 0]  # bar
+    Q_MAX = 5.0   # mmol/g
+    B = 0.8       # 1/bar
+    q = Q_MAX * B * P / (1.0 + B * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict equilibrium CO2 adsorbed amount (mmol/g) on a typical MOF
+    using a single-site Langmuir isotherm, the most widely cited closed-form
+    model for monolayer adsorption on homogeneous surfaces.
+
+    q = q_sat * K * P / (1 + K * P)
+
+    Coefficients are representative of a MOF at 298 K from CRAFTED v2.0.1.
+    """
+    # Representative Langmuir parameters
+    q_sat = 8.0      # mmol/g, saturation capacity
+    K     = 2.0      # bar^-1, affinity constant
+
+    P = X[:, 0]      # pressure in bar
+    q = q_sat * K * P / (1.0 + K * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict equilibrium CO2 adsorbed amount (mmol/g) using the Langmuir isotherm.
+    
+    Parameters:
+        X : np.ndarray, shape (n_samples, 1)
+            X[:, 0] = P (bar), CO2 equilibrium partial pressure.
+    
+    Returns:
+        q : np.ndarray, shape (n_samples,)
+            Adsorbed amount in mmol/g.
+    """
+    P = X[:, 0]
+    # Langmuir isotherm parameters (placeholder values)
+    q_sat = 5.0    # mmol/g  (saturation capacity)
+    b = 0.5        # bar^-1  (affinity constant)
+    q = q_sat * b * P / (1.0 + b * P)
+    return q

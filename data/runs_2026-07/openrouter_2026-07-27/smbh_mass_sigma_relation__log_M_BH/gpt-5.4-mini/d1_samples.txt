@@ -1,0 +1,99 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_BH/M_sun) from the canonical M_BH-sigma relation.
+
+    Uses the commonly cited form for dynamically measured supermassive
+    black holes:
+        log10(M_BH/M_sun) = alpha + beta * log10(sigma / 200 km/s)
+
+    A widely used calibration is from Kormendy & Ho (2013) for classical
+    bulges and ellipticals:
+        alpha = 8.49
+        beta  = 4.38
+    """
+    sigma = np.asarray(X)[:, 0]
+    return 8.49 + 4.38 * np.log10(sigma / 200.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    sigma0 = X[:, 0]
+
+    # Canonical M_BH - sigma relation for dynamically measured SMBHs
+    # (e.g., a commonly used form from the literature)
+    log_M_BH = 8.32 + 5.64 * np.log10(sigma0 / 200.0)
+
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    sigma0 = X[:, 0]
+    log_M_sph = X[:, 1]
+    B_T = X[:, 2]
+    P = X[:, 3]
+
+    # Standard dynamical black-hole mass scaling with central stellar velocity dispersion.
+    # Commonly cited form: log10(M_BH/Msun) = alpha + beta * log10(sigma / 200 km/s)
+    alpha = 8.32
+    beta = 5.64
+
+    return alpha + beta * np.log10(sigma0 / 200.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_BH / M_sun) from host-galaxy properties using a standard
+    literature black-hole scaling relation.
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 4)
+        Columns:
+        X[:, 0] = sigma0      [km/s]
+        X[:, 1] = log_M_sph   [log10(M_sun)]   (ignored)
+        X[:, 2] = B_T         (ignored)
+        X[:, 3] = Pseudobulge (ignored)
+
+    Returns
+    -------
+    ndarray, shape (N,)
+        log10(M_BH / M_sun)
+    """
+    sigma0 = np.asarray(X)[:, 0]
+
+    # Canonical M_BH - sigma relation (e.g., McConnell & Ma 2013 style form)
+    # log10(M_BH/Msun) = 8.32 + 5.64 * log10(sigma / 200 km/s)
+    return 8.32 + 5.64 * np.log10(sigma0 / 200.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_BH / M_sun) using the standard M_BH-sigma relation.
+    
+    Parameters
+    ----------
+    X : np.ndarray
+        2-D array with columns:
+        X[:, 0] = sigma0 [km/s]
+        X[:, 1] = log_M_sph
+        X[:, 2] = B_T
+        X[:, 3] = Pseudobulge
+    """
+    sigma = np.asarray(X)[:, 0]
+    # Commonly used canonical form for dynamically measured BH masses:
+    # log10(M_BH/M_sun) = 8.32 + 5.64 * log10(sigma / 200 km/s)
+    return 8.32 + 5.64 * np.log10(sigma / 200.0)

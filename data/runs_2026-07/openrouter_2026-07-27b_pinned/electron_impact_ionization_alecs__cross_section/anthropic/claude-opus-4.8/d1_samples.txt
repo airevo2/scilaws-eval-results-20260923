@@ -1,0 +1,110 @@
+import numpy as np
+
+def predict(X):
+    # Lotz semi-empirical formula for electron-impact single ionization
+    #   sigma = a * q * ln(E/I) / (E * I)   for E > I,  0 otherwise
+    # a = 4.5e-14 cm^2 eV^2  (Lotz constant), q = number of equivalent outer electrons
+    E = X[:, 0]                      # incident electron energy [eV]
+
+    a = 4.5e-14                      # Lotz constant [cm^2 eV^2]
+    q = 1.0                          # number of easily-ionized outer electrons
+    I = 13.6                         # ionization potential [eV] (generic)
+
+    sigma_cm2 = np.where(E > I, a * q * np.log(E / I) / (E * I), 0.0)
+
+    # convert cm^2 -> 1e-16 cm^2
+    return sigma_cm2 / 1e-16
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Lotz semi-empirical formula for electron-impact single ionization
+    # sigma = a * q * ln(E/P) / (E * P)   for E > P, else 0
+    E = X[:, 0]                 # incident electron energy [eV]
+
+    a = 4.5e-14                 # Lotz constant [cm^2 eV^2]
+    q = 1.0                     # number of equivalent electrons in outer shell
+    P = 15.0                    # ionization potential [eV]
+
+    sigma_cm2 = np.where(E > P, a * q * np.log(E / P) / (E * P), 0.0)
+
+    # convert cm^2 -> 1e-16 cm^2
+    return sigma_cm2 * 1e16
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Lotz semi-empirical formula for electron-impact single ionization:
+    #   sigma = a * q * ln(E/I) / (E * I)   [cm^2],  a = 4.5e-14 cm^2 eV^2
+    # (single outer shell, q electrons, ionization energy I)
+    E = X[:, 0]                 # incident electron energy [eV]
+
+    a = 4.5e-14                 # Lotz constant [cm^2 eV^2]
+    q = 2.0                     # number of equivalent outer-shell electrons
+    I = 15.0                    # ionization energy [eV]
+
+    ratio = E / I
+    sigma_cm2 = np.where(ratio > 1.0,
+                         a * q * np.log(ratio) / (E * I),
+                         0.0)
+
+    # convert cm^2 -> 1e-16 cm^2
+    return sigma_cm2 / 1e-16
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Total electron-impact single-ionization cross-section via the Lotz formula.
+
+    Lotz (1967) semi-empirical form for a single (outer) shell:
+
+        sigma(E) = a * q * ln(E/P) / (E * P)      for E > P
+                 = 0                              for E <= P
+
+    with:
+        a = 4.5e-14 cm^2 eV^2   (Lotz universal constant)
+        q = number of equivalent electrons in the shell
+        P = ionization potential (binding energy) [eV]
+
+    Result is returned in units of 1e-16 cm^2.
+    """
+    E = np.asarray(X[:, 0], dtype=float)
+
+    # Lotz constants
+    a = 4.5e-14      # cm^2 * eV^2
+    q = 2.0          # equivalent electrons in the outer shell
+    P = 15.0         # ionization potential [eV] (typical molecular value)
+
+    sigma_cm2 = np.zeros_like(E)
+    mask = E > P
+    sigma_cm2[mask] = a * q * np.log(E[mask] / P) / (E[mask] * P)
+
+    # convert cm^2 -> units of 1e-16 cm^2
+    return sigma_cm2 * 1.0e16
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Lotz semi-empirical formula for electron-impact single ionization:
+    #   sigma = a * ln(E/I) / (E * I)   for E > I, else 0
+    # where I is the ionization potential of the target.
+    E = X[:, 0].astype(float)          # incident electron energy [eV]
+
+    I = 15.6                            # ionization potential [eV] (order N2/typical molecule)
+    a = 4.5e-14                         # Lotz constant [cm^2 eV^2]
+
+    sigma_cm2 = np.zeros_like(E)
+    mask = E > I
+    sigma_cm2[mask] = a * np.log(E[mask] / I) / (E[mask] * I)
+
+    # convert from cm^2 to units of 1e-16 cm^2
+    return sigma_cm2 / 1e-16

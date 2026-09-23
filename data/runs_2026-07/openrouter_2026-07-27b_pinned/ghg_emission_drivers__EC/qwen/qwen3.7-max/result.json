@@ -1,0 +1,26 @@
+{
+  "task": "ghg_emission_drivers__EC",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "vazquez_2022_bms",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "vazquez_2022_stirpat",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+task_id: income_distribution_wid__pareto_alpha
+domain: social_science / income_inequality
+license: CC-BY-NC-4.0
+
+# Type II — cluster = country. Each (country, year) carries 5 rows, one per
+# top-fraction percentile threshold.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  This task is from economics, concerning the upper tail of a country's income distribution as recorded in the World Inequality Database (WID).
+
+target:
+  name: log_top_share
+  symbol: ln S(p)
+  unit: ""
+  description: Natural log of the share of pre-tax national income held by the top p fraction of equal-split adults aged 20 and over (a real WID measurement).
+  range: [-9.8, -0.2]
+
+inputs:
+  - name: log_p_above
+    symbol: ln p
+    description: Natural log of the top-fraction p (≤ 1), e.g. ln(0.10) for the top-10% bracket.
+    values: [-2.302585, -2.995732, -4.605170, -6.907755, -9.210340]
+  - name: top_pct
+    symbol: 100p
+    description: Top-fraction p in percentage (10.0, 5.0, 1.0, 0.1, 0.01) — same data as log_p_above in a different scale.
+    values: [10.0, 5.0, 1.0, 0.1, 0.01]
+  - name: year
+    symbol: t
+    unit: yr
+    description: Calendar year of the observation.
+    range: [1980, 2023]
+  - name: region
+    description: WID region code (Europe / Asia / Africa / Americas / Oceania) — categorical.
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Train/test boundary is by country: entire countries are held out, so the
+# discovered form is tested on countries unseen during development. Within
+# each test country, fit() sees 1980-2009 and predict() is scored on
+# 2010-2023. Holdout is region-stratified and deterministic (within each WID
+# region, countries sorted by group_id, every 5th assigned to test).
+data_files:
+  train:     data/train.csv        # 177 train countries, all years 1980-2023
+  test_fit:  data/test_fit.csv     # 40 test countries, 1980-2009 -> submission.fit()
+  test_test: data/test_test.csv    # 40 test countries, 2010-2023 -> held out, scored
+n_train: 38775
+n_test_fit: 6000
+n_test_test: 2800
+n_clusters_train: 177
+n_clusters_test: 40
+n_percentiles_per_cluster_year: 5
+
+# Data-quality note: WID's annual updates do not cover every country every
+# year; some country-year cells are last-observation-carried-forward from the
+# most recent update. With 5 percentile rows per year, this affects
+# year-to-year variation but not the within-year Lorenz fit.
+
+# Candidate prior constants — the `priors` prompt slot. A small grounded set:
+# one genuine constant traceable to a reference paper, plus distractors that
+# are in-domain (look relevant) but are not used by the reference formulas.
+# `_role` is audit-only (stripped before the priors are shown).
+priors:
+  - name: delta_work_life
+    value: 0.0333333
+    unit: yr^-1
+    description: Poisson rate at which earners are replaced by new entrants — reciprocal of a 30-year working life.
+    source: Gabaix-Lasry-Lions-Moll 2016 (demographic rate, 30-year work life).
+    _role: candidate
+  - name: wealth_tail_exponent
+    value: 1.5
+    unit: dimensionless
+    description: Pareto tail exponent of the wealth distribution.
+    source: Gabaix 2009 survey §5.4 — wealth exponents are near 1.5. (A power-law exponent of a different distribution than income.)
+    _role: distractor
+  - name: inverted_pareto_beta
+    value: 2.0
+    unit: dimensionless
+    description: Inverted Pareto coefficient — ratio of mean income above a threshold to that threshold.
+    source: Atkinson-Piketty-Saez 2011 — beta = alpha/(alpha-1), the paper's preferred summary measure, typically 1.5-3.0. (An alternative parameterisation, not the one the reference formulas use.)
+    _role: distractor
+
+# === Reference baselines ===
+# Three formulas, all applying the Pareto self-similarity form
+#     log_top_share = (1 - 1/alpha) * log_p_above + C
+# differing in how the per-country exponent alpha is parameterised.
+references:
+  - id: atkinson_2011
+    label: Atkinson-Piketty-Saez 2011 — Pareto self-similarity, OLS on the log-log slope
+    formula_file: formulas/atkinson_2011.py
+    reference_pdf: reference/atkinson_piketty_saez_2011.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # alpha, C
+    measured: {rmse: 0.4360, r2: 0.8913}
+  - id: gabaix_2016
+    label: Gabaix-Lasry-Lions-Moll 2016 — alpha from Friction-1 stationary dynamics
+    formula_file: formulas/gabaix_2016.py
+    reference_pdf: reference/gabaix_2016_dynamics.pdf
+    n_law_constants: 1         # delta
+    n_other_constants: 0
+    n_local_params: 3          # mu, sigma, C
+    measured: {rmse: 0.4361, r2: 0.8913}
+  - id: reed_2001
+    label: Reed 2001 — alpha from double-Pareto GBM dynamics
+    formula_file: formulas/reed_2001.py
+    reference_pdf: reference/reed_2003.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # mu, sigma, lam, C
+    measured: {rmse: 0.4523, r2: 0.8830}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        1
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on log_top_share
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes scale-free Pareto self-similarity of top income shares across top fractions"
+  - "keeps predicted log_top_share between log_p_above and 0 for every top fraction 0 < p ≤ 1"
+  - "makes predicted top income share nondecreasing as the top fraction p increases"
+  - "makes the implied top income share tend to 0 as p tends to 0 and equal 1 at p = 1"
+
+best_baseline: 0.4360     # atkinson_2011 rmse — the 0.5 score anchor

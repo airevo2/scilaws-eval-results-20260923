@@ -1,0 +1,98 @@
+import numpy as np
+
+def predict(X):
+    """
+    Hertzian contact model for a spherical AFM tip indenting an elastic sample.
+
+    F = (4/3) * E_eff * sqrt(R) * delta^(3/2)
+
+    Here we return the standard closed-form force-indentation relationship
+    up to the effective modulus term. Since no material parameters are given,
+    we use the canonical form with a unit prefactor:
+        F = (4/3) * sqrt(R) * delta^(3/2)
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 2)
+        X[:, 0] = indentation_m (delta) [m]
+        X[:, 1] = R_m (R) [m]
+
+    Returns
+    -------
+    F : ndarray, shape (n_samples,)
+        Force [N]
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+    return (4.0 / 3.0) * np.sqrt(R) * np.power(delta, 1.5)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Hertzian contact law for a spherical indenter:
+    # F = (4/3) * E_eff * sqrt(R) * delta^(3/2)
+    # Using E_eff as a fitted constant since no material parameters are provided.
+    E_eff = 1.0
+    F = (4.0 / 3.0) * E_eff * np.sqrt(R) * np.power(np.maximum(delta, 0.0), 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hertzian contact model for a spherical indenter on an elastic half-space:
+    # F = (4/3) * E* * sqrt(R) * delta^(3/2)
+    # Here we use the standard closed-form relationship structure, with the
+    # modulus-like prefactor left as 1.0 because no fitted data/coefficients were provided.
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    E_star = 1.0  # effective modulus prefactor (unknown without data)
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * np.power(np.maximum(delta, 0.0), 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Hertzian contact model for a spherical AFM tip indenting an elastic sample:
+        F = (4/3) * E_eff * sqrt(R) * delta^(3/2)
+
+    Here E_eff is the effective indentation modulus. Since no dataset-specific
+    fit is provided, this implementation uses the canonical closed-form form
+    with a unit prefactor placeholder for E_eff.
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Canonical Hertz sphere-on-half-space contact law
+    # F = (4/3) * E_eff * sqrt(R) * delta^(3/2)
+    # Using E_eff = 1 Pa as a placeholder constant (dimensionally yields N when
+    # multiplied by the geometric factor); replace if a fitted modulus is known.
+    E_eff = 1.0
+    F = (4.0 / 3.0) * E_eff * np.sqrt(R) * np.power(np.maximum(delta, 0.0), 1.5)
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Hertzian contact model for a spherical indenter on an elastic half-space:
+    # F = (4/3) * E_eff * sqrt(R) * delta^(3/2)
+    # Since only geometry is provided (no modulus), use the standard closed-form
+    # proportional relation with a unit effective modulus constant.
+    E_eff = 1.0
+    F = (4.0 / 3.0) * E_eff * np.sqrt(R) * np.power(delta, 1.5)
+    return F

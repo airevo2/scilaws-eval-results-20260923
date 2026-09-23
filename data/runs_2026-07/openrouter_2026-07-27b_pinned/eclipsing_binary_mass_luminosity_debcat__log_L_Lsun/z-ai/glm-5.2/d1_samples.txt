@@ -1,0 +1,64 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(L/Lsun) from log10(M/Msun) using the canonical
+    main-sequence mass-luminosity relation L ∝ M^3.5.
+    Metallicity (column 1) is a distractor and is ignored.
+    """
+    log_M = X[:, 0]
+    log_L = 3.5 * log_M
+    return log_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_M = X[:, 0]
+    # Standard mass-luminosity relation for main-sequence stars:
+    # L/Lsun = (M/Msun)^3.5  =>  log10(L/Lsun) = 3.5 * log10(M/Msun)
+    return 3.5 * log_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(L/Lsun) using the canonical main-sequence mass-luminosity
+    relation L/Lsun = (M/Msun)^3.5 (Salpeter/Eddington form).
+    Metallicity (X[:, 1]) is ignored as it is a distractor.
+    """
+    log_M = X[:, 0]
+    log_L = 3.5 * log_M
+    return log_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard mass-luminosity relation for main-sequence stars:
+        L / L_sun = (M / M_sun)^3.5
+    => log10(L/L_sun) = 3.5 * log10(M/M_sun)
+    Metallicity (X[:, 1]) is ignored.
+    """
+    log_M = X[:, 0]
+    log_L = 3.5 * log_M
+    return log_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard main-sequence mass-luminosity relation:
+        L / L_sun = (M / M_sun)^3.5
+    => log10(L / L_sun) = 3.5 * log10(M / M_sun)
+    """
+    log_M_Msun = X[:, 0]
+    log_L_Lsun = 3.5 * log_M_Msun
+    return log_L_Lsun

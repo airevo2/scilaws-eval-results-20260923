@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Current density"
+  symbol: "j"
+  unit: ""
+  description: "Current density"
+inputs:
+  - name: "Volume charge density"
+    symbol: "rho_c_0"
+    unit: ""
+    description: "Volume charge density"
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Vector potential"
+    symbol: "A_vec"
+    unit: ""
+    description: "Vector potential"
+  - name: "Mass"
+    symbol: "m"
+    unit: ""
+    description: "Mass"

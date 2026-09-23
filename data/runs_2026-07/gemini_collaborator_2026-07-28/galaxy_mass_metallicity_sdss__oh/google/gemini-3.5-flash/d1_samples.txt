@@ -1,0 +1,148 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = log_Mstar (log10 of stellar mass in solar masses)
+    # X[:, 1] = log_SFR (log10 of star formation rate in solar masses per year)
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    # Best-fit parameters from Curti et al. (2020) for the Fundamental Metallicity Relation (FMR)
+    Z_0 = 8.793
+    gamma = 0.27
+    beta = 1.21
+    m_0 = 10.02
+    m_1 = 0.53
+
+    # Characteristic mass log10(M_0) as a function of SFR
+    log_M0 = m_0 + m_1 * log_SFR
+
+    # Curti et al. (2020) FMR parameterization
+    # 12 + log(O/H) = Z_0 - (gamma/beta) * log10(1 + (M_* / M_0)^(-beta))
+    log_ratio = -beta * (log_Mstar - log_M0)
+    oh = Z_0 - (gamma / beta) * np.log10(1.0 + 10.0**log_ratio)
+
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the gas-phase oxygen abundance, 12 + log(O/H), of a galaxy's 
+    interstellar medium using the Fundamental Plane of Metallicity relation 
+    defined by Lara-López et al. (2010).
+
+    Parameters:
+    X : ndarray of shape (N, 2)
+        X[:, 0] = log_Mstar : Base-10 logarithm of stellar mass [log(M_sun)]
+        X[:, 1] = log_SFR   : Base-10 logarithm of star-formation rate [log(M_sun/yr)]
+
+    Returns:
+    oh : ndarray of shape (N,)
+        The predicted gas-phase oxygen abundance, 12 + log(O/H) [dex].
+    """
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Lara-López et al. (2010) empirical Fundamental Plane relation
+    oh = 0.379 * log_Mstar - 0.169 * log_SFR + 4.82
+    
+    return oh
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the gas-phase oxygen abundance 12 + log(O/H) of a galaxy
+
+    using the Fundamental Metallicity Relation (FMR) from Mannucci et al. (2010).
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = log_Mstar (log10 of stellar mass in solar masses)
+        - X[:, 1] = log_SFR (log10 of star formation rate in solar masses per year)
+
+    Returns:
+    - 1-D numpy array of 12 + log(O/H) in dex.
+    """
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    # Projection parameter mu with alpha = 0.32
+    mu = log_Mstar - 0.32 * log_SFR
+
+    # Polynomial fit parameter x = mu - 10
+    x = mu - 10.0
+
+    # Mannucci et al. (2010) parameterization
+    oh = 8.90 + 0.39 * x - 0.20 * x**2 - 0.077 * x**3
+
+    return oh
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the gas-phase oxygen abundance 12 + log(O/H) of a galaxy
+
+    using the Fundamental Metallicity Relation (FMR) from Mannucci et al. (2010).
+
+    Parameters:
+    X : ndarray of shape (N, 2)
+        X[:, 0] = log_Mstar (log10 of stellar mass in solar masses)
+        X[:, 1] = log_SFR (log10 of star formation rate in solar masses per year)
+
+    Returns:
+    ndarray of shape (N,)
+        The predicted gas-phase oxygen abundance 12 + log(O/H).
+    """
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+
+    # Calculate the projection parameter mu with alpha = 0.32
+    mu = log_Mstar - 0.32 * log_SFR
+
+    # Mannucci et al. (2010) polynomial parameterization
+    x = mu - 10.0
+    oh = 8.90 + 0.39 * x - 0.20 * x**2 - 0.077 * x**3
+
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the gas-phase oxygen abundance (12 + log(O/H)) of a galaxy 
+    using the canonical Fundamental Metallicity Relation (FMR) from 
+    Mannucci et al. (2010).
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = log_Mstar (log10 of stellar mass in solar masses)
+        - X[:, 1] = log_SFR (log10 of star formation rate in solar masses per year)
+
+    Returns:
+    - 1-D numpy array of 12 + log(O/H) [dex]
+    """
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Calculate the projection parameter mu with alpha = 0.32
+    mu = log_Mstar - 0.32 * log_SFR
+    
+    # Polynomial expansion variable
+    x = mu - 10.0
+    
+    # Mannucci et al. (2010) parameterization
+    oh = 8.90 + 0.39 * x - 0.20 * x**2 - 0.077 * x**3
+    
+    return oh

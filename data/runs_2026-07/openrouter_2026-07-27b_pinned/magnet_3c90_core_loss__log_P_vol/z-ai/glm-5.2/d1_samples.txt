@@ -1,0 +1,125 @@
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    f = X[:, 0]  # Frequency in Hz
+    B = X[:, 1]  # Peak flux density in T
+    T = X[:, 2]  # Temperature in degC
+    w = X[:, 3]  # Waveform ID (0=sin, 1=tri, 2=trap)
+
+    # Standard Steinmetz coefficients (generic typical values for power ferrites)
+    k = 1.0e4
+    a = 1.5
+    b = 2.5
+
+    # Typical temperature dependence factor (e.g., quadratic around a minimum)
+    # Often modeled as (ct0 - ct1*T + ct2*T^2), here simplified to 1.0 for base case
+    T_factor = 1.0
+
+    # Waveform factor (sinusoidal=1.0, triangular=0.8, trapezoidal=0.9)
+    wf = np.where(w == 0, 1.0, np.where(w == 1, 0.8, 0.9))
+
+    # Calculate volumetric core loss in W/m^3 using the Steinmetz equation
+    P_vol_Wm3 = k * (f**a) * (B**b) * T_factor * wf
+
+    # Convert to kW/m^3 and take base-10 logarithm
+    log_P_vol = np.log10(P_vol_Wm3 / 1000.0)
+
+    return log_P_vol
+
+=====
+
+import numpy as np
+
+def predict(X):
+    f = X[:, 0]
+    B = X[:, 1]
+    
+    # Standard Steinmetz Equation: P_vol = k * f^a * B^b
+    # log10(P_vol) = log10(k) + a * log10(f) + b * log10(B)
+    # Using representative coefficients for power ferrites
+    log10_k = -2.0
+    a = 1.3
+    b = 2.4
+    
+    log_P_vol = log10_k + a * np.log10(f) + b * np.log10(B)
+    
+    return log_P_vol
+
+=====
+
+import numpy as np
+
+def predict(X):
+    f = X[:, 0]
+    B = X[:, 1]
+    
+    # Standard Steinmetz Equation: P_vol = k * f^alpha * B^beta
+    # (Temperature and waveform shape are typically handled by modified forms 
+    # or separate coefficients, but the canonical closed-form is the Steinmetz equation)
+    
+    k = 1.0          # Steinmetz coefficient (placeholder)
+    alpha = 1.5      # Frequency exponent (placeholder)
+    beta = 2.5       # Flux density exponent (placeholder)
+    
+    log10_P_vol = np.log10(k) + alpha * np.log10(f) + beta * np.log10(B)
+    
+    return log10_P_vol
+
+=====
+
+import numpy as np
+
+def predict(X):
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+    
+    # Classic Steinmetz Equation: P_vol = k * f^alpha * B^beta
+    # Base parameters (illustrative typical ferrite values)
+    k = 1.0e-3
+    alpha = 1.3
+    beta = 2.5
+    
+    # Temperature correction factor (empirical linear adjustment around 25°C)
+    T_ref = 25.0
+    c_T = -0.001
+    
+    # Waveform correction factor (empirical adjustment for non-sinusoidal shapes)
+    # 0 = sinusoidal, 1 = triangular, 2 = trapezoidal
+    c_w = 0.05 * w
+    
+    # Compute volumetric core loss
+    P_vol = k * (f ** alpha) * (B ** beta) * (1.0 + c_T * (T - T_ref)) * (1.0 + c_w)
+    
+    # Return log10(P_vol), ensuring strictly positive values before log
+    return np.log10(np.maximum(P_vol, 1e-15))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+    
+    # Standard Steinmetz Equation extended with temperature and waveform modifiers:
+    # P_vol = k * f^a * B^b * (1 + c * (T - 25)) * (1 + d * w)
+    # log10(P_vol) = log10(k) + a * log10(f) + b * log10(B) + log10(1 + c * (T - 25)) + log10(1 + d * w)
+    
+    k = 1e-5   # scaling constant for kW/m^3, Hz, and T
+    a = 1.3     # frequency exponent
+    b = 2.5     # flux density exponent
+    c = 0.002   # linear temperature coefficient
+    d = 0.05    # waveform modifier coefficient
+    
+    log_P_vol = (np.log10(k) + 
+                 a * np.log10(f) + 
+                 b * np.log10(B) + 
+                 np.log10(1.0 + c * (T - 25.0)) + 
+                 np.log10(1.0 + d * w))
+    
+    return log_P_vol

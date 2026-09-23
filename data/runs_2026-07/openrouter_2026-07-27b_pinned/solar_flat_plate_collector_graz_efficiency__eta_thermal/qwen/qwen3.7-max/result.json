@@ -1,0 +1,35 @@
+{
+  "task": "solar_flat_plate_collector_graz_efficiency__eta_thermal",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeI",
+  "primary": "materials_and_energy ",
+  "formulas": [
+    {
+      "formula": "constant_efficiency",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "hwb_linear",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "hwb_quadratic",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    }
+  ]
+}

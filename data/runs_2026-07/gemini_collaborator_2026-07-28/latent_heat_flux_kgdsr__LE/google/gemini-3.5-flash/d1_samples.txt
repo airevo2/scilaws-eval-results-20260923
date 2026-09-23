@@ -1,0 +1,288 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs
+    SWdown = X[:, 0]  # Downward shortwave radiation [W m^-2]
+    VPD = X[:, 1]  # Vapour pressure deficit [kPa]
+    Tair = X[:, 2]  # Near-surface air temperature [K]
+    RH = X[:, 3]  # Relative humidity [fraction]
+    Wind = X[:, 4]  # Wind speed [m s^-1]
+    Rnet = X[:, 5]  # Net radiation [W m^-2]
+    Qg = X[:, 6]  # Soil heat flux [W m^-2]
+    LAI = X[:, 7]  # Leaf area index [m^2 m^-2]
+    LWdown = X[:, 8]  # Downward longwave radiation [W m^-2]
+    Ga = X[:, 9]  # Aerodynamic conductance [m s^-1]
+    delta = X[:, 10]  # Slope of saturation vapour pressure curve [kPa K^-1]
+    theta_FC = X[:, 11]  # Field capacity soil water content
+    theta_WP = X[:, 12]  # Wilting point soil water content
+
+    # Physical constants
+    cp = 1005.0  # Specific heat of air [J kg^-1 K^-1]
+    gamma = 0.066  # Psychrometric constant [kPa K^-1]
+
+    # Air density [kg m^-3] as a function of temperature
+    rho_a = 353.0 / Tair
+
+    # Available energy [W m^-2]
+    A = Rnet - Qg
+
+    # Canopy conductance Gs [m s^-1] modeled using a Jarvis-type approach
+    f_light = SWdown / (SWdown + 150.0)
+    f_vpd = np.exp(-0.5 * VPD)
+
+    g_s_max = 0.015  # Maximum stomatal conductance [m s^-1]
+    G_canopy = g_s_max * LAI * f_light * f_vpd
+
+    # Soil conductance contribution
+    tau = np.exp(-0.5 * LAI)
+    G_soil = 0.001 * tau
+
+    # Total surface conductance
+    Gs = G_canopy + G_soil
+    Gs = np.maximum(Gs, 1e-6)  # Avoid division by zero
+
+    # Penman-Monteith Equation
+    numerator = delta * A + rho_a * cp * Ga * VPD
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    SWdown   = X[:, 0]
+    VPD      = X[:, 1]
+    Tair     = X[:, 2]
+    RH       = X[:, 3]
+    Wind     = X[:, 4]
+    Rnet     = X[:, 5]
+    Qg       = X[:, 6]
+    LAI      = X[:, 7]
+    LWdown   = X[:, 8]
+    Ga       = X[:, 9]
+    delta    = X[:, 10]
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+    
+    # Physical constants
+    # Air density (kg m-3) using ideal gas law at standard pressure (101.3 kPa)
+    rho = 353.0 / Tair
+    cp = 1005.0  # Specific heat of air (J kg-1 K-1)
+    gamma = 0.066  # Psychrometric constant (kPa K-1)
+    
+    # Available energy (W m-2)
+    A = Rnet - Qg
+    
+    # Canopy conductance gs (m s-1) using Jarvis-Stewart type formulation
+    # Light response
+    f_light = SWdown / (SWdown + 100.0 + 1e-5)
+    
+    # VPD response (exponential decay)
+    f_vpd = np.exp(-0.5 * VPD)
+    
+    # Soil moisture response using theta_FC and theta_WP with RH as a proxy for soil moisture
+    theta = theta_WP + (theta_FC - theta_WP) * RH
+    f_theta = (theta - theta_WP) / (theta_FC - theta_WP + 1e-5)
+    f_theta = np.clip(f_theta, 0.01, 1.0)
+    
+    # Canopy conductance
+    gs_max = 0.015  # typical maximum canopy conductance (m s-1)
+    gs = gs_max * (LAI + 0.01) * f_light * f_vpd * f_theta
+    gs = np.maximum(gs, 1e-4)  # avoid division by zero
+    
+    # Penman-Monteith equation
+    num = delta * A + rho * cp * Ga * VPD
+    den = delta + gamma * (1.0 + Ga / gs)
+    
+    LE = num / den
+    
+    return LE
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs from 2-D numpy array
+    SWdown = X[:, 0]  # Downward shortwave radiation [W m^-2]
+    VPD = X[:, 1]  # Vapour pressure deficit [kPa]
+    Tair = X[:, 2]  # Air temperature [K]
+    RH = X[:, 3]  # Relative humidity [fraction]
+    Wind = X[:, 4]  # Wind speed [m s^-1]
+    Rnet = X[:, 5]  # Net radiation [W m^-2]
+    Qg = X[:, 6]  # Ground heat flux [W m^-2]
+    LAI = X[:, 7]  # Leaf area index [m^2 m^-2]
+    LWdown = X[:, 8]  # Downward longwave radiation [W m^-2]
+    Ga = X[:, 9]  # Aerodynamic conductance [m s^-1]
+    delta = X[:, 10]  # Slope of saturation vapour pressure curve [kPa K^-1]
+    theta_FC = X[:, 11]  # Field capacity [m^3 m^-3]
+    theta_WP = X[:, 12]  # Wilting point [m^3 m^-3]
+
+    # Constants
+    cp = 1005.0  # Specific heat of air [J kg^-1 K^-1]
+    Rd = 287.05  # Gas constant for dry air [J kg^-1 K^-1]
+    P = 101.3  # Standard atmospheric pressure [kPa]
+
+    # Calculate air density (rho_a) [kg m^-3]
+    rho_a = (P * 1000.0) / (Rd * Tair)
+
+    # Latent heat of vaporization (lambda_latent) [J kg^-1]
+    T_celsius = Tair - 273.15
+    lambda_latent = (2.501 - 0.00236 * T_celsius) * 1e6
+
+    # Psychrometric constant (gamma) [kPa K^-1]
+    gamma = (cp * P) / (0.622 * lambda_latent * 1e-3)
+
+    # Canopy conductance (Gs) model using Jarvis-type formulation [m s^-1]
+    g_smax = 0.012  # Maximum stomatal conductance of a leaf [m s^-1]
+
+    # 1. Radiation stress factor
+    f_SW = SWdown / (SWdown + 100.0 + 1e-5)
+
+    # 2. Vapor pressure deficit stress factor
+    f_VPD = np.exp(-0.5 * VPD)
+
+    # 3. Temperature stress factor (optimum near 25C)
+    T_opt = 298.15
+    T_min = 273.15
+    T_max = 313.15
+    f_T = np.clip(
+        (Tair - T_min)
+        * (T_max - Tair)
+        / ((T_opt - T_min) * (T_max - T_opt) + 1e-5),
+        0.0,
+        1.0,
+    )
+
+    # 4. Soil moisture stress factor proxy (using RH as wetness indicator)
+    f_S = 0.5 + 0.5 * RH
+
+    # Soil water capacity scaling using FC and WP
+    soil_scale = np.clip((theta_FC - theta_WP) / 0.35, 0.1, 1.0)
+
+    # Combine to get canopy conductance
+    Gs_min = 0.0001  # Minimum conductance (residual/soil evaporation proxy)
+    Gs = LAI * g_smax * f_SW * f_VPD * f_T * f_S * soil_scale + Gs_min
+
+    # Penman-Monteith Equation for Latent Heat Flux (LE)
+    # LE = [ delta * (Rnet - Qg) + rho_a * cp * Ga * VPD ] / [ delta + gamma * (1 + Ga / Gs) ]
+    numerator = delta * (Rnet - Qg) + rho_a * cp * Ga * VPD
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    SWdown = X[:, 0]
+    VPD = X[:, 1]
+    Tair = X[:, 2]
+    RH = X[:, 3]
+    Wind = X[:, 4]
+    Rnet = X[:, 5]
+    Qg = X[:, 6]
+    LAI = X[:, 7]
+    LWdown = X[:, 8]
+    Ga = X[:, 9]
+    delta = X[:, 10]
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+
+    # Physical constants
+    Cp = 1005.0  # Specific heat of air [J kg^-1 K^-1]
+    Rd = 287.05  # Gas constant for dry air [J kg^-1 K^-1]
+    P = 101.325  # Standard atmospheric pressure [kPa]
+
+    # Air density [kg m^-3]
+    rho_a = (P * 1000.0) / (Rd * Tair)
+
+    # Psychrometric constant [kPa K^-1]
+    gamma = 0.066
+
+    # Estimate canopy conductance Gs [m s^-1] using a Jarvis-type model
+    g_s_max = 0.012  # Maximum stomatal conductance [m s^-1]
+
+    # Environmental response functions
+    f_light = SWdown / (SWdown + 100.0)
+    f_light = np.clip(f_light, 0.0, 1.0)
+
+    f_vpd = 1.0 / (1.0 + VPD / 1.5)
+
+    # Soil moisture availability proxy (assumed at 70% of plant available water capacity)
+    f_sm = 0.7
+
+    # Combined canopy conductance
+    Gs = g_s_max * LAI * f_light * f_vpd * f_sm
+    Gs = np.maximum(Gs, 0.0001)  # Minimum conductance to prevent division by zero
+
+    # Available energy [W m^-2]
+    A = Rnet - Qg
+
+    # Penman-Monteith Equation
+    # Since VPD, delta, and gamma are all in kPa, the units cancel out perfectly
+    numerator = delta * A + rho_a * Cp * Ga * VPD
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    SWdown = X[:, 0]  # [W m^-2]
+    VPD = X[:, 1]  # [kPa]
+    Tair = X[:, 2]  # [K]
+    RH = X[:, 3]  # [0, 1]
+    Rnet = X[:, 5]  # [W m^-2]
+    Qg = X[:, 6]  # [W m^-2]
+    LAI = X[:, 7]  # [m^2 m^-2]
+    Ga = X[:, 9]  # [m s^-1]
+    delta = X[:, 10]  # [kPa K^-1]
+
+    # Thermodynamic constants
+    P = 101.3e3  # Standard atmospheric pressure (Pa)
+    Rd = 287.05  # Gas constant for dry air (J kg^-1 K^-1)
+    cp = 1005.0  # Specific heat of dry air (J kg^-1 K^-1)
+    gamma = 0.066  # Psychrometric constant (kPa K^-1)
+
+    # Compute air density (kg m^-3)
+    rho_a = P / (Rd * Tair)
+
+    # Canopy conductance (Gs) model using a Jarvis-type formulation
+    g_s_max = 0.012  # Maximum stomatal conductance (m s^-1)
+    f_light = SWdown / (SWdown + 100.0 + 1e-5)
+    f_vpd = 1.0 / (1.0 + 0.5 * VPD)
+    f_soil = RH  # Using RH as a proxy for soil moisture availability
+
+    # Calculate canopy conductance
+    Gs = LAI * g_s_max * f_light * f_vpd * f_soil
+    Gs = np.maximum(Gs, 0.0001)  # Ensure a minimum residual/night-time conductance
+
+    # Available energy (W m^-2)
+    A = Rnet - Qg
+
+    # Penman-Monteith equation to calculate latent heat flux (LE)
+    numerator = delta * A + rho_a * cp * Ga * VPD
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+
+    LE = numerator / denominator
+
+    return LE

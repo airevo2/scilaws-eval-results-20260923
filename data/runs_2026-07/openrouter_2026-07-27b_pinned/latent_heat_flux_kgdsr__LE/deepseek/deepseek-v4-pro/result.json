@@ -1,0 +1,26 @@
+{
+  "task": "latent_heat_flux_kgdsr__LE",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeII",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "li_2024",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "stewart_1988",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

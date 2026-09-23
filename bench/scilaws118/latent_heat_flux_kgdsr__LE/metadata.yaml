@@ -1,0 +1,163 @@
+task_id: latent_heat_flux_kgdsr__LE
+domain: earth_science / hydrology
+license: CC-BY-4.0
+
+# Type II — cluster = flux-tower site.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task comes from land-surface biometeorology, concerning the latent heat flux of energy carried away as water evaporates from a vegetated land surface, measured by eddy covariance.
+
+target:
+  name: LE
+  symbol: λE
+  unit: W m^-2
+  description: Bowen-ratio-preserving energy-balance-corrected half-hourly latent heat flux measured by eddy-covariance over a vegetated land surface.
+  range: [20.0, 1684.17]
+
+inputs:
+  - name: SWdown
+    symbol: S↓
+    unit: W m^-2
+    description: Downward shortwave (solar) radiation at the surface.
+    range: [50.0, 1342.37]
+  - name: VPD
+    symbol: VPD
+    unit: kPa
+    description: Vapour pressure deficit of the near-surface air.
+    range: [0.0, 7.8452]
+  - name: Tair
+    symbol: T_a
+    unit: K
+    description: Near-surface air temperature.
+    range: [240.83, 322.93]
+  - name: RH
+    symbol: RH
+    unit: ""
+    description: Near-surface relative humidity (fraction in [0, 1]).
+    range: [0.0001, 1.0]
+  - name: Wind
+    symbol: u
+    unit: m s^-1
+    description: Scalar wind speed at the measurement height.
+    range: [0.0, 19.495]
+  - name: Rnet
+    symbol: R_n
+    unit: W m^-2
+    description: Net radiation at the surface.
+    range: [-153.2, 1083.93]
+  - name: Qg
+    symbol: G
+    unit: W m^-2
+    description: Soil (ground) heat flux into the soil column.
+    range: [-527.42, 614.04]
+  - name: LAI
+    symbol: L
+    unit: m^2 m^-2
+    description: Leaf area index over the tower footprint.
+    range: [0.0, 6.3503]
+  - name: LWdown
+    symbol: L↓
+    unit: W m^-2
+    description: Downward longwave (thermal) radiation at the surface.
+    range: [120.0, 500.0]
+  - name: Ga
+    symbol: G_a
+    unit: m s^-1
+    description: Aerodynamic conductance for sensible/latent heat exchange.
+    range: [0.001, 0.5]
+  - name: delta
+    symbol: Δ
+    unit: kPa K^-1
+    description: Slope of the saturation vapour pressure curve at Tair.
+    range: [0.01, 0.5]
+  - name: theta_FC
+    symbol: θ_FC
+    unit: m^3 m^-3
+    description: Field-capacity volumetric soil water content (PFT-typical).
+    range: [0.1, 0.5]
+  - name: theta_WP
+    symbol: θ_WP
+    unit: m^3 m^-3
+    description: Wilting-point volumetric soil water content (PFT-typical).
+    range: [0.05, 0.3]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-site-out)
+# plus an interleaved-by-row within-test split. 54 flux-tower sites
+# (FLUXNET2015 + OzFlux) split 36 train / 18 test, every-3rd by row count
+# descending so both halves carry a mix of long and short records.
+# Within each test site, even-position rows -> test_fit, odd-position
+# rows -> test_test (interpolation within the site's half-hourly record).
+# The prepared csv is inherited from the v1 first-stage processing of
+# the FLUXNET / OzFlux NetCDFs (data_raw/download.sh documents the
+# source-of-truth).
+data_files:
+  train:     data/train.csv        # 36 train sites, all observations
+  test_fit:  data/test_fit.csv     # 18 test sites, even-position rows
+  test_test: data/test_test.csv    # 18 test sites, odd-position rows
+n_train:      1334530
+n_test_fit:    323854
+n_test_test:   323844
+n_clusters_train: 36
+n_clusters_test:  18
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: psychrometric_gamma_fao56
+    value: 0.0664
+    unit: kPa K^-1
+    description: Psychrometric constant for surface pressure ~95 kPa; FAO-56 mid-elevation reference.
+    source: FAO-56 standard reference. A universal physics constant used by the Penman-Monteith closure of both reference baselines (Li 2024 PDF p. 13). A candidate — the SR system should pair it with the PM closure rather than try to refit it per site.
+    _role: candidate
+  - name: stomatal_water_potential_typical
+    value: -1.5
+    unit: MPa
+    description: A typical leaf-level wilting water potential.
+    source: An in-domain plant-physiology quantity, but neither reference baseline operates at the leaf-water-potential level (they use a canopy-aggregated surface conductance). A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: stewart_1988
+    label: Stewart (1988) Jarvis-type surface conductance + Penman-Monteith (nonlinear LS)
+    formula_file: formulas/stewart_1988.py
+    reference_pdf: reference/stewart_1988.pdf
+    n_law_constants: 0
+    n_other_constants: 5       # RHO_A, CP, GAMMA, T_L, T_H
+    n_local_params: 5          # K1..K5
+    measured: {rmse: 64.1921, r2: 0.3740}   # mean per-cluster
+  - id: li_2024
+    label: Li (2024) KG-DSR-5 Penman-Monteith with E-1 surface conductance (nonlinear LS)
+    formula_file: formulas/li_2024.py
+    reference_pdf: reference/li_2024.pdf
+    n_law_constants: 0
+    n_other_constants: 3       # RHO_A, CP, GAMMA
+    n_local_params: 2          # scale, a1
+    measured: {rmse: 64.9963, r2: 0.3565}   # mean per-cluster
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         5
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10      # measured max per-cluster fit ~0.3s, floor 10 ample
+
+# === Scoring ===
+metric: rmse              # RMS error on LE (W/m^2)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "allow low surface or canopy conductance to throttle latent heat flux"
+  - "include latent-heat response to available energy as net radiation minus soil heat flux"
+  - "include the saturation-vapour-pressure slope as the temperature-dependent weighting of evaporation demand"
+  - "include vapour-pressure-deficit-driven aerodynamic transport strengthened by aerodynamic conductance"
+  - "increase surface or canopy conductance with shortwave light availability with high-light saturation"
+  - "reduce surface or canopy conductance under dry air or high vapour deficit"
+  - "predicted latent heat flux for evaporation is non-negative"
+
+best_baseline: 64.1921    # stewart_1988, mean per-cluster rmse

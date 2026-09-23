@@ -1,0 +1,157 @@
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    log_amount_ratio = X[:, 0]
+    ss_time_days = X[:, 1]
+    ll_time_days = X[:, 2]
+    
+    # Canonical hyperbolic discounting form for intertemporal choice:
+    # p(LL) = 1 / (1 + exp(-k * (V_LL/(1+k*t_LL) - V_SS/(1+k*t_SS))))
+    # Since no fitted parameters are provided, use the standard unit-parameter form.
+    k = 1.0
+    
+    sv_ll = X[:, 5] / (1.0 + k * ll_time_days)
+    sv_ss = X[:, 4] / (1.0 + k * ss_time_days)
+    latent = sv_ll - sv_ss
+    
+    return 1.0 / (1.0 + np.exp(-latent))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Hyperbolic discounting choice probability with a softmax/logit choice rule.
+
+    Here the subjective value of each option is approximated as:
+        SV = V / (1 + k * t)
+
+    and the probability of choosing the larger-later option is:
+        P(LL) = 1 / (1 + exp(-(SV_LL - SV_SS)))
+
+    Since no fitted coefficients are provided, a canonical scale-free form is used
+    with k = 1.0, applied to the delay terms in a standard hyperbolic comparison.
+    """
+    X = np.asarray(X)
+    
+    log_amount_ratio = X[:, 0]
+    t_ss = X[:, 1]
+    t_ll = X[:, 2]
+    v_ss = X[:, 4]
+    v_ll = X[:, 5]
+    
+    # Canonical hyperbolic subjective values
+    k = 1.0
+    sv_ss = v_ss / (1.0 + k * t_ss)
+    sv_ll = v_ll / (1.0 + k * t_ll)
+    
+    # Logistic choice rule
+    z = sv_ll - sv_ss
+    p_ll = 1.0 / (1.0 + np.exp(-z))
+    
+    return p_ll
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Common hyperbolic discounting choice rule:
+    #   SV = V / (1 + k * t)
+    #   P(LL) = 1 / (1 + exp(-(SV_LL - SV_SS) / s))
+    #
+    # Here we use a standard canonical form with unit sensitivity (s = 1)
+    # and no fitted coefficients, since no data were provided.
+
+    X = np.asarray(X)
+    v_ss = X[:, 4]
+    v_ll = X[:, 5]
+    t_ss = X[:, 1]
+    t_ll = X[:, 2]
+
+    # Proxy for discount rate (canonical hyperbolic form)
+    # Without fitted k, use a simple normalized temporal difference term.
+    # A common behavioral closed form is logistic in subjective value difference.
+    sv_ss = v_ss / (1.0 + t_ss)
+    sv_ll = v_ll / (1.0 + t_ll)
+
+    p_ll = 1.0 / (1.0 + np.exp(-(sv_ll - sv_ss)))
+    return p_ll
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Hyperbolic/logistic delay-discounting choice rule:
+    P(LL) = 1 / (1 + exp(-k * (V_LL / V_SS - 1) * ... )) 
+    Common closed-form for binary intertemporal choice is a logistic function
+    of the subjective value difference. With only the provided aggregated
+    inputs, a standard canonical specification is:
+
+        P(LL) = 1 / (1 + exp(-(beta0 + beta1*log(V_LL/V_SS) + beta2*t_SS + beta3*t_LL + beta4*Δt + beta5*V_SS + beta6*V_LL)))
+
+    Since no fitted coefficients are given, the most common closed-form
+    relationship used in the literature for the amount-ratio/delay case is
+    a logistic of the log amount ratio and delay difference:
+
+        P(LL) = 1 / (1 + exp(-(a + b*ln(V_LL/V_SS) - c*Δt)))
+
+    Here we use a generic canonical form with unit-scale coefficients to
+    provide a valid closed-form prediction structure.
+    """
+    X = np.asarray(X, dtype=float)
+    
+    log_amount_ratio = X[:, 0]
+    ss_time_days     = X[:, 1]
+    ll_time_days     = X[:, 2]
+    delay_diff_days  = X[:, 3]
+    ss_value         = X[:, 4]
+    ll_value         = X[:, 5]
+
+    # Canonical logistic choice rule; coefficients set to a simple standard form
+    # in absence of data-specific estimates.
+    z = (
+        0.0
+        + 1.0 * log_amount_ratio
+        - 0.0 * ss_time_days
+        - 0.0 * ll_time_days
+        - 1.0 * delay_diff_days
+        + 0.0 * ss_value
+        + 0.0 * ll_value
+    )
+
+    return 1.0 / (1.0 + np.exp(-z))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Canonical hyperbolic-discounting choice rule with a softmax/logistic choice mapping.
+
+    P(LL) = 1 / (1 + exp(-k * (V_LL/(1 + k_d * t_LL) - V_SS/(1 + k_d * t_SS))))
+
+    Here, since no fitted coefficients/data are provided, this function uses a
+    standard normalized closed-form choice probability based on the discounted
+    value difference inferred from the inputs. The discount-rate parameters are
+    set to 1.0 as generic placeholders.
+    """
+    X = np.asarray(X)
+    log_amount_ratio = X[:, 0]
+    t_ss = X[:, 1]
+    t_ll = X[:, 2]
+    v_ss = X[:, 4]
+    v_ll = X[:, 5]
+
+    # Generic canonical hyperbolic discounting with logistic choice rule
+    k_d = 1.0
+    beta = 1.0
+
+    dv = (v_ll / (1.0 + k_d * t_ll)) - (v_ss / (1.0 + k_d * t_ss))
+    p_ll = 1.0 / (1.0 + np.exp(-beta * dv))
+    return p_ll

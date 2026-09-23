@@ -1,0 +1,149 @@
+import numpy as np
+
+def predict(X):
+    q  = X[:, 0]
+    Lt = X[:, 1]
+    M1 = X[:, 2]
+    M2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Dietrich & Ujevic (2017) fit for the dynamical ejecta velocity.
+    # In-plane component v_rho
+    a_rho, b_rho, c_rho = -0.219479, 0.444836, -2.67385
+    v_rho = (a_rho * (M1 / M2) * (1.0 + c_rho * C1)
+             + a_rho * (M2 / M1) * (1.0 + c_rho * C2)
+             + b_rho)
+
+    # Out-of-plane component v_z
+    a_z, b_z, c_z = -0.315585, 0.63808, -1.00757
+    v_z = (a_z * (M1 / M2) * (1.0 + c_z * C1)
+           + a_z * (M2 / M1) * (1.0 + c_z * C2)
+           + b_z)
+
+    v_ej = np.sqrt(v_rho**2 + v_z**2)
+    return v_ej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017) fit for the mass-averaged terminal velocity
+    # of the dynamical ejecta (in units of c).
+    q  = X[:, 0]
+    M1 = X[:, 2]
+    M2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Fitted coefficients
+    a = -0.219479
+    b =  0.444836
+    c = -2.67385
+
+    v = (a * (M1 / M2) * (1.0 + c * C1)
+         + a * (M2 / M1) * (1.0 + c * C2)
+         + b)
+
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017) fit for the mass-averaged terminal
+    # velocity of the dynamical ejecta.
+    # v = sqrt(v_rho^2 + v_z^2)
+    q            = X[:, 0]
+    Lambda_tilde = X[:, 1]
+    M1           = X[:, 2]
+    M2           = X[:, 3]
+    C1           = X[:, 4]
+    C2           = X[:, 5]
+
+    # In-plane (radial) velocity component
+    a_rho = -0.219479
+    b_rho = 0.444836
+    c_rho = -2.67385
+    v_rho = (a_rho * (M1 / M2) * (1.0 + c_rho * C1)
+             + a_rho * (M2 / M1) * (1.0 + c_rho * C2)
+             + b_rho)
+
+    # Out-of-plane (z) velocity component
+    a_z = -0.315585
+    b_z = 0.63808
+    c_z = -1.00757
+    v_z = (a_z * (M1 / M2) * (1.0 + c_z * C1)
+           + a_z * (M2 / M1) * (1.0 + c_z * C2)
+           + b_z)
+
+    v = np.sqrt(v_rho**2 + v_z**2)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    q      = X[:, 0]
+    Lam    = X[:, 1]
+    M1     = X[:, 2]
+    M2     = X[:, 3]
+    C1     = X[:, 4]
+    C2     = X[:, 5]
+
+    # Dietrich & Ujevic (2017) fit for the dynamical ejecta velocity.
+    # In-plane (rho) component
+    a_rho = -0.219479
+    b_rho =  0.444836
+    c_rho = -2.67385
+    v_rho = ( a_rho * (1.0 + c_rho * C1) * (M1 / M2)
+            + a_rho * (1.0 + c_rho * C2) * (M2 / M1)
+            + b_rho )
+
+    # Out-of-plane (z) component
+    a_z =  0.0771661
+    b_z = -0.394251
+    c_z =  1.80829
+    v_z = ( a_z * (1.0 + c_z * C1) * (M1 / M2)
+          + a_z * (1.0 + c_z * C2) * (M2 / M1)
+          + b_z )
+
+    v_ej = np.sqrt(v_rho**2 + v_z**2)
+    return v_ej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017) fit for the mass-averaged ejecta velocity.
+    # v = sqrt(v_rho^2 + v_z^2)
+    q  = X[:, 0]
+    M1 = X[:, 2]
+    M2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # In-plane (radial) velocity coefficients
+    a = -0.219
+    b =  0.444
+    c = -2.324
+
+    v_rho = (a * (M1 / M2) * (1.0 + c * C1)
+             + a * (M2 / M1) * (1.0 + c * C2)
+             + b)
+
+    # Out-of-plane velocity coefficients
+    d = -0.315
+    e =  0.0
+    f =  0.679
+
+    v_z = (d * (M1 / M2) * (1.0 + e * C1)
+           + d * (M2 / M1) * (1.0 + e * C2)
+           + f)
+
+    v_ej = np.sqrt(v_rho**2 + v_z**2)
+    return v_ej

@@ -1,0 +1,44 @@
+{
+  "task": "measles_tsir_uk__cases_weekly",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "becker_2017",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "bjornstad_2002",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "finkenstadt_2000",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "grenfell_2001",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

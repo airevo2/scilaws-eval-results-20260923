@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Diffusion coefficient"
+  symbol: "D"
+  unit: ""
+  description: "Diffusion coefficient"
+inputs:
+  - name: "Mobility"
+    symbol: "mob"
+    unit: ""
+    description: "Mobility"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"

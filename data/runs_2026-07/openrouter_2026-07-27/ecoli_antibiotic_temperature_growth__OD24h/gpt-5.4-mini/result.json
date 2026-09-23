@@ -1,0 +1,17 @@
+{
+  "task": "ecoli_antibiotic_temperature_growth__OD24h",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "biology",
+  "formulas": [
+    {
+      "formula": "cruz_loya_2021",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

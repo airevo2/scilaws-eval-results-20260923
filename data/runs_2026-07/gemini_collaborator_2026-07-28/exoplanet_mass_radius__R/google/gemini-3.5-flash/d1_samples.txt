@@ -1,0 +1,175 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the radius of an exoplanet/brown dwarf in Earth radii
+
+    given its mass in Earth masses using a standard, continuous
+    three-phase empirical mass-radius relationship.
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the mass in Earth masses (M_earth)
+
+    Returns:
+    - 1-D numpy array of predicted radii in Earth radii (R_earth)
+    """
+    M = X[:, 0]
+
+    # Define the continuous piecewise mass-radius relationship:
+    # 1. Terran/Rocky planets (M < 1.5 M_earth)
+    # 2. Neptunian/Gas transition planets (1.5 <= M < 120 M_earth)
+    # 3. Jovian planets / Brown dwarfs (M >= 120 M_earth)
+    condlist = [M < 1.5, (M >= 1.5) & (M < 120.0), M >= 120.0]
+
+    funclist = [
+        lambda M: M**0.35,
+        lambda M: 0.92 * (M**0.55),
+        lambda M: 15.5 * (M**-0.04),
+    ]
+
+    return np.piecewise(M, condlist, funclist)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the radius of an exoplanet/brown dwarf in Earth radii
+
+    using the canonical piecewise mass-radius relation from Chen & Kipping (2017).
+
+    Parameters:
+    X : ndarray of shape (n_samples, n_features)
+        X[:, 0] contains the mass of the object in Earth masses (M_earth).
+
+    Returns:
+    R : ndarray of shape (n_samples,)
+        Predicted radius in Earth radii (R_earth).
+    """
+    M = X[:, 0]
+
+    # Define the mass transition thresholds (in Earth masses)
+    # Terran to Neptunian transition ~ 2.0 M_earth
+    # Neptunian to Jovian transition ~ 132.0 M_earth
+    condlist = [M < 2.0, (M >= 2.0) & (M < 132.0), M >= 132.0]
+
+    # Power-law relations for each regime (continuous at boundaries)
+    funclist = [
+        lambda m: 1.00 * m**0.28,  # Terran planets
+        lambda m: 0.81 * m**0.59,  # Neptunian worlds
+        lambda m: 17.7 * m**-0.04,  # Jovian planets / Brown Dwarfs
+    ]
+
+    R = np.piecewise(M, condlist, funclist)
+    return R
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract mass in Earth masses
+    M = X[:, 0]
+    R = np.empty_like(M)
+
+    # Transition masses (Chen & Kipping 2017 "Forecaster" relation)
+    M_neptune_start = 2.04  # Terran to Neptunian transition in Earth masses
+    M_jupiter_start = 132.0  # Neptunian to Jovian transition in Earth masses
+
+    # Calculate exact pivot radii to ensure continuity
+    R_neptune_start = M_neptune_start**0.28
+    R_jupiter_start = R_neptune_start * (
+        (M_jupiter_start / M_neptune_start) ** 0.59
+    )
+
+    # Boolean masks for different mass regimes
+    mask_terran = M < M_neptune_start
+    mask_neptunian = (M >= M_neptune_start) & (M < M_jupiter_start)
+    mask_jovian = M >= M_jupiter_start
+
+    # Apply the piecewise power-law relations
+    R[mask_terran] = M[mask_terran] ** 0.28
+    R[mask_neptunian] = R_neptune_start * (
+        (M[mask_neptunian] / M_neptune_start) ** 0.59
+    )
+    R[mask_jovian] = R_jupiter_start * (
+        (M[mask_jovian] / M_jupiter_start) ** -0.04
+    )
+
+    return R
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the radius of an exoplanet/brown dwarf in Earth radii
+
+    using the canonical mass-radius relations from Chen & Kipping (2017).
+
+    Parameters:
+    X : ndarray of shape (n_samples, 1)
+        X[:, 0] contains the mass of the object in Earth masses (M_earth).
+
+    Returns:
+    R : ndarray of shape (n_samples,)
+        The predicted radius in Earth radii (R_earth).
+    """
+    M = X[:, 0]
+    R = np.zeros_like(M)
+
+    # Terran planets (M <= 2.04 Earth masses)
+    mask1 = M <= 2.04
+    R[mask1] = 1.008 * (M[mask1] ** 0.279)
+
+    # Neptunian planets (2.04 < M <= 132.0 Earth masses)
+    mask2 = (M > 2.04) & (M <= 132.0)
+    R[mask2] = 0.808 * (M[mask2] ** 0.589)
+
+    # Jovian planets and Brown dwarfs (M > 132.0 Earth masses)
+    mask3 = M > 132.0
+    R[mask3] = 17.72 * (M[mask3] ** -0.044)
+
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the radius of an object in Earth radii given its mass in Earth masses
+    using the standard piecewise mass-radius relation from Chen & Kipping (2017).
+    
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the mass in Earth masses.
+    
+    Returns:
+    - 1-D numpy array of predicted radii in Earth radii.
+    """
+    M = X[:, 0]
+    
+    # Define the transition boundaries (in Earth masses)
+    conds = [
+        M < 2.04,
+        (M >= 2.04) & (M < 132.0),
+        (M >= 132.0) & (M < 26555.0),
+        M >= 26555.0
+    ]
+    
+    # Power-law relations for each regime, scaled for continuity at the boundaries:
+    # 1. Terran (rocky planets)
+    # 2. Neptunian (gaseous/volatile-rich planets)
+    # 3. Jovian (gas giants)
+    # 4. Stellar / Very high mass brown dwarfs
+    funcs = [
+        lambda M: 1.008 * (M ** 0.279),
+        lambda M: 0.811 * (M ** 0.589),
+        lambda M: 17.77 * (M ** -0.044),
+        lambda M: 0.00143 * (M ** 0.881)
+    ]
+    
+    return np.piecewise(M, conds, funcs)

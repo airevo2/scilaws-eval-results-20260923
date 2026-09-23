@@ -1,0 +1,55 @@
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    # Linear parameterization of G_E^p / G_D based on polarization transfer
+    # measurements (e.g., Gayou et al., Puckett et al., JLab).
+    # The ratio mu_p * G_E/G_M ~ 1 - 0.13*(Q^2 - 0.24); assuming
+    # G_M ~ mu_p * G_D gives G_E/G_D ~ 1 - 0.13*Q^2 as the commonly
+    # cited simplified form satisfying G_E(0)/G_D(0) = 1.
+    return 1.0 - 0.13 * Q2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    In the standard dipole approximation, the proton electric Sachs form factor 
+    G_E is assumed to be equal to the standard dipole form factor G_D.
+    Therefore, the ratio G_E / G_D is 1.
+    """
+    Q2 = X[:, 0]
+    return np.ones_like(Q2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the ratio of the proton electric Sachs form factor (G_E) 
+    to the standard dipole form factor (G_D).
+    
+    In the standard dipole approximation, the proton electric form factor 
+    is modeled exactly by the dipole form factor, i.e., G_E(Q^2) = G_D(Q^2).
+    Therefore, the canonical baseline ratio G_E / G_D is 1.
+    """
+    return np.ones(X.shape[0])
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # In the standard dipole approximation, the proton electric form factor G_E 
+    # is equal to the dipole form factor G_D, making their ratio exactly 1.
+    return np.ones(X.shape[0])
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q2 = X[:, 0]
+    return np.ones_like(Q2)

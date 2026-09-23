@@ -1,0 +1,135 @@
+task_id: eclipsing_binary_mass_luminosity_debcat__log_L_Lsun
+domain: astronomy / stellar_astrophysics
+license: CC-BY-4.0    # DEBCat compilation (Southworth 2015) — citation requested but no NDA
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Eclipsing binaries are pairs of stars whose mutual eclipses allow precise measurement of stellar properties, used in stellar astrophysics to characterise main-sequence stars.
+
+target:
+  name: log_L_Lsun
+  symbol: log₁₀(L/L☉)
+  unit: dex
+  description: Base-10 logarithm of bolometric stellar luminosity expressed in solar luminosities.
+  range: [-2.32, 5.26]
+
+inputs:
+  - name: log_M_Msun
+    symbol: log₁₀(M/M☉)
+    unit: dex
+    description: Base-10 logarithm of stellar mass expressed in solar masses.  Train [-0.68, 1.44] (pre-2018 stars, M = 0.21-27.3 M_sun); test [-0.98, 1.37] (post-2018 stars, M = 0.11-23.5 M_sun); both splits cover the full mass range.
+    range: [-0.98, 1.44]
+  - name: metallicity
+    symbol: "[M/H]"
+    unit: dex
+    description: Logarithmic stellar metallicity relative to the Sun.  Missing (NaN) for stars without a published spectroscopic determination (~50% of rows).  Distractor input — no reference baseline uses it.
+    range: [-1.86, 0.55]
+
+# NOTE: log_R_Rsun and T_eff_K are NOT released as inputs.  DEBCat's
+# log_L is derived from R and T_eff via the Stefan-Boltzmann radiation
+# law L = 4πR²σT⁴ for >99% of catalog rows (the underlying primary-
+# data papers compute L this way because direct L measurement requires
+# parallax + bolometric correction, which is harder than measuring R
+# and T_eff for an eclipsing binary).  Exposing R and T_eff as inputs
+# would let SR systems trivially recover log_L via the radiation law
+# (a circular target, the same pathology as `thermoelectric_zt`
+# (ZT = α²T/(ρκ)) and `cex_dex_arbitrage` (gap_bps = (cex-dex)/dex).
+# v2 therefore drops R and T_eff to make this a genuine M-L law
+# discovery task.
+
+# Dataset — Type I, two-file flat layout.  Source: DEBCat compilation
+# (Southworth 2015, current snapshot), parsed by v2's
+# `data_raw/parse_debcat_with_year.py` to extract per-binary
+# maximum publication year from ADS bibcodes in the References cell.
+# Detached double-lined eclipsing binaries with dynamically-measured
+# masses and radii.  Split is TIME-OOD: train = max_pub_year < 2018
+# (238 stars), test = max_pub_year >= 2018 (355 stars).  4 stars
+# without parseable year tags are dropped.  The 2018 cutoff matches
+# Eker et al. (2018)'s calibration publication date so the
+# `eker_2018_six_piece` baseline using their paper-published slopes
+# is a clean held-out validation.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 238
+n_test:  355
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: kuiper_1938_slope_classical
+    value: 3.5
+    unit: dimensionless
+    description: Kuiper 1938's originally-reported M-L power-law slope.
+    source: Kuiper 1938 ApJ 88:472 (PDF on disk) — empirical fit on the available 1938 stellar sample.  A candidate value for the ALPHA exponent; modern compilations (including v2 train) refit ALPHA ≈ 4.4 reflecting more high-mass coverage.
+    _role: candidate
+  - name: eddington_classical_ml_slope
+    value: 3.0
+    unit: dimensionless
+    description: Eddington 1926 theoretical M-L slope for uniform-composition stars dominated by electron-scattering opacity.
+    source: Eddington 1926 "Internal Constitution of the Stars" textbook §VII.  A candidate value for the ALPHA exponent; the theoretical slope is closer to 3 than the empirical 4 because real main-sequence stars have varying opacity and composition.
+    _role: candidate
+  - name: eddington_luminosity_solar
+    value: 1.26e31
+    unit: W
+    description: Eddington luminosity for a 1 M_sun star with electron-scattering opacity.
+    source: Eddington 1926 textbook value.  The Eddington-limit luminosity above which radiation pressure exceeds gravity; only relevant for super-massive (M > 50 M_sun) or accreting objects.  A distractor for the v2 test range (M ≤ 27 M_sun).
+    _role: distractor
+  - name: chandrasekhar_mass_limit
+    value: 1.4
+    unit: M_sun
+    description: Maximum mass of a stable white dwarf.
+    source: Chandrasekhar 1931, ApJ 74:81.  Relevant to white-dwarf physics, not to main-sequence M-L scaling.  A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: kuiper_1938_pure_power
+    label: Kuiper (1938) pure power-law M-L — single slope (Type I, frozen; ALPHA pre-fit on v2 pre-2018 train)
+    formula_file: formulas/kuiper_1938_pure_power.py
+    reference_pdf: reference/kuiper_1938.pdf
+    n_law_constants: 1         # ALPHA
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.6079, r2: 0.8472}
+  - id: henry_1993_two_piece
+    label: Henry-McCarthy (1993) two-piece M-L with break at M ≈ 0.6 M_sun (Type I, frozen; slopes pre-fit on v2 pre-2018 train)
+    formula_file: formulas/henry_1993_two_piece.py
+    reference_pdf: reference/henry_1993.pdf
+    n_law_constants: 5         # M_BREAK + 2 slopes + 2 intercepts
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.5581, r2: 0.8712}
+  - id: eker_2018_six_piece
+    label: Eker et al. (2018) six-piece M-L Table 4 — paper-published slopes (Type I, frozen, NOT refit on v2 train)
+    formula_file: formulas/eker_2018_six_piece.py
+    reference_pdf: reference/eker_2018.pdf
+    n_law_constants: 12        # 6 × (a, b) slopes/intercepts
+    n_other_constants: 5       # 5 break-point masses
+    n_local_params: 0
+    measured: {rmse: 0.5734, r2: 0.8641}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        12
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted log luminosity is a strictly increasing, steeply rising function of stellar mass alone, with mass as the dominant driver, so the relation stays defined when metallicity is missing"
+  - "expresses log luminosity as a log-linear power law in stellar mass (luminosity scales as a power of mass) with a non-zero normalization/intercept so the relation is not forced through the origin"
+  - "includes a steepening change of slope near the low-mass radiative-to-convective transition (around 0.4-0.6 solar masses), with a shallower slope below the break and a steeper slope above it"
+  - "includes a flattening (slope decrease) of the mass-luminosity relation at high mass (above roughly 7 solar masses) where radiation pressure becomes increasingly important"
+  - "predicted log luminosity is approximately solar (log L near 0) at one solar mass"
+
+# === Scoring ===
+metric: rmse              # RMS error on log_L_Lsun (dex)
+best_baseline: 0.5581     # henry_1993_two_piece (slightly beats eker_2018 because train-tuned)

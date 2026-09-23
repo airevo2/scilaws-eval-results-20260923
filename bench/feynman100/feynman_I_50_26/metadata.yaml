@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Length"
+  symbol: "x"
+  unit: ""
+  description: "Length"
+inputs:
+  - name: "Length"
+    symbol: "x1"
+    unit: ""
+    description: "Length"
+  - name: "Frequency"
+    symbol: "omega"
+    unit: ""
+    description: "Frequency"
+  - name: "Τime"
+    symbol: "t"
+    unit: ""
+    description: "Τime"
+  - name: "Dimensionless"
+    symbol: "alpha"
+    unit: ""
+    description: "Dimensionless"

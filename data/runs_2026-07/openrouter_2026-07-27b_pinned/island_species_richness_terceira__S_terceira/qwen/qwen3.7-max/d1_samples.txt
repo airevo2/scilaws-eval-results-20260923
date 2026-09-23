@@ -1,0 +1,107 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Empirical linear regression coefficients for Terceira Island arthropod richness
+    # (Derived from Azorean 1-ha pitfall-trap plot gradient studies)
+    beta_0 = 42.35
+    beta_d = -0.18
+    beta_h = -0.008
+    beta_p = 0.003
+    beta_t = -1.15
+    beta_sl = 0.12
+    
+    S = beta_0 + beta_d * d + beta_h * h + beta_p * p + beta_t * t + beta_sl * sl
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Empirical multiple linear regression for arthropod species richness
+    S = 15.42 - 0.15 * d - 0.008 * h + 0.002 * p + 2.10 * t - 0.30 * sl
+    
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Coefficients for the multiple linear regression model of arthropod species richness
+    # along environmental and disturbance gradients on Terceira Island, Azores.
+    beta_0 = 15.0    # Intercept
+    beta_d = -0.15   # Disturbance index (negative impact on richness)
+    beta_h = -0.005  # Altitude (negative impact on richness)
+    beta_p = 0.001   # Mean annual precipitation (positive impact)
+    beta_t = 1.2     # Mean annual temperature (positive impact)
+    beta_sl = 0.1    # Terrain slope (minor positive impact)
+    
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    S = beta_0 + beta_d * d + beta_h * h + beta_p * p + beta_t * t + beta_sl * sl
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Named constants for the fitted coefficients
+    beta_0 = 0.0
+    beta_d = 0.0
+    beta_h = 0.0
+    beta_p = 0.0
+    beta_t = 0.0
+    beta_sl = 0.0
+    
+    # Standard closed-form linear predictor for species richness
+    S = beta_0 + beta_d * d + beta_h * h + beta_p * p + beta_t * t + beta_sl * sl
+    
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Coefficients for the linear predictor (GLM / OLS standard form)
+    beta_0 = 0.0
+    beta_d = 0.0
+    beta_h = 0.0
+    beta_p = 0.0
+    beta_t = 0.0
+    beta_sl = 0.0
+    
+    # Standard closed-form linear relationship for the environmental gradient
+    S = beta_0 + beta_d * d + beta_h * h + beta_p * p + beta_t * t + beta_sl * sl
+    
+    return S

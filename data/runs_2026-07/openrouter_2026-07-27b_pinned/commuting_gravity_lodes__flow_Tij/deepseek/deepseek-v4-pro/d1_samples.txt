@@ -1,0 +1,162 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(T_ij + 1) using a gravity model with intervening opportunities.
+
+    The canonical log-linear form:
+        log10(T_ij + 1) = c + alpha*log10(m_i) + beta*log10(m_j)
+                          + gamma*log10(d_ij) + delta*log10(s_ij + 1)
+    where m_i, m_j are origin workers and destination jobs,
+    d_ij is distance (km), and s_ij is intervening opportunities.
+    """
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+
+    # Fitted coefficients (typical signs and magnitudes for commuting flows)
+    c = 0.5          # intercept
+    alpha = 0.8      # elasticity of origin workers
+    beta = 0.7       # elasticity of destination jobs
+    gamma = -1.2     # distance-decay parameter
+    delta = -0.3     # intervening-opportunities parameter
+
+    # Avoid log(0) for s_ij by adding 1 (matching the +1 shift philosophy)
+    log10_Tij_plus_1 = (
+        c
+        + alpha * np.log10(m_i)
+        + beta * np.log10(m_j)
+        + gamma * np.log10(d_ij)
+        + delta * np.log10(s_ij + 1.0)
+    )
+    return log10_Tij_plus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(T_ij + 1) using the parameter-free radiation model
+    (Simini et al., Nature 2012), a standard closed-form relationship
+    in mobility science for commuting flows with intervening opportunities.
+    """
+    # Extract inputs
+    m_i = X[:, 0]   # total resident workers at origin
+    m_j = X[:, 1]   # total jobs at destination
+    # d_ij = X[:, 2]  # distance (implicitly used via s_ij)
+    s_ij = X[:, 3]  # intervening opportunities (workers in disk, excluding i and j)
+
+    # Radiation model expected flow
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # with total outbound trips T_i = m_i
+    T_ij = (m_i**2 * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+
+    # Return log10(T_ij + 1) as required
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(T_ij + 1) using a standard log-linear gravity model
+    augmented with intervening opportunities.
+
+    Inputs:
+        X[:, 0] : m_i   (total resident workers in origin county)
+        X[:, 1] : m_j   (total jobs in destination county)
+        X[:, 2] : d_ij  (distance in km between county centroids)
+        X[:, 3] : s_ij  (intervening opportunities count)
+
+    Returns:
+        1-D array of predicted log10(annual commuting flow + 1)
+    """
+    # Extract features
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+
+    # Canonical coefficients (typical values from empirical commuting studies)
+    INTERCEPT = -2.0
+    BETA_M_I  =  1.0   # elasticity for origin workers
+    BETA_M_J  =  1.0   # elasticity for destination workers
+    BETA_D    = -1.0   # distance decay elasticity
+    BETA_S    = -0.2   # intervening opportunities elasticity
+
+    # Log-transform predictors (s_ij shifted by 1 to match dependent variable treatment)
+    log_m_i = np.log10(m_i)
+    log_m_j = np.log10(m_j)
+    log_d_ij = np.log10(d_ij)
+    log_s_ij_plus1 = np.log10(s_ij + 1)
+
+    # Closed-form prediction
+    log10_T_plus1 = (
+        INTERCEPT
+        + BETA_M_I * log_m_i
+        + BETA_M_J * log_m_j
+        + BETA_D   * log_d_ij
+        + BETA_S   * log_s_ij_plus1
+    )
+
+    return log10_T_plus1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(T_ij + 1) using the radiation model (Simini et al., 2012).
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 4)
+        X[:, 0] = m_i   : Total resident workers at origin
+        X[:, 1] = m_j   : Total jobs at destination
+        X[:, 2] = d_ij  : Haversine distance (km) -- not used directly in this model
+        X[:, 3] = s_ij  : Intervening opportunities (workers inside circle)
+    
+    Returns
+    -------
+    y : np.ndarray, shape (n_samples,)
+        log10(T_ij + 1) where T_ij is the predicted commuting flow.
+    """
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    s_ij = X[:, 3]
+    
+    # Radiation model: parameter-free closed-form for human mobility
+    T_ij = m_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    
+    return np.log10(T_ij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(T_ij + 1) using the radiation model (Simini et al., 2012).
+    
+    Inputs:
+    X[:, 0] : m_i    -- total resident workers in origin county
+    X[:, 1] : m_j    -- total jobs in destination county
+    X[:, 2] : d_ij   -- distance in km (not used directly by the radiation model)
+    X[:, 3] : s_ij   -- intervening opportunities count
+    
+    Returns:
+    log10(T_ij + 1) as a 1-D numpy array
+    """
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    s_ij = X[:, 3]
+    
+    # Radiation model formula for expected commuting flow
+    T_ij = m_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    
+    # Return base-10 logarithm of (flow + 1)
+    return np.log10(T_ij + 1)

@@ -1,0 +1,136 @@
+task_id: running_endurance_iaaf__velocity
+domain: social_science / sports_science
+license: CC-BY-SA-4.0
+
+# Type I — each world record (one distance x one sex) is an independent row.
+# No per-cluster structure; sex enters as a binary input covariate, not a group_id.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no column listing, no constants.
+context: >-
+  This task uses athletics world records for human running events across a range of race distances, relating to exercise physiology.
+
+target:
+  name: velocity
+  symbol: "v̄"
+  unit: m/s
+  description: Average race velocity over the full event distance, computed as race distance divided by the world-record finishing time.
+  range: [4.17, 10.44]
+
+inputs:
+  - name: distance_m
+    symbol: d
+    unit: m
+    description: Official race distance for the event, spanning sprint to ultra-marathon distances.
+    range: [60.0, 100000.0]
+  - name: sex_M
+    symbol: "s_M"
+    unit: ""
+    description: Binary sex indicator for the record — 1 for men, 0 for women.
+    values: [0, 1]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv  # distance_m < 20000 m (60 m to 10 miles)
+  test:  data/test.csv   # distance_m >= 20000 m (20 km to 100 km road, OOD)
+
+n_train: 28
+n_test: 14
+
+# Train/test split: feature-axis OOD on race distance, threshold 20 km.
+# Train: 60 m to 16 093.4 m (10 miles), test: 20 km to 100 km road.
+# Tests extrapolation from middle-distance / long-distance into road ultra events.
+
+# Reference baselines
+references:
+  - id: emig_2020
+    label: Emig & Peltonen 2020 — Lambert-W universal race-time formula (Eq. 1)
+    formula_file: formulas/emig_2020.py
+    reference_pdf: reference/emig2020_running.pdf
+    n_law_constants: 4     # vm_M, gamma_l_M, vm_F, gamma_l_F — per-sex defining coefficients of Eq. 1 (fit on train; field-classification audit 2026-05-30)
+    n_other_constants: 1   # tc = 360 s
+    n_local_params: 0
+    measured:
+      rmse: 0.2628
+      r2: 0.7811
+  - id: riegel_1981
+    label: Riegel 1981 — classical power-law endurance equation (Table 1)
+    formula_file: formulas/riegel_1981.py
+    reference_pdf: reference/riegel.pdf
+    n_law_constants: 4     # a_M, b_M, a_F, b_F
+    n_other_constants: 2   # unit_factor = 1000, time_factor = 60
+    n_local_params: 0
+    measured:
+      rmse: 0.4493
+      r2: 0.3601
+
+# Anti-dump caps (from derived_caps in reference_metrics.json)
+caps:
+  max_law_constants: 4
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "accounts for systematic male-female differences in world-record running velocity"
+  - "represents distance-dependent endurance fatigue that lowers sustainable average running velocity as race distance increases"
+  - "predicted velocity is positive for every positive race distance"
+
+best_baseline: 0.26277    # emig_2020 — rmse (lower is better); regenerated 2026-05-30
+
+# FM C12 fix (2026-05-26) — priors-leakage remediation
+# -------------------------------------------------------
+# PRE-FIX state: 5 of 6 priors were EMPIRICAL_FIT leaking into LAW_CONSTANTS /
+# OTHER_CONSTANTS of the two baselines:
+#   REMOVED — tc_crossover=360.0      → emig_2020.py::OTHER_CONSTANTS['tc']=360.0
+#   REMOVED — riegel_exponent_men=1.07732 → riegel_1981.py::LAW_CONSTANTS['b_M']=1.07732
+#   REMOVED — riegel_exponent_women=1.08283 → riegel_1981.py::LAW_CONSTANTS['b_F']=1.08283
+#   REMOVED — riegel_prefactor_men=2.299  → riegel_1981.py::LAW_CONSTANTS['a_M']=2.299
+#   REMOVED — riegel_prefactor_women=2.598 → riegel_1981.py::LAW_CONSTANTS['a_F']=2.598
+# All five are Riegel 1981 / Emig 2020 empirical regression coefficients (EMPIRICAL_FIT).
+# tc_crossover=360 s is also a paper-specific calibration boundary, not a universal
+# physical constant.  No upstream CODATA/IAU constant exists for this purely
+# empirical athletic regression; candidates block is intentionally left empty.
+# POST-FIX: 0 candidate + 4 distractor priors.  All are athletic/physiology
+# reference values with ZERO overlap with any LAW_CONSTANTS or OTHER_CONSTANTS
+# across formulas/riegel_1981.py and formulas/emig_2020.py.
+# Reference: audit/AUDIT_CHECKLIST.md §C12 (v0.6); audit/proposed_FMs/2026-05-26_priors_leakage_GM.md §6
+#
+# Audit cleanup (2026-05-29) — 逐条审核3
+# -------------------------------------------------------
+# REMOVED — world_record_men_marathon_seconds=7235.0 s.  This "distractor" was the
+# men's-marathon world-record FINISH TIME — a real cell of the time_s column that
+# prep_data.py deliberately drops as "direct leakage of the target"
+# (velocity = distance_m / time_s).  With prior marathon_distance=42195.0 m it
+# reconstructs the exact test target for the 42195 m / sex_M=1 row:
+#   42195 / 7235 = 5.832066 m/s  ==  test.csv men-marathon velocity.
+# Deleting the time prior closes the channel (no other prior exposes a finishing
+# time; distance_m is already a released input, so marathon_distance stays).
+# Not padded: 4 distractors -> 3.  POST-FIX priors: 0 candidate + 3 distractor.
+# Reference: audit/AUDIT_CHECKLIST.md §B7 (target-leak via the priors channel).
+priors:
+  - name: marathon_distance
+    value: 42195.0
+    unit: m
+    description: Official marathon race distance (IAAF standard). Kept from pre-fix priors — genuinely non-leaking distractor.
+    source: IAAF world athletics standards; used as a boundary distance in Emig & Peltonen (2020) analysis.
+    _role: distractor
+  - name: km_per_mile
+    value: 1.609344
+    unit: km/mile
+    description: Exact kilometres per international mile (IAU/IUPAC definition). Unit conversion factor not used by any baseline formula.
+    source: International Bureau of Weights and Measures (BIPM); exact definition.
+    _role: distractor
+  - name: vo2max_elite_threshold_mlkgmin
+    value: 70.0
+    unit: mL/kg/min
+    description: Approximate VO2max threshold for elite male endurance runners (exercise physiology reference). Not a parameter in any shipped formula.
+    source: Exercise physiology literature (e.g. Joyner & Coyle 2008, J. Physiol.); approximate canonical threshold.
+    _role: distractor

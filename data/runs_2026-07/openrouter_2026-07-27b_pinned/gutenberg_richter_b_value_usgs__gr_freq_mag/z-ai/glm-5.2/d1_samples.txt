@@ -1,0 +1,71 @@
+import numpy as np
+
+def predict(X):
+    """
+    Calculates the cumulative annual earthquake rate (log10 N) for events 
+    with moment magnitude at or above the threshold M, using the 
+    Gutenberg-Richter law: log10(N) = a - b*M.
+    
+    Canonical global average coefficients are used:
+    a = 8.0 (annual rate of M >= 0 events)
+    b = 1.0 (slope of the magnitude-frequency distribution)
+    """
+    M = X[:, 0]
+    a = 8.0
+    b = 1.0
+    return a - b * M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10_N using the Gutenberg-Richter law (cumulative form):
+    log10_N = a - b * M
+    where typical global coefficients are a = 8.0 and b = 1.0.
+    """
+    M = X[:, 0]
+    a = 8.0
+    b = 1.0
+    log10_N = a - b * M
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    # Gutenberg-Richter law: log10(N) = a - b * M
+    # Using commonly cited global average coefficients
+    a = 8.0
+    b = 1.0
+    log10_N = a - b * M
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gutenberg-Richter law: log10(N) = a - b * M
+    a = 6.0
+    b = 1.0
+    M = X[:, 0]
+    return a - b * M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gutenberg-Richter cumulative frequency-magnitude relation:
+        log10 N = a - b * M
+    where N is the cumulative annual rate of earthquakes with Mw >= M.
+    """
+    M = X[:, 0]
+    a = 8.0   # global activity-rate intercept (representative)
+    b = 1.0   # canonical Gutenberg-Richter b-value
+    return a - b * M

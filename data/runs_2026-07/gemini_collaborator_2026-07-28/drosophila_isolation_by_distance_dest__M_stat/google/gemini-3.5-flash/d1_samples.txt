@@ -1,0 +1,116 @@
+import numpy as np
+
+def predict(X):
+    # Rousset's linearized genetic differentiation statistic M = F_ST / (1 - F_ST)
+    # under the standard 2-dimensional isolation-by-distance (IBD) model.
+    # The theoretical expectation is: M = a + b * ln(distance)
+    # where b = 1 / (4 * pi * D * sigma^2) (D: population density, sigma^2: dispersal variance)
+    # We use representative empirical parameters for a typical species.
+    
+    ln_d = X[:, 0]  # Natural logarithm of distance in km
+    
+    # Representative coefficients
+    intercept = 0.010
+    slope = 0.005
+    
+    M_stat = intercept + slope * ln_d
+    return M_stat
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rousset's (1997) formulation for Isolation by Distance (IBD) in a 2D habitat
+    # relates M_stat = F_ST / (1 - F_ST) linearly to the natural logarithm of distance:
+    # M_stat = a + b * ln(d)
+    # where 'a' is the intercept and the slope 'b' is proportional to 1 / (4 * pi * D * sigma^2)
+    # (with D being population density and sigma^2 being mean squared dispersal distance).
+    
+    log_distance_km = X[:, 0]
+    
+    # Standard representative empirical coefficients for a 2D isolation-by-distance model
+    a = 0.002  # Intercept (differentiation at minimal distance)
+    b = 0.015  # Slope (reflecting the rate of gene flow decay over distance)
+    
+    M_stat = a + b * log_distance_km
+    return M_stat
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Rousset's (1997) canonical formula for isolation by distance in a 2D habitat:
+    # F_ST / (1 - F_ST) = Intercept + Slope * ln(d)
+    # where Slope = 1 / (4 * pi * D * sigma^2)
+    # D is the population density and sigma^2 is the mean squared dispersal distance.
+
+    log_distance_km = X[:, 0]
+
+    # Representative parameters for typical population genetic studies
+    slope = 0.0105
+    intercept = 0.0150
+
+    return intercept + slope * log_distance_km
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Rousset's linearized differentiation statistic, M = F_ST / (1 - F_ST),
+    using the standard 2-dimensional isolation-by-distance (IBD) model:
+    M = a + b * ln(d)
+    where d is the geographic distance, and the slope b is theoretically 
+    related to population density (D) and dispersal variance (sigma^2) 
+    by b = 1 / (4 * pi * D * sigma^2).
+    
+    Inputs:
+    X[:, 0] = log_distance_km (ln(d))
+    X[:, 1] = distance_km (d)
+    """
+    # Typical representative parameters for a 2D isolation-by-distance relationship
+    a = 0.010  # Intercept (differentiation at short distances)
+    b = 0.005  # Slope (related to 1 / (4 * pi * D * sigma^2))
+    
+    log_distance = X[:, 0]
+    
+    return a + b * log_distance
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Rousset's linearized differentiation statistic, M = F_ST / (1 - F_ST),
+    using the standard 2-dimensional isolation-by-distance (IBD) relationship:
+    
+        M = a + b * ln(d)
+        
+    where d is the geographic distance, and the slope b is theoretically 
+    related to the population density (D) and mean squared dispersal distance (sigma^2) 
+    by b = 1 / (4 * pi * D * sigma^2).
+    
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = log_distance_km (ln(d))
+        X[:, 1] = distance_km (d)
+        
+    Returns:
+    - 1-D numpy array of M values.
+    """
+    # Extract the natural logarithm of the great-circle distance
+    log_distance = X[:, 0]
+    
+    # Representative empirical coefficients for 2D isolation by distance
+    intercept = 0.010
+    slope = 0.005
+    
+    # Calculate Rousset's linearized statistic
+    M = intercept + slope * log_distance
+    
+    return M

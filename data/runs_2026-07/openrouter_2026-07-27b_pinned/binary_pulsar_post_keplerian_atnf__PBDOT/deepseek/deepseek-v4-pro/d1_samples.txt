@@ -1,0 +1,226 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict PBDOT (dot_P_b) [s/s] from orbital period Pb [d] and eccentricity e.
+    Uses the standard general-relativistic quadrupole formula for orbital
+    decay due to gravitational wave emission (Peters & Mathews 1963).
+    Assumes canonical neutron-star masses of 1.4 M_sun each.
+    """
+    Pb_d = X[:, 0]  # orbital period [days]
+    e    = X[:, 1]  # eccentricity [dimensionless]
+
+    # Physical constants
+    G     = 6.67430e-11          # gravitational constant [m^3 kg^-1 s^-2]
+    c     = 2.99792458e8         # speed of light [m s^-1]
+    M_sun = 1.98847e30           # solar mass [kg]
+
+    # Solar mass in time units (GM_sun / c^3) [s]
+    T_sun = G * M_sun / c**3     # = 4.925490947e-6 s
+
+    # Canonical neutron star masses [M_sun]
+    m1 = 1.4
+    m2 = 1.4
+
+    # Chirp mass [M_sun]
+    chirp_mass = (m1 * m2)**(3/5) / (m1 + m2)**(1/5)
+
+    # Convert period to seconds
+    Pb_s = Pb_d * 86400.0        # [s]
+
+    # Peters & Mathews eccentricity enhancement factor
+    e2 = e**2
+    f_e = (1.0 + (73.0/24.0)*e2 + (37.0/96.0)*e2**2) / (1.0 - e2)**3.5
+
+    # Orbital period derivative [s/s]
+    dot_P_b = (- (192.0 * np.pi / 5.0)
+               * (2.0 * np.pi / Pb_s)**(5.0/3.0)
+               * (T_sun * chirp_mass)**(5.0/3.0)
+               * f_e)
+
+    return dot_P_b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the GR-driven time derivative of the binary orbital period (dot_P_b)
+    for a double neutron star (DNS) system, assuming canonical neutron star masses
+    of 1.4 Msun each.
+
+    Inputs:
+        X : ndarray, shape (n, 2)
+            X[:, 0] = P_b [days]   : orbital period
+            X[:, 1] = e            : orbital eccentricity (0 <= e < 1)
+
+    Returns:
+        dot_P_b : ndarray, shape (n,)
+            Orbital period derivative [s/s] (negative for inspiral).
+    """
+    Pb_day = X[:, 0]
+    e = X[:, 1]
+
+    # Physical constants
+    T_sun = 4.925490947e-6          # GM_sun / c^3 [s] (IAU 2015)
+
+    # Canonical neutron star masses for a DNS system
+    m1 = 1.4   # Msun
+    m2 = 1.4   # Msun
+
+    # Dimensionless mass factor: m1*m2 / (m1+m2)^(1/3)
+    mass_factor = m1 * m2 / (m1 + m2) ** (1.0 / 3.0)
+
+    # Prefactor from Peters & Mathews (1963): (192π/5) * T_sun^(5/3) * mass_factor
+    prefactor = (192.0 * np.pi / 5.0) * (T_sun ** (5.0 / 3.0)) * mass_factor
+
+    # Convert orbital period from days to seconds
+    Pb_sec = Pb_day * 86400.0  # s
+
+    # (2π / P_b) ^ (5/3) term
+    freq_term = (2.0 * np.pi / Pb_sec) ** (5.0 / 3.0)
+
+    # Eccentricity correction function
+    e2 = e * e
+    e4 = e2 * e2
+    f_e = (1.0 + (73.0 / 24.0) * e2 + (37.0 / 96.0) * e4) / (
+        (1.0 - e2) ** (7.0 / 2.0)
+    )
+
+    # GR-predicted orbital period derivative (negative)
+    dot_P_b = -prefactor * freq_term * f_e
+    return dot_P_b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute the GR-predicted orbital period derivative (PBDOT) for a binary system,
+    given the orbital period Pb (in days) and eccentricity e.
+    
+    Uses the standard quadrupole formula (Peters 1964):
+    
+    \dot{P}_b = - (192π/5) * (P_b / (2π))^{-5/3} * (1 - e^2)^{-7/2}
+                * (1 + 73e^2/24 + 37e^4/96) * (G M_c / c^3)^{5/3}
+    
+    The chirp mass M_c is set to a typical DNS value (1.22 M_sun) as a placeholder;
+    in practice it can be replaced by any fitted constant.
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 2)
+        X[:,0] = Pb : orbital period in days
+        X[:,1] = e  : orbital eccentricity (dimensionless)
+    
+    Returns
+    -------
+    dot_Pb : ndarray, shape (n_samples,)
+        Orbital period derivative in s/s (negative for inspiraling systems).
+    """
+    Pb_day = X[:, 0]
+    e = X[:, 1]
+    
+    # Physical constants
+    G = 6.67430e-11        # m^3 kg^-1 s^-2
+    c = 299792458.0        # m/s
+    Msun = 1.98847e30      # kg
+    T_sun = G * Msun / c**3  # geometric time for one solar mass, ~4.9255e-6 s
+    
+    # Chirp mass in solar masses (tunable; typical DNS ~1.22)
+    mc = 1.22  # M_sun
+    
+    # Convert orbital period from days to seconds
+    Pb = Pb_day * 86400.0
+    
+    # Eccentricity enhancement factor
+    f_e = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**(3.5)
+    
+    # Pre-factor from the quadrupole formula
+    prefactor = (192.0 * np.pi / 5.0) * (Pb / (2.0 * np.pi))**(-5.0/3.0) * (T_sun * mc)**(5.0/3.0)
+    
+    dot_Pb = -prefactor * f_e
+    return dot_Pb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the observed time derivative of the binary orbital period (PBDOT)
+    using the standard general relativistic formula for orbital decay due to
+    gravitational wave emission (Peters 1964, Peters & Mathews 1963).
+
+    This closed-form relationship gives the dimensionless rate dot_P_b [s/s]
+    as a function of the orbital period P_b [days] and eccentricity e.
+    The prefactor mass combination is set to a typical DNS chirp mass;
+    it can be treated as a fitted constant for other systems.
+
+    Input X: 2D NumPy array, X[:,0] = P_b [d], X[:,1] = e
+    Returns: 1D array of dot_P_b [s/s]
+    """
+    P_b_days = X[:, 0]
+    e = X[:, 1]
+
+    # Convert orbital period from days to seconds
+    P_b_sec = P_b_days * 86400.0
+
+    # Fundamental constant: solar mass in time units (s)
+    T_sun = 4.925490947e-6  # G * M_sun / c^3
+
+    # Chirp mass in solar masses (typical DNS ~1.19, can be fitted)
+    M_chirp = 1.19
+
+    # Combined GR prefactor: (192π/5) * (2π)^(5/3) * (T_sun * M_chirp)^(5/3)
+    A = (192.0 * np.pi / 5.0) * (2.0 * np.pi)**(5.0/3.0) * (T_sun * M_chirp)**(5.0/3.0)
+
+    # Eccentricity enhancement factor (Peters 1964)
+    f_e = (1.0 + (73.0/24.0) * e**2 + (37.0/96.0) * e**4) / (1.0 - e**2)**3.5
+
+    # Orbital period derivative (negative for inspiral)
+    dot_P_b = -A * P_b_sec**(-5.0/3.0) * f_e
+    return dot_P_b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the observed time derivative of the binary orbital period (dot_P_b)
+    in s/s, given the orbital period P_b (days) and eccentricity e.
+    
+    Uses the general relativistic (GR) quadrupole formula (Peters 1964)
+    assuming a canonical double neutron star chirp mass of 1.2 M_sun.
+    """
+    # Extract inputs
+    Pb_day = X[:, 0]          # Orbital period in days
+    e = X[:, 1]               # Eccentricity (dimensionless, 0 <= e < 1)
+
+    # Physical constants (SI)
+    G = 6.67430e-11           # Gravitational constant [m^3 kg^-1 s^-2]
+    c = 2.99792458e8          # Speed of light [m/s]
+    Msun = 1.98847e30         # Solar mass [kg]
+
+    # Typical chirp mass for a double neutron star system
+    chirp_mass = 1.2 * Msun   # [kg]
+
+    # Convert orbital period to seconds
+    Pb_s = Pb_day * 86400.0   # [s]
+
+    # GR time-scale factor G*M_chirp / c^3  [s]
+    GMch_c3 = G * chirp_mass / c**3
+
+    # Dimensionless factor (2*pi * GMch_c3 / P_b)
+    A = 2.0 * np.pi * GMch_c3 / Pb_s
+
+    # Eccentricity enhancement function f(e)
+    f_e = (1.0 + (73.0/24.0) * e**2 + (37.0/96.0) * e**4) / (1.0 - e**2)**(7.0/2.0)
+
+    # Peters formula for the orbital period derivative (s/s)
+    dot_Pb = - (192.0 * np.pi / 5.0) * (A**(5.0/3.0)) * f_e
+
+    return dot_Pb

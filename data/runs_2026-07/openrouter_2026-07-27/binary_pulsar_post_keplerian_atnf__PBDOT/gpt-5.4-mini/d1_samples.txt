@@ -1,0 +1,160 @@
+import numpy as np
+
+def predict(X):
+    """
+    GR quadrupole orbital-period decay for a binary system (Peters & Mathews 1963; Peters 1964).
+    Inputs:
+        X[:, 0] = Pb [days]
+        X[:, 1] = e  [dimensionless]
+    Returns:
+        dot_P_b [s/s]
+    """
+    Pb = np.asarray(X[:, 0], dtype=float) * 86400.0  # days -> seconds
+    e = np.asarray(X[:, 1], dtype=float)
+
+    # The standard closed-form expression:
+    # dot{P}_b = -(192*pi/5) * (2*pi*G*M_c/c^3)^(5/3) * (2*pi/P_b)^(-5/3)
+    #            * (1 + 73/24 e^2 + 37/96 e^4) / (1 - e^2)^(7/2)
+    #
+    # Since the total mass / chirp mass is not provided, the commonly used
+    # canonical shape factor is returned up to the GR normalization constant
+    # for a given binary mass scale. For a purely symbolic standard form,
+    # the most universal closed-form dependence is the Peters eccentricity factor
+    # and the P_b^(-5/3) scaling.
+    #
+    # Here we express the standard GR dependence with the mass-dependent prefactor
+    # left implicit by setting it to 1 in natural units of the canonical form.
+
+    ecc_factor = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**(7.0 / 2.0)
+    return -(Pb ** (-5.0 / 3.0)) * ecc_factor
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Pb_days = X[:, 0]
+    e = X[:, 1]
+
+    # Convert orbital period from days to seconds
+    Pb = Pb_days * 86400.0
+
+    # Peters & Mathews / Peters (1964) GR quadrupole formula for orbital decay
+    # dot(Pb) = -(192*pi/5) * (2*pi*G/c^3)^(5/3) * (m1*m2)/(m1+m2)^(1/3) * Pb^(-5/3)
+    #            * (1 + 73/24 e^2 + 37/96 e^4) / (1 - e^2)^(7/2)
+    #
+    # Since only Pb and e are provided, return the canonical eccentricity/period dependence
+    # with the standard dimensionless enhancement factor and the Pb^(-5/3) scaling.
+    # The overall mass-dependent prefactor cannot be determined from the given inputs.
+    enhancement = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**3.5
+
+    # Return the standard closed-form functional dependence up to an overall constant scale.
+    # For use as a timing-model shape predictor, this preserves the canonical GR dependence.
+    return -enhancement * Pb**(-5.0 / 3.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gravitational-wave orbital decay for a binary pulsar (Peters & Mathews / Peters 1964).
+
+    Inputs
+    ------
+    X : array_like, shape (N, 2)
+        X[:, 0] = Pb in days
+        X[:, 1] = e  (eccentricity)
+
+    Returns
+    -------
+    dPbdt : ndarray, shape (N,)
+        Orbital period derivative in s/s
+    """
+    Pb_days = np.asarray(X)[:, 0]
+    e = np.asarray(X)[:, 1]
+
+    # Convert orbital period from days to seconds
+    Pb = Pb_days * 86400.0
+
+    # Constants (SI)
+    G = 6.67430e-11
+    c = 299792458.0
+    Msun = 1.98847e30
+
+    # Standard masses for the canonical GR binary-pulsar decay formula:
+    # The exact prediction requires the component masses m1 and m2.
+    # In the absence of masses, the commonly cited closed form is written as
+    # a function of masses; here we provide the standard formula structure
+    # using unit solar masses as placeholders is not physically predictive.
+    #
+    # Since only Pb and e are supplied, return the canonical GR prefactor
+    # in terms of an effective mass combination is impossible without masses.
+    # Therefore we encode the standard closed-form dependence on Pb and e
+    # with a unit-mass normalization commonly used in textbook form.
+
+    # Effective unit-mass normalization (m1 = m2 = 1 Msun)
+    m1 = 1.0 * Msun
+    m2 = 1.0 * Msun
+    M = m1 + m2
+
+    # Peters (1964) eccentricity enhancement factor
+    fe = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**(7.0 / 2.0)
+
+    # Orbital decay
+    dPbdt = (
+        -(192.0 * np.pi / 5.0)
+        * (G**(5.0 / 3.0) / c**5)
+        * ((2.0 * np.pi / Pb)**(5.0 / 3.0))
+        * (m1 * m2 / M**(1.0 / 3.0))
+        * fe
+    )
+
+    return dPbdt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Pb = X[:, 0]  # days
+    e = X[:, 1]
+
+    # Peters & Mathews / Peters (1964) gravitational-wave orbital decay
+    # for a binary with fixed component masses (mass-dependent prefactor omitted).
+    # Standard eccentricity enhancement factor:
+    fe = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**(7.0 / 2.0)
+
+    # Common closed-form scaling in terms of orbital period for GR-driven inspiral:
+    # dot(Pb) ∝ Pb^(-5/3) * fe
+    # The absolute normalization depends on the component masses; without masses
+    # we return the canonical dimensionless functional dependence.
+    return -(Pb ** (-5.0 / 3.0)) * fe
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Peters (1964) gravitational-wave-driven orbital decay for a binary:
+    dPb/dt = -(192*pi/5) * (2*pi*G/c^3)^(5/3) * (m1*m2/(m1+m2)^(1/3)) * Pb^(-5/3)
+             * (1 + 73/24 e^2 + 37/96 e^4) / (1 - e^2)^(7/2)
+
+    Since only Pb and e are provided here and no masses are given, use the
+    commonly cited closed-form eccentricity/period dependence up to an overall
+    system-dependent scale factor. This returns the standard dimensionless
+    GR-like functional dependence:
+        dot_P_b ∝ Pb^(-5/3) * f(e)
+
+    with
+        f(e) = (1 + 73/24 e^2 + 37/96 e^4) / (1 - e^2)^(7/2)
+    """
+    Pb = np.asarray(X[:, 0], dtype=float)  # days
+    e = np.asarray(X[:, 1], dtype=float)
+
+    # Standard Peters & Mathews eccentricity enhancement factor
+    fe = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**3.5
+
+    # Closed-form dependence on orbital period
+    return -(Pb ** (-5.0 / 3.0)) * fe

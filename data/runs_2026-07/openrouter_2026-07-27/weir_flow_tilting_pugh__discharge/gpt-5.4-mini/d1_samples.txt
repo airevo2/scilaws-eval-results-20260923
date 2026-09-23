@@ -1,0 +1,85 @@
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    
+    # Standard sharp-crested (fully contracted/rectangular) weir discharge relation
+    # Q = (2/3) * C_d * b * sqrt(2g) * h^(3/2)
+    # A common textbook value for a sharp-crested weir is C_d ≈ 0.611
+    g = 9.80665
+    C_d = 0.611
+    
+    Q = (2.0 / 3.0) * C_d * b * np.sqrt(2.0 * g) * h**1.5
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+
+    # Standard sharp-crested rectangular weir relation with approach-head correction
+    Q = (2.0 / 3.0) * 1.84 * b * np.sqrt(2.0 * 9.81) * np.power(h + 0.0015, 1.5)
+
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    
+    # Common broad-crested/sharp-crested weir-style form with approach-head correction
+    Cd = 1.84
+    Q = Cd * b * np.sqrt(2.0 * 9.81) * np.power(h + 0.0015, 1.5)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+
+    # Standard sharp-crested rectangular weir discharge equation with end-contraction correction
+    # Q = (2/3) * C_d * b * sqrt(2g) * h^(3/2)
+    # Common practical form for a suppressed sharp-crested weir:
+    # Q = 1.84 * b * h^(3/2)
+    # For a contracted weir, a common Francis-type correction is:
+    # Q = 1.84 * (b - 0.1*n*h) * h^(3/2)
+    # Here, with no side-contraction count given, the most general simple closed form uses the width b.
+    C = 1.84
+    Q = C * b * np.power(h, 1.5)
+
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+
+    # Standard sharp-crested rectangular weir discharge with end-contraction correction
+    # Francis-type form:
+    # Q = (2/3) * C_d * b * sqrt(2g) * h^(3/2)
+    # Commonly written in laboratory/engineering practice as:
+    # Q = 1.84 * b * (h + 0.0015)**1.5   (SI units, for a sharp-crested rectangular weir)
+    # Here, using the canonical closed-form with a typical discharge coefficient.
+    g = 9.81
+    Cd = 0.611  # standard sharp-crested weir coefficient in SI
+
+    Q = (2.0 / 3.0) * Cd * b * np.sqrt(2.0 * g) * np.power(h, 1.5)
+    return Q

@@ -1,0 +1,97 @@
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Brière model (Briére et al., 1999) for thermal performance curves
+    # P(T) = c * T * (T - T_min) * (T_max - T)**0.5
+    c = 1e-4
+    T_min = 5.0
+    T_max = 40.0
+    
+    P = np.zeros_like(T)
+    valid_mask = (T > T_min) & (T < T_max)
+    # Clip to avoid negative values under the square root due to floating point inaccuracies
+    term = np.maximum(T_max - T[valid_mask], 0)
+    P[valid_mask] = c * T[valid_mask] * (T[valid_mask] - T_min) * np.sqrt(term)
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    
+    # Parameters for a standard Gaussian Thermal Performance Curve (TPC)
+    # P_max: maximum performance
+    # T_opt: optimal temperature where performance is maximized
+    # sigma: thermal tolerance breadth (standard deviation)
+    P_max = 1.0
+    T_opt = 25.0
+    sigma = 10.0
+    
+    P = P_max * np.exp(-0.5 * ((T - T_opt) / sigma) ** 2)
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    
+    # Brière et al. (1999) thermal performance curve model
+    # P(T) = c * T * (T - T0) * (Tm - T)^(1/2)
+    # where:
+    # c is a scaling constant
+    # T0 is the lower developmental threshold
+    # Tm is the upper lethal threshold
+    
+    c = 1e-4
+    T0 = 10.0
+    Tm = 40.0
+    
+    # Ensure the term under the square root is non-negative
+    # and restrict performance to the viable temperature range [T0, Tm]
+    temp_diff_upper = np.maximum(Tm - T, 0)
+    temp_diff_lower = np.maximum(T - T0, 0)
+    
+    P = c * T * temp_diff_lower * np.sqrt(temp_diff_upper)
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Briere-1 model parameters (using generic typical values)
+    a = 1e-4       # scaling parameter
+    T0 = -5.0      # lower thermal threshold (degrees Celsius)
+    Tm = 50.0      # upper thermal threshold (degrees Celsius)
+    
+    P = np.zeros_like(T, dtype=float)
+    mask = (T > T0) & (T < Tm)
+    # Briere-1 equation: P(T) = a * T * (T - T0) * (Tm - T)
+    P[mask] = a * T[mask] * (T[mask] - T0) * (Tm - T[mask])
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Brière model parameters (Brière et al. 1999)
+    a = 1e-4       # scaling constant
+    T0 = -10.0     # lower developmental threshold (degrees Celsius)
+    Tm = 80.0      # upper lethal threshold (degrees Celsius)
+    
+    P = np.zeros_like(T)
+    valid_mask = (T > T0) & (T < Tm)
+    P[valid_mask] = a * T[valid_mask] * (T[valid_mask] - T0) * np.sqrt(Tm - T[valid_mask])
+    
+    return P

@@ -1,0 +1,168 @@
+task_id: budyko_partitioning_mach__et_over_p
+domain: earth_science / hydrology
+license: CC-BY-4.0
+
+# Type I — each catchment is an independent row; no within-catchment repeated
+# measures. All three reference formulas predict E/P from the aridity index
+# alone with a single globally-fixed shape parameter.
+type: typeI
+has_group_id: false
+
+context: >-
+  This task concerns the long-term partitioning of catchment precipitation between evapotranspiration and runoff, a topic in catchment hydrology.
+
+target:
+  name: et_over_p
+  symbol: E/P
+  unit: ""
+  description: Long-term mean annual ratio of actual evapotranspiration to precipitation; a dimensionless evaporative fraction bounded between 0 and 1 for nearly all natural catchments.
+  range: [0.0, 1.13]
+
+inputs:
+  - name: pet_over_p
+    symbol: φ
+    unit: ""
+    description: Climate aridity index — ratio of mean annual potential evapotranspiration to mean annual precipitation. Values below 1 indicate energy-limited (humid) conditions; values above 1 indicate water-limited (arid) conditions.
+    range: [0.22, 4.51]
+  - name: ppt_mm_yr
+    symbol: P
+    unit: mm yr⁻¹
+    description: Mean annual precipitation over the 1981–2010 period.
+    range: [251.91, 3118.13]
+  - name: pet_mm_yr
+    symbol: Ep
+    unit: mm yr⁻¹
+    description: Mean annual potential evapotranspiration estimated by the Hargreaves method over the 1981–2010 period.
+    range: [491.49, 1927.81]
+  - name: tav_C
+    symbol: T
+    unit: °C
+    description: Mean annual air temperature over the 1981–2010 period.
+    range: [-0.48, 22.78]
+  - name: area_sqkm
+    symbol: A
+    unit: km²
+    description: Total drainage area of the catchment.
+    range: [4.74, 25546.04]
+  - name: basin_slope
+    symbol: S
+    unit: "%"
+    description: Mean slope of the catchment terrain, expressed as a percentage.
+    range: [0.02, 66.62]
+  - name: elev_mean_m
+    symbol: Z
+    unit: m
+    description: Mean elevation of the catchment above sea level.
+    range: [8.07, 3602.21]
+  - name: clay_pct
+    symbol: c
+    unit: "%"
+    description: Soil clay fraction averaged over the catchment, expressed as a percentage of total soil composition.
+    range: [2.31, 53.08]
+  - name: bfi
+    symbol: BFI
+    unit: ""
+    description: Base-flow index — dimensionless ratio of long-term base flow to total streamflow, indicating the groundwater contribution to catchment discharge.
+    range: [0.06, 0.86]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv    # catchments with phi < 1.5 (humid to near-neutral)
+  test:  data/test.csv     # catchments with phi >= 1.5 (water-limited OOD)
+n_train: 840
+n_test: 156    # phi >= 1.5 arid OOD; 16 non-steady-state ET/P>1 rows dropped (2026-05-30)
+
+# Train/test split: feature-axis OOD on aridity index pet_over_p (phi),
+# threshold 1.5. Train covers the energy-limited to near-neutral Budyko regime
+# (phi < 1.5); test exercises the water-limited asymptote (phi >= 1.5, the top
+# ~17% of catchments). All three reference formulas are theoretically valid
+# across the full phi range.
+#
+# OOD note (data_spec §9.14 / §9.18): the water-limited test tail compresses the
+# target variance (test E/P std ~0.11, clustered near the ~0.84 water limit), so
+# the pooled test R^2 stays small or negative even for a form-correct formula.
+# yang_2008 (n=2, the parameter-free Turc-Pike curve) over-predicts E/P there and
+# scores R^2 = -0.15; choudhury_1999 (+0.04) and the anchor wang_tang_2014 (+0.06)
+# stay positive. All three beat the cross-OOD naive (train-mean predictor → test
+# RMSE = 0.249) by ~2x; the anchor wang_tang_2014 (RMSE 0.110, numeric 0.5) is a
+# genuine, non-trivial target — not a tautology or an exploded anchor.
+# Audit history (FM C12 / FM-H1 priors fixes, pike_1964 deprecation, 2026-05-29
+# review) is recorded in VERDICT.md.
+
+# === Reference baselines ===
+# Three Budyko-framework formulas. pike_1964 was deprecated (wave-7 F8) as the
+# exact n=2 special case of yang_2008 (both = phi/sqrt(1+phi^2)); its PDF is
+# retained under reference/ for provenance only. choudhury_1999 and yang_2008
+# share the Mezentsev-Choudhury-Yang functional form 1/(1+(1/phi)^p)^(1/p) at
+# p = 1.8 vs 2.0 (documented in formulas/__init__.py); wang_tang_2014 is a
+# distinct closed form derived from generalised proportionality.
+references:
+  - id: choudhury_1999
+    label: Choudhury 1999 — generalised Budyko Eq. (3) with alpha = 1.8 (river basins)
+    formula_file: formulas/choudhury_1999.py
+    reference_pdf: reference/choudhury_1999.pdf
+    n_law_constants: 1    # alpha
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.1110, r2: 0.0420}
+  - id: wang_tang_2014
+    label: Wang & Tang 2014 — one-parameter Budyko Eq. (10) with epsilon = 0.55 (MOPEX)
+    formula_file: formulas/wang_tang_2014.py
+    reference_pdf: reference/wang_tang_2014.pdf
+    n_law_constants: 1    # epsilon
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.1099, r2: 0.0604}
+  - id: yang_2008
+    label: Yang et al. 2008 — analytically derived Budyko Eq. (25) with n = 2.0 (Figure 1, PDF p. 4)
+    formula_file: formulas/yang_2008.py
+    reference_pdf: reference/yang_2008.pdf
+    n_law_constants: 1    # n
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.1217, r2: -0.1518}
+
+# Candidate prior constants — the `priors` prompt slot. `_role` is audit-only
+# (stripped before the priors are shown). This task offers NO candidate: the
+# Budyko shape parameters (alpha, epsilon, n) are all empirical per-dataset fits
+# with no upstream physical anchor, so exposing any of them — or a near-by
+# estimate of the same quantity (e.g. Choudhury's field-scale alpha = 2.6) —
+# would leak the answer (FM C12 / FM-H1). The block is therefore distractors-only:
+# two genuine hydrology reference values that name no LAW/OTHER constant of this
+# task's baselines. The SR system must discover the shape parameter itself.
+priors:
+  - name: Budyko_asymptote_humid
+    value: 1.0
+    unit: ""
+    description: Theoretical upper asymptote of the Budyko curve in the energy-limited (humid) regime — ET/P approaches 1 as PET/P → ∞. This is a structural boundary condition common to ALL Budyko-framework formulas, not a fitted parameter.
+    source: Budyko (1974) Climate and Life; Milly (1994) Water Resources Research 30:2065-2077.
+    _role: distractor
+  - name: omega_Zhang_2001_global
+    value: 0.9
+    unit: ""
+    description: Zhang et al. (2001) plant-available water coefficient omega for mixed vegetation (forests + grasslands), a shape parameter in the Zhang-Dawes-Walker Budyko variant. Not used in any formula in this task's baseline bank.
+    source: "Zhang L et al. (2001) Wat. Resour. Res. 37:701-708, Table 1 — omega=0.9 for mixed (forest+grass) catchments."
+    _role: distractor
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:       1
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+# === Scoring ===
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "represents water-energy partitioning as a function of the climate aridity index"
+  - "predicted evaporative fraction stays within [0, 1]"
+  - "predicted evaporative fraction does not exceed pet_over_p"
+  - "predicted evaporative fraction is nondecreasing as pet_over_p increases with other inputs fixed"
+  - "predicted evaporative fraction is defined over the physically admissible positive aridity domain"
+
+best_baseline: 0.105706    # wang_tang_2014 — rmse (lower is better); regenerated 2026-05-30

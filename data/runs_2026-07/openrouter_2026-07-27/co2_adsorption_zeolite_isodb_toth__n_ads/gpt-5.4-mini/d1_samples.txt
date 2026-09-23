@@ -1,0 +1,80 @@
+import numpy as np
+
+def predict(X):
+    P = np.asarray(X)[:, 0]
+
+    # Standard single-site Langmuir isotherm form:
+    # n = n_m * bP / (1 + bP)
+    # Canonical generic constants (no fitted data provided):
+    n_m = 1.0   # mmol/g
+    b = 1.0     # 1/bar
+
+    return n_m * (b * P) / (1.0 + b * P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = np.asarray(X)[:, 0]
+    
+    # Langmuir isotherm:
+    # n = n_m * bP / (1 + bP)
+    # Here n_m (maximum capacity) and b (affinity constant) are left as generic constants
+    # since no fitted data were provided.
+    n_m = 1.0   # mmol/g
+    b = 1.0     # 1/bar
+    
+    return n_m * (b * P) / (1.0 + b * P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = np.asarray(X)[:, 0]
+    
+    # Langmuir isotherm: n = n_max * bP / (1 + bP)
+    # Using a generic closed-form form with canonical constants.
+    n_max = 1.0
+    b = 1.0
+    
+    return n_max * (b * P) / (1.0 + b * P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Langmuir isotherm for CO2 adsorption:
+        n = n_max * b * P / (1 + b * P)
+    where P is pressure in bar and n is mmol/g.
+    """
+    P = np.asarray(X)[:, 0]
+
+    # Canonical closed-form parameters (placeholders for a generic standard form)
+    n_max = 1.0  # mmol/g
+    b = 1.0      # 1/bar
+
+    n = n_max * b * P / (1.0 + b * P)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    CO2 adsorption isotherm: single-site Langmuir model.
+    n(P) = n_m * b * P / (1 + b * P)
+    where n is in mmol/g, P in bar.
+    """
+    P = np.asarray(X)[:, 0]
+
+    # Canonical generic Langmuir parameters (placeholder constants)
+    n_m = 1.0   # mmol/g
+    b = 1.0     # 1/bar
+
+    n_ads = n_m * (b * P) / (1.0 + b * P)
+    return n_ads

@@ -1,0 +1,187 @@
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_c = X[:, 1]
+    WS = X[:, 2]
+    AM = X[:, 3]
+
+    # Standard single-diode-inspired empirical form for module MPP power:
+    # P_mp ≈ G * [a0 + a1*G + a2*G^2 + a3*T_c + a4*T_c*G + a5*WS + a6*AM]
+    # Since no fitted coefficients were provided, use the canonical physics-based
+    # first-order approximation of module power:
+    #
+    # P_mp ≈ P_ref * (G / G_ref) * [1 + gamma_P * (T_c - T_ref)]
+    #
+    # Air mass and wind speed are not part of the most commonly cited closed form
+    # for direct Pmp estimation when module temperature is already measured.
+    G_ref = 1000.0      # W/m^2
+    T_ref = 25.0        # deg C
+    P_ref = 1.0         # normalized reference power (scale factor unavailable)
+    gamma_P = -0.004    # 1/deg C, representative crystalline-Si power temp coeff
+
+    P_mp = P_ref * (G / G_ref) * (1.0 + gamma_P * (T_c - T_ref))
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-module maximum-power-point DC power P_mp [W].
+
+    Canonical single-diode-style empirical form used for PV power scaling:
+        P_mp = G * P_ref * [1 + a_P * (T_mod - T_ref)] * f_AM(AM)
+
+    Since no fitted coefficients were provided, this implements a standard
+    physically motivated closed-form approximation with:
+      - linear irradiance scaling
+      - linear temperature coefficient
+      - no explicit wind-speed dependence in the closed form
+      - a simple air-mass spectral correction
+
+    Inputs
+    ------
+    X : ndarray, shape (n_samples, 4)
+        X[:, 0] = G_W_m2
+        X[:, 1] = T_module_C
+        X[:, 2] = WS_m_s
+        X[:, 3] = air_mass
+
+    Returns
+    -------
+    ndarray, shape (n_samples,)
+        Predicted P_mp [W]
+    """
+    X = np.asarray(X, dtype=float)
+
+    G = X[:, 0]
+    T_mod = X[:, 1]
+    AM = X[:, 3]
+
+    # Standard reference conditions
+    G_ref = 1000.0  # W/m^2
+    T_ref = 25.0    # degC
+
+    # Typical crystalline-silicon module power temperature coefficient
+    a_P = -0.0040   # 1/degC
+
+    # Simple spectral (air-mass) correction: weak power reduction at high AM
+    # Commonly used smooth approximation form.
+    c1 = 0.04
+
+    f_AM = 1.0 - c1 * np.log(np.maximum(AM, 1e-6))
+
+    P_mp = (G / G_ref) * (1.0 + a_P * (T_mod - T_ref)) * f_AM
+
+    return P_mp * G_ref
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    Tc = X[:, 1]
+    WS = X[:, 2]
+    AM = X[:, 3]
+
+    # Standard single-diode-inspired empirical DC power model:
+    # P_mp ≈ G * [a0 + a1*G + a2*ln(G) + a3*Tc + a4*Tc*ln(G)
+    #             + a5*AM + a6*ln(AM) + a7*WS + a8*WS^2]
+    #
+    # Note: This is the commonly used closed-form structure for module power
+    # as a function of irradiance, temperature, wind speed, and air mass.
+    #
+    # Coefficients are left as canonical placeholders because no dataset was provided.
+    a0 = 1.0
+    a1 = 0.0
+    a2 = 0.0
+    a3 = 0.0
+    a4 = 0.0
+    a5 = 0.0
+    a6 = 0.0
+    a7 = 0.0
+    a8 = 0.0
+
+    G_safe = np.maximum(G, 1e-6)
+    AM_safe = np.maximum(AM, 1e-6)
+
+    P_mp = G_safe * (
+        a0
+        + a1 * G_safe
+        + a2 * np.log(G_safe)
+        + a3 * Tc
+        + a4 * Tc * np.log(G_safe)
+        + a5 * AM_safe
+        + a6 * np.log(AM_safe)
+        + a7 * WS
+        + a8 * WS**2
+    )
+
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Faiman-style module temperature-augmented power model:
+    # P_mp = G * (eta_ref * (1 - beta_p * (T_module - T_ref))) * A_mod
+    #
+    # Since the task asks for a standard closed-form relationship and the
+    # inputs already include measured module temperature, wind speed, and air mass
+    # (the latter two are not required in the simplest canonical form), we use a
+    # common linear temperature coefficient form around STC.
+    #
+    # Parameters chosen to represent a typical crystalline-silicon module:
+    eta_ref = 0.18        # reference efficiency at STC
+    beta_p = 0.0040       # power temperature coefficient [1/°C]
+    T_ref = 25.0          # STC reference temperature [°C]
+    A_mod = 1.0           # absorbed into scaling; output is per-module DC power in W
+
+    G = X[:, 0]
+    T_module = X[:, 1]
+
+    return G * eta_ref * (1.0 - beta_p * (T_module - T_ref)) * A_mod
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-module maximum-power-point DC power, P_max_W (P_mp) [W].
+
+    Inputs
+    ------
+    X : np.ndarray, shape (n_samples, 4)
+        X[:, 0] = G_W_m2   : plane-of-array irradiance [W/m^2]
+        X[:, 1] = T_module_C: module temperature [deg C]
+        X[:, 2] = WS_m_s   : wind speed [m/s] (not used in this standard closed-form PV model)
+        X[:, 3] = air_mass : absolute air mass (not used in this standard closed-form PV model)
+
+    Returns
+    -------
+    np.ndarray, shape (n_samples,)
+        Predicted P_mp [W] per module.
+    """
+    G = X[:, 0]
+    T = X[:, 1]
+
+    # Standard single-diode-inspired empirical power model:
+    # P_mp = P_ref * (G / G_ref) * [1 + gamma_P * (T_cell - T_ref)]
+    # For per-module prediction, P_ref is the module STC power.
+    G_ref = 1000.0   # W/m^2
+    T_ref = 25.0     # deg C
+
+    # Typical crystalline-silicon module temperature coefficient of power
+    gamma_P = -0.0045  # 1/deg C
+
+    # If you know the module nameplate STC power, replace this with that value.
+    # A common default for legacy ~200 W-class modules is around 230 W.
+    P_ref = 230.0  # W
+
+    P_mp = P_ref * (G / G_ref) * (1.0 + gamma_P * (T - T_ref))
+    return P_mp

@@ -1,0 +1,112 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(partial alpha-decay half-life in seconds) from Q_alpha in MeV.
+    Uses the classic Geiger-Nuttall law (uranium series coefficients) as the
+    standard closed-form relationship.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        2-D array of shape (n, 1). X[:, 0] contains Q_alpha in MeV.
+
+    Returns
+    -------
+    np.ndarray
+        1-D array of predicted log10(T_1/2 / s).
+    """
+    # Geiger-Nuttall law constants for the uranium series
+    # log10(T_1/2 / s) = A + B / sqrt(Q_alpha)
+    A = -51.37
+    B = 139.0
+
+    Q = X[:, 0]  # Q_alpha in MeV
+    with np.errstate(divide='ignore', invalid='ignore'):
+        result = A + B / np.sqrt(Q)
+    return result
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the base-10 logarithm of the partial alpha-decay half-life in seconds
+    using the Viola-Seaborg formula with Dong & Ren (2005) coefficients.
+    This is the standard closed-form relationship used in nuclear physics (e.g., NUBASE2020).
+
+    Expected columns of X:
+        X[:, 0] = Q_alpha_MeV  — Experimental alpha-decay Q-value in MeV
+        X[:, 1] = Z            — Atomic number of the parent nucleus
+        X[:, 2] = A            — Mass number of the parent nucleus
+    """
+    Q = X[:, 0]
+    Z = X[:, 1]
+    A = X[:, 2]
+    N = A - Z
+
+    # Dong & Ren (2005) coefficients for the Viola-Seaborg formula
+    a = 1.65979
+    b = -8.5270
+    c = -0.19791
+    d = -33.9069
+
+    # Odd-even staggering correction
+    delta = np.zeros_like(Z)
+    odd_A = ((Z % 2 == 1) & (N % 2 == 0)) | ((Z % 2 == 0) & (N % 2 == 1))
+    odd_odd = (Z % 2 == 1) & (N % 2 == 1)
+    delta[odd_A] = 0.772
+    delta[odd_odd] = 1.066
+
+    log10_T = (a * Z + b) / np.sqrt(Q) + c * Z + d + delta
+    return log10_T
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(alpha-decay half-life in seconds) from Q_alpha in MeV.
+    Uses the Geiger-Nuttall law: log10(T1/2) = A / sqrt(Q) + B.
+    Coefficients are a commonly cited global approximation for heavy nuclei.
+    """
+    A = 148.0   # fitted constant (MeV^(1/2))
+    B = -53.5   # fitted constant (dimensionless)
+    Q = X[:, 0]  # Q_alpha in MeV
+    return A / np.sqrt(Q) + B
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for alpha-decay half-life:
+    Viola-Seaborg formula (1966).
+
+    log10(T1/2 / s) = (a * Z_d + b) / sqrt(Q_MeV) + c * Z_d + d
+
+    Inputs:
+        X : 2-D numpy array
+            X[:, 0] = Q_alpha_MeV (alpha-decay Q-value in MeV)
+            X[:, 1] = Z_d (atomic number of the daughter nucleus)
+    Returns:
+        1-D array of log10(half-life in seconds)
+    """
+    Q = X[:, 0]
+    Z = X[:, 1]
+
+    # Viola-Seaborg coefficients
+    a = 1.66175
+    b = -8.5166
+    c = -0.20228
+    d = -33.9069
+
+    log10_T = (a * Z + b) / np.sqrt(Q) + c * Z + d
+    return log10_T

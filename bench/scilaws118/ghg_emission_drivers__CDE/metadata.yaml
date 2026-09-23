@@ -1,0 +1,98 @@
+task_id: ghg_emission_drivers__CDE
+domain: environmental_science / climate_economics
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  This task concerns national annual carbon dioxide emissions across countries and years, studied within climate and environmental policy science.
+
+target:
+  name: CDE
+  symbol: "I_CO2"
+  unit: kg CO2
+  description: National annual CO2 emissions from fossil fuel combustion and industrial processes, excluding land-use change and forestry
+  range: [14000000.0, 10600000000000.0]
+
+inputs:
+  - name: GDP
+    symbol: "A"
+    unit: USD per capita (constant 2015 USD)
+    description: Gross domestic product per capita in constant 2015 US dollars
+    range: [166.71, 112418.0]
+  - name: TP
+    symbol: "P"
+    unit: persons
+    description: Total national population
+    range: [52597.0, 1379860000.0]
+  - name: AP
+    symbol: "AP"
+    unit: "%"
+    description: Share of population aged 15 to 64 years (working-age or active population)
+    range: [45.77, 85.25]
+  - name: DP
+    symbol: "DP"
+    unit: persons per km2
+    description: Population density as number of inhabitants per square kilometre of land area
+    range: [1.35, 6944.1]
+  - name: UR
+    symbol: "UR"
+    unit: "%"
+    description: Percentage of the total population living in urban areas
+    range: [5.27, 100.0]
+  - name: AT
+    symbol: "AT"
+    unit: "degrees C"
+    description: Annual mean surface air temperature averaged over the national territory
+    range: [-4.97, 29.78]
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block added for schema symmetry with GOLD.
+priors: []
+
+data_files:
+  train: data/train.csv   # GDP <= 20000 USD/cap (lower/middle-income regime)
+  test:  data/test.csv    # GDP > 20000 USD/cap (high-income OOD extrapolation)
+# Note: this task uses a $20,000 GDP hard threshold for train/test split. Sister task EC uses a 75th-percentile split instead — see audit/triages/ghg_emission_drivers__EC_REAUDIT_2026-05-25.md for the discussion.
+
+n_train: 3555
+n_test: 838
+
+# Single reference baseline. The york_2003 and vazquez_2022_bms baselines were
+# dropped in the 2026-05-29 audit: both were globally mis-scaled against the kg-CO2
+# panel (SMAPE = 2.0 on the train set as well as test — far worse than a constant
+# predictor, not OOD degradation), and the unit/centering/normalisation corrections
+# could not be grounded from the released materials. See VERDICT.md.
+references:
+  - id: vazquez_2022_stirpat
+    label: "Vazquez 2022 modified STIRPAT log-linear formula for log(CDE)"
+    formula_file: formulas/vazquez_2022_stirpat.py
+    reference_pdf: reference/vazquez_2022.pdf
+    n_law_constants: 7
+    n_other_constants: 1
+    n_local_params: 0
+    measured: {smape: 0.496415, r2: 0.897937}
+
+caps:
+  max_law_constants: 7
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: smape
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "accounts for increasing emissions with per-capita income"
+  - "accounts for increasing emissions with total population size"
+  - "accounts for population-density-related emissions efficiency"
+  - "accounts for the working-age population share effect on emissions"
+  - "accounts for urbanisation effects on emissions"
+  - "accounts for warmer-climate reductions in heating-related emissions"
+  - "predicted national CO2 emissions are non-negative"
+  - "predictions are well-defined for valid countries with subzero Celsius annual mean temperature"
+
+best_baseline: 0.496415    # vazquez_2022_stirpat — smape (lower is better); regenerated 2026-05-30

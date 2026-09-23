@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Dimensionless"
+  symbol: "n"
+  unit: ""
+  description: "Dimensionless"
+inputs:
+  - name: "Dimensionless"
+    symbol: "n_0"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"
+  - name: "Magnetic moment"
+    symbol: "mom"
+    unit: ""
+    description: "Magnetic moment"
+  - name: "Magnetic field"
+    symbol: "B"
+    unit: ""
+    description: "Magnetic field"

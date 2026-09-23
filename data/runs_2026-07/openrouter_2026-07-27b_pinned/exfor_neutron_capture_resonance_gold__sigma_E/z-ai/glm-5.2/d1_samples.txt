@@ -1,0 +1,69 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of the Au-197(n,gamma) inclusive capture cross section [barns]
+    for incident neutron energies E [eV] using the standard single-level
+    Breit-Wigner formula with an energy-dependent s-wave neutron width.
+    The 1/v behaviour at low energy arises naturally from Gamma_n(E) ∝ sqrt(E).
+    """
+    E = np.asarray(X[:, 0], dtype=float)
+    # Guard against E=0 to avoid division by zero
+    E = np.where(E <= 0, 1e-30, E)
+
+    # Resonance parameters for the 4.906 eV resonance of 197Au
+    E0      = 4.906      # eV
+    G_gamma = 0.124      # eV  (radiative width)
+    G_n0    = 0.0153     # eV  (neutron width at E0)
+    g       = 0.625      # statistical factor (J=2, I=3/2)
+
+    # Constant C = pi/k^2 expressed in barns*eV:
+    #   pi * hbar^2 / (2*m_n) = 6.509e5 barns*eV
+    C = 6.509e5
+
+    # s-wave neutron width scales as sqrt(E)
+    G_n = G_n0 * np.sqrt(E / E0)
+    G_total = G_n + G_gamma
+
+    # Single-level Breit-Wigner capture cross section
+    sigma = (C / E) * g * (G_n * G_gamma /
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10 of the Au-197(n,gamma) inclusive capture cross section in barns.
+    Model: 1/v thermal background + single Breit-Wigner resonance at 4.906 eV.
+    """
+    E = X[:, 0]
+    # Avoid division by zero for sub-thermal energies
+    E = np.where(E < 1e-10, 1e-10, E)
+    
+    # 1/v thermal background
+    # Thermal cross section is ~98.65 b at 0.0253 eV
+    sigma_thermal = 98.65 * np.sqrt(0.0253 / E)
+    
+    # Breit-Wigner resonance for the 4.9 eV peak
+    E_r = 4.906          # Resonance energy in eV
+    Gamma = 0.1236       # Total width in eV
+    Gamma2_4 = (Gamma**2) / 4.0
+    sigma_0 = 31500.0    # Peak cross section in barns at E_r
+    
+    # The neutron width scales as sqrt(E), giving the 1/sqrt(E) factor in the BW formula
+    sigma_res = sigma_0 * np.sqrt(E_r / E) * (Gamma2_4 / ((E - E_r)**2 + Gamma2_4))
+    
+    sigma = sigma_thermal + sigma_res
+    return np.log10(sigma)
+
+=====
+

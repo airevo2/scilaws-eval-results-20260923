@@ -1,0 +1,98 @@
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    # Standard von Bertalanffy growth function (VBGF) parameters
+    Linf = 400.0   # asymptotic total length (mm)
+    K = 0.2        # Brody growth coefficient (yr^-1)
+    t0 = -1.0      # theoretical age at zero length (yr)
+    Li = Linf * (1.0 - np.exp(-K * (age - t0)))
+    return Li
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts back-calculated total length at age using the standard 
+    von Bertalanffy growth function (VBGF).
+    """
+    age = X[:, 0]
+    
+    # Typical generic fish growth parameters
+    Linf = 450.0  # Asymptotic length (mm)
+    k = 0.15      # Growth coefficient (1/year)
+    t0 = -1.0     # Theoretical age at zero length (years)
+    
+    Li_sp_m = Linf * (1.0 - np.exp(-k * (age - t0)))
+    
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts back-calculated total length (mm) at age using the standard 
+    von Bertalanffy growth function (VBGF), which is the most commonly 
+    cited closed-form relationship for fish length at age.
+    """
+    Agei = X[:, 0]
+    
+    # Standard VBGF parameters (using representative constants)
+    Linf = 500.0  # Asymptotic length (mm)
+    k = 0.15      # Growth coefficient (1/year)
+    t0 = -1.0     # Theoretical age at zero length (years)
+    
+    Li_sp_m = Linf * (1.0 - np.exp(-k * (Agei - t0)))
+    
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts back-calculated total length at age using the standard 
+    von Bertalanffy Growth Function (VBGF).
+    
+    L_t = L_inf * (1 - exp(-K * (t - t_0)))
+    
+    where:
+    L_inf = asymptotic length (mm)
+    K = growth coefficient (year^-1)
+    t_0 = theoretical age at zero length (years)
+    t = age at increment i (years since hatching)
+    """
+    # Typical biological parameters for a generic fish species
+    L_inf = 450.0  
+    K = 0.2        
+    t_0 = -1.0     
+    
+    t = X[:, 0]
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (t - t_0)))
+    
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts back-calculated total length (mm) at age using the standard 
+    von Bertalanffy Growth Function (VBGF). 
+    """
+    Age = X[:, 0]
+    
+    # Standard VBGF parameters
+    Linf = 500.0  # Asymptotic length (mm)
+    K = 0.2       # Growth coefficient (1/year)
+    t0 = -1.0     # Theoretical age at zero length (years)
+    
+    Li_sp_m = Linf * (1.0 - np.exp(-K * (Age - t0)))
+    
+    return Li_sp_m

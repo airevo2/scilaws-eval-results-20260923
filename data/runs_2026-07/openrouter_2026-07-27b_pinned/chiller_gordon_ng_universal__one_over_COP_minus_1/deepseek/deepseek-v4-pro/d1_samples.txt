@@ -1,0 +1,159 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts 1/COP - 1 using the standard Gordon-Ng / reciprocal chiller thermodynamic model.
+    
+    Inputs:
+        X[:,0] = T_ei [K]   Evaporator (chilled-water) inlet temperature
+        X[:,1] = T_ci [K]   Condenser (cooling-water) inlet temperature
+        X[:,2] = Q_e  [kW]  Evaporator cooling load
+    
+    Returns:
+        one_over_COP_minus_1 [dimensionless] = 1/COP - 1
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+    
+    # Fitted model coefficients (Carnot ideal defaults shown; fit to data for real chillers)
+    a0 = -1.0     # dimensionless intercept
+    a1 =  1.0     # dimensionless, 1/COP_Carnot coefficient
+    a2 =  0.0     # kW·K, internal entropy production coefficient
+    a3 =  0.0     # kW, heat-leak / external loss coefficient
+    
+    dT = T_ci - T_ei  # temperature lift [K]
+    
+    # Standard closed-form: 1/COP - 1 = a0 + a1*(dT/T_ei) + a2*dT/(T_ei*Q_e) + a3/Q_e
+    one_over_COP_minus_1 = a0 + a1 * dT / T_ei + a2 * dT / (T_ei * Q_e) + a3 / Q_e
+    
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict 1/COP - 1 using the Gordon-Ng universal chiller model.
+    
+    Inputs:
+        X[:, 0] : T_ei - Evaporator inlet temperature [K]
+        X[:, 1] : T_ci - Condenser inlet temperature [K]
+        X[:, 2] : Q_e  - Evaporator cooling load [kW]
+    
+    Returns:
+        1/COP - 1 [dimensionless]
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+    
+    # Gordon-Ng model fitted coefficients (typical centrifugal chiller)
+    A = 30.0   # kW
+    B = 0.05   # kW/K
+    C = 0.04   # kW/K
+    
+    # Gordon-Ng universal model: 1/COP = -1 + T_ci/T_ei + (A + B*T_ci - C*T_ei)/Q_e
+    # Thus 1/COP - 1 = -2 + T_ci/T_ei + (A + B*T_ci - C*T_ei)/Q_e
+    one_over_COP_minus_1 = -2.0 + T_ci / T_ei + (A + B * T_ci - C * T_ei) / Q_e
+    
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict 1/COP - 1 using the ideal Carnot refrigeration cycle relationship.
+    This is the most fundamental closed-form thermodynamic model for a chiller,
+    using the inlet water temperatures as approximations for the reservoir temperatures.
+    
+    Carnot COP = T_e / (T_c - T_e)
+    => 1/COP = (T_c - T_e) / T_e = T_c/T_e - 1
+    => 1/COP - 1 = T_c/T_e - 2
+    
+    Inputs:
+    X[:, 0] = T_ei  [K]  Evaporator inlet temperature
+    X[:, 1] = T_ci  [K]  Condenser inlet temperature
+    X[:, 2] = Q_e   [kW] Evaporator cooling load (not used in this ideal model)
+    
+    Returns:
+    1-D array of 1/COP - 1 [dimensionless]
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    # Ideal Carnot relationship
+    return T_ci / T_ei - 2.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts 1/COP - 1 using the Gordon-Ng universal chiller model.
+    Input X is a 2-D numpy array with columns:
+        X[:, 0] = T_ei  [K]   Evaporator inlet temperature
+        X[:, 1] = T_ci  [K]   Condenser inlet temperature
+        X[:, 2] = Q_e   [kW]  Evaporator cooling load
+    Returns:
+        1-D array of predicted 1/COP - 1 [dimensionless]
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e  = X[:, 2]
+
+    # Model coefficients (placeholders; to be fitted to data)
+    a0 = 1.0   # [kW]
+    a1 = 0.0   # [kW/K]
+    a2 = 0.0   # [kW/K]  (extended form, often zero)
+
+    # Gordon-Ng universal chiller model:
+    # 1/COP = -1 + T_ci / T_ei + (a0 + a1 * T_ci + a2 * T_ei) / Q_e
+    # Commonly reduced to: 1/COP = -1 + T_ci / T_ei + (a0 + a1 * T_ci) / Q_e
+    # Then 1/COP - 1 = -2 + T_ci / T_ei + (a0 + a1 * T_ci) / Q_e
+    one_over_COP_minus_1 = -2.0 + T_ci / T_ei + (a0 + a1 * T_ci + a2 * T_ei) / Q_e
+
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict 1/COP - 1 using the standard Gordon-Ng universal chiller model.
+    
+    Inputs:
+        X : 2-D numpy array
+            X[:, 0] = T_ei  [K]  Evaporator inlet temperature
+            X[:, 1] = T_ci  [K]  Condenser inlet temperature
+            X[:, 2] = Q_e   [kW] Evaporator cooling load
+    
+    Returns:
+        1-D array of 1/COP - 1 [dimensionless]
+    
+    The Gordon-Ng model (1995, ASHRAE Transactions) is the most widely cited
+    physics-based closed-form relationship for chiller performance:
+        1/COP = -1 + (T_ci / T_ei) + (A0 + A1*T_ci - A2*T_ei) / Q_e
+    Hence:
+        1/COP - 1 = -2 + (T_ci / T_ei) + (A0 + A1*T_ci - A2*T_ei) / Q_e
+    
+    Coefficients A0, A1, A2 are fitted constants; here they are given as named
+    constants (placeholder values) to be determined from data.
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e  = X[:, 2]
+
+    # Gordon-Ng model coefficients (named constants — fit to actual data)
+    A0 = 0.0   # [kW]
+    A1 = 0.0   # [kW/K]
+    A2 = 0.0   # [kW/K]
+
+    # Standard closed-form for 1/COP - 1
+    one_over_COP_minus_1 = -2.0 + (T_ci / T_ei) + (A0 + A1 * T_ci - A2 * T_ei) / Q_e
+
+    return one_over_COP_minus_1

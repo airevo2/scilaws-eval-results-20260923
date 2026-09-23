@@ -1,0 +1,154 @@
+import numpy as np
+
+def predict(X):
+    E_e = X[:, 0]
+    
+    # Lotz empirical formula for electron-impact single-ionization cross-section
+    # sigma = a * q * ln(E_e / I) / (E_e * I)
+    # Defaulting to Hydrogen atom parameters as the fundamental reference target.
+    a = 450.0  # Lotz constant 4.5e-14 cm^2 eV^2 converted to 1e-16 cm^2 units
+    I = 13.6   # Ionization potential in eV
+    q = 1.0    # Number of electrons in the subshell
+    
+    sigma = np.zeros_like(E_e, dtype=float)
+    mask = E_e > I
+    sigma[mask] = a * q * np.log(E_e[mask] / I) / (E_e[mask] * I)
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+    
+    # Binary-Encounter-Bethe (BEB) model parameters
+    # Defaulting to typical valence/total parameters for a common target (e.g., N2)
+    # as specific target identifiers are not provided in the input features.
+    B = 15.58        # Ionization threshold energy (eV)
+    U = 35.0         # Average orbital kinetic energy (eV)
+    N = 14.0         # Total number of electrons
+    R = 13.60569     # Rydberg energy (eV)
+    a0 = 0.529177e-8 # Bohr radius (cm)
+    
+    # Pre-factor S (cm^2)
+    S = 4.0 * np.pi * (a0**2) * N * (R / B)**2
+    
+    # Reduced variables
+    t = np.maximum(E / B, 1.0)
+    u = U / B
+    
+    sigma = np.zeros_like(E, dtype=float)
+    mask = E > B
+    t_m = t[mask]
+    
+    # BEB cross-section formula
+    sigma[mask] = (S / (t_m + (u + 1.0) / 2.0)) * (
+        (np.log(t_m) / 2.0) * (1.0 - 1.0 / t_m**2) +
+        1.0 - 1.0 / t_m -
+        np.log(t_m) / (t_m + 1.0)
+    )
+    
+    # Convert from cm^2 to 1e-16 cm^2
+    return sigma * 1e16
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E_e = X[:, 0]
+    
+    # Lotz empirical formula parameters (generic representative values)
+    I = 13.6   # Ionization threshold energy (eV)
+    a = 450.0  # Scaling factor (in units of 1e-16 cm^2 * eV^2)
+    b = 0.6    # Empirical shape parameter
+    c = 0.5    # Empirical shape parameter
+    
+    # Avoid log(0) or negative arguments below threshold
+    E_safe = np.maximum(E_e, I + 1e-9)
+    
+    # Lotz formula for single-ionization cross-section
+    term1 = np.log(E_safe / I) / (E_safe * I)
+    term2 = 1.0 - b * np.exp(-c * (E_safe / I - 1.0))
+    
+    sigma = a * term1 * term2
+    
+    # Cross-section is physically zero below the ionization threshold
+    sigma = np.where(E_e > I, sigma, 0.0)
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the total electron-impact single-ionization cross-section 
+    using the Binary-Encounter-Bethe (BEB) model, the standard closed-form 
+    relationship for atoms and molecules.
+    
+    Parameters used here are representative of a typical target (e.g., Argon).
+    """
+    E = X[:, 0]
+    
+    # Named constants / Target parameters (e.g., Argon 3p shell)
+    I = 15.76   # Ionization energy (eV)
+    U = 15.76   # Average orbital kinetic energy (eV)
+    N = 8.0     # Number of electrons in the ionizing shell
+    R = 13.6057 # Rydberg energy (eV)
+    a0 = 0.529177e-8 # Bohr radius (cm)
+    
+    # Scaling factor S converted to units of 10^-16 cm^2
+    S = 4 * np.pi * (a0**2) * N * (R / I)**2 * 1e16 
+    
+    t = E / I
+    u = U / I
+    
+    sigma = np.zeros_like(E, dtype=float)
+    mask = t > 1.0
+    tm = t[mask]
+    
+    # BEB formula terms
+    term1 = (np.log(tm) / 2.0) * (1.0 - 1.0 / tm**2)
+    term2 = 1.0 - 1.0 / tm
+    term3 = np.log(tm) / (tm + 1.0)
+    
+    sigma[mask] = (S / (tm + (u + 1.0) / 2.0)) * (term1 + term2 - term3)
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E_e = X[:, 0]
+    
+    # Binary-Encounter-Bethe (BEB) model parameters
+    # Using representative values for a typical valence shell (e.g., N2 or H2O)
+    B = 15.0      # Ionization energy (eV)
+    U = 15.0      # Average orbital kinetic energy (eV)
+    N = 10.0      # Effective number of electrons
+    
+    R = 13.6057   # Rydberg energy (eV)
+    # 4 * pi * a0^2 in units of 1e-16 cm^2 is approximately 3.516
+    S = 3.516 * N * (R / B)**2 
+    
+    t = E_e / B
+    u = U / B
+    
+    sigma = np.zeros_like(E_e, dtype=float)
+    mask = t > 1.0
+    t_m = t[mask]
+    
+    # BEB cross-section formula
+    term1 = (np.log(t_m) / 2.0) * (1.0 - 1.0 / t_m**2)
+    term2 = 1.0 - 1.0 / t_m
+    term3 = -np.log(t_m) / (t_m + 1.0)
+    
+    sigma[mask] = (S / (t_m + (u + 1.0) / 2.0)) * (term1 + term2 + term3)
+    
+    return sigma

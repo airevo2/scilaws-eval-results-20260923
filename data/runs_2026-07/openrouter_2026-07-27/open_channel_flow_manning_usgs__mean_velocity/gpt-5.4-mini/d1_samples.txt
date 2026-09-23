@@ -1,0 +1,63 @@
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning's equation with US customary/metric-consistent form using hydraulic radius and slope
+    # V = (1/n) * R^(2/3) * S^(1/2)
+    # Since no roughness coefficient n is provided, the standard closed-form relationship
+    # cannot be fully specified from R and S alone. A common canonical resistance-free
+    # approximation for mean velocity in open-channel flow is the Chézy form:
+    # V = C * sqrt(R * S)
+    #
+    # Using a generic coefficient C = 1.0 because no calibration data are given.
+    return np.sqrt(R * S)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    return (1.0 / 0.013) * (R ** (2.0 / 3.0)) * (S ** 0.5)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning-type open-channel velocity relationship:
+    # V = (1/n) * R^(2/3) * S^(1/2)
+    # Using a commonly cited representative roughness value for natural streams.
+    n = 0.035
+    V = (1.0 / n) * np.power(R, 2.0 / 3.0) * np.sqrt(S)
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    return np.sqrt(R * S)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    S = X[:, 1]
+    # Manning/Chézy-style uniform-flow velocity relation:
+    # V = (1/n) * R^(2/3) * S^(1/2)
+    # Since no roughness coefficient n is provided, the standard closed-form
+    # hydraulic relationship cannot be uniquely evaluated from R and S alone.
+    # Here we return the friction-slope/gravity driven proportional form,
+    # with the canonical coefficient omitted.
+    return np.sqrt(R * S)

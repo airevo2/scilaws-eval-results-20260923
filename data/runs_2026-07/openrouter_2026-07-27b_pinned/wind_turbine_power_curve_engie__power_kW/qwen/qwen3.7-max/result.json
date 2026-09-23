@@ -1,0 +1,26 @@
+{
+  "task": "wind_turbine_power_curve_engie__power_kW",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeI",
+  "primary": "materials_and_energy ",
+  "formulas": [
+    {
+      "formula": "carrillo_2013_cubic",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "lydia_2014_4pl",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

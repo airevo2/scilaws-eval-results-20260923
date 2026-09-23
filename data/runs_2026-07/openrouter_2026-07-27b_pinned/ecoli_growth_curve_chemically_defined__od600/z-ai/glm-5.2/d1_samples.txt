@@ -1,0 +1,102 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Modified Gompertz model for bacterial growth (closed-form)
+    # OD(t) = A + C * exp(-exp(-B * (t - M)))
+    A = 0.0      # Asymptotic minimum OD (background-subtracted)
+    C = 1.1      # Asymptotic maximum OD (carrying capacity)
+    B = 0.6      # Maximum relative growth rate (1/h)
+    M = 5.5      # Time at inflection point (h)
+    
+    od600 = A + C * np.exp(-np.exp(-B * (t - M)))
+    return od600
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts OD600(t) using the modified Gompertz growth model, 
+    commonly cited in predictive microbiology.
+    """
+    t = X[:, 0]
+    
+    # Typical growth parameters for E. coli K-12 BW25113 in a 96-well plate
+    A = 0.65       # Asymptotic maximum OD600 (carrying capacity)
+    mu_max = 1.2   # Maximum specific growth rate (OD600 / hour)
+    lag = 1.5      # Lag time (hours)
+    e = np.exp(1)  # Euler's number
+    
+    # Modified Gompertz equation
+    od600 = A * np.exp(-np.exp((mu_max * e / A) * (lag - t) + 1))
+    
+    return od600
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts OD600(t) using the Modified Gompertz model, the most commonly 
+    cited standard closed-form relationship in predictive microbiology for 
+    fitting microbial growth curves.
+    """
+    t = X[:, 0]
+    
+    # Representative fitted coefficients for E. coli K-12 BW25113 
+    # in a 96-well microplate under typical rich media conditions.
+    A = 1.2       # Asymptotic maximum OD600 (carrying capacity)
+    mu_max = 1.5  # Maximum absolute growth rate (OD600 / h)
+    lag = 1.5     # Lag time (hours)
+    
+    # Modified Gompertz equation:
+    # OD(t) = A * exp(-exp((mu_max * e / A) * (lag - t) + 1))
+    od600 = A * np.exp(-np.exp((mu_max * np.e / A) * (lag - t) + 1.0))
+    
+    return od600
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts OD600(t) using the modified Gompertz model, which is the 
+    most commonly cited standard closed-form relationship in predictive 
+    microbiology for bacterial growth curves.
+    """
+    t = X[:, 0]
+    
+    # Typical coefficients for E. coli K-12 BW25113 in a 96-well microplate
+    OD0 = 0.05      # Initial OD600 (inoculum density)
+    ODmax = 1.0     # Maximum OD600 (carrying capacity)
+    mu = 1.5        # Maximum specific growth rate (h^-1)
+    lag = 1.0       # Lag phase duration (h)
+    
+    # Modified Gompertz equation
+    od600 = OD0 + (ODmax - OD0) * np.exp(-np.exp(-mu * (t - lag)))
+    
+    return od600
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    
+    # Parameters for the Modified Gompertz model, the most commonly cited 
+    # closed-form relationship in predictive microbiology (e.g., Zwietering et al., 1990).
+    # Values reflect a typical E. coli K-12 BW25113 growth curve in rich media at 37°C.
+    A = 0.02   # Lower asymptote (initial OD600, background-subtracted)
+    C = 1.18   # Asymptotic increase (OD_max - OD_min)
+    B = 0.8    # Relative maximum growth rate at inflection point (1/h)
+    M = 6.0    # Time at inflection point (h)
+    
+    # Modified Gompertz equation
+    OD600 = A + C * np.exp(-np.exp(-B * (t - M)))
+    
+    return OD600

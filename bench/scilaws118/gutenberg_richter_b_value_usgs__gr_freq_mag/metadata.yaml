@@ -1,0 +1,109 @@
+task_id: gutenberg_richter_b_value_usgs__gr_freq_mag
+domain: earth_science / seismology
+license: CC0-1.0
+
+# Type I — single globally-aggregated frequency-magnitude table; one row per
+# magnitude bin; no cluster structure; a and b are per-catalog fit parameters.
+type: typeI
+has_group_id: false
+
+context: >-
+  In seismology, an earthquake catalog records the rate of events in a region as a function of magnitude threshold, a key input to seismic hazard analysis.
+
+target:
+  name: log10_N
+  symbol: "log₁₀N"
+  unit: ""
+  description: Log base-10 of the cumulative annual earthquake rate for events with moment magnitude at or above the threshold.
+  range: [-1.35, 2.43]
+
+inputs:
+  - name: M_threshold
+    symbol: "M"
+    unit: ""
+    description: Moment-magnitude threshold — minimum Mw for which log10_N is the cumulative annual event rate.
+    range: [5.6, 9.1]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv   # M_threshold < 7.5 — well-sampled body of GR distribution
+  test:  data/test.csv    # M_threshold >= 7.5 — large-event tail (OOD extrapolation)
+
+n_train: 19
+n_test:  17
+
+# Audit note: small volume (36 total rows) is physically justified — the
+# GR law has only 2 free parameters and one row per 0.1-mag bin is the
+# natural resolution of a binned cumulative frequency table. The raw upstream
+# catalog contains 17,300 events; the small aggregated count reflects the data
+# model, not a data shortage. Six rows in the high-magnitude tail share
+# identical log10_N values (M 8.5/8.6, 8.7/8.8, 8.9/9.0/9.1) because no
+# new Mw events fell in those bins over 44 years (genuine data, not mock).
+
+# Audit history:
+#   DEC-001 2026-05-25: replaced frohlich_1993 baseline with hanks_kanamori_1979 (frohlich
+#     was C7a algebraic duplicate of aki_1965); fixed C2 transcription error b=2/3 → b=0.75
+#     (β vs b_GR distinction, see AUTONOMOUS_FIX_LOG.md).
+#   2026-05-28: removed b_global_cmt=0.90 prior — same physical quantity as
+#     hanks_kanamori_1979 LAW b=0.75 (both are G-R slope b; empirical vs theoretical point
+#     estimates), FM-H1 semantic leak. log10_e=0.4343 retained as candidate (math constant
+#     in Aki MLE derivation, different physical quantity from b/m_t).
+priors:
+  - name: log10_e
+    value: 0.4343
+    unit: ""
+    description: log10(e) — the base-10 logarithm of Euler's number; appears in the MLE b estimator (Aki 1965 p. 1-2; Page 1968 Eq. 3 p. 12).
+    source: Aki (1965) MLE derivation, PDF p. 1-2; Page (1968) Eq. 3, PDF p. 12.
+    _role: candidate
+
+# Reference-baseline bank
+references:
+  - id: aki_1965
+    label: Aki (1965) — GR law log10 N = a - b*M (a, b are the defining LAW coefficients)
+    formula_file: formulas/aki_1965.py
+    reference_pdf: reference/aki_1965.pdf
+    n_law_constants:   2   # a, b — G-R defining coefficients (OLS on train)
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.2755
+      r2: 0.8156
+  - id: hanks_kanamori_1979
+    label: Hanks & Kanamori (1979) + Kagan (2010) — G-R slope b = 0.75 (b_GR = 1.5*β, β = 0.5) + intercept a (both LAW)
+    formula_file: formulas/hanks_kanamori_1979.py
+    reference_pdf: reference/hanks_kanamori_1979.pdf
+    n_law_constants:   2   # b = 0.75 (Kagan theoretical) + a (intercept, fit under frozen b)
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.7594
+      r2: -0.4012   # §9.6 / §9.14: intentional weakest rung — frozen theoretical b=0.75 (Kagan 2010 β=0.5 prediction) under-predicts on the empirical M_w≥7.5 tail where the catalog's free-fit b≈1.02. Bank passes overall via kagan_2010 (R²=0.8158). Justification in formulas/hanks_kanamori_1979.py docstring + AUTONOMOUS_FIX_LOG.md.
+  - id: kagan_2010
+    label: Kagan (2010) — GR law log10 N(m) = a_t - b*(m - m_t); a_t, b LAW; m_t = 5.6 given threshold (OTHER)
+    formula_file: formulas/kagan_2010.py
+    reference_pdf: reference/kagan_2010.pdf
+    n_law_constants:   2   # a_t, b — Eq. 2 defining coefficients (PDF p. 8 "a_t and b are parameters")
+    n_other_constants: 1   # m_t = 5.6 — given completeness threshold (the pivot the form is centred on)
+    n_local_params:    0
+    measured:
+      rmse: 0.2754
+      r2: 0.8158
+
+caps:
+  max_law_constants:        2
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "applies a constant log-linear decay slope (the b-value) to the magnitude threshold, so the log cumulative rate falls off linearly with magnitude"
+  - "couples the magnitude-domain falloff slope to the power-law (Pareto) exponent of the underlying seismic-moment distribution via the moment-magnitude scale, e.g. b = (3/2)beta"
+  - "has a strictly positive falloff (decreasing) slope, so larger earthquakes are always rarer than smaller ones (b > 0), and the log cumulative rate is therefore monotonically non-increasing in the magnitude threshold"
+
+best_baseline: 0.275353    # kagan_2010 — rmse (lower is better); regenerated 2026-05-30

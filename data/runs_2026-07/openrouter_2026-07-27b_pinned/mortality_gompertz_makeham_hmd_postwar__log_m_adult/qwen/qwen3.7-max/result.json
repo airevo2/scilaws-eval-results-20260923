@@ -1,0 +1,44 @@
+{
+  "task": "mortality_gompertz_makeham_hmd_postwar__log_m_adult",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "gompertz_age",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "gompertz_age_year",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "gompertz_age_year_interaction",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "gompertz_makeham",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Angular momentum"
+  symbol: "L"
+  unit: ""
+  description: "Angular momentum"
+inputs:
+  - name: "Mass"
+    symbol: "m"
+    unit: ""
+    description: "Mass"
+  - name: "Length"
+    symbol: "r"
+    unit: ""
+    description: "Length"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Dimensionless"
+    symbol: "theta"
+    unit: ""
+    description: "Dimensionless"

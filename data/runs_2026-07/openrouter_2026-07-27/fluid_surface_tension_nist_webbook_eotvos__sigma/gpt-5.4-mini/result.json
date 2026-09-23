@@ -1,0 +1,17 @@
+{
+  "task": "fluid_surface_tension_nist_webbook_eotvos__sigma",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "materials_and_energy ",
+  "formulas": [
+    {
+      "formula": "kaptay_2024",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

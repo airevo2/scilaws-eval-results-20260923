@@ -1,0 +1,105 @@
+import numpy as np
+
+def predict(X):
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+    
+    # Standard Gordon-Ng universal chiller model basis functions
+    # These terms capture the Carnot limit and heat exchanger irreversibilities
+    term1 = T_ci / T_ei
+    term2 = T_ci / Q_e
+    term3 = T_ei / Q_e
+    
+    # Fitted coefficients (placeholders representing the linear combination for 1/COP - 1)
+    a0 = 0.0
+    a1 = 1.0
+    a2 = 0.0
+    a3 = 0.0
+    
+    one_over_COP_minus_1 = a0 + a1 * term1 + a2 * term2 + a3 * term3
+    
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+    
+    # Gordon-Ng universal chiller model
+    # The base term (T_ci / T_ei - 1) represents the inverse Carnot COP.
+    # The remaining terms account for internal and external irreversibilities (losses).
+    
+    a1 = 0.015  # Coefficient for condenser temperature loss term
+    a2 = -0.005 # Coefficient for evaporator temperature loss term
+    a3 = 0.010  # Coefficient for temperature difference loss term
+    
+    inv_COP_minus_1 = (T_ci / T_ei - 1.0) + \
+                      a1 * (T_ci / Q_e) + \
+                      a2 * (T_ei / Q_e) + \
+                      a3 * ((T_ci - T_ei) / (T_ei * Q_e))
+                      
+    return inv_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+    
+    # Gordon-Ng universal chiller model functional form
+    # Coefficients are placeholders as no data was provided for fitting
+    a0 = 0.0
+    a1 = 1.0
+    a2 = 0.0
+    
+    one_over_COP_minus_1 = a0 + a1 * (T_ci / T_ei) + a2 * (Q_e / T_ei)
+    
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e  = X[:, 2]
+
+    # Gordon-Ng universal chiller model
+    # 1/COP - 1 = a0 + a1*(T_ci/T_ei) + a2*((T_ci - T_ei)/Q_e) + a3/Q_e
+    a0 = -2.93
+    a1 =  2.0
+    a2 =  0.48
+    a3 =  4.5
+
+    return a0 + a1 * (T_ci / T_ei) + a2 * ((T_ci - T_ei) / Q_e) + a3 / Q_e
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T_ei = X[:, 0]  # Evaporator (chilled-water) inlet temperature [K]
+    T_ci = X[:, 1]  # Condenser (cooling-water) inlet temperature [K]
+    Q_e  = X[:, 2]  # Evaporator cooling load [kW]
+
+    # Gordon-Ng universal chiller model
+    # 1/COP = a1*(T_ci/T_ei) + a2*(Q_e/T_ei) + a3*((T_ci - T_ei)/Q_e)
+    # Term 1: Carnot-like thermodynamic limit (dimensionless)
+    # Term 2: Heat-exchanger irreversibility losses (proportional to load)
+    # Term 3: Compressor mechanical/thermal losses (inversely proportional to load)
+    a1 = 0.1     # dimensionless
+    a2 = 0.05    # [K/kW]
+    a3 = 1.0     # [kW/K]
+
+    inv_COP = a1 * (T_ci / T_ei) + a2 * (Q_e / T_ei) + a3 * ((T_ci - T_ei) / Q_e)
+
+    return inv_COP - 1.0

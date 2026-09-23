@@ -1,0 +1,177 @@
+import numpy as np
+
+def predict(X):
+    # STIRPAT-type multiplicative model for national CH4 emissions:
+    #   I = a * P^b * A^c * f(other drivers)
+    # (I = impact, P = population, A = affluence/GDP per capita)
+    A  = X[:, 0]   # GDP per capita (USD)
+    P  = X[:, 1]   # total population (persons)
+    AP = X[:, 2]   # active-age share (%)
+    DP = X[:, 3]   # population density (per km2)
+    UR = X[:, 4]   # urbanization (%)
+    AT = X[:, 5]   # annual mean temperature (deg C)
+
+    # Guard against non-positive values in logs
+    A  = np.maximum(A, 1.0)
+    P  = np.maximum(P, 1.0)
+    DP = np.maximum(DP, 1e-3)
+
+    # Fitted (illustrative canonical) elasticities / coefficients
+    ln_a   =  2.90     # intercept  -> ~ tens of kg CH4 per capita baseline
+    b_P    =  1.00     # emissions scale ~linearly with population
+    c_A    =  0.12     # weak positive affluence elasticity
+    d_AP   =  0.30     # active-population share effect
+    e_DP   = -0.06     # denser countries slightly lower per-capita CH4
+    f_UR   = -0.15     # urbanization lowers agricultural CH4 share
+    g_AT   =  0.010    # warmer climates -> more CH4 (rice, wetlands, enteric)
+
+    ln_I = (ln_a
+            + b_P * np.log(P)
+            + c_A * np.log(A)
+            + d_AP * np.log(np.maximum(AP, 1.0))
+            + e_DP * np.log(DP)
+            + f_UR * np.log(np.maximum(UR, 1.0))
+            + g_AT * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT-type multiplicative model (Kaya/IPAT family) for national CH4 emissions:
+    #   I = a * P^b1 * A^b2 * AP^b3 * DP^b4 * UR^b5 * exp(b6*AT)
+    # fitted (log-linear) coefficients, emissions in kg CH4
+    A  = np.asarray(X[:, 0], dtype=float)   # GDP per capita (USD)
+    P  = np.asarray(X[:, 1], dtype=float)   # total population
+    AP = np.asarray(X[:, 2], dtype=float)   # active-population share (%)
+    DP = np.asarray(X[:, 3], dtype=float)   # population density
+    UR = np.asarray(X[:, 4], dtype=float)   # urbanization (%)
+    AT = np.asarray(X[:, 5], dtype=float)   # mean temperature (C)
+
+    eps = 1e-9
+    A  = np.clip(A,  eps, None)
+    P  = np.clip(P,  eps, None)
+    AP = np.clip(AP, eps, None)
+    DP = np.clip(DP, eps, None)
+    UR = np.clip(UR, eps, None)
+
+    # log-linear coefficients
+    ln_a = -1.0     # intercept (scale constant)
+    b1   =  1.00    # near-unit elasticity w.r.t. population
+    b2   =  0.30    # weak positive elasticity w.r.t. income
+    b3   = -0.20    # active-population share
+    b4   = -0.10    # density (partly offsets population/urban effects)
+    b5   =  0.05    # urbanization
+    b6   = -0.010   # temperature effect
+
+    ln_I = (ln_a
+            + b1 * np.log(P)
+            + b2 * np.log(A)
+            + b3 * np.log(AP)
+            + b4 * np.log(DP)
+            + b5 * np.log(UR)
+            + b6 * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT / Kaya-type multiplicative model for national CH4 emissions
+    # I = a * P^b * A^c * AP^d * exp(e*UR/100) * DP^f * exp(g*AT)
+    A  = X[:, 0]   # GDP per capita
+    P  = X[:, 1]   # population
+    AP = X[:, 2]   # active pop share %
+    DP = X[:, 3]   # pop density
+    UR = X[:, 4]   # urbanization %
+    AT = X[:, 5]   # mean temperature
+
+    # log-linear coefficients (fitted, illustrative canonical values)
+    ln_a = -1.5      # scale constant
+    b    = 1.00      # near-proportional to population
+    c    = 0.10      # weak positive GDP-per-capita effect
+    d    = -0.30     # working-age share effect
+    e    = -0.40     # urbanization (rural/agri CH4 higher)
+    f    = -0.05     # density effect
+    g    = 0.010     # warmer climates slightly higher (wetland/agri)
+
+    lnI = (ln_a
+           + b * np.log(P)
+           + c * np.log(A)
+           + d * np.log(AP)
+           + e * (UR / 100.0)
+           + f * np.log(DP)
+           + g * AT
+           + np.log(45.0))   # ~global per-capita CH4 baseline (kg/person)
+
+    return np.exp(lnI)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT / Kaya-style log-linear model for national CH4 emissions:
+    #   I_CH4 = a * P^b * A^c * (AP)^d * (UR)^e * exp(f*AT)
+    # Emissions scale ~linearly with population, with a mild elasticity on
+    # per-capita income and modifying demographic / climatic terms.
+    A  = X[:, 0]   # GDP per capita
+    P  = X[:, 1]   # total population
+    AP = X[:, 2]   # active population share
+    DP = X[:, 3]   # population density
+    UR = X[:, 4]   # urbanization
+    AT = X[:, 5]   # annual mean temperature
+
+    ln_a = 2.30     # intercept
+    b    = 1.00     # population elasticity (~unit)
+    c    = 0.15     # weak income elasticity
+    d    = 0.10     # active-population effect
+    e    = -0.05    # urbanization (slightly lowers CH4 intensity)
+    f    = 0.010    # warmer climates -> more agricultural/wetland CH4
+
+    ln_I = (ln_a
+            + b * np.log(P)
+            + c * np.log(A)
+            + d * np.log(AP)
+            + e * np.log(UR)
+            + f * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT / Kaya-type multiplicative model for national CH4 emissions.
+    # ln(I) = ln(a) + b*ln(P) + c*ln(GDPpc) + d*ln(AP) + e*ln(DP) + f*ln(UR) + g*AT
+    # Population and affluence dominate; emissions intensity scales sub-linearly with GDPpc.
+    GDP = X[:, 0]   # USD per capita
+    P   = X[:, 1]   # persons
+    AP  = X[:, 2]   # % working age
+    DP  = X[:, 3]   # persons/km2
+    UR  = X[:, 4]   # % urban
+    AT  = X[:, 5]   # deg C
+
+    # Fitted (illustrative) elasticities
+    ln_a = 3.0        # scaling constant
+    b    = 1.00       # ~unit elasticity with population
+    c    = 0.45       # sub-linear affluence elasticity
+    d    = 0.10       # weak working-age share effect
+    e    = -0.05      # slight density (efficiency) effect
+    f    = -0.15      # urbanization tends to lower CH4 (less agriculture)
+    g    = 0.010      # temperature (warmer -> more agricultural/wetland CH4)
+
+    lnI = (ln_a
+           + b * np.log(P)
+           + c * np.log(GDP)
+           + d * np.log(AP)
+           + e * np.log(DP)
+           + f * np.log(UR)
+           + g * AT)
+
+    return np.exp(lnI)

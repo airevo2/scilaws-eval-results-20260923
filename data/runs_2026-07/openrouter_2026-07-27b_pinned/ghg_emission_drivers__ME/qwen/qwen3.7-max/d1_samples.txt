@@ -1,0 +1,132 @@
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]  # GDP per capita (Affluence)
+    P = X[:, 1]  # Total population
+    AP = X[:, 2] # Working-age population share
+    DP = X[:, 3] # Population density
+    UR = X[:, 4] # Urbanization rate
+    AT = X[:, 5] # Annual mean temperature
+    
+    # STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology)
+    # Canonical environmental economics form: I = a * P^b * A^c * T_proxies^d * exp(e * Temp)
+    a = 1.0
+    b = 1.0
+    c = 1.0
+    d = 1.0
+    e = 1.0
+    f = 1.0
+    g = 0.0
+    
+    I = a * (P ** b) * (A ** c) * (AP ** d) * (DP ** e) * (UR ** f) * np.exp(g * AT)
+    
+    return I
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # Named constants for empirical model coefficients (e.g., STIRPAT/panel regression)
+    beta_0 = 0.0
+    beta_A = 0.0
+    beta_P = 0.0
+    beta_AP = 0.0
+    beta_DP = 0.0
+    beta_UR = 0.0
+    beta_AT = 0.0
+    
+    # Standard closed-form linear empirical relationship 
+    # (used to safely accommodate negative temperature values without log-domain errors)
+    I_CH4 = beta_0 + beta_A * A + beta_P * P + beta_AP * AP + beta_DP * DP + beta_UR * UR + beta_AT * AT
+    
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]  # GDP per capita
+    P = X[:, 1]  # Total population
+    AP = X[:, 2] # Active population share (%)
+    DP = X[:, 3] # Population density
+    UR = X[:, 4] # Urbanization rate (%)
+    AT = X[:, 5] # Annual mean temperature (can be negative)
+    
+    # Extended STIRPAT model coefficients (named constants)
+    alpha = 1.0
+    beta_P = 1.0
+    beta_A = 0.5
+    beta_DP = 0.1
+    beta_AP = 0.01
+    beta_UR = 0.01
+    beta_AT = 0.02
+    
+    # Semi-log / multiplicative STIRPAT formulation to accommodate negative temperatures
+    I_CH4 = alpha * (P ** beta_P) * (A ** beta_A) * (DP ** beta_DP) * np.exp(beta_AP * AP + beta_UR * UR + beta_AT * AT)
+    
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) model
+    # Log-linear form: ln(I) = ln(a) + b*ln(P) + c*ln(A) + d*ln(AP) + e*ln(DP) + f*ln(UR) + g*AT
+    # AT (temperature) enters linearly in the log equation since it can take negative values.
+    
+    a = 1.0  # Base multiplier (exp(intercept))
+    b = 1.0  # Elasticity of Population
+    c = 1.0  # Elasticity of Affluence (GDP per capita)
+    d = 0.0  # Elasticity of Working-age Population Share
+    e = 0.0  # Elasticity of Population Density
+    f = 0.0  # Elasticity of Urbanization Rate
+    g = 0.0  # Semi-elasticity of Annual Mean Temperature
+    
+    I_CH4 = a * (P**b) * (A**c) * (AP**d) * (DP**e) * (UR**f) * np.exp(g * AT)
+    
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # Extended STIRPAT model coefficients (canonical placeholders)
+    # ln(I) = ln(a) + b1*ln(P) + b2*ln(A) + b3*ln(AP) + b4*ln(DP) + b5*ln(UR) + b6*AT
+    a = 1.0
+    b1 = 1.0
+    b2 = 1.0
+    b3 = 1.0
+    b4 = 1.0
+    b5 = 1.0
+    b6 = 0.0
+    
+    # Closed-form multiplicative relationship
+    # Temperature (AT) is kept in levels (exponential term) to accommodate negative values
+    I = a * (P ** b1) * (A ** b2) * (AP ** b3) * (DP ** b4) * (UR ** b5) * np.exp(b6 * AT)
+    
+    return I

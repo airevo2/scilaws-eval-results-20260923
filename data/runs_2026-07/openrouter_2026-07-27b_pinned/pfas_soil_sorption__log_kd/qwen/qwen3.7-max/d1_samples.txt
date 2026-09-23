@@ -1,0 +1,126 @@
+import numpy as np
+
+def predict(X):
+    log_Kow = X[:, 6]
+    pH      = X[:, 7]
+    CEC     = X[:, 8]
+    foc     = X[:, 13]
+
+    # PFAS-specific LFER for organic-carbon normalised partition coeff.
+    # log Koc = a*logKow + b + c*pH + d*CEC
+    a = 0.65    # slope on log Kow (lower than ~1 for neutral organics
+                # because PFAS are ionic surfactants)
+    b = 0.80    # intercept
+    c = -0.15   # pH effect (higher pH -> more negative surfaces ->
+                # less sorption of anionic PFAS)
+    d = 0.005   # CEC effect (more exchange sites -> slightly more sorption)
+
+    log_Koc = b + a * log_Kow + c * pH + d * CEC
+
+    # Standard organic-carbon partitioning model:  Kd = Koc * foc
+    log_Kd = log_Koc + np.log10(np.maximum(foc, 1e-10))
+
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log Kd (log10 of the solid-liquid distribution coefficient) 
+    using the standard environmental partitioning relationship.
+    
+    The canonical closed-form relationship for soil sorption is:
+    Kd = Koc * foc
+    
+    In the absence of a direct Koc measurement, the standard textbook 
+    approximation substitutes the octanol-water partition coefficient (Kow) 
+    as the primary hydrophobicity proxy for the organic carbon-water 
+    partition coefficient (Koc), yielding:
+    log10(Kd) = log10(Kow) + log10(foc)
+    """
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+    
+    # Standard partitioning relationship
+    log_Kd = log_Kow + np.log10(foc)
+    
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+    
+    # Standard canonical partitioning relationship: Kd = Koc * foc
+    # In the absence of compound-specific Koc, Koc is approximated by Kow 
+    # (or log Koc ~ log Kow) for the baseline closed-form hydrophobic partitioning model.
+    log_kd = log_Kow + np.log10(np.maximum(foc, 1e-10))
+    
+    return log_kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log Kd for PFAS sorption to soil using the standard
+    organic-carbon partitioning framework with PFAS-specific corrections.
+    
+    Core model:  log Kd = log Koc + log10(foc)
+    where:       log Koc = a * log Kow + b   (PFAS-calibrated)
+    
+    Additive corrections account for pH-dependent electrostatic repulsion
+    of anionic PFAS, cation exchange capacity, and clay mineral sorption.
+    """
+    # Extract relevant inputs
+    log_Kow = X[:, 6]     # log10 octanol-water partition coefficient
+    pH      = X[:, 7]     # soil solution pH
+    CEC     = X[:, 8]     # cation exchange capacity [cmol+/kg]
+    Clay    = X[:, 11]    # clay mass fraction [%]
+    foc     = X[:, 13]    # fraction of organic carbon [dimensionless]
+
+    # --- Organic carbon–water partition coefficient (log Koc) ---
+    # PFAS-specific linear free-energy relationship: log Koc = a * log Kow + b
+    a = 0.55
+    b = 0.20
+    log_Koc = a * log_Kow + b
+
+    # --- Core partitioning model: Kd = Koc * foc ---
+    foc_safe = np.maximum(foc, 1e-6)   # guard against log(0)
+    log_kd = log_Koc + np.log10(foc_safe)
+
+    # --- PFAS-specific sorption corrections ---
+    # pH effect: higher pH increases negative surface charge on minerals,
+    # repelling anionic PFAS (centred at reference pH 7)
+    log_kd += -0.10 * (pH - 7.0)
+
+    # CEC effect: electrostatic sorption sites on soil exchange complex
+    log_kd += 0.008 * CEC
+
+    # Clay effect: additional mineral-phase sorption surfaces
+    log_kd += 0.30 * (Clay / 100.0)
+
+    return log_kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+    
+    # Standard organic carbon partitioning model
+    # log Koc estimated from log Kow (Karickhoff, 1981)
+    log_Koc = 1.0 * log_Kow - 0.21
+    
+    # Kd = Koc * foc  =>  log Kd = log Koc + log10(foc)
+    log_Kd = log_Koc + np.log10(foc)
+    
+    return log_Kd

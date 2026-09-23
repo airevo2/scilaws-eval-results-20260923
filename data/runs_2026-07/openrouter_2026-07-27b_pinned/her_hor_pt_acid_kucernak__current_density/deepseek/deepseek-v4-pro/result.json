@@ -1,0 +1,26 @@
+{
+  "task": "her_hor_pt_acid_kucernak__current_density",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "chemistry ",
+  "formulas": [
+    {
+      "formula": "kucernak_2016_bv",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "kucernak_2016_hv",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

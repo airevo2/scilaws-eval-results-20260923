@@ -1,0 +1,120 @@
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    Teff = X[:, 1]
+    FeH = X[:, 2]
+    phase = X[:, 3]
+
+    # Standard asteroseismic scaling relation:
+    # Δν ≈ Δν_sun * (ν_max / ν_max,sun)^(3/4) * (T_eff / T_eff,sun)^(3/8)
+    # with a simple phase-dependent correction factor for red-giant branch vs core-He burning.
+    dnu_sun = 135.1  # uHz
+    numax_sun = 3090.0  # uHz
+    teff_sun = 5777.0  # K
+
+    dnu = dnu_sun * (nu_max / numax_sun) ** 0.75 * (Teff / teff_sun) ** 0.375
+
+    # Mild empirical adjustment by evolutionary phase:
+    # 0 = unclassified, 1 = RGB, 2 = HeB.
+    # RGB stars tend to lie slightly below the pure scaling relation,
+    # while HeB stars tend to lie slightly above it.
+    corr = np.ones_like(dnu)
+    corr = np.where(phase == 1, 0.98, corr)
+    corr = np.where(phase == 2, 1.02, corr)
+
+    return dnu * corr
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the large frequency separation Δν (uHz) for red giants using the
+    standard seismic scaling relation, with a simple evolutionary-phase correction.
+
+    Inputs
+    ------
+    X : array-like, shape (n_samples, 4)
+        X[:, 0] = nu_max [uHz]
+        X[:, 1] = Teff [K]
+        X[:, 2] = FeH [dex]   (unused in the canonical closed-form scaling)
+        X[:, 3] = phase       (0=unclassified, 1=RGB, 2=HeB)
+
+    Returns
+    -------
+    y : ndarray, shape (n_samples,)
+        Predicted Δν [uHz]
+    """
+    X = np.asarray(X)
+    nu_max = X[:, 0]
+    teff = X[:, 1]
+    phase = X[:, 3]
+
+    # Solar reference values
+    nu_max_sun = 3090.0    # uHz
+    dnu_sun = 135.1        # uHz
+    teff_sun = 5777.0      # K
+
+    # Canonical Δν–νmax scaling relation:
+    # Δν = Δν_sun * (νmax/νmax_sun)^0.75 * (Teff/Teff_sun)^0.375
+    dnu = dnu_sun * (nu_max / nu_max_sun) ** 0.75 * (teff / teff_sun) ** 0.375
+
+    # Simple commonly used phase-dependent correction:
+    # RGB and HeB stars can follow slightly different normalizations.
+    # A modest empirical offset is applied for HeB stars; unclassified left unchanged.
+    correction = np.ones_like(dnu)
+    correction[phase == 2] = 1.03   # HeB / red clump slightly larger Δν at fixed νmax
+    dnu *= correction
+
+    return dnu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    Teff = X[:, 1]
+
+    # Standard asteroseismic scaling relation for the large frequency separation:
+    # Δν ≈ Δν_sun * (ν_max / ν_max_sun)^(3/4) * (T_eff / T_eff_sun)^(3/16)
+    dnu_sun = 135.1      # uHz
+    numax_sun = 3090.0   # uHz
+    teff_sun = 5777.0    # K
+
+    return dnu_sun * (nu_max / numax_sun) ** 0.75 * (Teff / teff_sun) ** 0.1875
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the large frequency separation Δν (uHz) using the standard
+    asteroseismic scaling relation:
+
+        Δν = Δν_sun * (ν_max / ν_max,sun)^0.75 * (T_eff / T_eff,sun)^0.375
+
+    This is the commonly cited closed-form relation for red-giant p-modes.
+    The remaining inputs (Fe/H, phase) are not used in the basic scaling law.
+    """
+    X = np.asarray(X)
+    nu_max = X[:, 0]
+    teff = X[:, 1]
+
+    # Solar reference values
+    nu_max_sun = 3090.0   # uHz
+    teff_sun = 5777.0     # K
+    delta_nu_sun = 135.1  # uHz
+
+    return delta_nu_sun * (nu_max / nu_max_sun) ** 0.75 * (teff / teff_sun) ** 0.375
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    return 0.267 * np.power(nu_max, 0.75)

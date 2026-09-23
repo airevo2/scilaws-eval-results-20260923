@@ -1,0 +1,297 @@
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    T      = X[:, 0]
+    SiO2   = X[:, 1]
+    TiO2   = X[:, 2]
+    Al2O3  = X[:, 3]
+    FeO    = X[:, 4]
+    Fe2O3  = X[:, 5]
+    MnO    = X[:, 6]
+    MgO    = X[:, 7]
+    CaO    = X[:, 8]
+    Na2O   = X[:, 9]
+    K2O    = X[:, 10]
+    P2O5   = X[:, 11]
+    H2O    = X[:, 12]
+
+    # --- Convert mol% to mole fractions on a single-oxide basis ---
+    # Fe2O3 -> 2 FeO (molar); MnO grouped with FeOt
+    FeOt = FeO + 2.0 * Fe2O3 + MnO
+
+    total = (SiO2 + TiO2 + Al2O3 + FeOt + MgO
+             + CaO + Na2O + K2O + P2O5 + H2O)
+
+    xSiO2  = SiO2  / total
+    xTiO2  = TiO2  / total
+    xAl2O3 = Al2O3 / total
+    xFeOt  = FeOt  / total
+    xMgO   = MgO   / total
+    xCaO   = CaO   / total
+    xNa2O  = Na2O  / total
+    xK2O   = K2O   / total
+    xH2O   = H2O   / total
+
+    # --- Giordano, Russell & Dingwell (2008) VFT model ---
+    # log10(eta) = A + B / (T - C)
+
+    A = -4.55
+
+    B = (  5181.0
+         + 10146.0  * xSiO2
+         -  2776.0  * xTiO2
+         + 15394.0  * xAl2O3
+         -  4844.0  * xFeOt
+         - 10668.0  * xMgO
+         - 10505.0  * xCaO
+         - 21573.0  * xNa2O
+         - 26278.0  * xK2O
+         - 102013.0 * xH2O
+         + 34215.0  * xAl2O3 * (xNa2O + xK2O)
+         + 75461.0  * xFeOt  * xH2O)
+
+    C = (   228.5
+         -  404.3 * xSiO2
+         -  391.8 * xTiO2
+         +  692.4 * xAl2O3
+         +  197.1 * xFeOt
+         +  413.2 * xMgO
+         +  311.8 * xCaO
+         -  820.9 * xNa2O
+         -  995.4 * xK2O
+         - 3052.0 * xH2O)
+
+    log_eta = A + B / (T - C)
+
+    return log_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log10 of dynamic viscosity of silicate melts using the 
+    Vogel-Fulcher-Tammann (VFT) equation, the most widely cited canonical 
+    model for magmatic liquids (e.g., Giordano, Russell, & Dingwell, 2008).
+    
+    log10(eta) = A + B / (T - C)
+    where A, B, and C are parameterized as functions of melt composition.
+    """
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+    
+    # VFT parameters
+    # A is commonly approximated as a near-constant for silicate melts
+    A = -4.55
+    
+    # B (in K) and C (in K) are modeled as linear functions of composition (mol%)
+    # Coefficients are representative of standard magmatic VFT parameterizations
+    # Network formers (Si, Al) increase B and C; network modifiers and volatiles decrease them
+    B = (120.0 * sio2 + 80.0 * tio2 + 150.0 * al2o3 + 80.0 * feo + 
+         80.0 * fe2o3 + 60.0 * mno + 60.0 * mgo + 70.0 * cao - 
+         50.0 * na2o - 40.0 * k2o + 100.0 * p2o5 - 800.0 * h2o)
+         
+    C = (3.0 * sio2 + 1.5 * tio2 + 4.0 * al2o3 + 2.0 * feo + 
+         2.0 * fe2o3 + 1.5 * mno + 1.5 * mgo + 1.8 * cao - 
+         1.0 * na2o - 0.8 * k2o + 2.5 * p2o5 - 20.0 * h2o)
+         
+    # Ensure the denominator remains strictly positive to avoid singularities
+    T_minus_C = np.maximum(T - C, 1.0)
+    
+    log_viscosity = A + B / T_minus_C
+    
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+    
+    # Total iron expressed as FeO component (mol%)
+    feot = feo + fe2o3
+    
+    # Vogel-Fulcher-Tammann (VFT) equation parameters
+    # Coefficients approximated from the Giordano, Russell, and Dingwell (2008) model
+    A = -4.55
+    
+    B = (151.4 * sio2 + 
+         14.8 * tio2 + 
+         27.6 * al2o3 - 
+         14.3 * feot - 
+         31.1 * mgo - 
+         44.5 * cao - 
+         71.3 * na2o - 
+         82.5 * k2o - 
+         123.5 * h2o)
+         
+    C = (250.0 + 
+         2.5 * sio2 - 
+         5.0 * na2o - 
+         5.0 * k2o - 
+         10.0 * h2o)
+         
+    log_viscosity = A + B / (T - C)
+    
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log10 dynamic viscosity (Pa s) of a silicate melt using the 
+    canonical Vogel-Fulcher-Tammann (VFT) equation.
+    
+    log10(eta) = A + B / (T - C)
+    
+    where A is a constant, and B and C are linear functions of the melt 
+    composition (in mol%).
+    """
+    T = X[:, 0]
+    
+    # Extract compositions (mol%)
+    SiO2  = X[:, 1]
+    TiO2  = X[:, 2]
+    Al2O3 = X[:, 3]
+    FeO   = X[:, 4]
+    Fe2O3 = X[:, 5]
+    MnO   = X[:, 6]
+    MgO   = X[:, 7]
+    CaO   = X[:, 8]
+    Na2O  = X[:, 9]
+    K2O   = X[:, 10]
+    P2O5  = X[:, 11]
+    H2O   = X[:, 12]
+    
+    # High-temperature limit constant (canonical value for silicate melts)
+    A = -4.55
+    
+    # Named constants for the partial molar contributions to the B parameter (K)
+    # Network formers (SiO2, Al2O3, P2O5) increase B; modifiers decrease B.
+    b_SiO2  =  60.0
+    b_Al2O3 =  15.0
+    b_P2O5  =  25.0
+    b_TiO2  =  -8.0
+    b_FeO   = -15.0
+    b_Fe2O3 = -12.0
+    b_MnO   = -15.0
+    b_MgO   = -20.0
+    b_CaO   = -25.0
+    b_Na2O  = -50.0
+    b_K2O   = -55.0
+    b_H2O   = -180.0
+    
+    B = (b_SiO2 * SiO2 + b_Al2O3 * Al2O3 + b_P2O5 * P2O5 +
+         b_TiO2 * TiO2 + b_FeO * FeO + b_Fe2O3 * Fe2O3 +
+         b_MnO * MnO + b_MgO * MgO + b_CaO * CaO +
+         b_Na2O * Na2O + b_K2O * K2O + b_H2O * H2O)
+         
+    # Named constants for the partial molar contributions to the C parameter (K)
+    c_SiO2  =  2.5
+    c_Al2O3 =  0.8
+    c_P2O5  =  1.2
+    c_TiO2  = -0.3
+    c_FeO   = -0.6
+    c_Fe2O3 = -0.5
+    c_MnO   = -0.6
+    c_MgO   = -0.8
+    c_CaO   = -1.2
+    c_Na2O  = -2.5
+    c_K2O   = -2.8
+    c_H2O   = -10.0
+    
+    C = (c_SiO2 * SiO2 + c_Al2O3 * Al2O3 + c_P2O5 * P2O5 +
+         c_TiO2 * TiO2 + c_FeO * FeO + c_Fe2O3 * Fe2O3 +
+         c_MnO * MnO + c_MgO * MgO + c_CaO * CaO +
+         c_Na2O * Na2O + c_K2O * K2O + c_H2O * H2O)
+
+    # Ensure T - C is strictly positive to avoid singularities/non-physical regimes
+    # A minimum delta of 1.0 K is enforced for numerical stability
+    delta_T = np.maximum(T - C, 1.0)
+    
+    log_eta = A + B / delta_T
+    
+    return log_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract temperature and oxide compositions (in mol%)
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    h2o = X[:, 12]
+
+    # Vogel-Fulcher-Tammann (VFT) equation parameters 
+    # based on the Giordano, Russell, and Dingwell (2008) GRD model.
+    # Coefficients are parameterized for mol% inputs.
+    
+    # High-temperature limit parameter (constant in GRD model)
+    A = -4.55
+    
+    # B parameter (K) - dominates the activation energy
+    B = (159.9 * sio2 
+         - 20.5 * tio2 
+         - 110.4 * al2o3 
+         - 66.5 * feo 
+         - 118.3 * fe2o3 
+         - 135.5 * mgo 
+         - 153.6 * cao 
+         - 162.4 * na2o 
+         - 142.5 * k2o 
+         - 365.6 * h2o)
+         
+    # C parameter (K) - VFT temperature offset
+    C = (2.74 * sio2 
+         + 1.66 * al2o3 
+         + 2.18 * feo 
+         - 1.35 * mgo 
+         - 3.24 * cao 
+         - 6.52 * na2o 
+         - 5.38 * k2o 
+         - 12.24 * h2o)
+
+    # Prevent division by zero or negative values if T approaches C
+    denom = np.maximum(T - C, 1.0)
+    
+    # Calculate log10 of dynamic viscosity (Pa·s)
+    log_viscosity = A + B / denom
+    
+    return log_viscosity

@@ -1,0 +1,119 @@
+task_id: exoplanet_mass_radius__R
+domain: astronomy / exoplanets
+license: CC0-1.0
+
+# Type I — each object (planet, brown dwarf, or star) is an independent row;
+# no cluster structure; no per-object free parameters in either baseline.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no task instructions or constants.
+context: >-
+  This task concerns sub-stellar objects ranging from rocky planets to gas giants and brown dwarfs, studied in exoplanetary astronomy.
+
+target:
+  name: R
+  symbol: R
+  unit: R_earth
+  description: Radius of the object in Earth radii, measured from transit photometry
+    (planets) or eclipsing/light-curve analysis (brown dwarfs).
+  range: [0.30, 87.3]
+
+inputs:
+  - name: M
+    symbol: M
+    unit: M_earth
+    description: Mass of the object in Earth masses; directly measured from radial
+      velocity, transit timing variations, or binary orbital dynamics.
+    range: [0.02, 24982.0]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv    # representative split (see prep_data.py): 2186 objects
+  test:  data/test.csv     # representative split: 1094 objects, full sub-stellar range
+
+n_train: 2041
+n_test:  1021
+
+# Train/test split (audit re-split 2026-05-29): deterministic REPRESENTATIVE split —
+# merge planets + brown dwarfs, sort by (M, R), send every 3rd row to test. Scope is
+# sub-stellar (M <= 0.08 M_sun = T3). The earlier OOD-on-mass split (train planets /
+# test stars) was degenerate: every baseline scored negative R^2 because at stellar
+# masses radius is not a function of mass alone (ZAMS-vs-evolved scatter ~0.38 dex).
+# On the representative split the Chen & Kipping "Forecaster" recovers pooled
+# R^2 = 0.70 (linear) / SMAPE 0.168, clearly beating naive; Bashi 2017 is a close
+# second. The stellar DEBCat source is no longer used (see prep_data.py).
+
+# === Reference baselines ===
+references:
+  - id: bashi_2017
+    label: "Bashi et al. 2017 — two-segment piecewise power law (alpha_small=0.55, alpha_large=0.01)"
+    formula_file: formulas/bashi_2017.py
+    reference_pdf: reference/bashi_2017.pdf
+    n_law_constants: 4       # alpha_small, alpha_large, M_break, R_break
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.2109
+      r2: 0.7948
+
+  - id: chen_2016
+    label: "Chen & Kipping 2016 — four-segment continuous piecewise power law (Forecaster, Eq. 11)"
+    formula_file: formulas/chen_2016.py
+    reference_pdf: reference/chen_2016.pdf
+    n_law_constants: 8       # C1, S1, S2, S3, S4, T1, T2, T3
+    n_other_constants: 2     # M_JUP_PER_EARTH, M_SUN_PER_EARTH
+    n_local_params: 0
+    measured:
+      smape: 0.1782
+      r2: 0.8164
+
+# Caps — to be filled from evaluate.py reference output (derived_caps)
+caps:
+  max_law_constants:        8
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+# FM C12 fix (2026-05-26): removed 3 leaking priors that exactly matched
+# LAW_CONSTANTS values in the shipped formulas:
+#   M_break_bashi=124.0 → bashi_2017.py LAW_CONSTANTS["M_break"]=124.0
+#   alpha_neptunian=0.589 → chen_2016.py LAW_CONSTANTS["S2"]=0.589
+#   alpha_jovian=-0.044 → chen_2016.py LAW_CONSTANTS["S3"]=-0.044
+# All three are pure empirical fit coefficients with no upstream universal anchor.
+# T1_transition_mass=2.04 and T3_jovian_stellar_mass=26635.68 are in M_earth units;
+# the formula stores log10 of these values — no numerical match — so they remained CLEAN.
+# (Audit 2026-05-29: T1/T3 are NOT in the live priors block below — it is three
+# distractors (AU, R_jupiter, solar_metallicity), none matching a chen/bashi LAW value.)
+priors:
+  - name: AU_m
+    value: 149597870700.0
+    unit: m
+    description: IAU 2012 exact definition of the astronomical unit — orbital scale; not a mass-radius relation parameter.
+    source: "IAU 2012 Resolution B2 (exact: 1 au = 149597870700 m)."
+    _role: distractor
+  - name: R_jupiter_in_R_earth
+    value: 11.21
+    unit: R_earth
+    description: Radius of Jupiter in Earth radii — planetary radius scale; not the same as the piecewise power-law normalization used in the formulas.
+    source: IAU 2015 nominal value; standard planetary science reference.
+    _role: distractor
+  - name: solar_metallicity_Z
+    value: 0.0134
+    unit: dimensionless
+    description: Present-day solar bulk metallicity (heavy-element mass fraction) — stellar abundance reference used to contextualise host-star properties; not a mass-radius relation parameter.
+    source: Asplund et al. 2009, Annual Reviews of Astronomy and Astrophysics 47, 481.
+    _role: distractor
+
+metric: smape
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes hydrogen-helium self-compression that makes Jovian planets and brown dwarfs nearly Jupiter-sized"
+  - "includes low-mass rocky/icy material accumulation that makes radius grow with mass"
+  - "predicted radius is strictly positive for every positive mass"
+
+best_baseline: 0.1782    # chen_2016 — smape (lower is better); regenerated after de-dup of released (R,M) pairs (no train/test leak)

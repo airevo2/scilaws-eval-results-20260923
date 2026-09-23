@@ -1,0 +1,73 @@
+import numpy as np
+
+def predict(X):
+    # Simple closed-form demographic approximation of period life expectancy at birth
+    # as a monotone logistic trend over calendar time.
+    t = np.asarray(X)[:, 0].astype(float)
+    
+    # Midpoint and slope chosen to reflect the long-run historical rise in life expectancy.
+    # Asymptotes approximate plausible lower/upper bounds for HMD total-sex e0.
+    L_low = 15.0
+    L_high = 90.0
+    t0 = 1950.0
+    k = 0.03
+    
+    return L_low + (L_high - L_low) / (1.0 + np.exp(-k * (t - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = np.asarray(X)[:, 0]
+    # Common closed-form approximation for period life expectancy at birth:
+    # e0(t) = a + b * t
+    # with coefficients chosen as a generic linear trend placeholder.
+    # Since no data are provided, this uses a simple monotonic secular trend form.
+    a = -344.0
+    b = 0.18
+    return a + b * t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Simple canonical closed-form approximation of period life expectancy at birth
+    # as a logistic growth trajectory over calendar time.
+    t = np.asarray(X)[:, 0]
+
+    # Parameters chosen to represent a smooth historical rise in e0.
+    # L = long-run upper asymptote, k = growth rate, t0 = midpoint year.
+    L = 90.0
+    k = 0.03
+    t0 = 1950.0
+
+    return L / (1.0 + np.exp(-k * (t - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gompertz-style long-run improvement in period life expectancy at birth
+    # e0(t) = a + b * ln(t - t0)
+    t = np.asarray(X)[:, 0]
+    t0 = 1500.0
+    a = -130.0
+    b = 25.0
+    return a + b * np.log(np.maximum(t - t0, 1.0))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = np.asarray(X)[:, 0]
+    # Standard demographic/logistic-style closed form for life expectancy over time:
+    # e0(t) = L / (1 + exp(-k * (t - t0)))
+    # Chosen as a generic canonical saturation curve for period life expectancy.
+    L = 90.0
+    k = 0.03
+    t0 = 1950.0
+    return L / (1.0 + np.exp(-k * (t - t0)))

@@ -1,0 +1,89 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Langmuir Isotherm Model
+    # n = (n_max * K * P) / (1 + K * P)
+    
+    n_max = 5.0  # Maximum monolayer adsorption capacity [mmol/g]
+    K = 0.5      # Langmuir affinity/equilibrium constant [bar^-1]
+    
+    n_ads = (n_max * K * P) / (1.0 + K * P)
+    
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Langmuir isotherm model (most commonly cited canonical form)
+    # Representative fitted coefficients for CO2 adsorption on a typical porous adsorbent
+    n_max = 6.0  # Maximum monolayer adsorption capacity [mmol/g]
+    K = 0.8      # Langmuir affinity/equilibrium constant [bar^-1]
+    
+    n_ads = (n_max * K * P) / (1.0 + K * P)
+    
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Langmuir adsorption isotherm for CO2.
+    
+    n = n_max * K * P / (1 + K * P)
+    
+    Parameters chosen as representative values for CO2 on a
+    typical microporous adsorbent (e.g., activated carbon or zeolite)
+    near ambient temperature.
+    """
+    P = X[:, 0]            # equilibrium pressure [bar]
+    n_max = 4.0            # monolayer saturation capacity [mmol/g]
+    K = 0.5                # Langmuir affinity constant [bar^-1]
+    
+    n = n_max * K * P / (1.0 + K * P)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Langmuir Isotherm Model
+    # n = (n_max * K * P) / (1 + K * P)
+    
+    n_max = 5.0  # Maximum monolayer adsorption capacity [mmol/g]
+    K = 0.2      # Langmuir affinity constant [bar^-1]
+    
+    n_ads = (n_max * K * P) / (1.0 + K * P)
+    
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Langmuir adsorption isotherm for CO2.
+    
+    n = n_max * K * P / (1 + K * P)
+    
+    Parameters chosen as representative values for CO2 on a
+    typical microporous adsorbent (e.g., activated carbon) at ~298 K.
+    """
+    P = X[:, 0]  # equilibrium pressure [bar]
+    
+    n_max = 8.0   # mmol/g  – monolayer saturation capacity
+    K     = 0.5   # bar^-1  – Langmuir affinity constant
+    
+    n = n_max * K * P / (1.0 + K * P)
+    return n

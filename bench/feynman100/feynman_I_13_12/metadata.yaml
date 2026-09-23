@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "U"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Mass"
+    symbol: "m1"
+    unit: ""
+    description: "Mass"
+  - name: "Mass"
+    symbol: "m2"
+    unit: ""
+    description: "Mass"
+  - name: "Length"
+    symbol: "r1"
+    unit: ""
+    description: "Length"
+  - name: "Length"
+    symbol: "r2"
+    unit: ""
+    description: "Length"
+  - name: "Newton's constant"
+    symbol: "G"
+    unit: ""
+    description: "Newton's constant"

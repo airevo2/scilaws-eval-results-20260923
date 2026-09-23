@@ -1,0 +1,26 @@
+{
+  "task": "drosophila_isolation_by_distance_dest__M_stat",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "rousset_1997",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "rousset_1997_1d",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

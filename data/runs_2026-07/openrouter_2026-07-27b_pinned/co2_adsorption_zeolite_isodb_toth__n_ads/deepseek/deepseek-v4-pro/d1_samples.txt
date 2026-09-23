@@ -1,0 +1,100 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the equilibrium amount of CO2 adsorbed (n_ads, mmol/g) 
+    from pressure P (bar) using the Langmuir isotherm.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, n_features)
+        X[:, 0] = P_bar (pressure in bar)
+
+    Returns
+    -------
+    n : np.ndarray, shape (n_samples,)
+        Predicted amount adsorbed in mmol/g
+    """
+    P = X[:, 0]  # equilibrium pressure in bar
+
+    # Langmuir isotherm parameters (illustrative, physically plausible values)
+    n_max = 8.0   # mmol/g   (monolayer capacity)
+    K = 0.1       # 1/bar    (Langmuir equilibrium constant)
+
+    n_ads = n_max * K * P / (1.0 + K * P)
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict CO2 adsorption amount n_ads (mmol/g) from equilibrium pressure P_bar (bar)
+    using the Langmuir isotherm model.
+    """
+    P = X[:, 0]  # equilibrium pressure in bar
+    
+    # Langmuir parameters (typical for CO2 on activated carbon at ~298 K)
+    q_m = 2.5      # maximum adsorption capacity, mmol/g
+    b   = 0.8      # Langmuir affinity constant, 1/bar
+    
+    n_ads = q_m * b * P / (1.0 + b * P)
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Langmuir isotherm: n = n_m * K * P / (1 + K * P)
+    # n_m: maximum adsorption capacity [mmol/g]
+    # K: Langmuir equilibrium constant [1/bar]
+    P = X[:, 0]  # pressure in bar
+
+    n_m = 5.0   # mmol/g (typical for CO2 on many adsorbents)
+    K = 0.05    # 1/bar (affinity constant)
+
+    n = n_m * K * P / (1.0 + K * P)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Langmuir isotherm for CO₂ adsorption.
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 1)
+        X[:, 0] = P_bar (bar), equilibrium CO₂ gas pressure.
+    
+    Returns
+    -------
+    n_ads : ndarray, shape (n_samples,)
+        Amount of CO₂ adsorbed (mmol/g) at equilibrium.
+    
+    Coefficients are typical values for CO₂ on zeolite 13X at 298 K.
+    """
+    # Langmuir parameters
+    n_m = 3.0   # monolayer capacity (mmol/g)
+    K = 0.5     # Langmuir constant (bar⁻¹)
+    
+    P = X[:, 0]
+    n = n_m * K * P / (1.0 + K * P)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard Langmuir isotherm for CO2 adsorption
+    # n_ads = q_max * b * P / (1 + b * P)
+    q_max = 4.0   # mmol/g (monolayer capacity)
+    b = 0.5       # 1/bar (Langmuir affinity constant)
+    P = X[:, 0]   # pressure in bar
+    n = q_max * b * P / (1.0 + b * P)
+    return n

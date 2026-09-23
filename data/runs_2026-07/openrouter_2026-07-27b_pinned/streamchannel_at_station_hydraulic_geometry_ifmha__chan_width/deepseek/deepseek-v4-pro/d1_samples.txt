@@ -1,0 +1,115 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict channel water-surface width (w, ft) from discharge (Q, cfs)
+    using the classic at-a-station hydraulic geometry power-law relationship:
+    w = a * Q^b
+    Coefficients are typical literature values for at-a-station width.
+    """
+    # At-a-station hydraulic geometry coefficients
+    a = 10.0    # coefficient (ft per cfs^b)
+    b = 0.12    # exponent (dimensionless)
+
+    Q = X[:, 0]                  # discharge in cfs
+    w = a * np.power(Q, b)       # width in ft
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict water-surface width (ft) from discharge (cfs) using at-a-station
+    hydraulic geometry: w = a * Q^b.
+
+    Parameters
+    ----------
+    X : 2-D numpy array
+        X[:, 0] = chan_discharge (Q) in cfs.
+
+    Returns
+    -------
+    w : 1-D numpy array
+        Water-surface width in feet.
+
+    Notes
+    -----
+    Coefficients are typical values from the classic Leopold and Maddock (1953)
+    at-a-station hydraulic geometry relationships for midwestern U.S. streams.
+    The exponent b = 0.26 is widely cited; the coefficient a is a representative
+    scaling factor (ft per cfs^b) that yields plausible widths over the given
+    discharge range.
+    """
+    Q = X[:, 0]
+    a = 5.0      # scaling coefficient (ft / cfs^0.26)
+    b = 0.26     # width exponent
+    w = a * np.power(Q, b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict water-surface width (w) [ft] at a gauging cross-section
+    using the classic at-a-station hydraulic geometry power-law:
+        w = a * Q^b
+
+    Coefficients are representative values from Leopold and Maddock (1953):
+    a = 10.0   (ft per (cfs)^b)  -- typical site-specific constant
+    b = 0.26   (dimensionless)   -- average width exponent for U.S. rivers
+    """
+    Q = X[:, 0]  # discharge [cfs]
+    a = 10.0
+    b = 0.26
+    w = a * np.power(Q, b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict water-surface width (ft) from discharge (cfs) using at-a-station
+    hydraulic geometry:  w = a * Q^b
+
+    Coefficients are representative values from classic fluvial geomorphology
+    (e.g., Leopold & Maddock 1953, Leopold, Wolman & Miller 1964).
+    """
+    # at-a-station width coefficient (ft) and exponent [-]
+    a = 5.0
+    b = 0.26
+
+    Q = X[:, 0]                 # discharge [cfs]
+    w = a * np.power(Q, b)      # width [ft]
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict water-surface width (w, ft) from discharge (Q, cfs) using the
+    classic at-a-station hydraulic geometry power law: w = a * Q^b.
+
+    Parameters
+    ----------
+    X : 2-D numpy array
+        X[:, 0] = channel discharge Q [cfs]
+
+    Returns
+    -------
+    w : 1-D numpy array
+        Predicted water-surface width [ft]
+    """
+    Q = X[:, 0]                     # discharge in cfs
+    # Coefficients typical for natural river cross-sections (Leopold & Maddock, 1953)
+    a = 16.6                        # ft / (cfs^b)
+    b = 0.26                        # dimensionless exponent
+    w = a * np.power(Q, b)
+    return w

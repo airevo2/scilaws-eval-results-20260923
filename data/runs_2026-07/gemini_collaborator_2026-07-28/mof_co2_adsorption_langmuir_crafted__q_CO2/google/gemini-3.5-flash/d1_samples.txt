@@ -1,0 +1,115 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the equilibrium CO2 adsorbed amount per gram of MOF (q)
+
+    using a representative Langmuir adsorption isotherm model.
+
+    Input:
+    - X: 2-D numpy array where X[:, 0] is P_bar [bar] (CO2 partial pressure)
+
+    Output:
+    - 1-D numpy array of q_CO2_mmol_per_g [mmol/g]
+    """
+    P = X[:, 0]
+
+    # Representative Langmuir parameters for CO2 in a typical MOF
+    q_max = 6.0  # Maximum saturation capacity in mmol/g
+    b = 1.5  # Langmuir affinity constant in bar^-1
+
+    q = (q_max * b * P) / (1.0 + b * P)
+    return q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract equilibrium CO2 partial pressure (P) in bar
+    P = X[:, 0]
+
+    # Dual-site Langmuir parameters for a representative MOF at 298 K
+    # q1, q2: Saturation loadings for site 1 and site 2 (mmol/g)
+    # K1, K2: Langmuir affinity constants for site 1 and site 2 (1/bar)
+    q1 = 1.8  # Strong binding sites (e.g., open metal sites, functional groups)
+    K1 = 12.5  # High affinity constant
+    q2 = 7.5  # Weak binding sites (pore filling / physisorption)
+    K2 = 0.35  # Low affinity constant
+
+    # Dual-site Langmuir equation
+    q = (q1 * K1 * P) / (1.0 + K1 * P) + (q2 * K2 * P) / (1.0 + K2 * P)
+
+    return q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the equilibrium CO2 adsorbed amount (q) in mmol/g
+
+    using a standard Langmuir adsorption isotherm model.
+
+    Parameters:
+    X : 2-D numpy array
+        X[:, 0] = P_bar (equilibrium CO2 partial pressure in bar)
+
+    Returns:
+    q : 1-D numpy array
+        Equilibrium CO2 adsorbed amount in mmol/g
+    """
+    P = X[:, 0]
+
+    # Typical Langmuir parameters for CO2 adsorption in a representative MOF
+    q_sat = 12.0  # Saturation capacity in mmol/g
+    K = 1.2  # Langmuir affinity constant in bar^-1
+
+    q = (q_sat * K * P) / (1.0 + K * P)
+    return q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Langmuir adsorption isotherm model
+    # Representing typical CO2 adsorption behavior in a MOF at room temperature (298 K)
+    # q_sat: Saturation loading capacity (mmol/g)
+    # b: Langmuir affinity parameter (1/bar)
+    q_sat = 8.5
+    b = 1.2
+
+    P = X[:, 0]
+    q = (q_sat * b * P) / (1.0 + b * P)
+    return q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the equilibrium CO2 adsorption capacity (q) in mmol/g
+
+    using the classic Langmuir adsorption isotherm model.
+
+    Parameters:
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] is the equilibrium CO2 partial pressure (P) in bar.
+
+    Returns:
+    q : np.ndarray, shape (n_samples,)
+        Equilibrium CO2 loading in mmol/g.
+    """
+    P = X[:, 0]
+
+    # Typical Langmuir parameters for CO2 adsorption in MOFs
+    q_max = 8.0  # Maximum adsorption capacity (mmol/g)
+    b = 1.5  # Langmuir affinity constant (1/bar)
+
+    q = (q_max * b * P) / (1.0 + b * P)
+    return q

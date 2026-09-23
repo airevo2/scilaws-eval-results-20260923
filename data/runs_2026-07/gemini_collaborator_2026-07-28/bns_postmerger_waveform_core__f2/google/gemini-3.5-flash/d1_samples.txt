@@ -1,0 +1,132 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract total mass (M) and combined tidal coupling constant (kap2t)
+    M = X[:, 0]
+    kap2t = X[:, 2]
+
+    # Quasi-universal relation for the dimensionless peak frequency (G * M * f2 / c^3)
+    # from Bernuzzi et al. (2015)
+    a = 0.0758
+    b = -1.109e-4
+    c = 7.89e-8
+    dimless_f2 = a + b * kap2t + c * kap2t**2
+
+    # Conversion factor: G * M_sun / c^3 ≈ 4.925491e-6 seconds
+    # To output f2 directly in kHz, we express this characteristic time in milliseconds (1e-3 s)
+    t_ms = M * 4.925491e-3
+
+    # f2 [kHz] = dimensionless_f2 / t_ms
+    f2 = dimless_f2 / t_ms
+
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the dominant post-merger gravitational-wave spectral peak frequency f2 [kHz]
+    of a binary neutron star (BNS) remnant using a standard quasi-universal relation.
+    
+    Inputs:
+    X[:, 0] = mass (M) [M_sun]
+    X[:, 2] = kap2t (kappa_2^T) - Combined tidal coupling constant
+    
+    Output:
+    f2 [kHz] - 1-D numpy array of predicted frequencies
+    """
+    M = X[:, 0]
+    kap2t = X[:, 2]
+    
+    # Quasi-universal relation based on Bernuzzi et al. (2015) 
+    # relating the dimensionless peak frequency G*M*omega_2/c^3 to kappa_2^T.
+    # G*M*omega_2/c^3 \approx 0.69 * (kappa_2^T)^(-0.22)
+    # Converting to f2 in kHz: f2 = (G*M*omega_2/c^3) / (2 * pi * G * M_sun / c^3 * M_tot)
+    # where G * M_sun / c^3 \approx 4.925491e-6 seconds.
+    f2 = 22.3 * np.power(kap2t, -0.22) / M
+    
+    return f2
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract total mass M and combined tidal coupling constant kappa2t
+    M = X[:, 0]
+    kappa2t = X[:, 2]
+
+    # Universal relation for the dimensionless post-merger peak angular frequency
+    # omega_hat = G * M * omega_2 / c^3 as a function of kappa_2^T.
+    # This standard fit is based on Bernuzzi et al. (2015) and Breschi et al. (2019).
+    omega_hat = 0.356 * (1.0 + 0.0039 * kappa2t) / (1.0 + 0.0125 * kappa2t)
+
+    # Conversion factor from dimensionless angular frequency to physical frequency in kHz:
+    # G * M_sun / c^3 approx 4.925491e-6 seconds
+    # f [kHz] = omega_hat / (2 * pi * (G * M_sun / c^3) * M * 1000)
+    f2 = omega_hat / (2.0 * np.pi * 4.925491e-3 * M)
+
+    return f2
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = total mass M [M_sun]
+    # X[:, 1] = mass ratio q (m2/m1 <= 1)
+    # X[:, 2] = kap2t (\kappa_2^T) - combined tidal coupling constant
+    M = X[:, 0]
+    q = X[:, 1]
+    kappa2T = X[:, 2]
+
+    # G * M_sun / c^3 in seconds
+    G_Msun_c3 = 4.925491e-6
+
+    # Symmetric mass ratio
+    eta = q / (1.0 + q) ** 2
+
+    # Standard rational function fit for the dimensionless frequency f_bar = G * M * f_2 / c^3
+    # based on Bernuzzi et al. (2015) and Dietrich et al. (2019)
+    n1 = 0.0031
+    d1 = 0.0094
+    f_bar = 0.0758 * (1.0 + n1 * kappa2T) / (1.0 + d1 * kappa2T)
+
+    # Mass ratio asymmetry correction
+    f_bar *= 1.0 + 0.15 * (0.25 - eta)
+
+    # Convert dimensionless frequency back to f_2 in kHz
+    # f_2 [Hz] = f_bar / (M * G_Msun_c3)
+    # f_2 [kHz] = f_2 [Hz] / 1000
+    f2_kHz = f_bar / (M * G_Msun_c3 * 1000.0)
+
+    return f2_kHz
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract total mass (M) and combined tidal coupling constant (kap2t)
+    M = X[:, 0]
+    kap2t = X[:, 2]
+
+    # Quasi-universal relation for the dimensionless post-merger peak frequency (M * \omega_2)
+    # derived from numerical relativity simulations (e.g., Bernuzzi et al. 2015).
+    omega_2 = 0.370 * (1.0 + 0.0011 * kap2t) / (1.0 + 0.0037 * kap2t)
+
+    # Conversion factor from dimensionless frequency to kHz:
+    # c^3 / (2 * pi * G * M_sun * 1000) ~ 32.3126 kHz
+    factor = 32.3126
+
+    # Calculate f2 in kHz
+    f2 = (omega_2 * factor) / M
+
+    return f2

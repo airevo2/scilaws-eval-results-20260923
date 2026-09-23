@@ -1,0 +1,67 @@
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    a = 8.0   # GR a-value (global annual seismicity)
+    b = 1.0   # GR b-value (canonical global average)
+    log10_N = a - b * M
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard Gutenberg-Richter law for global annual seismicity
+    # log10(N) = a - b * M
+    a = 8.0
+    b = 1.0
+    
+    M_threshold = X[:, 0]
+    log10_N = a - b * M_threshold
+    
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_threshold = X[:, 0]
+    
+    # Global Gutenberg-Richter frequency-magnitude distribution coefficients
+    a = 8.0
+    b = 1.0
+    
+    log10_N = a - b * M_threshold
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Gutenberg-Richter frequency-magnitude relationship (global average).
+    
+    log10(N) = a - b * M
+    
+    where N is the cumulative annual number of earthquakes with Mw >= M.
+    Canonical global-average coefficients: a = 8.0, b = 1.0
+    """
+    a = 8.0
+    b = 1.0
+    M = X[:, 0]
+    return a - b * M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gutenberg-Richter law for global seismicity
+    # log10(N) = a - b * M
+    a = 8.0
+    b = 1.0
+    M_threshold = X[:, 0]
+    return a - b * M_threshold

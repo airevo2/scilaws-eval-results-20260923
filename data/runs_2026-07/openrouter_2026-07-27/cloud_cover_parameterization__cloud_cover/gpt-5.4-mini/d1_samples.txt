@@ -1,0 +1,186 @@
+import numpy as np
+
+def predict(X):
+    """
+    Diagnose cloud fraction (cloud cover) from cloud water/ice, humidity, and related state variables.
+    Canonical simple closed-form bulk cloud-cover relationship based on a critical-total-water / relative-humidity
+    style saturation adjustment:
+    
+        C = clip( (q_t - q_crit) / (q_sat - q_crit), 0, 1 )
+    
+    with a humidity-based fallback when condensate is negligible.
+    """
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+    T = X[:, 3]
+    p = X[:, 4]
+    q_v = X[:, 5]
+
+    # Total cloud condensate
+    q_l = q_c + q_i
+
+    # Saturation specific humidity over liquid water (Bolton/Tetens-style Clausius-Clapeyron)
+    # e_s(T) in Pa
+    Tc = T - 273.15
+    e_s = 611.2 * np.exp((17.67 * Tc) / (Tc + 243.5))
+    eps = 0.622
+    q_sat = eps * e_s / np.maximum(p - (1.0 - eps) * e_s, 1.0)
+
+    # Total water mixing ratio (vapour + condensate)
+    q_t = q_v + q_l
+
+    # Critical total water for onset of cloud cover: use saturation limit
+    q_crit = q_sat
+
+    # Bulk cloud fraction from excess total water above saturation
+    C_bulk = (q_t - q_crit) / np.maximum(q_sat, 1e-12)
+    C_bulk = np.clip(C_bulk, 0.0, 1.0)
+
+    # Humidity-based cloud fraction estimate (commonly used as a simple subgrid closure)
+    C_rh = np.clip((RH - 0.8) / 0.2, 0.0, 1.0)
+
+    # If condensate exists, favor bulk condensate-based closure; otherwise use RH-based closure
+    C = np.where(q_l > 0.0, C_bulk, C_rh)
+
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Diagnose sub-grid cloud area fraction (cloud cover) from humidity and cloud condensate.
+    Standard closed-form choice: a simple bounded saturation/cloudiness relation based on
+    total cloud condensate and relative humidity.
+
+    Inputs
+    ------
+    X[:,0] = q_c   cloud liquid water mixing ratio [kg/kg]
+    X[:,1] = q_i   cloud ice mixing ratio [kg/kg]
+    X[:,2] = RH    relative humidity w.r.t. liquid water [-]
+    X[:,3] = T     temperature [K]            (unused)
+    X[:,4] = p     pressure [Pa]              (unused)
+    X[:,5] = q_v   water vapor mixing ratio [kg/kg] (unused)
+    X[:,6] = z_g   geometric height [m]       (unused)
+    X[:,7] = dz_RH vertical RH gradient [1/m] (unused)
+
+    Returns
+    -------
+    C : 1-D numpy array, cloud cover in [0, 1]
+    """
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+
+    # Total cloud condensate
+    q_cld = q_c + q_i
+
+    # Common bounded diagnostic: cloud cover increases with RH and cloud condensate.
+    # The constants below are generic scale factors chosen to yield a smooth [0,1] response.
+    rh_term = np.clip((RH - 0.7) / 0.3, 0.0, 1.0)
+    q_term = 1.0 - np.exp(-q_cld / 1.0e-5)
+
+    C = 1.0 - (1.0 - rh_term) * (1.0 - q_term)
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+    T = X[:, 3]
+    p = X[:, 4]
+    q_v = X[:, 5]
+    z_g = X[:, 6]
+    dz_RH = X[:, 7]
+
+    # Common diagnostic cloud cover parameterization:
+    # cloud fraction increases with total condensate and relative humidity,
+    # and is reduced by negative RH gradient / higher entrainment-drying tendency.
+    q_t = q_c + q_i
+
+    # Critical RH threshold from a simple Clausius-type / condensate-dependent closure
+    # (bounded to keep within physical range)
+    RH_crit = 0.80 + 0.15 * np.exp(-8000.0 * q_t) - 0.05 * np.tanh((T - 273.15) / 20.0)
+    RH_crit = np.clip(RH_crit, 0.50, 0.98)
+
+    # Subgrid cloud fraction: linear ramp between RH_crit and saturation,
+    # modulated by condensate and vertical RH structure.
+    frac_rh = (RH - RH_crit) / (1.0 - RH_crit + 1e-12)
+    frac_rh = np.clip(frac_rh, 0.0, 1.0)
+
+    # Condensate enhancement (very common in bulk cloud-cover closures)
+    cond_factor = 1.0 - np.exp(-5000.0 * q_t)
+
+    # Vertical humidity-gradient effect: stronger positive gradient favors more cloudiness
+    grad_factor = 1.0 / (1.0 + np.exp(-4000.0 * dz_RH))
+
+    # Weak dependence on pressure and humidity amount (kept bounded)
+    moist_factor = np.clip((q_v / (q_v + 0.002 + 1e-12)), 0.0, 1.0)
+    pres_factor = np.clip((p / 100000.0) ** 0.25, 0.2, 1.3)
+
+    C = frac_rh * cond_factor * grad_factor * moist_factor * pres_factor
+
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+    T = X[:, 3]
+    p = X[:, 4]
+    q_v = X[:, 5]
+    z_g = X[:, 6]
+    dz_RH = X[:, 7]
+
+    # Common diagnostic cloud fraction parameterization:
+    # cloud cover increases with humidity and condensate, and decreases with
+    # the degree of subsaturation. A widely used closed-form form is a
+    # bounded sigmoid-like function of relative humidity.
+    #
+    # Here we use a standard smooth closure with condensate dependence:
+    #   C = 1 - exp(-A * q_cond * max(RH - RH0, 0) / max(1e-12, 1 - RH))
+    # bounded to [0, 1]
+    #
+    # where q_cond = q_c + q_i and RH0 is a threshold near saturation.
+    q_cond = q_c + q_i
+    RH0 = 0.7
+    A = 1500.0
+
+    supersat = np.maximum(RH - RH0, 0.0)
+    denom = np.maximum(1e-12, 1.0 - RH)
+    arg = A * q_cond * supersat / denom
+
+    C = 1.0 - np.exp(-arg)
+    C = np.clip(C, 0.0, 1.0)
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Most commonly used diagnostic cloud fraction closure:
+    # Sundqvist-type cloud cover relation based on total condensate.
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+
+    # Total cloud condensate mixing ratio
+    q_cl = q_c + q_i
+
+    # Critical condensate threshold (standard order-of-magnitude constant)
+    q_crit = 1.0e-6  # kg/kg
+
+    # Cloud fraction
+    C = np.where(q_cl <= q_crit, 0.0, 1.0 - np.exp(-q_cl / q_crit))
+
+    return np.clip(C, 0.0, 1.0)

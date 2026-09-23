@@ -1,0 +1,102 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log Gross Metropolitan Product (ln Y, in millions of chained 2017 USD)
+    from log Metropolitan Statistical Area population (ln N).
+
+    Uses the standard urban scaling relationship:
+        ln Y = alpha + beta * ln N
+    with superlinear scaling for GDP (beta ≈ 1.126) as reported by
+    Bettencourt, Lobo, Helbing, Kühnert (2007) PNAS.
+    The intercept is calibrated to a typical U.S. per capita GDP of
+    approximately $55,000 at a population of 1 million.
+    """
+    # Scaling exponent for GDP (superlinear, ~1.126)
+    beta = 1.126
+    # Intercept: ln(coefficient) matching typical real GDP per capita
+    # c ≈ 0.00965 so that for N=1,000,000, Y ≈ 55,000 million.
+    alpha = -4.640  # ln(0.00965)
+    return alpha + beta * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log Gross Metropolitan Product (ln Y) from log population (ln N)
+    using the standard urban scaling law: ln Y = ln A + beta * ln N.
+    
+    Parameters:
+    X : np.ndarray, shape (n, 1)
+        X[:, 0] = log_pop (ln N)
+    
+    Returns:
+    np.ndarray, shape (n,)
+        Predicted log_GMP (ln Y)
+    """
+    # Urban scaling law coefficients (superlinear scaling for GDP)
+    ln_A = 0.0      # Intercept (log of scaling constant)
+    beta = 1.15     # Scaling exponent (typical value for urban GDP)
+    
+    log_pop = X[:, 0]
+    return ln_A + beta * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log GMP (ln Y) from log population (ln N) using the standard
+    urban scaling law: Y = c * N^beta  =>  ln Y = alpha + beta * ln N.
+    
+    Coefficients are typical values from the urban scaling literature
+    (e.g., Bettencourt, 2013; Bettencourt et al., 2007).
+    """
+    log_pop = X[:, 0]  # ln N, in persons
+    
+    # Scaling exponent (superlinear scaling for GDP)
+    BETA = 1.15
+    
+    # Intercept calibrated to roughly match typical U.S. MSA levels
+    # (e.g., for N ~ 1,000,000 persons, GMP ~ 60,000 million USD => ln Y ~ 11.0)
+    ALPHA = -4.6
+    
+    return ALPHA + BETA * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard urban scaling law for metropolitan GDP: ln Y = α + β ln N
+    # β ≈ 1.126 from Bettencourt et al. (2010) for US MSAs
+    # α calibrated to match per-capita GDP of ~$60,000 at N=1,000,000
+    INTERCEPT = -4.554
+    SLOPE = 1.126
+    return INTERCEPT + SLOPE * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log GMP (natural log of Gross Metropolitan Product in millions of
+    chained 2017 USD) from log population.
+
+    Uses the canonical urban scaling law:
+        ln Y = ln a + beta * ln N
+    with beta = 1.15 (superlinear scaling of urban productivity) and an
+    intercept calibrated to typical U.S. MSA values.
+    """
+    # intercept
+    ln_a = -4.9
+    # scaling exponent for urban GDP
+    beta = 1.15
+
+    log_pop = X[:, 0]
+    log_GMP = beta * log_pop + ln_a
+    return log_GMP

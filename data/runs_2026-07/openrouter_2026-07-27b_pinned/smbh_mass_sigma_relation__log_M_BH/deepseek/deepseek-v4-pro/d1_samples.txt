@@ -1,0 +1,122 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_BH/M_sun) using the M-sigma relation, the most commonly
+    cited closed-form scaling relation for dynamically measured SMBH masses.
+    Reference: Kormendy & Ho (2013), ARA&A, 51, 511.
+    """
+    sigma0 = X[:, 0]  # central velocity dispersion in km/s
+    log_M_BH = 8.49 + 4.38 * np.log10(sigma0 / 200.0)
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = sigma0, central stellar velocity dispersion in km/s
+    sigma = X[:, 0]
+    # Standard M-sigma relation (Tremaine et al. 2002; most commonly cited)
+    # log10(M_BH / M_sun) = 8.13 + 4.02 * log10(sigma / 200)
+    log_M_BH = 8.13 + 4.02 * np.log10(sigma / 200.0)
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the base-10 logarithm of the supermassive black hole mass
+    log10(M_BH / M_sun) using the scaling relation from Jin & Davis (2023),
+    which incorporates the central stellar velocity dispersion (sigma0),
+    spheroid stellar mass (log_M_sph), bulge-to-total ratio (B_T), and
+    a morphological flag for pseudobulges.
+    """
+    sigma = X[:, 0]          # sigma0 in km/s
+    logM_sph = X[:, 1]       # log10(M_sph / M_sun)
+    B_T = X[:, 2]            # bulge-to-total luminosity ratio
+    P = X[:, 3]              # 1 for pseudobulge, 0 otherwise
+
+    # Reference values for centring the relation
+    sigma_ref = 200.0        # km/s
+    M_sph_ref = 11.0         # log10 M_sun
+    B_T_ref = 0.5
+
+    # Fitted coefficients (approximate values from the literature)
+    a = 8.50                 # intercept at reference point and P=0
+    b = 4.20                 # slope for log10(sigma / sigma_ref)
+    c = 0.92                 # slope for (logM_sph - M_sph_ref)
+    d = 0.18                 # coefficient for (B_T - B_T_ref)
+    e = -0.62                # offset applied when P=1 (pseudobulge)
+
+    log_M_BH = (
+        a
+        + b * np.log10(sigma / sigma_ref)
+        + c * (logM_sph - M_sph_ref)
+        + d * (B_T - B_T_ref)
+        + e * P
+    )
+    return log_M_BH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form scaling relation for dynamically measured supermassive 
+    black hole mass, combining the M-sigma and M-M_sph relations with 
+    a bulge-to-total correction and a pseudobulge offset. 
+    Coefficients are drawn from the consensus literature (e.g., Kormendy & Ho 2013;
+    Graham & Scott 2013; Sahu et al. 2019; Jin & Davis 2023).
+    """
+    # Unpack inputs
+    sigma0 = X[:, 0]          # central stellar velocity dispersion [km/s]
+    logM_sph = X[:, 1]        # log10(spheroid stellar mass / M_sun)
+    B_T = X[:, 2]             # bulge-to-total luminosity ratio (0 < B_T <= 1)
+    Pseudobulge = X[:, 3]     # 1 for pseudobulge, 0 for classical bulge/elliptical
+
+    # Fitted coefficients (typical values from multi-variate regressions)
+    # Intercept for classical bulges (sigma = 200 km/s, M_sph = 10^11 M_sun, B_T=1)
+    A = 8.20                   
+    # M-sigma slope
+    B = 4.00                   
+    # M-M_sph slope (complementary to sigma)
+    C = 0.50                   
+    # Bulge-to-total ratio slope
+    D = 0.35                   
+    # Pseudobulge offset (pseudobulges host systematically lower mass BHs)
+    E = -0.60                  
+
+    # Reference values for scaling
+    sigma_ref = 200.0          # km/s
+    M_sph_ref = 11.0           # log10(M_sph/M_sun)
+
+    logM_BH = (A 
+               + B * np.log10(sigma0 / sigma_ref) 
+               + C * (logM_sph - M_sph_ref) 
+               + D * np.log10(B_T) 
+               + E * Pseudobulge)
+    return logM_BH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_BH/M_sun) using the standard M-sigma relation.
+    Input X is a 2-D array with columns:
+    X[:,0] = sigma0 [km/s]
+    X[:,1] = log_M_sph [log10(M_sun)] (not used in this canonical relation)
+    X[:,2] = B_T (not used)
+    X[:,3] = Pseudobulge (not used)
+
+    Uses the relation from McConnell & Ma (2013) for all galaxy types:
+    log(M_BH/M_sun) = 8.32 + 5.64 * log10(sigma0 / 200 km/s)
+    """
+    sigma0 = X[:, 0]
+    log_M_BH = 8.32 + 5.64 * np.log10(sigma0 / 200.0)
+    return log_M_BH

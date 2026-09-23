@@ -1,0 +1,155 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = T_ei [K] (Evaporator inlet temperature)
+    # X[:, 1] = T_ci [K] (Condenser inlet temperature)
+    # X[:, 2] = Q_e [kW] (Evaporator cooling load)
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+
+    # Typical parameters for the Gordon-Ng universal chiller model:
+    # P1: Internal entropy production parameter (kW/K)
+    # P2: Heat loss/gain parameter (kW)
+    # P3: Total equivalent thermal resistance (K/kW)
+    P1 = 0.05  # kW/K
+    P2 = 5.0  # kW
+    P3 = 0.0005  # K/kW
+
+    # Gordon-Ng closed-form expression for 1/COP
+    numerator = -1.0 + T_ci / T_ei + (P1 * T_ci + P2) / Q_e + P3 * Q_e / T_ei
+    denominator = 1.0 - P3 * Q_e / T_ei
+    one_over_cop = numerator / denominator
+
+    # Return 1/COP - 1
+    return one_over_cop - 1.0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    T_ei = X[:, 0]  # Evaporator inlet temperature [K]
+    T_ci = X[:, 1]  # Condenser inlet temperature [K]
+    Q_e = X[:, 2]  # Cooling load [kW]
+
+    # Gordon-Ng universal chiller model parameters (typical centrifugal chiller)
+    # a1: Internal entropy production parameter [kW/K]
+    # a2: Heat leakage parameter [kW]
+    # a3: Chiller thermal resistance parameter [K/kW]
+    a1 = 0.15
+    a2 = 15.0
+    a3 = 0.0015
+
+    # Gordon-Ng linearized model equation
+    term1 = a1 * T_ei / Q_e
+    term2 = a2 * (T_ci - T_ei) / (T_ci * Q_e)
+    term3 = a3 * (Q_e / T_ci) * (1.0 - T_ei / T_ci)
+
+    y = term1 + term2 + term3
+
+    # Solve for 1/COP - 1
+    # Since y = (T_ei / T_ci) * (1 + 1/COP) - 1
+    # We have: 1/COP - 1 = (y + 1) * (T_ci / T_ei) - 2
+    one_over_cop_minus_1 = (y + 1.0) * (T_ci / T_ei) - 2.0
+
+    return one_over_cop_minus_1
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = T_ei [K] — Evaporator inlet temperature
+    # X[:, 1] = T_ci [K] — Condenser inlet temperature
+    # X[:, 2] = Q_e [kW] — Evaporator cooling load
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+
+    # Standard Gordon-Ng thermodynamic chiller model coefficients
+    # representing typical centrifugal/screw chiller performance.
+    a0 = 15.0  # Constant heat loss term [kW]
+    a1 = 0.05  # Heat loss coefficient [kW/K]
+    a2 = 0.10  # Evaporator heat leak coefficient [kW/K]
+    a3 = 0.002  # Heat exchanger thermal resistance coefficient [K/kW]
+
+    # Reciprocal COP based on the Gordon-Ng universal chiller model:
+    # 1/COP = -1 + T_ci/T_ei + (a0 + a1*T_ci + a2*(T_ci - T_ei))/Q_e + a3*Q_e*(T_ci - T_ei)/(T_ei**2)
+    one_over_cop = (
+        -1.0
+        + (T_ci / T_ei)
+        + (a0 + a1 * T_ci + a2 * (T_ci - T_ei)) / Q_e
+        + a3 * Q_e * (T_ci - T_ei) / (T_ei**2)
+    )
+
+    # Return the requested quantity: 1/COP - 1
+    return one_over_cop - 1.0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs
+    T_ei = X[:, 0]  # Evaporator inlet temperature [K]
+    T_ci = X[:, 1]  # Condenser inlet temperature [K]
+    Q_e = X[:, 2]  # Evaporator cooling load [kW]
+
+    # Representative fitted coefficients for the Gordon-Ng universal chiller model
+    a0 = -3.5  # kW
+    a1 = 0.08  # kW/K
+    a2 = -1.2  # kW
+
+    # Gordon-Ng formulation for 1/COP:
+    # 1/COP = -1 + T_ci/T_ei + (a0 + a1*T_ci + a2*(T_ci/T_ei)) / Q_e
+    # Subtracting 1 from both sides yields the target quantity:
+    one_over_COP_minus_1 = (
+        (T_ci / T_ei) - 2.0 + (a0 + a1 * T_ci + a2 * (T_ci / T_ei)) / Q_e
+    )
+
+    return one_over_COP_minus_1
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the quantity 1/COP - 1 using the Gordon-Ng universal chiller model.
+
+    Inputs:
+    - X[:, 0]: T_ei (Evaporator inlet water temperature) [K]
+    - X[:, 1]: T_ci (Condenser inlet water temperature) [K]
+    - X[:, 2]: Q_e (Evaporator cooling load) [kW]
+
+    Output:
+    - 1-D numpy array of 1/COP - 1 [dimensionless]
+    """
+    T_ei = X[:, 0]
+    T_ci = X[:, 1]
+    Q_e = X[:, 2]
+
+    # Standard empirical parameters for the Gordon-Ng model
+    # representing a typical water-cooled centrifugal chiller
+    a1 = 0.051  # kW/K (heat loss coefficient)
+    a2 = 14.8  # kW (internal entropy production parameter)
+    a3 = 0.0012  # K/kW (heat exchanger thermal resistance parameter)
+
+    # Gordon-Ng formulation for 1/COP
+    one_over_cop = (
+        -1.0
+        + (T_ci / T_ei)
+        + (a1 * T_ci / Q_e)
+        + (a2 * (T_ci - T_ei) / (Q_e * T_ei))
+        + (a3 * (Q_e / T_ei) * (T_ci / T_ei - 1.0))
+    )
+
+    return one_over_cop - 1.0

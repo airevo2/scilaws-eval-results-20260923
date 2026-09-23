@@ -1,0 +1,144 @@
+import numpy as np
+
+def predict(X):
+    """
+    Log sex ratio of mortality: ln(m_male / m_female)
+    
+    Derived from the Gompertz model m(x) = a * exp(b * x):
+        ln(m_m / m_f) = ln(a_m / a_f) + (b_m - b_f) * x
+    
+    With time-varying Gompertz parameter differences:
+        delta_a(t) = ln(a_m/a_f) = a0 + a1 * (t - 1900)
+        delta_b(t) = (b_m - b_f) = b0 + b1 * (t - 1900)
+    """
+    x = X[:, 0]  # age (years, 30-95)
+    t = X[:, 1]  # calendar year
+
+    t_c = t - 1900.0
+
+    # Gompertz log-intercept difference: ln(a_m / a_f)
+    a0 = 0.71       # at reference year 1900
+    a1 = 0.0016     # secular trend per calendar year
+
+    # Gompertz aging-rate difference: (b_m - b_f)
+    b0 = -0.006     # at reference year 1900
+    b1 = -0.00001   # secular trend per calendar year
+
+    delta_a = a0 + a1 * t_c
+    delta_b = b0 + b1 * t_c
+
+    ln_alpha = delta_a + delta_b * x
+    return ln_alpha
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    
+    # Gompertz derivation for the log sex ratio of central death rates:
+    # If male and female mortality follow the Gompertz law, m(x) = a * exp(b * x),
+    # then the log sex ratio is a linear function of age:
+    # ln(m_m / m_f) = ln(a_m / a_f) + (b_m - b_f) * x
+    # 
+    # In adulthood (ages 30-95), the male-to-female mortality ratio typically 
+    # declines with age, implying that the male rate of aging (b_m) is less 
+    # than the female rate of aging (b_f), making the slope negative.
+    # The year (X[:, 1]) defines the Lexis surface but the canonical Gompertz-derived 
+    # closed-form age profile depends strictly on age.
+    
+    beta_0 = 1.5    # ln(a_m / a_f): baseline log ratio
+    beta_1 = -0.015 # (b_m - b_f): difference in Gompertz aging parameters
+    
+    return beta_0 + beta_1 * age
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Gompertz-derived log sex ratio of mortality
+    # m(x) = a * exp(b * x)
+    # ln(m_male / m_female) = ln(a_m / a_f) + (b_m - b_f) * x
+    
+    # Canonical fitted coefficients for adult/old ages (30-95)
+    # A = ln(a_m / a_f) : baseline log ratio at age 0 (extrapolated)
+    # B = (b_m - b_f)   : difference in the rate of mortality increase
+    # Males have higher baseline mortality (A > 0) but a slower rate of 
+    # exponential increase with age compared to females (B < 0), 
+    # causing the sex differential to narrow at older ages (Glei & Horiuchi, 2007).
+    
+    A = 1.35
+    B = -0.012
+    
+    # Period effect (optional but accounts for the mid-20th century smoking epidemic)
+    # Peak sex gap occurred roughly around 1980.
+    t_ref = 1980.0
+    C = 0.002  # amplitude of period effect
+    period_effect = C * np.exp(-0.001 * (t - t_ref)**2)
+    
+    ln_alpha = A + B * x + period_effect
+    
+    return ln_alpha
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log sex ratio of mortality: ln(m_male / m_female).
+    
+    Derived from the Gompertz law: m(x) = a * exp(b * x)
+    => ln(m_m / m_f) = ln(a_m / a_f) + (b_m - b_f) * x
+                       = A(t) + B(t) * x
+    
+    where A(t) and B(t) are linear in calendar time (Glei & Horiuchi, 2007).
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+    tau = year - 1950.0  # center calendar time at 1950
+
+    # Gompertz parameter differences (baseline at 1950)
+    a0 = 0.725       # ln(a_m / a_f) at tau = 0
+    b0 = -0.0075     # (b_m - b_f) at tau = 0  [negative: gap narrows with age]
+
+    # Linear time drifts of the Gompertz parameter differences
+    a1 = 0.002       # d/dtau [ln(a_m / a_f)]
+    b1 = -0.00002    # d/dtau [(b_m - b_f)]
+
+    # Closed-form: ln(alpha) = A(t) + B(t) * x
+    ln_alpha = (a0 + a1 * tau) + (b0 + b1 * tau) * age
+
+    return ln_alpha
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Gompertz mortality model: m(x) = a * exp(b * x)
+    # The log sex ratio derives as: ln(m_m / m_f) = ln(a_m / a_f) + (b_m - b_f) * x
+    
+    # Representative Gompertz difference parameters for high-income populations
+    delta_ln_a_base = 1.8      # Baseline log ratio of initial mortality (a_m / a_f)
+    delta_b = -0.018           # Difference in Gompertz aging rates (b_m - b_f)
+    
+    # Temporal trend: the sex differential widened until the 1970s and has since narrowed
+    ref_year = 1975
+    year_trend = -0.006 * (year - ref_year)
+    
+    # Time-varying baseline
+    delta_ln_a = delta_ln_a_base + year_trend
+    
+    # Standard closed-form Gompertz derivation for log sex ratio
+    log_sex_ratio = delta_ln_a + delta_b * age
+    
+    return log_sex_ratio

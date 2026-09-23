@@ -1,0 +1,172 @@
+task_id: nuclear_binding_energy_ame2020__BE_per_A
+domain: astronomy / nuclear_astrophysics
+license: CC0-1.0
+
+# Type I — each nucleus is an independent row; no cluster structure.
+type: typeI
+has_group_id: false
+
+# One-paragraph task statement — what to predict and from what. (Distinct
+# from `context` below, which is domain background.)
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  Nuclear binding energy is the energy that holds an atomic nucleus together against the forces among its protons and neutrons, a central quantity in nuclear physics.
+
+target:
+  name: BE_per_A
+  symbol: B/A
+  unit: MeV
+  description: Binding energy per nucleon — total nuclear binding energy divided by mass number A.
+  range: [0.961639, 8.794555]
+
+inputs:
+  - name: Z
+    symbol: Z
+    unit: count
+    description: Proton number (atomic number).
+    range: [1, 110]
+  - name: N
+    symbol: N
+    unit: count
+    description: Neutron number.
+    range: [1, 160]
+  - name: A
+    symbol: A
+    unit: count
+    description: Mass number, A = Z + N.
+    range: [2, 270]
+  - name: NZ_diff
+    symbol: N-Z
+    unit: count
+    description: Neutron excess, N minus Z.
+    range: [-5, 59]
+  - name: asym
+    symbol: I
+    unit: dimensionless
+    description: Isospin asymmetry, (N - Z) / A.
+    range: [-0.5, 0.666667]
+  - name: coul_proxy
+    symbol: Z(Z-1)/A^(1/3)
+    unit: dimensionless
+    description: Coulomb proxy, Z(Z-1) / A^(1/3) — proportional to electrostatic self-energy.
+    range: [0.0, 1857.384241]
+  - name: pair
+    symbol: delta
+    unit: categorical
+    description: Parity indicator — +1 even-even, 0 odd-mass, -1 odd-odd.
+    categories: [-1, 0, 1]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv     # nuclei with Z <= 82 (well-measured region)
+  test:  data/test.csv      # nuclei with Z >= 83 (superheavy extrapolation)
+n_train: 2078
+n_test: 470
+
+# Train/test split: feature-axis OOD on proton number Z (cutoff Z=82/83,
+# the lead/bismuth boundary). Tests extrapolation of a universal closed-form
+# mass model from the well-measured chart into the superheavy frontier.
+
+# === Reference baselines ===
+# Four liquid-drop / macroscopic mass models.
+references:
+  - id: weizsacker_1935
+    label: Weizsäcker 1935 — semi-empirical mass formula (liquid-drop, Eq. 51)
+    formula_file: formulas/weizsacker_1935.py
+    reference_pdf: reference/bethe_1935.pdf
+    n_law_constants: 5        # alpha, beta, gamma, delta, r0
+    n_other_constants: 1      # e2
+    n_local_params: 0
+    measured: {rmse: 4.8989, r2: -1444.0497}
+  - id: duflo_1995
+    label: Duflo-Zuker 1995 — 6p asymptotic liquid-drop limit (Table III)
+    formula_file: formulas/duflo_1995.py
+    reference_pdf: reference/duflo_1995.pdf
+    n_law_constants: 6        # a_vol, a_surf, a_sym, a_ssy, a_pair, a_coul
+    n_other_constants: 1      # vc_coef
+    n_local_params: 0
+    measured: {rmse: 0.0211, r2: 0.9731}
+  - id: moller_1995
+    label: Möller-Nix-Myers-Swiatecki 1995 — FRDM macroscopic, spherical limit (Eq. 40)
+    formula_file: formulas/moller_1995.py
+    reference_pdf: reference/moller_1995.pdf
+    n_law_constants: 9        # a1, a2, J, Q, c1, c4, c_a, W, r_pair
+    n_other_constants: 1      # h_np
+    n_local_params: 0
+    measured: {rmse: 1.3572, r2: -109.9149}
+  - id: wang_2014
+    label: Wang-Liu-Zhao 2014 — WS4 liquid-drop component (Eq. 1)
+    formula_file: formulas/wang_2014.py
+    reference_pdf: reference/wang_2014.pdf
+    n_law_constants: 9        # a_v, a_s, a_c, c_sym, kappa, xi, a_pair, c_w, kappa_s
+    n_other_constants: 4      # coul_fs, i0_slope, i0_offset, ee_pair
+    n_local_params: 0
+    measured: {rmse: 0.0145, r2: 0.9874}
+
+# Candidate prior constants — the `priors` prompt slot. A small set: two
+# genuine nuclear-physics constants traceable to the reference papers, mixed
+# with distractors from unrelated physics. The SR system must select which
+# are relevant. `_role` is audit-only (stripped before the priors are shown).
+priors:
+  - name: e2_coulomb
+    value: 1.4399764
+    unit: MeV*fm
+    description: Coulomb coupling e^2 — electrostatic energy of two unit charges 1 fm apart.
+    source: CODATA; used in the Coulomb terms of Weizsäcker 1935 and Möller 1995.
+    _role: candidate
+  - name: r0_nuclear_radius
+    value: 1.16
+    unit: fm
+    description: Nuclear-radius constant in R = r0 * A^(1/3).
+    source: Möller-Nix-Myers-Swiatecki 1995 (stated value, 1.16 fm).
+    _role: candidate
+  - name: magic_number_N126
+    value: 126
+    unit: dimensionless
+    description: A nuclear shell-closure ("magic") nucleon number.
+    source: AME2020 evaluation and the mass-model literature — shell closures at N/Z = 2, 8, 20, 28, 50, 82, 126. (Not used by a pure liquid-drop formula.)
+    _role: distractor
+  - name: compressibility_const
+    value: 60.0
+    unit: MeV
+    description: Pre-exponential constant of the nuclear-compressibility correction term.
+    source: Möller-Nix-Myers-Swiatecki 1995 constant table. (Not used by the macroscopic spherical-limit formula.)
+    _role: distractor
+  - name: spin_orbit_strength
+    value: 26.4796
+    unit: dimensionless
+    description: Spin-orbit strength parameter of a Woods-Saxon single-particle potential.
+    source: Wang-Liu-Zhao 2014 WS4 Table I. (Parameterises the shell correction, not the liquid-drop component.)
+    _role: distractor
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        9
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# Built by 0_harness/evaluation/extract_validity_rubrics.py (gpt-5.5),
+# trimmed in review: surface-symmetry / pairing / Wigner are 3/4 (not in
+# the baseline intersection); the "BE/A < nucleon rest mass" bound was
+# dropped (inviolable but never binds, ~939 MeV vs real BE/A ≤ 8.8 MeV);
+# "BE/A non-negative for bound nuclei" was also dropped — it is
+# tautological for bound nuclei (BE>0 by definition), every sane model
+# predicts positive on the data, and the mini judge was inconsistent on
+# it across baselines.
+validity_rubrics:
+  - includes Coulomb repulsion among protons, including finite-size or exchange corrections
+  - includes a bulk volume binding term from saturated short-range nuclear attraction
+  - includes a surface-energy correction for reduced binding of nucleons at the nuclear surface
+  - includes an isospin-asymmetry penalty for neutron-proton imbalance
+  - predicts a finite real BE/A for every nucleus in the Z,N domain
+  - for mirror nuclei with the same A and |N-Z|, the more proton-rich nucleus has no larger predicted BE/A
+
+# === Scoring ===
+metric: rmse              # RMS error on B/A — canonical for nuclear mass models
+best_baseline: 0.0145     # wang_2014 rmse on data/test.csv

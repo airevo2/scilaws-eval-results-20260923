@@ -1,0 +1,57 @@
+import numpy as np
+
+def predict(X):
+    # Langmuir isotherm: q = q_sat * (K*P) / (1 + K*P)
+    P = X[:, 0]
+    q_sat = 5.0   # mmol/g, saturation capacity
+    K = 0.5       # 1/bar, Langmuir affinity constant
+    q = q_sat * (K * P) / (1.0 + K * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Langmuir isotherm: q = qmax * b * P / (1 + b * P)
+    P = X[:, 0]
+    qmax = 5.0   # mmol/g, saturation capacity
+    b = 0.5      # 1/bar, Langmuir affinity constant
+    q = qmax * b * P / (1.0 + b * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Langmuir isotherm: q = qmax * b * P / (1 + b * P)
+    P = X[:, 0]
+    qmax = 5.0   # mmol/g, saturation capacity
+    b = 0.5      # 1/bar, Langmuir affinity constant
+    q = qmax * b * P / (1.0 + b * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Langmuir isotherm: q = qmax * b * P / (1 + b * P)
+    P = X[:, 0]
+    qmax = 5.0   # mmol/g, saturation capacity
+    b = 1.0      # 1/bar, Langmuir affinity constant
+    q = qmax * b * P / (1.0 + b * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Langmuir isotherm: q = q_max * b * P / (1 + b * P)
+    P = X[:, 0]
+    q_max = 5.0   # mmol/g, saturation capacity
+    b = 1.0       # 1/bar, Langmuir affinity constant
+    q = q_max * b * P / (1.0 + b * P)
+    return q

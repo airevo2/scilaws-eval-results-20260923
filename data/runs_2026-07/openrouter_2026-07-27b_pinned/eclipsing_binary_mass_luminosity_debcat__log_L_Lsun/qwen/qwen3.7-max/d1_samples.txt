@@ -1,0 +1,51 @@
+import numpy as np
+
+def predict(X):
+    return 3.5 * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(L/L_sun) using the canonical Mass-Luminosity relation.
+    X[:, 0] is log10(M/M_sun).
+    X[:, 1] is metallicity (ignored as it is a distractor).
+    """
+    log_M = X[:, 0]
+    # The most commonly cited canonical mass-luminosity relation is L ~ M^3.5
+    # Therefore, log10(L/L_sun) = 3.5 * log10(M/M_sun)
+    return 3.5 * log_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard mass-luminosity relation (Eddington, 1924):
+        L / L_sun = (M / M_sun)^3.5
+    In log form:
+        log10(L/L_sun) = 3.5 * log10(M/M_sun)
+    
+    Metallicity (X[:, 1]) is ignored as a distractor.
+    """
+    log_M = X[:, 0]
+    log_L = 3.5 * log_M
+    return log_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_M = X[:, 0]
+    return 3.5 * log_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    return 3.5 * X[:, 0]

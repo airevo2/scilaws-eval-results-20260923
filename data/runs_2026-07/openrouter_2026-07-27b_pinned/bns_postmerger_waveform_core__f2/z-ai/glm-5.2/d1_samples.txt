@@ -1,0 +1,91 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the dominant post-merger gravitational-wave spectral peak frequency f2 (in kHz).
+    
+    Based on the canonical empirical relation (e.g., Breschi et al. 2019; Bernuzzi et al. 2015)
+    relating f2 to the total mass M and the combined tidal deformability Lambda_tilde.
+    
+    Formula:
+    f2 = a0 + a1 * (M_sun / M) * Lambda_tilde^(1/3)
+    """
+    # Extract total mass M (in solar masses) and combined tidal deformability Lambda_tilde
+    M = X[:, 0]
+    lamT = X[:, 3]
+    
+    # Empirical coefficients (in kHz)
+    a0 = 1.2
+    a1 = 0.6
+    
+    # Calculate f2 in kHz
+    f2 = a0 + a1 * (1.0 / M) * np.power(lamT, 1.0/3.0)
+    
+    return f2
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    kap2t = X[:, 2]
+    
+    # Dimensional scaling constant: c^3 / (2 * pi * G * M_sun) in kHz
+    c = 299792458.0
+    G = 6.67430e-11
+    M_sun = 1.98847e30
+    scale = c**3 / (2 * np.pi * G * M_sun) / 1000.0
+    
+    # Standard quasi-universal relation for the dominant post-merger GW frequency f_2
+    # (Bernuzzi et al. 2015, PRL 114, 161103)
+    # M * omega_22 = a0 + a1 * kappa_2^T
+    # f_2 = omega_22 / (2 * pi)
+    a0 = 0.313
+    a1 = -0.000167
+    
+    f2 = (scale / M) * (a0 + a1 * kap2t)
+    
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dominant post-merger gravitational-wave spectral peak frequency f2 [kHz].
+    
+    Standard closed-form relation from Bernuzzi et al. (2015) using the tidal
+    coupling constant kappa2T and total mass M:
+    
+        M * omega_2 = c0 + c1 * kappa2T^{-1/2}
+        f2 = (M * omega_2) / (2 * pi * M_geo)
+    
+    where M_geo = G*M_sun/c^3 * M is the total mass in seconds.
+    """
+    M = X[:, 0]           # Total gravitational mass [M_sun]
+    kappa2t = X[:, 2]     # Tidal coupling constant kappa2T
+    
+    # Geometric mass in seconds: G*M_sun/c^3
+    M_geo = M * 4.925490947e-6  # seconds
+    
+    # Empirical coefficients from the universal relation (Bernuzzi et al. 2015)
+    c0 = 0.15
+    c1 = 1.5
+    
+    # Dimensionless post-merger frequency
+    M_omega2 = c0 + c1 / np.sqrt(kappa2t)
+    
+    # Convert to physical frequency in Hz, then kHz
+    f2_hz = M_omega2 / (2.0 * np.pi * M_geo)
+    f2_khz = f2_hz / 1e3
+    
+    return f2_khz
+
+=====
+

@@ -1,0 +1,77 @@
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Standard closed-form prediction using ECSC 1993 (Quanjer et al.) reference equations.
+    # As sex is not provided, the male equation is used as the canonical default.
+    # FEV1 (L) = 4.30 * height(m) - 0.029 * age(yr) - 2.49
+    height_m = height_cm / 100.0
+    fev1 = 4.30 * height_m - 0.029 * age - 2.49
+    
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Standard closed-form approximation based on ECSC (Quanjer 1993) reference equations.
+    # Since sex is not provided, the male equation is used as the canonical default.
+    # FEV1 (L) = 0.043 * height(cm) - 0.029 * age(yr) - 2.49
+    fev1 = 0.043 * height_cm - 0.029 * age - 2.49
+    
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+
+    # ECSC/ERS 1993 (Quanjer et al.) prediction equations for FEV1
+    # Male:   FEV1 = 4.30 * height_m - 0.029 * age - 2.49
+    # Female: FEV1 = 3.95 * height_m - 0.025 * age - 2.60
+    # Sex-averaged coefficients (height converted from cm to m):
+    #   height coeff: (4.30 + 3.95) / 2 / 100 = 0.04125
+    #   age coeff:    (-0.029 + -0.025) / 2    = -0.027
+    #   intercept:    (-2.49 + -2.60) / 2      = -2.545
+
+    fev1 = 0.04125 * height_cm - 0.027 * age - 2.545
+
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Averaged ECSC/Quanjer (1993) reference equations for males and females
+    # since sex is not provided as an input feature.
+    fev1 = 0.0386 * height_cm - 0.027 * age - 1.96
+    
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    height_m = height_cm / 100.0
+
+    # ECSC/ERS 1993 (Quanjer et al.) reference equation for FEV1
+    # Most widely cited closed-form prediction equation in pulmonology
+    FEV1 = 4.30 * height_m - 0.029 * age - 2.49
+
+    return FEV1

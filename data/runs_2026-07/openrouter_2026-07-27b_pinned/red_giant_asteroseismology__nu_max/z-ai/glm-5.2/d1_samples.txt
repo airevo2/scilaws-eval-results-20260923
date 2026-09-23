@@ -1,0 +1,58 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts nu_max using the standard empirical scaling relation 
+    between nu_max and delta_nu (e.g., Stello et al. 2009; Mosser et al. 2010).
+    The relation takes the form:
+    nu_max ~ nu_max_sun * (delta_nu / delta_nu_sun)^s
+    where s ~ 1.5 is the standard empirical exponent for solar-like oscillators.
+    Note: While Teff, FeH, and phase are provided as inputs, the most commonly 
+    cited canonical closed-form relationship for nu_max given only delta_nu 
+    (when mass and radius are independently unknown) relies solely on delta_nu.
+    """
+    dnu = X[:, 0]
+    
+    # Solar reference values (in microHz)
+    numax_sun = 3090.0
+    dnu_sun = 135.1
+    
+    # Empirical exponent (typically ~1.5 for red giants / solar-like stars)
+    s = 1.5
+    
+    numax = numax_sun * (dnu / dnu_sun)**s
+    return numax
+
+=====
+
+
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta_nu = X[:, 0]
+    Teff = X[:, 1]
+    
+    # Standard solar reference values
+    nu_max_sun = 3090.0  # microHz
+    delta_nu_sun = 135.1 # microHz
+    Teff_sun = 5777.0    # K
+    
+    # Empirical asteroseismic scaling relation commonly cited for red giants
+    # (e.g., Stello et al. 2009; Mosser et al. 2010; Huber et al. 2011)
+    # nu_max ~ nu_max_sun * (delta_nu / delta_nu_sun)**s * (Teff / Teff_sun)**t
+    # For red giants, an empirical exponent s ~ 2.0 and t ~ -0.5 is often adopted
+    s = 2.0
+    t = -0.5
+    
+    nu_max = nu_max_sun * (delta_nu / delta_nu_sun)**s * (Teff / Teff_sun)**t
+    return nu_max
+
+=====
+

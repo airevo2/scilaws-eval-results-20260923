@@ -1,0 +1,26 @@
+{
+  "task": "electron_impact_ionization_alecs__cross_section",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "gaches_2024",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "lotz_1968",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

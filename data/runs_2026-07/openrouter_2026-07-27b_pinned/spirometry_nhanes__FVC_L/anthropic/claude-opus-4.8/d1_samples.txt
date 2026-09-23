@@ -1,0 +1,88 @@
+import numpy as np
+
+def predict(X):
+    # Log-linear spirometry prediction (Quanjer/GLI-style form)
+    # FVC = exp(a + b*ln(height_cm) + c*ln(age_yr))
+    a = -10.30
+    b = 2.20
+    c = 0.15
+
+    age = np.asarray(X[:, 0], dtype=float)
+    height = np.asarray(X[:, 1], dtype=float)
+
+    ln_h = np.log(height)
+    ln_t = np.log(age)
+
+    fvc = np.exp(a + b * ln_h + c * ln_t)
+    return fvc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard multiple-linear spirometry prediction (pediatric/adolescent):
+    # FVC = b0 + b1*height_cm + b2*age
+    t = X[:, 0]   # age [yr]
+    h = X[:, 1]   # height [cm]
+
+    b0 = -6.50
+    b1 = 0.060   # per cm
+    b2 = 0.050   # per yr
+
+    FVC = b0 + b1 * h + b2 * t
+    return FVC
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hankinson (NHANES III) style prediction for FVC (litres)
+    # FVC = b0 + b1*age + b2*age^2 + b3*height_cm^2
+    age = X[:, 0]
+    height = X[:, 1]
+    b0 = -0.2584
+    b1 = -0.20415
+    b2 = 0.010133
+    b3 = 0.00018642
+    fvc = b0 + b1 * age + b2 * age**2 + b3 * height**2
+    return fvc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Forced Vital Capacity (FVC, litres) for children/adolescents.
+
+    Canonical log-linear (power-law) spirometry prediction form:
+        ln(FVC) = a + b*ln(height_cm) + c*ln(age_yr)
+    which is the structure used by most reference equations
+    (e.g. GLI / Hankinson-type pediatric fits).
+    """
+    age = np.asarray(X[:, 0], dtype=float)
+    height = np.asarray(X[:, 1], dtype=float)
+
+    a = -12.20   # intercept
+    b =   2.58   # height exponent
+    c =   0.10   # age exponent
+
+    ln_fvc = a + b * np.log(height) + c * np.log(age)
+    return np.exp(ln_fvc)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Log-linear (power-law) spirometric prediction for FVC in children/adolescents:
+    #   ln(FVC) = a + b*ln(height_cm) + c*ln(age_yr)
+    age = X[:, 0]
+    height = X[:, 1]
+    a = -11.26
+    b = 2.40
+    c = 0.10
+    ln_fvc = a + b * np.log(height) + c * np.log(age)
+    return np.exp(ln_fvc)

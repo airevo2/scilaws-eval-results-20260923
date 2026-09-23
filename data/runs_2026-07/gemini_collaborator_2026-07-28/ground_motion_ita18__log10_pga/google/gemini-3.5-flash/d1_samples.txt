@@ -1,0 +1,295 @@
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    Mw = X[:, 0]
+    R_km = X[:, 1]
+    depth_km = X[:, 2]
+    
+    ec8_A = X[:, 3]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    sof_SS = X[:, 10]
+    
+    # Compute effective distance (hypocentral distance)
+    R_eff = np.sqrt(R_km**2 + depth_km**2)
+    R_eff = np.maximum(R_eff, 0.1)  # Prevent log10 of zero or near-zero values
+    
+    # Ground Motion Prediction Equation (GMPE) Coefficients
+    # These are canonical values representative of European-Mediterranean models (e.g., Bindi et al.)
+    c1 = 1.20
+    c2 = 0.55
+    c3 = -0.02
+    c4 = -1.15
+    c5 = -0.0015
+    
+    # Site amplification coefficients relative to EC8 Class A (Rock)
+    s_A = 0.00
+    s_B = 0.12
+    s_C = 0.21
+    s_D = 0.26
+    s_E = 0.22
+    
+    # Style-of-faulting coefficients relative to Strike-Slip (SS)
+    f_NF = -0.08
+    f_TF = 0.08
+    f_SS = 0.00
+    
+    # Calculate log10(PGA) in cm/s^2
+    log10_pga = (
+        c1 + c2 * Mw + c3 * Mw**2 + 
+        c4 * np.log10(R_eff) + c5 * R_eff +
+        s_A * ec8_A + s_B * ec8_B + s_C * ec8_C + s_D * ec8_D + s_E * ec8_E +
+        f_NF * sof_NF + f_TF * sof_TF + f_SS * sof_SS
+    )
+    
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    
+    ec8_A = X[:, 3]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    sof_SS = X[:, 10]
+    
+    # Calculate hypocentral distance (proxy for source-to-site distance)
+    # A small offset is used to prevent log10(0) issues at zero distance
+    R_hypo = np.sqrt(R**2 + h**2)
+    R_hypo = np.maximum(R_hypo, 0.1)
+    
+    # Coefficients based on Bindi et al. (2011/2014) reference model for Europe,
+    # converted from m/s^2 to cm/s^2 by adding 2.0 to the intercept.
+    c1 = 2.341
+    c2 = 0.509
+    c3 = -0.063
+    c4 = -1.144
+    M_ref = 5.5
+    
+    # Site class coefficients (relative to Class A)
+    s_A = 0.0
+    s_B = 0.147
+    s_C = 0.111
+    s_D = 0.170
+    s_E = 0.210
+    
+    # Style-of-faulting coefficients (relative to Strike-slip)
+    f_SS = 0.0
+    f_NF = -0.076
+    f_TF = 0.086
+    
+    # Ground motion prediction equation
+    log10_pga = (
+        c1 
+        + c2 * (Mw - M_ref) 
+        + c3 * (Mw - M_ref)**2 
+        + c4 * np.log10(R_hypo)
+        + (s_A * ec8_A + s_B * ec8_B + s_C * ec8_C + s_D * ec8_D + s_E * ec8_E)
+        + (f_NF * sof_NF + f_TF * sof_TF + f_SS * sof_SS)
+    )
+    
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log10 of the RotD50 peak ground acceleration (PGA) in cm/s^2
+    using a standard European-style Ground Motion Prediction Equation (GMPE).
+    
+    Inputs:
+    - X[:, 0]: Mw (Moment magnitude)
+    - X[:, 1]: R_km (Joyner-Boore distance in km)
+    - X[:, 2]: depth_km (Hypocentral depth in km)
+    - X[:, 3]: ec8_A (Binary indicator for EC8 Class A)
+    - X[:, 4]: ec8_B (Binary indicator for EC8 Class B)
+    - X[:, 5]: ec8_C (Binary indicator for EC8 Class C)
+    - X[:, 6]: ec8_D (Binary indicator for EC8 Class D)
+    - X[:, 7]: ec8_E (Binary indicator for EC8 Class E)
+    - X[:, 8]: sof_NF (Binary indicator for Normal Faulting)
+    - X[:, 9]: sof_TF (Binary indicator for Thrust/Reverse Faulting)
+    - X[:, 10]: sof_SS (Binary indicator for Strike-Slip Faulting)
+    """
+    # Extract input variables
+    Mw = X[:, 0]
+    R_jb = X[:, 1]
+    h = X[:, 2]
+    
+    ec8_A = X[:, 3]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    sof_SS = X[:, 10]
+    
+    # Calculate effective distance (hypocentral distance proxy to avoid singularity)
+    R_eff = np.sqrt(R_jb**2 + h**2 + 1.0)
+    
+    # GMPE Coefficients (standard values for European crustal earthquakes)
+    c1 = 0.95
+    c2 = 0.65
+    c3 = -0.03
+    c4 = -1.15
+    c5 = -0.0025
+    
+    # Site amplification coefficients relative to Class A (Rock)
+    s_A = 0.0
+    s_B = 0.12
+    s_C = 0.21
+    s_D = 0.28
+    s_E = 0.16
+    
+    # Style of faulting coefficients relative to Strike-Slip
+    f_NF = -0.08  # Normal faulting
+    f_TF = 0.08   # Thrust/Reverse faulting
+    f_SS = 0.0    # Strike-Slip faulting reference
+    
+    # Compute GMPE terms
+    magnitude_term = c1 + c2 * Mw + c3 * Mw**2
+    distance_term = c4 * np.log10(R_eff) + c5 * R_eff
+    site_term = s_A * ec8_A + s_B * ec8_B + s_C * ec8_C + s_D * ec8_D + s_E * ec8_E
+    sof_term = f_NF * sof_NF + f_TF * sof_TF + f_SS * sof_SS
+    
+    # Predict log10(PGA) [log10(cm/s^2)]
+    log10_pga = magnitude_term + distance_term + site_term + sof_term
+    
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    Mw = X[:, 0]
+    R_jb = X[:, 1]
+    depth = X[:, 2]
+    
+    # EC8 site classes
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+    
+    # Style of faulting
+    F_NF = X[:, 8]
+    F_TF = X[:, 9]
+    F_SS = X[:, 10]
+    
+    # Calculate hypocentral distance as the effective distance metric
+    R_hyp = np.sqrt(R_jb**2 + depth**2)
+    
+    # Reference magnitude
+    M_ref = 5.5
+    
+    # Model coefficients (calibrated for PGA in cm/s^2)
+    c1 = 3.40      # Base intercept
+    c2 = 0.62      # Linear magnitude scaling
+    c3 = -0.05     # Quadratic magnitude scaling
+    c4 = -1.22     # Base distance attenuation
+    c5 = 0.07      # Magnitude-dependent distance attenuation
+    
+    # Site class coefficients (relative to Class A rock)
+    s_A = 0.00
+    s_B = 0.13
+    s_C = 0.21
+    s_D = 0.28
+    s_E = 0.24
+    
+    # Style of faulting coefficients (relative to Strike-Slip)
+    f_NF = -0.08   # Normal faulting (typically lower ground motions)
+    f_TF = 0.10    # Thrust/Reverse faulting (typically higher ground motions)
+    f_SS = 0.00    # Strike-Slip faulting (reference)
+    
+    # Magnitude scaling term
+    f_M = c1 + c2 * (Mw - M_ref) + c3 * (Mw - M_ref)**2
+    
+    # Distance attenuation term (with magnitude-dependent saturation)
+    f_R = (c4 + c5 * (Mw - M_ref)) * np.log10(R_hyp)
+    
+    # Site amplification term
+    f_S = s_A * C_A + s_B * C_B + s_C * C_C + s_D * C_D + s_E * C_E
+    
+    # Style of faulting term
+    f_F = f_NF * F_NF + f_TF * F_TF + f_SS * F_SS
+    
+    # Predict log10(PGA) in cm/s^2
+    log10_pga = f_M + f_R + f_S + f_F
+    
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract input features
+    Mw = X[:, 0]
+    R_km = X[:, 1]
+    depth_km = X[:, 2]
+    
+    # Site class indicators (EC8)
+    # ec8_A (Class A) is treated as the reference site class
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    
+    # Style-of-faulting indicators
+    # sof_SS (Strike-slip) is treated as the reference faulting style
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    
+    # Effective distance calculation (incorporating depth to avoid singularity near the surface)
+    R_eff = np.sqrt(R_km**2 + depth_km**2)
+    R_eff = np.maximum(R_eff, 1.0)  # Avoid log10(0) for hypothetical surface ruptures
+    
+    # Ground Motion Prediction Equation (GMPE) coefficients (representative of European models like Bindi et al.)
+    # Base model coefficients
+    c1 = 0.812    # Constant
+    c2 = 0.702    # Linear magnitude scaling
+    c3 = -0.046   # Quadratic magnitude scaling
+    c4 = -1.120   # Geometrical spreading coefficient
+    
+    # Site amplification terms (relative to Class A rock)
+    s_B = 0.120   # Class B (stiff soil)
+    s_C = 0.210   # Class C (medium soil)
+    s_D = 0.270   # Class D (soft soil)
+    s_E = 0.180   # Class E (alluvium)
+    
+    # Style-of-faulting terms (relative to Strike-slip)
+    f_NF = -0.080 # Normal faulting (typically lower ground motion)
+    f_TF = 0.100  # Thrust/Reverse faulting (typically higher ground motion)
+    
+    # Evaluate the GMPE
+    log10_pga = (c1 + 
+                 c2 * Mw + 
+                 c3 * Mw**2 + 
+                 c4 * np.log10(R_eff) + 
+                 s_B * ec8_B + s_C * ec8_C + s_D * ec8_D + s_E * ec8_E + 
+                 f_NF * sof_NF + f_TF * sof_TF)
+    
+    return log10_pga

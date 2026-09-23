@@ -1,0 +1,60 @@
+import numpy as np
+
+def predict(X):
+    # Period life expectancy at birth modeled as a linear trend in calendar year.
+    # Based on the long-run near-linear rise in national e0 (~0.167 yr per calendar year),
+    # anchored at ~35 yr in 1751 and ~80 yr in ~2020.
+    t = X[:, 0]
+    intercept = -260.0   # years
+    slope = 0.167        # years of e0 per calendar year
+    return intercept + slope * t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Linear trend in life expectancy at birth (HMD national life tables).
+    # Baseline ~37 years around 1751, rising ~0.16 years per calendar year.
+    year = X[:, 0]
+    e0 = 37.0 + 0.16 * (year - 1751.0)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    # Linear rise in life expectancy over time (cf. Oeppen-Vaupel best-practice trend)
+    # Baseline ~35 years around 1751, rising ~0.17 years per calendar year.
+    e0_1751 = 35.0
+    slope = 0.17
+    return e0_1751 + slope * (t - 1751.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Period life expectancy at birth has risen roughly linearly over calendar time.
+    # Oeppen-Vaupel-type linear trend fitted to HMD national tables.
+    t = X[:, 0]
+    # e0 ~ intercept + slope * year
+    intercept = -300.0   # years
+    slope = 0.19         # years of e0 gained per calendar year
+    e0 = intercept + slope * t
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Oeppen–Vaupel style linear rise in life expectancy:
+    # best-practice/national e0 rose ~2.5 years per decade (0.25 yr/yr).
+    year = X[:, 0]
+    slope = 0.25          # years of e0 gained per calendar year
+    e0_ref = 78.0         # reference e0 near year 2000
+    year_ref = 2000.0
+    return e0_ref + slope * (year - year_ref)

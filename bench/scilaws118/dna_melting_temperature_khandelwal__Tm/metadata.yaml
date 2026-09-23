@@ -1,0 +1,139 @@
+task_id: dna_melting_temperature_khandelwal__Tm
+domain: biology / biochemistry
+license: CC-BY-4.0
+
+# Type I — each row is an independent oligonucleotide measurement at specific
+# solution conditions. The reference formula applies universally with no
+# per-cluster fitted parameters.
+type: typeI
+has_group_id: false
+
+context: >-
+  The melting temperature of a double-stranded DNA oligonucleotide is the temperature at which half of the duplexes dissociate into single strands, a key parameter in molecular biology.
+
+target:
+  name: Tm
+  symbol: "T_m"
+  unit: "°C"
+  description: Experimentally measured DNA duplex melting temperature — the temperature at which 50% of double-stranded DNA has dissociated into single strands, determined by UV-absorbance hyperchromic effect.
+  range: [35.30, 88.60]
+
+inputs:
+  - name: E
+    symbol: E
+    unit: dimensionless
+    description: DNA strength parameter per base — sum of overlapping dinucleotide step strength values divided by sequence length, encoding stacking and hydrogen-bonding contributions to duplex stability.
+    range: [5.409091, 9.760000]
+  - name: N
+    symbol: "N"
+    unit: bp
+    description: Oligonucleotide sequence length in base pairs.
+    values: [15, 16, 17, 18, 20, 21, 22, 24, 25, 30]
+  - name: salt_M
+    symbol: "[Na+]"
+    unit: "M"
+    description: Sodium ion concentration of the solution in Molar units, controlling electrostatic screening of the DNA backbone.
+    range: [0.07, 1.02]
+  - name: dna_conc_M
+    symbol: "C_DNA"
+    unit: "M"
+    description: Total nucleotide strand concentration in Molar units.
+    range: [0.000001, 0.000100]
+
+data_files:
+  train: data/train.csv   # Tables S1+S2: 348 oligomers, N=16-30 bp
+  test:  data/test.csv    # Table S3: 100 fifteen-mers (Owczarzy cohort, length-axis OOD)
+
+n_train: 344
+n_test: 100
+
+# OOD note: test set is the paper's own external validation cohort (Table S3,
+# 100 fifteen-mers compiled by Owczarzy). N=15 does not appear in the training
+# set (S1+S2 have N=16–30 only). Tests extrapolation of the ln(N) term to
+# shorter sequences than the training distribution. The formula produces
+# MAE ≈ 2.8 °C on the 15-mers vs. ≈ 1.6 °C on the training cohort
+# (paper reports r=0.98, avg error unspecified for S3 at this threshold).
+
+# FM C12 fix — priors-leakage (2026-05-26)
+# Audit: all 5 original priors were Khandelwal 2010 empirical regression coefficients
+# that matched LAW_CONSTANTS in formulas/khandelwal_2010.py exactly (EMPIRICAL_FIT).
+# Classification: REMOVE all 5 (EMPIRICAL_FIT — paper-specific regression output,
+# not upstream physical constants). The Khandelwal formula has no upstream CODATA
+# building-block constants (it is a purely empirical multiple-regression model).
+# Replacement: 4 distractors from related-but-not-this-task biophysics / molecular bio
+# and universal physics — none matching any LAW_CONSTANTS or OTHER_CONSTANTS value
+# in any formula file. No new candidate priors are added (the formula has no
+# upstream physical constants to expose as candidates — consistent with the
+# gold philosophy that an empty candidate slot is preferable to leaking fit answers).
+# Reference: audit/AUDIT_CHECKLIST.md §C12 (v0.6);
+#            audit/proposed_FMs/2026-05-26_priors_leakage_GM.md §6.
+priors:
+  - name: pKa_phosphate_backbone
+    value: 2.0
+    unit: dimensionless
+    description: Approximate pKa of the DNA phosphate backbone. The backbone phosphodiester groups carry a negative charge at physiological pH (pKa ~2), contributing to electrostatic interactions screened by [Na+] — but this pKa value is not a parameter of the Khandelwal regression.
+    source: Blackburn & Gait (eds.) "Nucleic Acids in Chemistry and Biology" 3rd ed. (2006); standard biochemistry reference.
+    _role: distractor
+  - name: Boltzmann_J_per_K
+    value: 1.380649e-23
+    unit: J/K
+    description: Boltzmann constant k_B (CODATA 2018 exact definition). Appears in thermodynamic treatments of DNA helix-coil transitions (e.g. nearest-neighbour entropy terms), but not in the Khandelwal phenomenological regression.
+    source: CODATA 2018 exact value (SI redefinition).
+    _role: distractor
+  - name: R_gas_J_per_mol_K
+    value: 8.314462618
+    unit: J/(mol*K)
+    description: Molar gas constant R (CODATA 2018). Appears in van't Hoff / nearest-neighbour thermodynamic melting models (ΔH / ΔS framework) but is not used by the Khandelwal empirical multiple-regression formula.
+    source: CODATA 2018 (derived from k_B × N_A).
+    _role: distractor
+  - name: dna_persistence_length_bp
+    value: 50.0
+    unit: bp
+    description: Canonical persistence length of double-stranded B-form DNA (~50 bp ≈ 17 nm). Governs elastic properties and loop formation probabilities but is not a parameter in the Khandelwal melting temperature regression.
+    source: Bustamante et al. (1994) Science 265:1599; Hagerman (1988) Annu Rev Biophys Biophys Chem 17:265 — standard biophysics value.
+    _role: distractor
+references:
+  - id: khandelwal_2010
+    label: Khandelwal & Bhyravabhotla 2010 — phenomenological linear regression model (Eq. 1)
+    formula_file: formulas/khandelwal_2010.py
+    reference_pdf: reference/khandelwal_2010.pdf
+    n_law_constants: 5      # E_coeff, ln_N_coeff, ln_salt_coeff, ln_dna_coeff, intercept
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 4.1573
+      r2: 0.7774
+
+# === Audit re-work, 2026-05-29 (claude-opus) ===
+# Removed the santalucia_1998 reference entry. It was a FABRICATED second baseline:
+# the released CSV has no raw sequence, so the SantaLucia 1998 nearest-neighbor model
+# could not be computed faithfully; it had been reparameterized onto the Khandelwal E
+# input with hand-derived constants (H_per_step = -8000/7.5, S_per_step = -21.4/7.5 —
+# cross-paper grafts, NOT SantaLucia's published Table 2 values) and scored R^2=-1.39.
+# It was also never registered in formulas/__init__.py (so the harness never ran it;
+# metadata/registry/reference_metrics/README disagreed). Per anti-fabrication it is
+# removed, and the task ships as a clean single-baseline task — matching VERDICT.md,
+# reference/README.md, and the AUTONOMOUS_FIX_LOG conclusion that no faithful second
+# baseline is available from the released inputs. santalucia_1998.py + its reference
+# PDF are archived in .dropped_baselines/.
+
+caps:
+  max_law_constants: 5
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+reference_baseline_id: khandelwal_2010   # sole baseline; the metric anchor
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes oligonucleotide length dependence of duplex stability"
+  - "includes sequence-dependent stacking and hydrogen-bonding strength"
+  - "includes sodium-ion electrostatic screening of the DNA phosphate backbone"
+  - "includes strand-concentration mass-action stabilization of duplex formation"
+
+best_baseline: 4.15727    # khandelwal_2010 — rmse; regenerated after de-dup (no within-file duplicate rows / no leak)

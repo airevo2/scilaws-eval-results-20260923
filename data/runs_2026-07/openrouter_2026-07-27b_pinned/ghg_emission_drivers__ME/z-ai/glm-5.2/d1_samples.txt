@@ -1,0 +1,206 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CH4 emissions (kg CH4) using an extended
+    STIRPAT (Stochastic Impacts by Regression on Population, Affluence
+    and Technology) closed-form relationship.
+
+    Inputs (columns of X):
+      0: GDP per capita (constant 2015 USD)
+      1: Total population (persons)
+      2: Active population share (%)
+      3: Population density (persons per km2)
+      4: Urbanization rate (%)
+      5: Annual mean surface air temperature (deg C)
+    """
+    # Unpack columns
+    A  = X[:, 0]   # affluence (GDP per capita)
+    P  = X[:, 1]   # population
+    AP = X[:, 2]   # active population share
+    DP = X[:, 3]   # population density
+    UR = X[:, 4]   # urbanization rate
+    AT = X[:, 5]   # temperature
+
+    # Canonical STIRPAT coefficients (typical literature values)
+    # I = alpha * P^beta_P * A^beta_A * AP^beta_AP * DP^beta_DP
+    #     * UR^beta_UR * exp(beta_AT * AT)
+    alpha    = 0.1     # scale constant
+    beta_P   = 1.0     # population elasticity
+    beta_A   = 0.5     # affluence elasticity
+    beta_AP  = 0.05    # active-population elasticity
+    beta_DP  = -0.05   # density elasticity (economies of scale)
+    beta_UR  = 0.3     # urbanization elasticity
+    beta_AT  = 0.01    # temperature semi-elasticity
+
+    I_CH4 = (
+        alpha
+        * np.power(P,  beta_P)
+        * np.power(A,  beta_A)
+        * np.power(AP, beta_AP)
+        * np.power(DP, beta_DP)
+        * np.power(UR, beta_UR)
+        * np.exp(beta_AT * AT)
+    )
+
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Extended STIRPAT (Stochastic Impacts by Regression on Population,
+    Affluence and Technology) model for national CH4 emissions.
+    
+    Canonical log-linear / power-law form:
+        I = a * P^b * A^c * AP^d * DP^e * UR^f * exp(g*AT)
+    
+    where coefficients are typical elasticities reported in cross-country
+    climate-econometric studies of non-LUCF methane emissions.
+    """
+    # Fitted coefficients (natural-log scale)
+    a       = -6.0      # intercept
+    b_pop   = 1.0       # population elasticity
+    b_gdp   = 0.7       # GDP per capita elasticity
+    b_ap    = 0.2       # active-population share elasticity
+    b_dp    = -0.1      # population density elasticity (negative: density → efficiency)
+    b_ur    = 0.3       # urbanization rate elasticity
+    b_temp  = 0.05      # temperature semi-elasticity (per °C)
+
+    A  = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P  = X[:, 1]   # Total population
+    AP = X[:, 2]   # Active population share (%)
+    DP = X[:, 3]   # Population density (persons per km²)
+    UR = X[:, 4]   # Urbanization rate (%)
+    AT = X[:, 5]   # Annual mean temperature (°C)
+
+    ln_I = (a
+            + b_pop * np.log(P)
+            + b_gdp * np.log(A)
+            + b_ap  * np.log(AP)
+            + b_dp  * np.log(DP)
+            + b_ur  * np.log(UR)
+            + b_temp * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) 
+    # extended log-linear model for methane emissions.
+    # ln(I_CH4) = c0 + c1*ln(P) + c2*ln(A) + c3*ln(AP) + c4*ln(DP) + c5*ln(UR) + c6*AT
+    
+    c0 = -8.0
+    c1 = 1.0
+    c2 = 0.5
+    c3 = 1.0
+    c4 = -0.1
+    c5 = 0.5
+    c6 = 0.02
+    
+    ln_I = (c0 + 
+            c1 * np.log(P) + 
+            c2 * np.log(A) + 
+            c3 * np.log(AP) + 
+            c4 * np.log(DP) + 
+            c5 * np.log(UR) + 
+            c6 * AT)
+            
+    I_CH4 = np.exp(ln_I)
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extracting inputs
+    A = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P = X[:, 1]   # Total population
+    AP = X[:, 2]  # Active population share (%)
+    DP = X[:, 3]  # Population density (persons per km2)
+    UR = X[:, 4]  # Urbanization rate (%)
+    AT = X[:, 5]  # Annual mean temperature (degrees C)
+
+    # Ensure strictly positive values for logarithms
+    A = np.maximum(A, 1.0)
+    P = np.maximum(P, 1.0)
+    AP = np.maximum(AP, 1.0)
+    DP = np.maximum(DP, 1.0)
+    UR = np.maximum(UR, 1.0)
+
+    # Canonical extended STIRPAT model with an Environmental Kuznets Curve (EKC) term for affluence
+    # ln(I) = beta_0 + beta_1*ln(P) + beta_2*ln(A) + beta_3*(ln(A))^2 + beta_4*ln(AP) + beta_5*ln(DP) + beta_6*ln(UR) + beta_7*AT
+    
+    beta_0 = -12.0   # Intercept
+    beta_1 = 1.0     # Population elasticity
+    beta_2 = 1.2     # Affluence elasticity (GDP per capita)
+    beta_3 = -0.08   # EKC quadratic term for GDP per capita
+    beta_4 = 0.5     # Active population elasticity
+    beta_5 = 0.15    # Population density elasticity
+    beta_6 = 0.7     # Urbanization rate elasticity
+    beta_7 = 0.03    # Temperature effect
+
+    ln_I_CH4 = (beta_0 + 
+                beta_1 * np.log(P) + 
+                beta_2 * np.log(A) + 
+                beta_3 * (np.log(A) ** 2) + 
+                beta_4 * np.log(AP) + 
+                beta_5 * np.log(DP) + 
+                beta_6 * np.log(UR) + 
+                beta_7 * AT)
+
+    I_CH4 = np.exp(ln_I_CH4)
+    
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts national annual CH4 emissions (excluding LUCF) using a STIRPAT 
+    (Stochastic Impacts by Regression on Population, Affluence, and Technology) 
+    canonical multiplicative form.
+    """
+    # Extract inputs
+    A = X[:, 0]   # GDP per capita
+    P = X[:, 1]   # Total population
+    AP = X[:, 2]  # Active population share
+    DP = X[:, 3]  # Population density
+    UR = X[:, 4]  # Urbanization rate
+    AT = X[:, 5]  # Annual mean temperature
+    
+    # Canonical STIRPAT coefficients (stylized typical values from literature)
+    # I = a * P^b * A^c * AP^d * DP^e * UR^f * exp(g * AT)
+    a = 1e-4      # Scale factor
+    b = 1.0       # Population elasticity
+    c = 0.5       # Affluence (GDP per capita) elasticity
+    d = 0.2       # Active population elasticity
+    e = -0.1      # Population density elasticity
+    f = 0.6       # Urbanization rate elasticity
+    g = 0.02      # Temperature coefficient
+    
+    # Calculate emissions (kg CH4)
+    I_CH4 = (a * 
+             np.power(P, b) * 
+             np.power(A, c) * 
+             np.power(AP, d) * 
+             np.power(DP, e) * 
+             np.power(UR, f) * 
+             np.exp(g * AT))
+    
+    return I_CH4

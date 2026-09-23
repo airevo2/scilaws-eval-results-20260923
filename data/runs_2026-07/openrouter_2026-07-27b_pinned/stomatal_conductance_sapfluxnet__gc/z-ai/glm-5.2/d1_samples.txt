@@ -1,0 +1,95 @@
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Canonical log-linear decline of canopy conductance with VPD (Oren et al., 1999)
+    # Gc = Gc_ref - m * ln(D)
+    Gc_ref = 50.0  # reference canopy conductance at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    m = 30.0        # stomatal sensitivity to VPD [cm3 cm-2 h-1 kPa-1]
+    
+    Gc = Gc_ref - m * np.log(D)
+    # Ensure conductance does not drop below zero
+    Gc = np.maximum(Gc, 0.0)
+    
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    
+    # Standard log-linear decline of canopy conductance with VPD
+    # Gc = Gc_ref - m * ln(D)
+    # Typical values for a well-watered canopy proxy:
+    Gc_ref = 12.0  # reference canopy conductance [cm3 cm-2 h-1 kPa-1]
+    m = 6.0        # sensitivity to VPD
+    
+    Gc = Gc_ref - m * np.log(D)
+    
+    # Conductance cannot be negative
+    Gc = np.maximum(Gc, 0)
+    
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts daily daytime canopy conductance proxy (Gc) based on VPD.
+    Uses the log-linear relationship Gc = Gc_ref - m * ln(D), 
+    where m = 0.6 * Gc_ref based on the canonical stomatal sensitivity 
+    to VPD proposed by Oren et al. (1999).
+    """
+    D = X[:, 0]
+    
+    # Typical reference canopy conductance at D = 1 kPa
+    Gc_ref = 50.0 
+    
+    # Stomatal sensitivity parameter (m = 0.6 * Gc_ref)
+    m = 0.6 * Gc_ref 
+    
+    # Log-linear decline with VPD
+    Gc = Gc_ref - m * np.log(D)
+    
+    # Ensure non-negative conductance
+    return np.maximum(Gc, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    Gc_ref = 15.0  # Reference canopy conductance proxy at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    m = 4.5         # Sensitivity of conductance to VPD [cm3 cm-2 h-1 kPa-1]
+    
+    Gc = Gc_ref - m * np.log(D)
+    
+    # Ensure non-negative conductance
+    Gc = np.maximum(Gc, 0.0)
+    
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    
+    # Reference canopy conductance at VPD = 1 kPa
+    Gc_ref = 5.0  # [cm3 cm-2 h-1 kPa-1]
+    
+    # Sensitivity to VPD, commonly parameterized as 0.5 * Gc_ref 
+    # based on the isohydric/anisohydric framework (e.g., Oren et al., 1999)
+    m = 0.5 * Gc_ref
+    
+    # Log-linear decline of canopy conductance with VPD
+    Gc = Gc_ref - m * np.log(D)
+    
+    # Physiological constraint: conductance cannot be negative
+    return np.maximum(Gc, 0)

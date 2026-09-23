@@ -1,0 +1,121 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the absorbance (A) of a potassium dichromate solution
+
+    using the Beer-Lambert law at a standard calibration wavelength of 350 nm.
+
+    Parameters:
+    X : ndarray of shape (N, 2)
+        X[:, 0] : concentration (c) in g/L
+        X[:, 1] : path_length (l) in cm
+
+    Returns:
+    A : ndarray of shape (N,)
+        Absorbance (dimensionless)
+    """
+    c = X[:, 0]
+    l = X[:, 1]
+
+    # Specific absorptivity (epsilon) of potassium dichromate in acidic solution
+    # (0.005 M H2SO4) at 350 nm is approximately 10.7 L/(g*cm).
+    epsilon = 10.7  # L / (g * cm)
+
+    # Beer-Lambert Law: A = epsilon * c * l
+    A = epsilon * c * l
+
+    return A
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Calculates the absorbance (A) of a potassium dichromate solution
+
+    using the Beer-Lambert Law at a standard calibration wavelength of 350 nm.
+
+    Inputs:
+    - X[:, 0]: concentration (c) [g/L]
+    - X[:, 1]: path_length (l) [cm]
+
+    Specific absorptivity (epsilon) of potassium dichromate in 0.005 M H2SO4
+    at 350 nm is approximately 10.73 L/(g*cm) (derived from the standard
+    specific absorbance A(1%, 1cm) of 107.3).
+    """
+    epsilon = 10.73  # L / (g * cm)
+    c = X[:, 0]
+    l = X[:, 1]
+
+    return epsilon * c * l
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = concentration (c) [g/L]
+    # X[:, 1] = path_length (l) [cm]
+
+    # Beer-Lambert Law: A = epsilon * c * l
+    # For potassium dichromate (e.g., NIST SRM 935a in 0.005 M H2SO4) at 350 nm,
+    # the specific absorbance (epsilon) is approximately 10.71 L / (g * cm).
+
+    c = X[:, 0]
+    l = X[:, 1]
+    epsilon = 10.71  # L/(g*cm)
+
+    return epsilon * c * l
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the apparent absorbance (A) of a potassium dichromate solution
+
+    using the Beer-Lambert Law.
+
+    Inputs:
+    - X[:, 0]: concentration (c) [g/L]
+    - X[:, 1]: path_length (l) [cm]
+
+    Using the standard specific absorptivity of potassium dichromate in acidic
+    solution (0.005 M H2SO4) at the canonical calibration wavelength of 350 nm,
+    where the specific absorbance E^(1%)(1 cm) is approximately 107.3,
+    corresponding to a specific absorptivity (mass attenuation coefficient)
+    of 10.73 L / (g * cm).
+    """
+    # Specific absorptivity at 350 nm in L/(g*cm)
+    epsilon = 10.73
+
+    c = X[:, 0]
+    l = X[:, 1]
+
+    # Beer-Lambert Law: A = epsilon * c * l
+    A = epsilon * c * l
+
+    return A
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract concentration (c) in g/L and path length (l) in cm
+    c = X[:, 0]
+    l = X[:, 1]
+
+    # Specific absorbance (epsilon) of potassium dichromate in acidic solution
+    # at the standard calibration wavelength of 350 nm is ~10.66 L/(g*cm).
+    epsilon = 10.66
+
+    # Beer-Lambert Law: A = epsilon * c * l
+    A = epsilon * c * l
+
+    return A

@@ -1,0 +1,154 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract incident neutron energy in eV
+    E = X[:, 0]
+
+    # Single-level Breit-Wigner (SLBW) parameters for the dominant 4.89 eV resonance
+    # of Au-197, adjusted for Doppler broadening at room temperature, plus a 1/v background.
+    E0 = 4.89
+    A = 365.0
+    B = 0.00586  # Equivalent to (Gamma_eff / 2)^2
+    C = 0.284  # Background 1/v coefficient
+
+    sqrt_E = np.sqrt(E)
+    sigma = A / (sqrt_E * ((E - E0) ** 2 + B)) + C / sqrt_E
+
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract incident neutron energy in eV
+    E = X[:, 0]
+
+    # Au-197 4.89 eV resonance parameters
+    E0 = 4.89  # Resonance energy (eV)
+    Gamma_gamma = 0.1225  # Radiative width (eV)
+    Gamma_n0 = 0.00687  # Reduced neutron width (eV^1/2)
+
+    # Energy-dependent neutron width and total width
+    Gamma_n = Gamma_n0 * np.sqrt(E)
+    Gamma = Gamma_gamma + Gamma_n
+
+    # Single-Level Breit-Wigner (SLBW) capture cross section
+    # Constant 4.106e5 corresponds to (pi / k^2) * E * g
+    # where g = 0.625 is the spin statistical factor
+    sigma_bw = (
+        (4.106e5 / E)
+        * (Gamma_n * Gamma_gamma)
+        / ((E - E0) ** 2 + (Gamma / 2.0) ** 2)
+    )
+
+    # 1/v background correction to match the thermal capture cross section (~98.7 b)
+    sigma_bg = 1.145 / np.sqrt(E)
+
+    # Total capture cross section
+    sigma = sigma_bw + sigma_bg
+
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Incident neutron energy in eV
+    E = X[:, 0]
+
+    # Au-197 Breit-Wigner resonance parameters at ~4.89 eV
+    E0 = 4.89  # Resonance energy (eV)
+    G_gamma = 0.124  # Radiative capture width (eV)
+    G_n0 = 0.0152 / np.sqrt(E0)  # Reduced neutron width (eV^0.5)
+
+    # Energy-dependent widths
+    G_n = G_n0 * np.sqrt(E)
+    G = G_gamma + G_n
+
+    # Spin statistical factor for J=2 (Au-197 ground state is 3/2+)
+    g = 0.625
+
+    # Breit-Wigner resonance cross section
+    # Constant 6.52e5 comes from pi / k^2 factor converted to barns
+    sigma_bw = (
+        (6.52e5 / E) * g * (G_n * G_gamma) / ((E - E0) ** 2 + (G / 2) ** 2)
+    )
+
+    # 1/v background contribution to match the thermal cross section of 98.7 b.
+    # The BW tail contributes ~91.8 b at 0.0253 eV; the remaining 6.9 b is the 1/v background.
+    sigma_bg = 6.9 * np.sqrt(0.0253 / E)
+
+    # Total capture cross section
+    sigma = sigma_bw + sigma_bg
+
+    # Return base-10 logarithm of the cross section
+    return np.log10(np.maximum(sigma, 1e-10))
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Incident neutron energy in eV
+    E = X[:, 0]
+    E_safe = np.maximum(E, 1e-10)
+
+    # Effective Breit-Wigner parameters for the dominant 4.89 eV resonance of Au-197
+    # adjusted for Doppler broadening at room temperature (300 K)
+    E0 = 4.891  # Resonance energy in eV
+    sigma_0 = 28200.0  # Effective peak cross section in barns
+    Gamma_eff = 0.155  # Effective total width in eV
+
+    # Single-level Breit-Wigner formula with 1/v low-energy scaling
+    width_factor = (Gamma_eff / 2.0) ** 2
+    sigma_res = (
+        sigma_0
+        * np.sqrt(E0 / E_safe)
+        * (width_factor / ((E_safe - E0) ** 2 + width_factor))
+    )
+
+    # Background capture cross section from higher-energy resonances
+    sigma_bg = 0.040
+
+    # Total capture cross section
+    sigma = sigma_res + sigma_bg
+
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract incident neutron energy in eV
+    E = X[:, 0]
+
+    # Resonance parameters for the dominant 4.89 eV s-wave resonance of Au-197
+    E0 = 4.89  # Resonance energy (eV)
+    Gamma_g = 0.124  # Radiative capture width (eV)
+    Gamma_n0 = 0.00687  # Reduced neutron width (eV)
+
+    # Energy-dependent neutron width and total width
+    Gamma_n = Gamma_n0 * np.sqrt(E)
+    Gamma = Gamma_g + Gamma_n
+
+    # Single-Level Breit-Wigner (SLBW) cross section for radiative capture
+    # Constant factor includes g-factor (0.625) and neutron wavelength scaling
+    sigma_res = (
+        (4.1e5 / E) * (Gamma_n * Gamma_g) / ((E - E0) ** 2 + 0.25 * Gamma**2)
+    )
+
+    # Background 1/v contribution from distant resonances
+    sigma_bg = 0.3 / np.sqrt(E)
+
+    # Total capture cross section in barns
+    sigma = sigma_res + sigma_bg
+
+    return np.log10(sigma)

@@ -1,0 +1,26 @@
+{
+  "task": "sex_mortality_ratio_hmd__log_sex_ratio",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "glei_horiuchi_2007",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "glei_horiuchi_year_drift",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    }
+  ]
+}

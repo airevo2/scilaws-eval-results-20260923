@@ -1,0 +1,127 @@
+task_id: stomatal_conductance_sapfluxnet__gc
+domain: biology / plant ecophysiology
+license: CC-BY-4.0
+
+# Type II — cluster = individual tree (tree_code from SAPFLUXNET pl_code).
+# Each tree contributes a time series of daily daytime (Gc_proxy, vpd) rows.
+# The Oren (1999) log-linear model fits two LOCAL parameters (Gc_ref, m)
+# independently per tree from its own (vpd, Gc_proxy) time series.
+type: typeII
+has_group_id: true
+
+context: >-
+  Plant leaves regulate water loss and CO2 uptake by opening and closing
+  their stomatal pores. At the canopy scale, stomatal conductance (gc)
+  describes how easily water vapour moves from the leaf interior to the
+  atmosphere and is the primary control on transpiration. A well-established
+  empirical relationship shows that canopy conductance declines linearly with
+  the natural logarithm of vapour pressure deficit (VPD): gc decreases as the
+  atmosphere becomes drier, reflecting stomatal closure to prevent excessive
+  desiccation. The slope of this decline (the stomatal sensitivity) tends to
+  scale proportionally with the reference conductance at low VPD, and the
+  proportionality constant is observed to be approximately the same across
+  many mesic species. SAPFLUXNET v0.1.5 provides sub-daily sap-flux density
+  measurements for individual trees at 19 globally distributed sites, which
+  are converted here to a daily canopy conductance proxy (mean sap-flux
+  density divided by mean VPD over daytime hours) for each individual tree.
+  Trees differ in their reference conductance and sensitivity, reflecting
+  species physiology, site water availability, and canopy position.
+
+target:
+  name: Gc_proxy
+  symbol: G_c
+  unit: cm3 cm-2 h-1 kPa-1
+  description: >-
+    Daily daytime canopy conductance proxy derived as mean sapwood-area-
+    normalised sap flux density divided by mean vapour pressure deficit
+    over daytime hours with VPD >= 0.3 kPa. This quantity is proportional
+    to stomatal conductance via the transpiration-conductance relationship
+    E = Gc × D, and exhibits a log-linear decline with VPD of the form
+    Gc = Gc_ref - m × ln(D).
+  range: [0.01, 115.0]
+
+inputs:
+  - name: vpd
+    symbol: D
+    unit: kPa
+    description: >-
+      Daily daytime mean vapour pressure deficit at canopy level, computed
+      as the mean of all sub-daily VPD values with VPD >= 0.3 kPa on the
+      given solar date. VPD is the difference between saturated and actual
+      vapour pressure and is the primary driver of stomatal closure in the
+      log-linear conductance model.
+    range: [0.30, 7.40]
+
+# Dataset — three-file v2 Type II layout, cluster (tree) holdout.
+# 101 individual trees from 19 SAPFLUXNET v0.1.5 sites.
+# Cluster holdout: every 5th tree in lexicographic order (i % 5 == 4) → test
+#   (cross-tree holdout = the Type II generalisation challenge).
+# Within-cluster split: rows sorted by local solar date, then split INTERLEAVED
+#   on date rank (even rank → test_fit, odd → test_test), so both halves span
+#   the full date AND vpd range — a representative split scored by interpolation.
+#
+# Audit 2026-06-02 (re-split): the previous design split first 60% of dates →
+# test_fit, last 40% → test_test. Because vpd / the conductance level are
+# seasonally non-stationary within a tree, this forced the per-cluster Oren fit
+# to extrapolate onto a later season / vpd region unseen during the fit, so the
+# reference lost to the per-cluster mean: mean-per-cluster R² = −0.31 (7/20
+# clusters negative), masked by a positive pooled R² (0.59). The harness scores
+# MEAN-PER-CLUSTER, so this was a §9.6 failure. Interleaving makes the Oren
+# baseline beat the per-cluster naive in 18/20 clusters (mean-per-cluster
+# R² +0.35, pooled R² 0.68). See VERDICT.md.
+# train.csv:     Gc_proxy, vpd              (NO group_id)
+# test_fit.csv:  Gc_proxy, vpd, group_id    (group_id LAST)
+# test_test.csv: Gc_proxy, vpd, group_id    (group_id LAST)
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 8766
+n_test_fit: 1229
+n_test_test: 1216
+n_clusters_train: 81
+n_clusters_test: 20
+n_rows_per_tree_min: 12
+n_rows_per_tree_median: 100
+n_rows_per_tree_max: 335
+
+# Forward-compat: cluster-holdout discipline guarantees no unseen groups.
+unseen_group_strategy: error
+
+# Candidate priors — see reference/summary_formula_oren_1999.md for source grounding.
+# m_over_gsref = 0.6 is Oren's cross-species interspecific slope (m ≈ 0.6 × Gc_ref
+# for mesic species, leaf-level and sap-flux). It is a CANDIDATE prior only — it is
+# NOT a LAW_CONSTANT: the shipped two-parameter form re-fits Gc_ref and m per cluster
+# and never consumes 0.6, so LAW_CONSTANTS = {} (form-discovery Type II). Exposing it
+# as a prior candidate is therefore legitimate (LAW ∩ priors = ∅ trivially).
+# Source: Oren (1999) Figs. 3 & 4b (PDF pp. 3 & 7); theoretical Eq. 4.
+priors:
+  - name: m_over_gsref
+    value: 0.6
+    unit: "dimensionless"
+    description: >-
+      Universal interspecific slope of stomatal sensitivity m vs. reference
+      conductance Gc_ref for mesic species: m ≈ 0.6 × Gc_ref.
+    source: "Oren et al. (1999) Figs. 3 & 4b (PDF pp. 3 & 7); theoretical Eq. 4."
+    _role: candidate
+
+# === Reference baselines ===
+references:
+  - id: oren_1999
+    label: "Oren 1999 — Gc = Gc_ref - m * ln(D)"
+    formula_file: formulas/oren_1999.py
+    reference_pdf: reference/oren_1999_stomatal_sensitivity_pce.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured: {rmse: 4.3101, r2: 0.6801}   # interleaved re-split 2026-06-02 (was 4.7549/0.5873)
+
+caps:
+  max_law_constants: 0
+  max_local_params: 2
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+metric: rmse
+best_baseline: 4.3101   # oren_1999 — lowest pooled AND mean-per-cluster rmse (sole baseline)

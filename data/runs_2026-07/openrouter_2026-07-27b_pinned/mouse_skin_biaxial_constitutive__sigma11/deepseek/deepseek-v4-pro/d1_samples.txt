@@ -1,0 +1,179 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Cauchy stress σ₁₁ [MPa] for a planar mouse-skin specimen under biaxial loading
+    using the anisotropic Fung exponential constitutive model.
+
+    The model assumes incompressibility, plane stress, and principal stretches aligned with the
+    material axes.  The strain energy density is given by:
+        W = (c/2) * [exp(Q) - 1]
+    with
+        Q = a1 * E11^2 + a2 * E22^2 + 2*a3 * E11 * E22
+    where Eii = 0.5*(λii^2 - 1) are the Green–Lagrange strains.
+
+    Cauchy stress σ₁₁ is derived via σ = F (∂W/∂E) F^T, leading to:
+        σ₁₁ = λ₁₁^2 * (a1*E11 + a3*E22) * c * exp(Q)
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:,0] = λ₁₁ : lateral stretch ratio  [dimensionless]
+        X[:,1] = λ₂₂ : cranial-caudal stretch ratio [dimensionless]
+
+    Returns
+    -------
+    sigma11 : np.ndarray, shape (n,)
+        Predicted Cauchy stress σ₁₁ [MPa].
+    """
+    # Unpack inputs
+    lam1 = X[:, 0]
+    lam2 = X[:, 1]
+
+    # --- Constitutive coefficients (placeholders; require data to fit) ---
+    c  = 1.0       # stress scaling factor [MPa]
+    a1 = 1.0       # lateral stiffness parameter
+    a2 = 1.0       # cranial-caudal stiffness parameter
+    a3 = 0.5       # interaction parameter
+
+    # Green–Lagrange strains
+    E11 = 0.5 * (lam1**2 - 1.0)
+    E22 = 0.5 * (lam2**2 - 1.0)
+
+    # Exponential argument
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Cauchy stress σ₁₁ (plane stress, incompressible membrane)
+    sigma11 = (lam1**2) * (a1 * E11 + a3 * E22) * c * np.exp(Q)
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Cauchy stress sigma11 (MPa) for a planar mouse-skin specimen
+    under biaxial loading using the standard Fung-type exponential model.
+
+    Input X: 2D numpy array, where X[:,0] = lambda11, X[:,1] = lambda22.
+    Output: 1D numpy array of sigma11.
+    """
+    # Fung model parameters (typical literature values for mouse skin)
+    C = 0.1       # MPa
+    a1 = 10.0
+    a2 = 8.0
+    a3 = 1.5
+
+    # principal stretch ratios
+    lam1 = X[:, 0]
+    lam2 = X[:, 1]
+
+    # Green-Lagrange strains
+    E11 = (lam1**2 - 1.0) / 2.0
+    E22 = (lam2**2 - 1.0) / 2.0
+
+    # exponent in the Fung strain energy
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Cauchy stress in the first principal direction (plane stress, incompressible)
+    sigma11 = lam1**2 * C * (a1 * E11 + a3 * E22) * np.exp(Q)
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Returns the Cauchy stress sigma11 [MPa] in the first principal (lateral) direction
+    for a planar mouse-skin specimen under biaxial loading.
+    
+    Uses the standard Fung-type exponential strain energy model:
+        W = 0.5 * c * (exp(Q) - 1)
+        Q = a1 * E11^2 + a2 * E22^2 + 2 * a3 * E11 * E22
+    with Green-Lagrange strains Eii = (lambda_ii^2 - 1)/2.
+    The material is assumed incompressible and plane stress (sigma33=0).
+    
+    The fitted coefficients are typical literature values for mouse skin.
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    # Green-Lagrange strains
+    E11 = (lambda11**2 - 1.0) / 2.0
+    E22 = (lambda22**2 - 1.0) / 2.0
+
+    # Model parameters (example values for mouse skin; units: c in MPa, a_i dimensionless)
+    c  = 0.135
+    a1 = 0.324
+    a2 = 2.267
+    a3 = 0.211
+
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+    sigma11 = c * lambda11**2 * np.exp(Q) * (a1 * E11 + a3 * E22)
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Fung-type constitutive model for planar biaxial soft tissue (e.g., mouse skin).
+    Assumes incompressible, homogeneous, anisotropic hyperelastic behavior under plane stress.
+    The strain energy density: W = c/2 * [exp(Q) - 1], with:
+        Q = a1 * E11^2 + a2 * E22^2 + 2 * a3 * E11 * E22,
+        E11 = (lambda11^2 - 1) / 2, E22 = (lambda22^2 - 1) / 2.
+    Cauchy stress in the first principal direction (neglecting out-of-plane energy contributions):
+        sigma11 = lambda11^2 * dW/dE11 = lambda11^2 * c * exp(Q) * (a1 * E11 + a3 * E22).
+    Coefficients below are typical order-of-magnitude values for mouse skin; in practice they must
+    be fitted to experimental biaxial data.
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    # Material constants (placeholders – to be determined from experimental data)
+    c = 0.5        # MPa
+    a1 = 0.15
+    a2 = 0.15
+    a3 = 0.05
+
+    # Green–Lagrange strains
+    E11 = (lambda11**2 - 1.0) / 2.0
+    E22 = (lambda22**2 - 1.0) / 2.0
+
+    # Quadratic form Q
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Cauchy stress sigma11 [MPa]
+    sigma11 = lambda11**2 * c * np.exp(Q) * (a1 * E11 + a3 * E22)
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Fung-type exponential strain energy model for skin under planar biaxial loading.
+    # W = c/2 * (exp(Q) - 1),  Q = a1*E11^2 + a2*E22^2 + 2*a3*E11*E22
+    # Cauchy stress in the first principal (lateral) direction:
+    # sigma11 = lambda1^2 * c * exp(Q) * (a1*E11 + a3*E22)
+
+    # Representative material constants for mouse skin (MPa)
+    c = 0.002      # scaling parameter [MPa]
+    a1 = 0.3       # lateral orientation stiffening
+    a2 = 0.5       # cranial-caudal orientation stiffening
+    a3 = 0.05      # shear interaction
+
+    lam1 = X[:, 0]  # lambda11
+    lam2 = X[:, 1]  # lambda22
+
+    E11 = (lam1**2 - 1.0) / 2.0
+    E22 = (lam2**2 - 1.0) / 2.0
+
+    Q = a1*E11**2 + a2*E22**2 + 2.0*a3*E11*E22
+    sigma11 = c * np.exp(Q) * (a1*E11 + a3*E22) * lam1**2
+    return sigma11

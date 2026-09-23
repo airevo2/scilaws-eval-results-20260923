@@ -1,0 +1,198 @@
+task_id: red_giant_asteroseismology__nu_max
+metric: rmse
+domain: astronomy / asteroseismology
+type: typeI
+has_group_id: false
+
+license: "VizieR-CDS academic (free for scientific use with citation); numeric tabular facts per Feist 1991; AUDIT_CHECKLIST v0.4 D5 compliant"
+
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no formula/exponent, no citations
+# (gold philosophy: the discovery target is the FORM + LAW_CONSTANTS).
+context: >-
+  Red giant stars exhibit solar-like oscillations driven by turbulent convection in their outer envelopes, studied in the field of asteroseismology.
+
+target:
+  name: nu_max
+  symbol: ν_max
+  unit: μHz
+  description: >-
+    Frequency of maximum oscillation power in the stellar p-mode power
+    spectrum, measured by fitting a Gaussian envelope to the Kepler long-
+    cadence power spectrum (Yu+2018 §3.1, SYD pipeline). Median measurement
+    uncertainty 1.6%. Range 3.97–273.16 μHz in the full catalog.
+  range:
+    - 3.97
+    - 273.16
+
+inputs:
+  - name: delta_nu
+    symbol: Δν
+    unit: μHz
+    dtype: float
+    description: >-
+      Mean large frequency separation between consecutive radial-order
+      p-modes, measured by autocorrelating the power spectrum (Yu+2018 §3.2,
+      SYD pipeline). Measured INDEPENDENTLY of ν_max. Median precision 0.6%.
+    range:
+      - 0.747
+      - 19.294
+
+  - name: Teff
+    symbol: T_eff
+    unit: K
+    dtype: float
+    description: >-
+      Effective surface temperature from the Kepler Q1-17 DR25 stellar
+      properties catalog (Mathur+2017), based on photometry and spectroscopy.
+      Independent of seismology.
+    range:
+      - 3225.0
+      - 6356.0
+
+  - name: FeH
+    symbol: "[Fe/H]"
+    unit: dex
+    dtype: float
+    description: >-
+      Iron-to-hydrogen abundance ratio relative to solar, from spectroscopic
+      measurements in the Kepler Q1-17 DR25 stellar properties catalog
+      (Mathur+2017). Independent of seismology.
+    range:
+      - -2.5
+      - 1.0
+
+  - name: phase
+    symbol: phase
+    unit: ""
+    dtype: int
+    description: >-
+      Evolutionary-phase label (integer-coded). Class 0 = unclassified;
+      class 1 = hydrogen-shell-burning red-giant-branch (RGB) star;
+      class 2 = helium-burning (red-clump / secondary-clump, HeB) star.
+      Derived from mixed-mode dipole period spacings (Elsworth+2017 /
+      Vrard+2016) — INDEPENDENT of the global ν_max measurement.
+    range:
+      - 0
+      - 2
+
+# Dataset layout
+data_files:
+  train: data/train.csv   # delta_nu < P80(8.2206 uHz): 12875 rows (FM G1 fix 2026-05-26)
+  test:  data/test.csv    # delta_nu >= P80(8.2206 uHz): 3219 rows
+
+n_train: 12875
+n_test: 3219
+
+# Auditor notes:
+#
+# 1. A3-tautology defense.  The Yu+2018 catalog M_NoCor, R_NoCor, and log_g_cgs
+#    are algebraically derived from (ν_max, Δν, Teff) via the inverted seismic
+#    scaling relations (Yu+2018 Eqs. 4-6):
+#      M/M_⊙ = (ν_max/ν_max_⊙)^3 (Δν/Δν_⊙)^{-4} (Teff/Teff_⊙)^{3/2}   [Eq. 4]
+#      R/R_⊙ = (ν_max/ν_max_⊙)   (Δν/Δν_⊙)^{-2} (Teff/Teff_⊙)^{1/2}   [Eq. 5]
+#      g/g_⊙ = (ν_max/ν_max_⊙)   (Teff/Teff_⊙)^{1/2}                    [Eq. 6]
+#    Using M, R, or log_g as inputs to predict ν_max therefore reconstructs ν_max
+#    algebraically at R² > 0.9999 — a closed-form identity, not a learned relation.
+#    These columns are DROPPED from the released input schema.
+#    The retained inputs {Δν, Teff, [Fe/H], phase} are observationally independent:
+#    Δν from the power-spectrum autocorrelation (§3.2); Teff, [Fe/H] from Mathur+2017
+#    photometry/spectroscopy; phase from Elsworth+2017 mixed-mode period spacings.
+#    Test-set R² = 0.9654 for the canonical baseline (delta_nu-P80 split; far below
+#    the R²>0.999 that an algebraic identity would give) — confirms no tautology.
+#
+# 2. OOD axis.  The evolutionary-phase holdout tests extrapolation from the RGB-
+#    dominated training set (Phase 0+1; ν_max ~ 4–273 μHz, RGB-branch) to the
+#    helium-burning red-clump population (Phase 2; ν_max ~ 12–191 μHz concentrated
+#    near 20–50 μHz). HeB stars occupy a distinct locus in the Δν–ν_max plane
+#    (Yu+2018 §3.6 / Figs. 7b-7c).
+#
+# 3. License framework.  VizieR catalog J/ApJS/236/42 (Yu+2018), distributed by
+#    CDS Strasbourg under the explicit "free of usage in a scientific context with
+#    citation" terms (https://cds.unistra.fr/vizier-org/licences_vizier.html).
+#    The 2018 ApJS article (pre-2021-10-11) carries AAS-copyright on prose; the
+#    numeric tabular measurement values carry no creative copyright (Feist v. Rural
+#    Telephone, US Supreme Court 1991). AUDIT_CHECKLIST v0.4 D5 explicitly covers
+#    this case. Citation: Yu+2018 (bibcode 2018ApJS..236...42Y).
+
+# Priors-leakage history (FM C12 -> H1 -> 2026-05-29 audit). Leak detection is against
+# LAW_CONSTANTS ONLY (AUDIT_CHECKLIST §C12 corrected 2026-05-29: a prior overlapping an
+# OTHER_CONSTANTS value is expected design, NOT a leak).
+#   2026-05-26 (C12): removed A_yu2018=0.267 and beta_yu2018=0.764 — both equalled
+#     yu_2018_inverted.py LAW_CONSTANTS["A"/"beta"] (genuine LAW leak).
+#   2026-05-26 (v0.8 H1): removed beta_theoretical=0.75 — it names the SAME physical
+#     quantity (the Δν–ν_max power-law exponent) as LAW_CONSTANTS["beta"]=0.764, so it is
+#     an H1 semantic leak even though 0.75 != 0.764.
+#   Teff_sun=5777.0 was removed in 2026-05-26 only because it matched a former
+#     yu_2018_teff.py OTHER_CONSTANTS value; under the 2026-05-29 corrected rule an OTHER
+#     match is NOT a leak, so that removal was unnecessary — but moot now, since
+#     yu_2018_teff was later DROPPED (FM-A1-fitprefactor) and the bank has no OTHER_CONSTANTS.
+#   Current priors: 3 distractors (delta_nu_sun, nu_max_sun, log_g_sun_cgs), 0 candidates;
+#     none match the only LAW_CONSTANTS {A=0.267, beta=0.764} -> CLEAN. Zero candidates is
+#     correct: the Yu+2018 law is purely empirical, so any candidate would expose a fit
+#     coefficient (per §C12 guidance, prefer no candidate over a leaking one).
+
+priors:
+  - name: delta_nu_sun
+    value: 135.1
+    unit: μHz
+    description: Solar large-frequency-separation reference adopted in the seismic scaling relation (Yu+2018 Eq. 3). A solar reference constant, not a coefficient in the ν_max–Δν power-law formula fitted to the red-giant population.
+    source: Yu et al. 2018, Eq. 3, PDF p. 5
+    _role: distractor
+  - name: nu_max_sun
+    value: 3090.0
+    unit: μHz
+    description: Solar reference frequency of maximum oscillation power (Yu+2018 Eq. 2). Solar anchor value, not a coefficient in the power-law ν_max fit. Enters the ν_max scaling relation only as a normalisation anchor for the Sun; not used in the two shipped baselines (yu_2018_inverted and yu_2018_teff).
+    source: Yu et al. 2018, Eq. 2, PDF p. 5
+    _role: distractor
+  - name: log_g_sun_cgs
+    value: 4.438
+    unit: "cm/s^2 (log10)"
+    description: Solar surface gravity log10(g_sun) ≈ 4.438 cm/s² (cgs), the reference value in the ν_max ∝ g·T_eff^{-1/2} scaling relation normalisation. Not used directly in either shipped baseline formula, which work with ν_max_sun and Teff_sun as references rather than log_g_sun. A domain-relevant solar constant from asteroseismic conventions.
+    source: Chaplin WJ & Miglio A (2013) ARA&A 51:353-392, §2; IAU 2015 B3 nominal solar values.
+    _role: distractor
+
+# Reference-baseline bank
+references:
+  - id: yu_2018_inverted
+    label: "Yu et al. 2018 — ν_max = (Δν/A)^(1/β) with A=0.267, β=0.764 (inverted MCMC fit; §3.6, PDF p. 10)"
+    formula_file: formulas/yu_2018_inverted.py
+    reference_pdf: reference/Yu2018.pdf
+    n_law_constants: 2    # A and beta
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 8.0790
+      r2: 0.9654
+      mae: 6.1062
+      smape: 0.0415
+      nmse: 0.0346
+      # Re-measured 2026-05-26 after FM G1 fix: split changed from phase to delta_nu P80.
+      # Pre-fix (phase split, n_test=7703): rmse=5.1455, r2=0.8935.
+      # Post-fix (delta_nu P80 split, n_test=3219): rmse=8.0790, r2=0.9654.
+
+  # yu_2018_teff DROPPED 2026-05-29 (FM-A1-fitprefactor Wave-6k remediation).
+  # K=5.8715 was in LAW_CONSTANTS but is a train-set OLS fit (12875 rows log-log).
+  # Yu+2018 Eq. 7 (PDF p. 9) publishes proportionality only — no frozen K.
+  # No paper-frozen source found. Dropped per Option B; F goes 2→1 (yu_2018_inverted
+  # remains at R²=0.9654, RMSE=8.079 μHz). File archived as
+  # formulas/yu_2018_teff.py.DROPPED_FM_A1.
+
+caps:
+  max_law_constants: 2
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+reference_baseline_id: yu_2018_inverted
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "relates ν_max to the large frequency separation through the red-giant asteroseismic bulk-structure scaling"
+  - "predicted ν_max is strictly positive"
+  - "predicted ν_max increases with delta_nu for otherwise identical stellar properties"
+
+best_baseline: 8.079    # yu_2018_inverted — rmse (lower is better); regenerated 2026-05-30

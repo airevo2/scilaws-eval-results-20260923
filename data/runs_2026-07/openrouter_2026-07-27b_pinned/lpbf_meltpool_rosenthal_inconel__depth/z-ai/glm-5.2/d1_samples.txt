@@ -1,0 +1,141 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    V = X[:, 1]
+    D = X[:, 2]
+    
+    # Canonical power-law scaling relationship for melt pool depth:
+    # d = C * P^a * V^b * D^c
+    # Coefficients are typical empirical constants for conduction-mode laser melting.
+    C = 50.0
+    a = 1.0
+    b = -0.5
+    c = -0.5
+    
+    d = C * (P ** a) * (V ** b) * (D ** c)
+    
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts melt-pool depth (d) in micrometers using a standard 
+    areal energy density scaling law. 
+    
+    d = k * (P / (V * D_m))
+    
+    where:
+    P = laser power [W]
+    V = scan velocity [mm/s]
+    D_m = beam diameter [m] (converted from um)
+    k = empirical material/process coefficient [um / (J/mm^2)]
+    """
+    P = X[:, 0]
+    V = X[:, 1]
+    D_um = X[:, 2]
+    
+    # Convert beam diameter to mm to compute areal energy density in J/mm^2
+    D_mm = D_um * 1e-3
+    areal_energy_density = P / (V * D_mm)
+    
+    # Empirical fitted coefficient typical for metallic alloys (e.g., Ti-6Al-4V, Inconel)
+    # yielding melt pool depth in um
+    k = 50.0 
+    
+    d = k * areal_energy_density
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    V = X[:, 1] / 1000.0  # convert mm/s to m/s
+    D = X[:, 2] / 1e6     # convert um to m
+    
+    # Material properties (e.g., Inconel 718)
+    A = 0.4                # Absorptivity
+    rho = 8190.0           # Density [kg/m^3]
+    Cp = 435.0             # Specific heat [J/(kg K)]
+    k = 25.0               # Thermal conductivity [W/(m K)]
+    Tm = 1600.0            # Melting point above room temp [K]
+    
+    alpha = k / (rho * Cp) # Thermal diffusivity [m^2/s]
+    
+    # Normalized enthalpy scaling law for melt pool depth
+    # d = (A * P) / (pi * rho * Cp * Tm * sqrt(alpha * V * sigma))
+    # where sigma (beam 1/e^2 radius) = D4sigma / 4
+    sigma = D / 4.0
+    d = (A * P) / (np.pi * rho * Cp * Tm * np.sqrt(alpha * V * sigma))
+    
+    return d * 1e6  # convert m to um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the maximum melt-pool depth using a 2D energy balance (areal energy density) 
+    closed-form analytical model, commonly used as a first-order approximation in the 
+    high-Peclet number (conduction) regime for laser additive manufacturing.
+    
+    The model balances the absorbed incident laser energy with the volumetric enthalpy 
+    required to heat and melt the material across the beam diameter and melt-pool depth.
+    """
+    P = X[:, 0]  # Laser power [W]
+    V = X[:, 1]  # Scan velocity [mm/s]
+    D = X[:, 2]  # Beam diameter [um]
+    
+    # Convert to SI units [m, s]
+    V_si = V * 1e-3  # m/s
+    D_si = D * 1e-6  # m
+    
+    # Typical material and process constants (e.g., representative of Ti-6Al-4V or steel)
+    rho = 4430.0       # Density [kg/m^3]
+    cp = 830.0         # Specific heat capacity [J/(kg*K)]
+    T_m = 1923.0       # Melting temperature [K]
+    T_0 = 300.0        # Ambient/initial temperature [K]
+    A = 0.5            # Laser absorptivity [-]
+    
+    delta_T = T_m - T_0
+    
+    # 2D energy balance: A * P = rho * cp * delta_T * V * D * d
+    # Solving for melt pool depth d:
+    d_si = (A * P) / (rho * cp * delta_T * V_si * D_si)
+    
+    # Convert depth back to micrometers [um]
+    d_um = d_si * 1e6
+    
+    return d_um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the laser melt-pool depth (d) based on the Rosenthal moving point 
+    heat source solution and normalized enthalpy scaling (3D conduction limit).
+    
+    The relationship scales as d ~ P / sqrt(V * D), where the proportionality 
+    constant K encapsulates material properties (absorptivity, thermal 
+    conductivity, density, specific heat, and melting temperature).
+    """
+    P = X[:, 0]  # Laser power [W]
+    V = X[:, 1]  # Scan velocity [mm/s]
+    D = X[:, 2]  # Beam diameter [um]
+    
+    # Empirical/analytical coefficient for typical AM alloys (e.g., Ti-6Al-4V, IN718)
+    # tuned for mixed input units (W, mm/s, um) to yield depth in um.
+    K = 400.0 
+    
+    # Closed-form relationship: d = K * P / sqrt(V * D)
+    d = K * P / np.sqrt(V * D)
+    
+    return d

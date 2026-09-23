@@ -1,0 +1,35 @@
+{
+  "task": "galaxy_stellar_mass_sdss__log_M_star",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "bell_2003",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "taylor_2011",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "zibetti_2009",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

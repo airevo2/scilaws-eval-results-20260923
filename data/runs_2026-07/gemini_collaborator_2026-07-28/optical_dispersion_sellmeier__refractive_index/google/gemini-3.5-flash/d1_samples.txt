@@ -1,0 +1,121 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract wavelength in micrometers
+    wavelength = X[:, 0]
+    w2 = wavelength**2
+
+    # Sellmeier coefficients for Silicon (Si) at room temperature (Bond 1965)
+    A1 = 10.6684293
+    B1 = 0.09091219  # 0.301516485^2
+    A2 = 0.0030434748
+    B2 = 1.287660  # 1.1347511^2
+    A3 = 1.5413340
+    B3 = 1218816.0  # 1104.0^2
+
+    # Calculate refractive index squared (n^2)
+    n2 = (
+        1
+        + (A1 * w2 / (w2 - B1))
+        + (A2 * w2 / (w2 - B2))
+        + (A3 * w2 / (w2 - B3))
+    )
+
+    # Return refractive index n
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract wavelength in micrometers
+    wavelength = X[:, 0]
+    w2 = wavelength**2
+
+    # Sellmeier coefficients for Silicon (Si) at room temperature (298 K)
+    # Source: W. L. Bond, J. Appl. Phys. 36, 1674 (1965)
+    A1 = 10.6684293
+    L1 = 0.301516485
+
+    A2 = 0.0030434748
+    L2 = 1.13475115
+
+    A3 = 1.5413340
+    L3 = 1104.0
+
+    # Calculate refractive index squared (n^2) using the Sellmeier equation
+    term1 = (A1 * w2) / (w2 - L1**2)
+    term2 = (A2 * w2) / (w2 - L2**2)
+    term3 = (A3 * w2) / (w2 - L3**2)
+
+    n2 = 1.0 + term1 + term2 + term3
+
+    # Return the real part of the refractive index
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = wavelength in micrometers
+    wavelength = X[:, 0]
+    w2 = wavelength**2
+
+    # Sellmeier equation for Silicon (Si) at room temperature (293 K)
+    # Source: W. L. Bond, J. Appl. Phys. 36, 3874 (1965)
+    term1 = 10.6684293 * w2 / (w2 - 0.301516485**2)
+    term2 = 0.0030434748 * w2 / (w2 - 1.13475115**2)
+    term3 = 1.54133408 * w2 / (w2 - 1104.0**2)
+
+    n2 = 1 + term1 + term2 + term3
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the vacuum wavelength in micrometers (lambda)
+    wavelength = X[:, 0]
+    w2 = wavelength**2
+
+    # Sellmeier equation coefficients for Silicon (Si) at room temperature (Bond 1965)
+    # n^2 - 1 = A1*lambda^2/(lambda^2 - B1^2) + A2*lambda^2/(lambda^2 - B2^2) + A3*lambda^2/(lambda^2 - B3^2)
+    A1, B1 = 10.6684293, 0.30151648
+    A2, B2 = 0.0030434748, 1.1347511
+    A3, B3 = 1.54133408, 1104.0
+
+    term1 = A1 * w2 / (w2 - B1**2)
+    term2 = A2 * w2 / (w2 - B2**2)
+    term3 = A3 * w2 / (w2 - B3**2)
+
+    n2 = 1 + term1 + term2 + term3
+
+    # Clip to prevent negative values in case of out-of-range inputs near absorption edges
+    n2 = np.clip(n2, 1.0, None)
+
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = wavelength in micrometers (lambda)
+    wavelength = X[:, 0]
+    
+    # Sellmeier equation for Silicon at room temperature (Bond 1965)
+    # Valid in the transparent infrared region (lambda > 1.2 um)
+    epsilon = 11.6858
+    A = 0.939816
+    B = 0.00810461
+    lambda_g = 1.1071
+    
+    n_sq = epsilon + A / (wavelength**2) + (B * wavelength**2) / (wavelength**2 - lambda_g**2)
+    return np.sqrt(n_sq)

@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Electric dipole moment"
+    symbol: "p_d"
+    unit: ""
+    description: "Electric dipole moment"
+  - name: "Electric field"
+    symbol: "Ef"
+    unit: ""
+    description: "Electric field"
+  - name: "Dimensionless"
+    symbol: "theta"
+    unit: ""
+    description: "Dimensionless"

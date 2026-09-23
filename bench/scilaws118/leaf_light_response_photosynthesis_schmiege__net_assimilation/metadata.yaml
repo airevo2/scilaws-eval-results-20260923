@@ -1,0 +1,149 @@
+task_id: leaf_light_response_photosynthesis_schmiege__net_assimilation
+domain: biology / plant ecophysiology
+license: CC0-1.0
+
+# Type II — cluster = one (ID, spp) pair = one individual leaf of one conifer
+# species. Net assimilation A_n vs incident PPFD Qin is governed by per-leaf
+# parameters (phi, Pgmax, theta, RD) from the non-rectangular hyperbola.
+# Rows from different leaves are NOT interchangeable: a shade-tolerant
+# Podocarpaceae leaf saturates at ~100-300 umol m-2 s-1 with Pgmax ~3-6,
+# while a sun-tolerant Pinus leaf saturates at ~400-600 umol m-2 s-1 with
+# Pgmax ~8-14. Type II criterion (a) fires: primary baseline has 4 per-cluster
+# LOCAL_FITTABLE parameters.
+type: typeII
+has_group_id: true
+
+# FM-A1 audit note: A_n (column A in the XLSX) is the net CO2 assimilation
+# rate measured directly by the LI-6800 IRGA (infrared gas analyser) — a
+# direct measurement, not computed from a formula. FM-A1: PASS.
+
+# Within-cluster split note: Qin-INTERLEAVED (interpolation). Each test cluster's
+# rows are Qin-sorted; even rank -> test_fit, odd rank -> test_test, so both windows
+# span the full 0..~2000 PPFD range. A Qin-THRESHOLD split (the original design: fit
+# <=300, predict the >300 plateau) is BROKEN for a saturating light-response curve:
+# the high-PAR plateau has near-zero within-cluster variance, so the per-cluster MEAN
+# beats the extrapolated curve -- both baselines lost to naive (NRH beat it in 3/12
+# clusters, Mitscherlich 0/12; mean-per-cluster RMSE 0.40/0.41 > naive 0.23), a §9.6
+# failure masked by a flattering pooled R^2 (0.94/0.96, driven by between-cluster Pgmax
+# variance; the harness scores by MEAN PER-CLUSTER rmse, not pooled). Under the
+# interleaved split both baselines beat the per-cluster mean in 12/12 clusters
+# (mean-pc RMSE 0.11/0.12). All 12 test clusters have >= 11 test_fit and >= 10 test_test
+# rows (floor: 5 for 4 params). Mirrors the coral / cosmic_ray interleaved-split fixes.
+
+# FM-T-ID1 note: All clusters have >= 21 total rows; test clusters have
+# >= 17 sub-saturation fit rows for the 4-parameter NRH. No floor enforcement
+# reassignment needed. FM-T-ID1: PASS.
+
+# FM-T7 (K floor) note: Not applicable. The NRH sqrt argument
+# (phi*I + Pgmax)^2 - 4*theta*phi*I*Pgmax >= 0 for all valid parameters
+# (convexity theta in (0,1]). No pole or log floor needed. FM-T7: N/A.
+
+context: >-
+  Plant photosynthesis is the primary mechanism by which atmospheric carbon is
+  fixed into organic matter. At the leaf level, net carbon assimilation (A_n)
+  rises from negative values in darkness (where only dark respiration occurs)
+  to an asymptotic maximum as incident light (photosynthetically active
+  radiation, PAR) increases. This photosynthetic light-response curve is a
+  foundational tool in plant ecophysiology: it characterises how efficiently
+  a leaf captures light energy (quantum yield), how much carbon it can
+  maximally assimilate (light-saturated rate), and how steeply the
+  transition occurs (convexity). Conifer species differ markedly in these
+  traits depending on their evolutionary history and light environment:
+  shade-tolerant Podocarpaceae (Dacrycarpus, Dacrydium, Nageia, Podocarpus)
+  have low light-saturation points and low maximum rates adapted to forest
+  understories, while sun-tolerant Pinus species have higher maximum rates
+  and steeper initial slopes. Schmiege and colleagues (2020) measured LI-6800 gas
+  exchange light-response curves for 7 conifer species across 19 plants in
+  Vietnamese forest sites, providing 54 individual leaf curves spanning the
+  full PAR range from 0 to ~2000 umol m-2 s-1. The target SR task is to
+  recover the functional form of A_n as a function of PAR for each leaf,
+  where the parameters governing the curve shape (apparent quantum yield phi,
+  gross asymptote Pgmax, convexity theta, dark respiration RD) vary
+  per-leaf.
+
+target:
+  name: A_n
+  symbol: "A_n"
+  unit: "umol CO2 m-2 s-1"
+  description: >-
+    Net CO2 assimilation rate (=A in Schmiege XLSX) measured by the LI-6800
+    portable gas exchange analyser (IRGA). Positive values represent net
+    carbon uptake; negative values at very low light represent dark
+    respiration exceeding gross photosynthesis. Range spans from the
+    dark-respiration intercept (~-0.2 to -1.4 umol CO2 m-2 s-1) to the
+    light-saturated asymptote (~3 to 14 umol CO2 m-2 s-1) depending on
+    species and individual.
+  range: [-1.445953, 13.866282]
+
+inputs:
+  - name: Qin
+    symbol: "Q_in"
+    unit: "umol photons m-2 s-1"
+    description: >-
+      Incident photosynthetically active radiation (PPFD) on the leaf surface,
+      measured by the LI-6800 quantum sensor. Ranges from 0 (complete darkness)
+      to ~2000 umol m-2 s-1 (near-full sunlight). The LI-6800 steps through
+      a programmed sequence of incident light levels for each measurement.
+    range: [0.0, 2000.01]
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Cluster = one (ID, spp) leaf pair from the Schmiege 2021 Dryad dataset.
+# 54 unique leaf clusters total; 42 train, 12 test.
+#
+# Cluster holdout: MD5(leaf_id) % 5 == 0 -> test cluster (leaf_id = spp+'_'+str(ID)).
+# Within-cluster split: Qin-INTERLEAVED (Qin-sorted; even rank -> test_fit, odd -> test_test).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 1108
+n_test_fit: 155
+n_test_test: 148
+n_clusters_train: 42
+n_clusters_test: 12
+n_rows_per_cluster_min: 21
+n_rows_per_cluster_median: 22
+n_rows_per_cluster_max: 45
+
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+
+# Candidate prior constants — Lobo 2013 NRH has no universal law constants.
+# The integer factors 4 and 2 in the NRH discriminant are structural algebraic
+# constants (from the quadratic formula roots), not empirical values.
+# phi, Pgmax, theta, RD are all per-cluster. priors: [] is correct.
+priors: []
+
+# Reference-baseline bank (2 baselines)
+references:
+  - id: lobo_2013
+    label: "Lobo (2013) NRH — PN=[phi*I+Pgmax-sqrt((phi*I+Pgmax)^2-4*theta*phi*I*Pgmax)]/(2*theta)-RD"
+    formula_file: formulas/lobo_2013.py
+    reference_pdf: reference/lobo_2013_light_response.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # phi, Pgmax, theta, RD
+    measured:
+      rmse: 0.18090216
+      r2: 0.99105323
+  - id: peek_2002
+    label: "Peek (2002) Mitscherlich — A = Amax * [1 - exp(-Aqe * (PPF - LCP))]"
+    formula_file: formulas/peek_2002.py
+    reference_pdf: reference/peek_2002.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # Amax, Aqe, LCP
+    measured:
+      rmse: 0.18151676
+      r2: 0.99099233
+
+# === v2 anti-dump caps (back-filled from reference_metrics.json after evaluate.py) ===
+caps:
+  max_law_constants:        0
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.18090216   # lobo_2013 pooled RMSE — 0.5 score anchor (best by mean-per-cluster AND pooled)

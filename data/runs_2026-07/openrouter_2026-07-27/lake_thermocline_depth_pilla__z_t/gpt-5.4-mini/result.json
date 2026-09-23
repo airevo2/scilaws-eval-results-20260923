@@ -1,0 +1,17 @@
+{
+  "task": "lake_thermocline_depth_pilla__z_t",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "boehrer_2008",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

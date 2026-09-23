@@ -1,0 +1,53 @@
+{
+  "task": "v1_orientation_tuning_stringer__neuron_response",
+  "model": "z-ai/glm-5.2",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "swindale_1998_flat_topped",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "swindale_1998_skewed",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "swindale_1998_von_mises",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "swindale_1998_wrapped_gaussian",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "wu_2025",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

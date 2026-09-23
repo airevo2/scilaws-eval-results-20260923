@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Electric field"
+  symbol: "Ef"
+  unit: ""
+  description: "Electric field"
+inputs:
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"
+  - name: "Electric dipole moment"
+    symbol: "p_d"
+    unit: ""
+    description: "Electric dipole moment"
+  - name: "Dimensionless"
+    symbol: "theta"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Length"
+    symbol: "r"
+    unit: ""
+    description: "Length"

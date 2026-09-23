@@ -1,0 +1,191 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the large frequency separation (delta_nu) in uHz for red-giant stars 
+    using the standard empirical power-law relationship with the frequency of 
+    maximum oscillation power (nu_max), accounting for the stellar evolutionary phase.
+
+    Inputs:
+    - X[:, 0] = nu_max (ν_max) [uHz]
+    - X[:, 1] = Teff (T_eff) [K] (not explicitly needed for the primary scaling)
+    - X[:, 2] = FeH ([Fe/H]) [dex] (not explicitly needed for the primary scaling)
+    - X[:, 3] = phase (0: unclassified, 1: RGB, 2: HeB)
+    """
+    nu_max = X[:, 0]
+    phase = X[:, 3]
+
+    # Initialize coefficients with the canonical global relation (e.g., Huber et al. 2011)
+    a = np.full_like(nu_max, 0.263)
+    b = np.full_like(nu_max, 0.772)
+
+    # Refined coefficients for Hydrogen-shell-burning Red Giant Branch (RGB) stars
+    rgb_mask = (phase == 1)
+    a[rgb_mask] = 0.273
+    b[rgb_mask] = 0.755
+
+    # Refined coefficients for Helium-core-burning (HeB / Red Clump) stars
+    heb_mask = (phase == 2)
+    a[heb_mask] = 0.255
+    b[heb_mask] = 0.775
+
+    # Standard power-law relation: delta_nu = a * (nu_max)^b
+    delta_nu = a * (nu_max ** b)
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the large frequency separation (delta_nu) in microhertz [uHz]
+    from nu_max, Teff, FeH, and evolutionary phase using the standard empirical 
+    power-law relations from Huber et al. (2011) and Yu et al. (2018).
+    
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = nu_max [uHz]
+        - X[:, 1] = Teff [K] (not explicitly needed for the power-law relation)
+        - X[:, 2] = FeH [dex] (not explicitly needed for the power-law relation)
+        - X[:, 3] = phase (0: unknown, 1: RGB, 2: HeB)
+        
+    Returns:
+    - 1-D numpy array of delta_nu [uHz]
+    """
+    nu_max = X[:, 0]
+    phase = X[:, 3]
+    
+    # Default coefficients (global relation from Huber et al. 2011)
+    a = np.full_like(nu_max, 0.263)
+    b = np.full_like(nu_max, 0.772)
+    
+    # RGB stars (phase = 1) coefficients from Yu et al. (2018)
+    rgb_mask = (phase == 1)
+    a[rgb_mask] = 0.273
+    b[rgb_mask] = 0.757
+    
+    # Helium-burning / Red Clump stars (phase = 2) coefficients from Yu et al. (2018)
+    heb_mask = (phase == 2)
+    a[heb_mask] = 0.241
+    b[heb_mask] = 0.775
+    
+    # Compute delta_nu
+    delta_nu = a * (nu_max ** b)
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the large frequency separation (delta_nu) in uHz for red-giant stars
+    using the empirical power-law relations with nu_max, accounting for the 
+    evolutionary phase (RGB vs. HeB) as described in asteroseismic literature 
+    (e.g., Huber et al. 2011, Yu et al. 2018).
+    
+    Inputs:
+    - X[:, 0]: nu_max [uHz]
+    - X[:, 1]: Teff [K] (not explicitly needed for the primary power-law relation)
+    - X[:, 2]: FeH [dex] (not explicitly needed for the primary power-law relation)
+    - X[:, 3]: phase (0 = unknown, 1 = RGB, 2 = HeB)
+    """
+    nu_max = X[:, 0]
+    phase = X[:, 3]
+    
+    # Initialize the output array
+    delta_nu = np.zeros_like(nu_max)
+    
+    # Define masks for different evolutionary phases
+    rgb_mask = (phase == 1)
+    heb_mask = (phase == 2)
+    other_mask = ~(rgb_mask | heb_mask)
+    
+    # Apply the phase-specific power-law relations (Yu et al. 2018 / Huber et al. 2011)
+    # RGB stars (Hydrogen-shell-burning)
+    delta_nu[rgb_mask] = 0.273 * (nu_max[rgb_mask] ** 0.757)
+    
+    # HeB stars (Helium-core-burning / Red Clump)
+    delta_nu[heb_mask] = 0.252 * (nu_max[heb_mask] ** 0.780)
+    
+    # Unclassified stars (Global average relation)
+    delta_nu[other_mask] = 0.263 * (nu_max[other_mask] ** 0.772)
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the large frequency separation delta_nu [uHz] for red-giant stars
+
+    using empirical power-law relations as a function of nu_max and evolutionary phase.
+
+    Inputs:
+    - X[:, 0] = nu_max [uHz]
+    - X[:, 1] = Teff [K] (not strictly needed for the primary scaling relation)
+    - X[:, 2] = FeH [dex] (not strictly needed for the primary scaling relation)
+    - X[:, 3] = phase (0: unknown, 1: RGB, 2: HeB)
+    """
+    nu_max = X[:, 0]
+    phase = X[:, 3]
+
+    # Default/global coefficients (Huber et al. 2011)
+    a = np.full_like(nu_max, 0.263)
+    b = np.full_like(nu_max, 0.772)
+
+    # RGB-specific coefficients (Yu et al. 2018)
+    rgb_mask = phase == 1
+    a[rgb_mask] = 0.273
+    b[rgb_mask] = 0.757
+
+    # HeB-specific coefficients (Yu et al. 2018)
+    heb_mask = phase == 2
+    a[heb_mask] = 0.241
+    b[heb_mask] = 0.792
+
+    # Compute delta_nu
+    delta_nu = a * (nu_max**b)
+
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the large frequency separation (delta_nu, [uHz]) from the frequency of 
+    maximum oscillation power (nu_max, [uHz]) and evolutionary phase using the 
+    canonical empirical power-law relationships established in asteroseismology 
+    (e.g., Huber et al. 2011, Yu et al. 2018).
+    
+    Inputs:
+    - X[:, 0]: nu_max [uHz]
+    - X[:, 1]: Teff [K] (not required for the primary power-law relation)
+    - X[:, 2]: FeH [dex] (not required for the primary power-law relation)
+    - X[:, 3]: phase (0 = unclassified, 1 = RGB, 2 = HeB)
+    """
+    nu_max = X[:, 0]
+    phase = X[:, 3]
+    
+    # Default coefficients for unclassified stars (global fit from Huber+2011)
+    a = np.full_like(nu_max, 0.263)
+    b = np.full_like(nu_max, 0.772)
+    
+    # Hydrogen-shell-burning RGB stars (phase == 1)
+    rgb_mask = (phase == 1)
+    a[rgb_mask] = 0.269
+    b[rgb_mask] = 0.761
+    
+    # Core helium-burning RC/HeB stars (phase == 2)
+    heb_mask = (phase == 2)
+    a[heb_mask] = 0.252
+    b[heb_mask] = 0.781
+    
+    return a * (nu_max ** b)

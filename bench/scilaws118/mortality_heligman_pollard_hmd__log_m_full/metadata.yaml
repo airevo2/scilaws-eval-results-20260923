@@ -1,0 +1,112 @@
+task_id: mortality_heligman_pollard_hmd__log_m_full
+domain: social_science / demography
+license: CC-BY-4.0
+
+# Type II — cluster = country (HMD code).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task is from demography, concerning the central death rate across the full human age range, by age and calendar year, as recorded in the national life tables of the Human Mortality Database (HMD).
+
+target:
+  name: log_m_full
+  symbol: ln M(x,t)
+  unit: ""
+  description: Natural log of the central period death rate at single-year age resolution over the full age range (Total sex, 1×1 configuration).
+  range: [-12.206073, 0.524812]
+
+inputs:
+  - name: age
+    symbol: x
+    unit: years
+    description: Single-year integer age of the cohort, 0 to 95 inclusive.
+    range: [0, 95]
+  - name: year
+    symbol: t
+    unit: years
+    description: Calendar year of observation, 1751 to 2025.
+    range: [1751, 2025]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-country-out)
+# plus a within-test-cluster temporal split. 42 HMD countries split 28 train
+# / 14 test. Test countries are never seen during form discovery; for each
+# test country, fit() sees its first 50% of years (test_fit, temporal prefix)
+# and predict() is scored on the remaining 50% (test_test, temporal suffix).
+# Both cross-cluster and cross-time generalisation are exercised.
+#
+# This is the full-age-range sibling of
+# mortality_gompertz_makeham_hmd__log_m_adult: same HMD source and same
+# Heligman-Pollard reference paper, but ages 0-95 and the complete
+# 8-parameter HP curve rather than the adult-only Gompertz reduction.
+data_files:
+  train:     data/train.csv        # 28 train countries, all years
+  test_fit:  data/test_fit.csv     # 14 test countries, early-half years
+  test_test: data/test_test.csv    # 14 test countries, late-half years
+n_train:     257660
+n_test_fit:   63071
+n_test_test:  63700
+n_clusters_train: 28
+n_clusters_test:  14
+
+# Candidate prior constants — the `priors` prompt slot. The Heligman-Pollard
+# model-1 law fits all eight of its parameters per cluster; no external
+# constant is load-bearing. The distractor below is a parameter of the HP
+# 1980 models 2 and 3 that model 1 — this benchmark's reference — does not
+# contain: in-domain, from the same paper, but not part of the formula.
+priors:
+  - name: hp1980_curvature_K
+    value: 1.0
+    unit: dimensionless
+    description: Curvature parameter of the senescent term in Heligman-Pollard 1980 models 2 and 3.
+    source: HP 1980 Tables 2-3 (K ∈ ~0.78–2.42). Model 1 — the reference law of this task — has no K term; K=1 is where models 2/3 reduce to model 1.
+    _role: distractor
+
+# === Reference baselines ===
+# Two formulas spanning the full-age mortality landscape. Gompertz-Makeham
+# (Makeham 1860) models only senescence plus a constant background — it
+# cannot represent the childhood decline or the accident hump, the weak
+# rung. Heligman & Pollard (1980) model 1 adds both: three additive
+# components, eight per-cluster parameters A-H, the full curve.
+references:
+  - id: gompertz_makeham
+    label: Gompertz-Makeham law — senescence plus an age-independent constant (nonlinear LS)
+    formula_file: formulas/gompertz_makeham.py
+    reference_pdf: reference/makeham_1860.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # A, B, beta
+    measured: {rmse: 1.0407, r2: 0.7344}   # mean per-cluster
+  - id: heligman_pollard_1980
+    label: Heligman & Pollard (1980) 8-parameter law of mortality, model 1 (nonlinear LS)
+    formula_file: formulas/heligman_pollard_1980.py
+    reference_pdf: reference/heligman_pollard_1980.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 8          # A, B, C, D, E, F, G, H
+    measured: {rmse: 0.9496, r2: 0.7586}   # mean per-cluster
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         8
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on log_m_full
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a steeply declining childhood-mortality term that falls with age through the early-childhood years, so that mortality decreases monotonically with age across the childhood regime before the young-adult hump"
+  - "includes a localised young-adult accident hump - a rise-and-fall of mortality concentrated in the late teens to thirties (e.g. a lognormal-in-age bump)"
+  - "includes a senescence-driven mortality rise that dominates at older ages, where the log-mortality rise accelerates toward a straight Gompertz log-linear asymptote as age increases"
+  - "includes an age-independent background mortality term present at all ages (a Makeham-type constant floor)"
+  - "predicted log mortality is defined and finite across the entire stated age-year domain, including age 0"
+  - "the implied one-year death probability stays within (0,1), bounding the central death rate (and hence log mortality) from above"
+
+best_baseline: 0.9496     # heligman_pollard_1980, mean per-cluster rmse

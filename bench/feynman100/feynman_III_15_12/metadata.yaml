@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Energy"
+    symbol: "U"
+    unit: ""
+    description: "Energy"
+  - name: "Wave number"
+    symbol: "k"
+    unit: ""
+    description: "Wave number"
+  - name: "Length"
+    symbol: "d"
+    unit: ""
+    description: "Length"

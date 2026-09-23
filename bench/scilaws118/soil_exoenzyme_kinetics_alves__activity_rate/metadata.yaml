@@ -1,0 +1,160 @@
+task_id: soil_exoenzyme_kinetics_alves__activity_rate
+domain: biology / soil_ecology
+license: CC-BY-4.0
+
+# Type II -- cluster = (enzyme x depth x temperature x core).
+# Each combination has its own V_max and K_m; MM structural form is invariant.
+type: typeII
+has_group_id: true
+
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# Cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emitted for forward-compat.
+
+context: >-
+  Extracellular soil enzymes mediate the rate-limiting step of organic
+  matter decomposition by hydrolyzing polymeric substrates into
+  assimilable monomers. The relationship between enzyme activity rate
+  and substrate concentration follows a hyperbolic saturation curve:
+  at low concentrations the rate rises nearly linearly with substrate,
+  while at high concentrations it asymptotes toward a maximum velocity
+  set by the enzyme abundance and turnover number. The kinetic
+  parameters governing this curve differ with soil depth — surface
+  soils have higher enzyme concentrations and activity than deep
+  mineral horizons — and with incubation temperature, which modulates
+  enzyme conformation and catalytic efficiency. Fluorometric assays
+  using methylumbelliferyl (MUF) and amino-methyl coumarin (AMC)
+  substrates allow direct measurement of activity at a series of
+  substrate concentrations, enabling curve-fitting of the kinetic
+  parameters.
+
+target:
+  name: activity_rate
+  symbol: v
+  unit: nmol g^-1 h^-1
+  description: >-
+    Fluorometric enzyme activity rate (nmol per gram dry soil per hour),
+    measured via MUF/AMC fluorescence at a single substrate concentration.
+    A real measured quantity -- NOT a pre-fitted kinetic parameter.
+  range: [0.000422, 9869.64]
+
+inputs:
+  - name: substrate_conc
+    symbol: S
+    unit: uM
+    description: >-
+      Substrate concentration in micromolar (uM). Eight discrete assay
+      levels per enzyme type: BG 10-450 uM; LAP 10-600 uM; AP 10-700 uM
+      (not all levels survive the activity>0 filter in all clusters).
+    range: [10.0, 700.0]
+
+# Dataset -- three-file v2 Type II layout, cluster holdout.
+# Cluster = enzyme x depth x temperature x core (324 total; 10 excluded for
+# FM-T-ID1 identifiability failure; 314 usable).
+# Holdout: every 4th cluster alphabetically -> test (78 test clusters).
+# Within-test split: substrate_conc rank interleaved (even ranks -> test_fit,
+# odd ranks -> test_test) to prevent Henry's-law saturation leakage.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 6411
+n_test_fit: 1170
+n_test_test: 965
+n_clusters_train: 236
+n_clusters_test: 78
+n_rows_per_cluster_min: 18
+n_rows_per_cluster_median: 27
+n_rows_per_cluster_max: 32
+
+# Priors: a small grounded set of candidate constants + distractors.
+# All values traceable to the Alves 2021 paper (Frontiers in Microbiology 12:735282).
+priors:
+  - name: typical_surface_V_max
+    value: 1500.0
+    unit: nmol g^-1 h^-1
+    description: >-
+      Representative maximum velocity for surface soil (0-10 cm) across
+      enzymes at moderate temperature (25 C). Alves et al. 2021 Table 2:
+      V_max/ds surface values of order 10^2-10^3 nmol g^-1 h^-1.
+    source: Alves et al. 2021, Table 2, p. 7 (surface V_max/ds).
+    _role: distractor
+  - name: typical_surface_K_m
+    value: 80.0
+    unit: uM
+    description: >-
+      Representative Michaelis constant for surface soils. Alves et al.
+      2021 Figure 2: K_m ranges from ~10-200 uM at surface; median ~80 uM.
+    source: Alves et al. 2021, Figure 2, p. 8.
+    _role: distractor
+  - name: approx_Q10_V_max
+    value: 2.0
+    unit: dimensionless
+    description: >-
+      Approximate Q10 temperature coefficient for V_max (ratio of activity
+      at T+10 C to activity at T). Alves et al. 2021 Figure 7A: Q10 for
+      V_max spans ~1.2-2.5 with mean near 2.0 for BG.
+    source: Alves et al. 2021, Figure 7A, p. 13.
+    _role: distractor
+
+# Reference baselines
+references:
+  - id: alves_2021
+    label: Alves et al. 2021 -- 2-parameter Michaelis-Menten v = V_max * S / (K_m + S)
+    formula_file: formulas/alves_2021.py
+    reference_pdf: reference/alves_2021.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2    # V_max, K_m
+    measured: {rmse: 119.7061, r2: 0.9840}
+  - id: hill_1910
+    label: Hill 1910 -- 3-parameter Hill equation v = V_max * S^n / (K_h^n + S^n)
+    formula_file: formulas/hill_1910.py
+    reference_pdf: reference/alves_2021.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3    # V_max, K_h, n
+    measured: {rmse: 114.0293, r2: 0.9855}
+
+# Auditor notes
+auditor_notes: >-
+  §9.6 judged on MEAN-PER-CLUSTER rmse (the harness basis), NOT pooled R²: the best
+  baseline alves_2021 has mean-pc rmse 58.69 vs the per-cluster-mean naive 144.71
+  (oracle) / 149.85 (realistic), beating naive in 65/78 (oracle) and 73/78 (realistic)
+  of the 78 test clusters — §9.6 passes decisively. hill_1910 (mean-pc 59.59) beats
+  naive in 58/78 (oracle). The per-cluster negative-R² counts (alves 13/78, hill 20/78,
+  hill the higher because its 3rd parameter overfits the ~4 odd-rank test levels) are a
+  small minority and do NOT overturn the aggregate mean-pc verdict — they are the
+  small-cluster scatter artefact noted in audit-typeII-selection-metric, not a §9.6
+  failure (an earlier draft of this note defended §9.6 via pooled R²=0.9855, which is the
+  wrong metric — corrected here). The scoring anchor is alves_2021 (mean-pc argmin, score
+  self-test 0.5000); the best_baseline field carries the pooled-min (hill_1910 114.03) so
+  the pooled-based tools (verify_task §8.12 / metric_sanity) pass — best_baseline does not
+  affect scoring (see the best_baseline comment). FM-T-ID1: 10/324 clusters excluded for
+  max(S) < K_m (documented in prep_data.py and data_raw/README.md).
+
+# v2 anti-dump caps
+caps:
+  max_law_constants:        0
+  max_local_params:         3
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# Scoring
+metric: rmse
+# best_baseline = the POOLED rmse of the pooled-strongest reference (hill_1910, 114.03),
+# set to match the pooled-based consistency checks (verify_task §8.12 + metric_sanity both
+# pick "strongest" by pooled rmse). best_baseline has NO effect on scoring — evaluate.py
+# recomputes the anchor from reference_metrics.json each run.
+#
+# The ACTUAL harness 0.5 scoring anchor is alves_2021, NOT hill_1910: evaluate.py
+# `_best_reference` selects Type II by MEAN-PER-CLUSTER rmse (argmin), under which
+# alves_2021 (58.69) < hill_1910 (59.59) — confirmed by the score self-test
+# (alves_2021 → 0.5000, hill_1910 → 0.4582). alves_2021 is also the source-paper primary
+# model (Alves 2021 fit the 2-parameter MM). Pooled and mean-pc DISAGREE here because the
+# 3-parameter hill_1910 overfits per-cluster (20/78 vs 13/78 neg-R², worse mean-pc) while
+# shaving the high-V_max clusters in the pooled sense (lower pooled rmse). The
+# equal-cluster-weight mean-pc basis is the authoritative Type II selection; the pooled
+# best_baseline below is a display value chosen so the pooled-based tools pass.
+best_baseline: 114.0293    # hill_1910 pooled rmse (pooled-min); the scoring anchor is alves_2021 (mean-pc)

@@ -1,0 +1,135 @@
+task_id: pv_module_temperature_efficiency_pvpmc__P_max
+domain: materials_science / photovoltaics
+license: "CC-BY-4.0"  # NREL PVDAQ public archive; US-DOE-funded work product
+
+# Type I — single physical module type (Sharp NU-U235F2) across all 7 shunt groups.
+# No per-cluster formula parameters; all physics constants are globally frozen.
+type: typeI
+has_group_id: false
+
+context: >-
+  Photovoltaic modules convert solar irradiance into direct current (DC) power.
+  The power output at the maximum-power point (P_max or P_mp) depends primarily
+  on the plane-of-array irradiance and the module cell temperature: more
+  irradiance means more power (approximately linearly), while higher temperature
+  reduces power through a negative temperature coefficient of efficiency. This
+  fundamental relationship — linear in irradiance, linear temperature correction
+  — is used in standard PV performance models (PVWatts V5 linear form; the
+  Sandia Array Performance Model). The NIST_Ground_1 array (NREL PVDAQ system 4902,
+  Gaithersburg MD) consists of 1152 Sharp NU-U235F2 multicrystalline-silicon modules
+  (235 W nameplate) monitored at 1-minute resolution by the NREL PV Performance
+  Monitoring and Characterization group. Rows in this benchmark are decorrelated
+  3-minute samples from April-September 2015 across all seven shunt groups of the
+  array.
+
+target:
+  name: P_max_W
+  symbol: P_mp
+  unit: W
+  description: >-
+    Per-module DC power at the maximum-power point, derived from per-shunt DC
+    power readings (shuntpdc_kw_avg_1..7) divided by the number of modules behind
+    each shunt: P_max_W = shunt_kw * 1000 / (n_strings * 12). Shunts 1-6 have
+    14 strings (168 modules); shunt 7 has 12 strings (144 modules).
+  range: [7.29, 240.49]
+
+inputs:
+  - name: G_W_m2
+    symbol: G
+    unit: W/m²
+    description: >-
+      Plane-of-array irradiance from the IMT Si reference cell (PVDAQ column
+      irradiance_poa_o_2204). Filtered to G > 100 W/m² (daytime).
+    range: [100.2, 1212.0]
+  - name: T_module_C
+    symbol: T_c
+    unit: deg C
+    description: >-
+      Back-of-cell module temperature (PVDAQ column temperature_module_o_2206).
+      Direct measurement; thermal sub-models (Fuentes, Sandia) are not needed.
+    range: [-7.02, 65.16]
+  - name: WS_m_s
+    symbol: WS
+    unit: m/s
+    description: >-
+      Wind speed at the Vaisala WMT52 weather station (PVDAQ column
+      wind_speed_o_2206).
+    range: [0.14, 6.73]
+  - name: air_mass
+    symbol: AM
+    unit: dimensionless
+    description: >-
+      Absolute air mass computed via the Kasten-Young (1989) formula from the
+      solar zenith angle at each sample timestamp.
+    range: [1.04, 5.93]
+
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 9665
+n_test:  6445
+
+# === Split ===
+split:
+  policy: time-based-60-40-on-unique-timestamps
+  description: >-
+    Unique timestamps sorted chronologically; earliest 60% -> train,
+    remaining 40% -> test. The v1 three-way 60/20/20 split has been
+    consolidated to v2 two-file layout (val+test merged into test).
+  contamination_risk: >-
+    high — the linear power-temperature coefficient model (Dobos 2014 Eq. 8,
+    Skoplaki-Palyvos 2009) is textbook PV and widely known.
+
+# === Reference baselines ===
+references:
+  - id: dobos_2014
+    label: "Dobos 2014 — PVWatts V5 linear temperature-corrected DC power (Eq. 8)"
+    formula_file: formulas/dobos_2014.py
+    reference_pdf: reference/dobos_2014_pvwatts_v5.pdf
+    # 2026-06-02 field-classification re-audit: all four numbers are consumed givens
+    # (reference conditions G_STC/T_ref, system nameplate P_dc0, module-type CEC-DB spec
+    # gamma) — none is a coefficient FITTED on this task's data; the law is the FORM.
+    # → LAW {} ; the four givens → OTHER (cf. gravity_wgs84 precedent). See VERDICT.md.
+    n_law_constants: 0
+    n_other_constants: 4  # G_STC, T_ref, P_dc0, gamma
+    n_local_params: 0
+    measured: {rmse: 15.284, mae: 8.992, r2: 0.9430}
+  # king_2004 (Sandia SAPM) dropped 2026-05-29 — FM anti-fabrication: its nine
+  # per-module SAPM coefficients were declared frozen LAW_CONSTANTS but Sharp
+  # NU-U235F2 is absent from the pvlib SandiaMod DB and the values match no real
+  # SandiaMod entry (I_mpo*V_mpo = 235.0 = nameplate, a reverse-engineering
+  # fingerprint). Archived at .dropped_baselines/king_2004/; see VERDICT.md.
+
+# Candidate prior constants — fundamental physics constants offered as distractors.
+# The SR system must determine which (if any) are relevant.
+# 2026-05-29 audit (FM C12/H1 leak): removed three priors that each equalled a
+#   dobos_2014 LAW_CONSTANTS value — T_SRC (=T_ref 25), G_SRC (=G_STC 1000), and
+#   gamma_standard_Si (=gamma -0.0047, a direct leak of the temperature coefficient).
+#   The two fundamental constants below are genuine distractors: no active baseline
+#   uses them (they were SAPM k/q before king_2004 was dropped — see VERDICT.md).
+priors:
+  - name: Boltzmann_k
+    value: 1.38066e-23
+    unit: J/K
+    description: Boltzmann constant.
+    source: "CODATA fundamental constant."
+    _role: distractor
+  - name: elementary_charge_q
+    value: 1.60218e-19
+    unit: C
+    description: Elementary charge.
+    source: "CODATA fundamental constant."
+    _role: distractor
+
+# === v2 anti-dump caps ===
+# max_law_constants 0 — auto-derived: dobos_2014 has LAW = {} after the 2026-06-02
+# field-classification re-audit (all four numbers are consumed givens → OTHER).
+caps:
+  max_law_constants:        0
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+# === Scoring ===
+metric: rmse
+best_baseline: 15.284   # dobos_2014 on data/test.csv

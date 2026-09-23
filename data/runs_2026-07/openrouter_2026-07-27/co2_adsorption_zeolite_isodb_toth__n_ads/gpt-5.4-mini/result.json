@@ -1,0 +1,26 @@
+{
+  "task": "co2_adsorption_zeolite_isodb_toth__n_ads",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "kim_2023",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "swenson_stadie_2019",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

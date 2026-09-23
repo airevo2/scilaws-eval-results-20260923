@@ -1,0 +1,17 @@
+{
+  "task": "pfas_soil_sorption__log_kd",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "fabregat_2025",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

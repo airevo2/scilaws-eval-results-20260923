@@ -1,0 +1,26 @@
+{
+  "task": "parker_spiral_imf__B_phi",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "parker_1958",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "parker_1958_omega_stated",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

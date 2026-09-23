@@ -1,0 +1,332 @@
+import numpy as np
+
+def predict(X):
+    # Coefficients from Bindi et al. (2011) IT10 model for PGA (cm/s^2)
+    Mh = 5.5
+    a = 3.074
+    b1 = 0.511
+    b2 = -0.059
+    c1 = -1.051
+    c2 = 0.192
+    e1 = -0.0084
+
+    # Site class coefficients (EC8 class A is reference)
+    site_coeff = np.array([0.0, 0.060, 0.146, 0.237, 0.102])  # A, B, C, D, E
+
+    # Style-of-faulting coefficients (strike-slip is reference)
+    f_N = -0.051   # Normal
+    f_R =  0.028   # Reverse
+    # f_SS = 0.0   # Strike-slip
+
+    M = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+
+    # Site term (one-hot encoded: columns 3 to 7)
+    site = X[:, 3:8] @ site_coeff
+
+    # Style-of-faulting term (columns 8: NF, 9: TF, 10: SS)
+    style = X[:, 8] * f_N + X[:, 9] * f_R  # SS contributes 0
+
+    # Distance metric
+    R_hypo = np.sqrt(R**2 + h**2)
+
+    # Predicted log10 PGA
+    log10_pga = (a
+                 + b1 * (M - Mh)
+                 + b2 * (M - Mh)**2
+                 + (c1 + c2 * (M - Mh)) * np.log10(R_hypo)
+                 + e1 * h
+                 + site
+                 + style)
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(PGA) (in log10(cm/s^2)) using a standard ground-motion
+    prediction equation (GMPE) with the following inputs (columns of X):
+    
+    X[:, 0] : Mw          - Moment magnitude
+    X[:, 1] : R_km        - Joyner-Boore distance [km]
+    X[:, 2] : depth_km    - Hypocentral depth [km]
+    X[:, 3] : ec8_A       - Binary site class A (reference; not used)
+    X[:, 4] : ec8_B       - Binary site class B
+    X[:, 5] : ec8_C       - Binary site class C
+    X[:, 6] : ec8_D       - Binary site class D
+    X[:, 7] : ec8_E       - Binary site class E
+    X[:, 8] : sof_NF      - Normal faulting
+    X[:, 9] : sof_TF      - Reverse (Thrust) faulting
+    X[:,10] : sof_SS      - Strike-slip faulting (reference; not used)
+    
+    The functional form follows the ITA18 model (Lanzano et al., 2019),
+    which is a standard closed-form relationship for shallow active crustal
+    regions in Italy, using EC8 site classes and style-of-faulting indicators.
+    Coefficients are given as named constants; replace them with actual
+    calibrated values for a specific region or application.
+    """
+    # Extract inputs
+    M      = X[:, 0]
+    R      = X[:, 1]
+    h      = X[:, 2]
+    C_B    = X[:, 4]
+    C_C    = X[:, 5]
+    C_D    = X[:, 6]
+    C_E    = X[:, 7]
+    F_N    = X[:, 8]
+    F_R    = X[:, 9]
+    
+    # -----------------------------------------------------------------
+    # Coefficients (placeholders – replace with fitted values)
+    # -----------------------------------------------------------------
+    # Constant (intercept)
+    b0 = 0.0
+    # Magnitude scaling (M-5)
+    b1 = 0.0          # linear coefficient for (M-5)
+    b2 = 0.0          # quadratic coefficient for (M-5)^2
+    # Distance scaling
+    b3 = 0.0          # intercept of distance term
+    b4 = 0.0          # magnitude-dependent distance term
+    h_d = 5.0         # pseudo-depth coefficient (fitted)
+    # Hypocentral depth term
+    b5 = 0.0          # coefficient for hypocentral depth (h)
+    # Site amplification w.r.t. EC8-A (rock)
+    s_B = 0.0
+    s_C = 0.0
+    s_D = 0.0
+    s_E = 0.0
+    # Style-of-faulting w.r.t. Strike-slip
+    f_N = 0.0         # Normal faulting
+    f_R = 0.0         # Reverse faulting
+    # -----------------------------------------------------------------
+    
+    # Magnitude term (centred at M=5)
+    M5 = M - 5.0
+    
+    # Distance term: log10( sqrt(R^2 + h_d^2) )
+    R_term = np.log10(np.sqrt(R**2 + h_d**2))
+    
+    # Assemble the prediction
+    log10_pga = (b0
+                 + b1 * M5
+                 + b2 * M5**2
+                 + (b3 + b4 * M5) * R_term
+                 + b5 * h
+                 + s_B * C_B
+                 + s_C * C_C
+                 + s_D * C_D
+                 + s_E * C_E
+                 + f_N * F_N
+                 + f_R * F_R)
+    
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(PGA) (RotD50, cm/s^2) using a standard European GMM
+    functional form (e.g., Bindi et al., 2014).
+    Reference categories: EC8 site class A, strike-slip faulting.
+    Coefficients are representative; replace with officially calibrated
+    values as needed.
+    """
+    # ---- functional form coefficients ----
+    a = 1.853          # intercept
+    b = 0.367          # linear magnitude scaling
+    c = -0.0264        # quadratic magnitude scaling
+    d = -1.201         # geometric spreading (constant part)
+    e = 0.100          # magnitude-dependent geometric spreading
+    f = -0.005         # hypocentral depth scaling
+    h_const = 6.0      # pseudo-depth (km) in distance term
+
+    # site coefficients (relative to EC8 A)
+    s_B = 0.05
+    s_C = 0.15
+    s_D = 0.25
+    s_E = 0.10
+
+    # style-of-faulting coefficients (relative to strike-slip)
+    sof_N = -0.05      # normal
+    sof_R = 0.05       # reverse/thrust
+
+    # ---- extract inputs ----
+    M = X[:, 0]        # Mw
+    R = X[:, 1]        # Joyner-Boore distance (km)
+    depth = X[:, 2]    # hypocentral depth (km)
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    # ec8_A (X[:,3]) and sof_SS (X[:,10]) are reference categories (coefficient = 0)
+
+    # ---- compute log10(PGA) ----
+    R_eff = np.sqrt(R**2 + h_const**2)
+    log10_pga = (a
+                 + b * M
+                 + c * M**2
+                 + (d + e * M) * np.log10(R_eff)
+                 + f * depth
+                 + s_B * ec8_B
+                 + s_C * ec8_C
+                 + s_D * ec8_D
+                 + s_E * ec8_E
+                 + sof_N * sof_NF
+                 + sof_R * sof_TF)
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(PGA) [log10(cm/s^2)] for RotD50 horizontal component.
+    
+    Uses the Akkar, Sandıkkaya & Bommer (2014) ground-motion model for
+    crustal earthquakes in Europe and the Middle East.
+    
+    Inputs: X is a 2-D numpy array with columns:
+    X[:,0]  = Mw          : moment magnitude
+    X[:,1]  = R_km        : Joyner--Boore distance [km]
+    X[:,2]  = depth_km    : hypocentral depth [km]
+    X[:,3]  = ec8_A       : 1 if EC8 class A (rock), else 0
+    X[:,4]  = ec8_B       : 1 if EC8 class B (stiff soil), else 0
+    X[:,5]  = ec8_C       : 1 if EC8 class C (medium soil), else 0
+    X[:,6]  = ec8_D       : 1 if EC8 class D (soft soil), else 0
+    X[:,7]  = ec8_E       : 1 if EC8 class E (special), else 0
+    X[:,8]  = sof_NF      : 1 if normal faulting, else 0
+    X[:,9]  = sof_TF      : 1 if reverse faulting, else 0
+    X[:,10] = sof_SS      : 1 if strike-slip faulting, else 0
+    """
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    ec8_A = X[:, 3]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    NF = X[:, 8]
+    TF = X[:, 9]
+    # SS = X[:, 10]  # strike-slip is reference (coefficient = 0)
+
+    # ----- Reference model coefficients (PGA, ASB14) -----
+    a1 = 1.85329
+    a2 = 0.42251
+    a3 = -0.05270
+    a4 = -2.21532
+    a5 = 0.27728
+    a6 = 7.06571
+    a7 = -0.00244
+    a8 = -0.04108   # normal faulting
+    a9 = 0.08003    # reverse faulting
+
+    # ----- Site amplification coefficients (relative to VS30=750 m/s) -----
+    s_A = -0.15099
+    s_B = -0.02911
+    s_C = 0.15382
+    s_D = 0.22485
+    s_E = 0.09342
+
+    # Magnitude and distance terms
+    M2 = Mw * Mw
+    R_term = np.sqrt(R * R + a6 * a6)
+    log10_R_term = np.log10(R_term)
+
+    # Compute log10(PGA)
+    log10_pga = (a1
+                 + a2 * Mw
+                 + a3 * M2
+                 + (a4 + a5 * Mw) * log10_R_term
+                 + a7 * h
+                 + a8 * NF
+                 + a9 * TF
+                 + s_A * ec8_A
+                 + s_B * ec8_B
+                 + s_C * ec8_C
+                 + s_D * ec8_D
+                 + s_E * ec8_E)
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for log10(PGA) (RotD50, cm/s^2) commonly used in 
+    shallow crustal ground-motion prediction equations (GMPEs) in active tectonic regions.
+    
+    Input X columns:
+    0: Mw         - Moment magnitude
+    1: R_km       - Joyner-Boore distance (km)
+    2: depth_km   - Hypocentral depth (km)
+    3: ec8_A      - EC8 site class A (rock, Vs30 > 800 m/s) – reference class
+    4: ec8_B      - EC8 site class B (stiff soil, Vs30 360–800 m/s)
+    5: ec8_C      - EC8 site class C (medium soil, Vs30 180–360 m/s)
+    6: ec8_D      - EC8 site class D (soft soil, Vs30 < 180 m/s)
+    7: ec8_E      - EC8 site class E (thin alluvium over rock)
+    8: sof_NF     - Normal faulting
+    9: sof_TF     - Reverse (Thrust) faulting
+    10: sof_SS    - Strike-slip faulting (reference style)
+    
+    Functional form:
+        log10(PGA) = beta0 + beta1*M + beta2*M^2 + 
+                     (beta3 + beta4*M) * log10( sqrt(R^2 + h^2) ) +
+                     gamma_B*C_B + gamma_C*C_C + gamma_D*C_D + gamma_E*C_E +
+                     delta_N*F_N + delta_R*F_R
+    where h is the hypocentral depth, acting as the near-source saturation distance.
+    """
+    # Extract variables
+    M = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+    F_N = X[:, 8]
+    F_R = X[:, 9]
+
+    # Typical coefficients for illustration (e.g., derived from European strong-motion datasets)
+    # Intercept (for Mw=0, reference rock A, strike-slip) – adjust as fitted
+    beta0 =  1.500
+    beta1 =  0.450
+    beta2 = -0.010
+    beta3 = -1.250
+    beta4 =  0.120
+    # Site amplification relative to rock A (ec8_A = 0)
+    gamma_B = 0.20
+    gamma_C = 0.32
+    gamma_D = 0.45
+    gamma_E = 0.55
+    # Faulting style adjustments relative to strike-slip
+    delta_N = -0.04   # normal faulting slightly lower motions
+    delta_R =  0.05   # reverse faulting slightly higher motions
+
+    # Near-source saturation distance (hypocentral depth used as pseudo-depth)
+    R_sat = np.sqrt(R**2 + h**2)
+
+    # Compute log10 PGA
+    log10_pga = (beta0 
+                 + beta1 * M 
+                 + beta2 * M**2 
+                 + (beta3 + beta4 * M) * np.log10(R_sat)
+                 + gamma_B * C_B 
+                 + gamma_C * C_C 
+                 + gamma_D * C_D 
+                 + gamma_E * C_E
+                 + delta_N * F_N 
+                 + delta_R * F_R)
+
+    return log10_pga

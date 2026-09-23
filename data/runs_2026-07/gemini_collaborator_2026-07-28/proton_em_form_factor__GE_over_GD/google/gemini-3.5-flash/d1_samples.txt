@@ -1,0 +1,140 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the four-momentum transfer squared Q^2 in GeV^2
+    Q2 = X[:, 0]
+
+    # Proton mass in GeV
+    M_p = 0.938272
+    tau = Q2 / (4.0 * M_p**2)
+
+    # Kelly (2004) parametrization for the proton electric form factor G_E
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+
+    G_E = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Standard dipole form factor G_D
+    G_D = (1.0 + Q2 / 0.71) ** (-2)
+
+    # Ratio G_E / G_D
+    return G_E / G_D
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Q^2 (four-momentum transfer squared in GeV^2)
+    Q2 = X[:, 0]
+
+    # Standard dipole form factor G_D
+    GD = (1.0 + Q2 / 0.71) ** -2
+
+    # Proton mass in GeV
+    Mp = 0.938272
+    tau = Q2 / (4.0 * Mp**2)
+
+    # Kelly (2004) parameterization coefficients for G_E
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+
+    # Calculate G_E using the Kelly parameterization
+    GE = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Return the ratio G_E / G_D
+    return GE / GD
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Q^2 in GeV^2
+    Q2 = X[:, 0]
+
+    # Proton mass in GeV
+    M_p = 0.938272
+
+    # Dimensionless scaling variable tau
+    tau = Q2 / (4.0 * M_p**2)
+
+    # Kelly (2004) parameterization coefficients for G_E
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+
+    # Proton electric form factor G_E
+    G_E = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Standard dipole form factor G_D
+    G_D = (1.0 + Q2 / 0.71) ** -2
+
+    # Ratio G_E / G_D
+    return G_E / G_D
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Q^2 in GeV^2
+    Q2 = X[:, 0]
+
+    # Proton mass in GeV
+    M_p = 0.938272
+    tau = Q2 / (4.0 * M_p**2)
+
+    # Kelly (2004) parameterization coefficients for G_E
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+
+    # Proton electric Sachs form factor G_E
+    G_E = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Standard dipole form factor G_D
+    G_D = (1.0 + Q2 / 0.71) ** (-2)
+
+    # Ratio G_E / G_D
+    return G_E / G_D
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Q^2 in GeV^2 from the first column
+    Q2 = X[:, 0]
+
+    # Standard dipole form factor G_D
+    G_D = (1.0 + Q2 / 0.71) ** -2
+
+    # Proton mass in GeV
+    M_p = 0.938272
+
+    # Dimensionless scaling variable tau
+    tau = Q2 / (4.0 * M_p**2)
+
+    # Kelly (2004) parameterization coefficients for G_E
+    a1 = -0.24
+    b1 = 10.98
+    b2 = 12.82
+    b3 = 21.97
+
+    # Calculate G_E using the rational function parameterization
+    G_E = (1.0 + a1 * tau) / (1.0 + b1 * tau + b2 * tau**2 + b3 * tau**3)
+
+    # Return the ratio G_E / G_D
+    return G_E / G_D

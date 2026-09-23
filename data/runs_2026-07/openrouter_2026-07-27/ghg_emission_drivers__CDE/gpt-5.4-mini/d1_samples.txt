@@ -1,0 +1,158 @@
+import numpy as np
+
+def predict(X):
+    # Standard Kaya-identity style multiplicative form with a common empirical
+    # multiplicative correction on demographic/urbanization/climate factors.
+    GDP = X[:, 0]
+    TP  = X[:, 1]
+    AP  = X[:, 2]
+    DP  = X[:, 3]
+    UR  = X[:, 4]
+    AT  = X[:, 5]
+
+    # Avoid invalid operations
+    GDP = np.maximum(GDP, 1e-12)
+    TP  = np.maximum(TP, 1e-12)
+    AP  = np.maximum(AP, 1e-12)
+    DP  = np.maximum(DP, 1e-12)
+    UR  = np.maximum(UR, 1e-12)
+
+    # Common closed-form specification for national CO2 emissions:
+    # I_CO2 = P * (GDP/P) * EI * CI
+    # Here, the unknown intensity terms are represented by a compact
+    # log-linear reduced form using the provided socio-economic drivers.
+    #
+    # This is a standard empirical approximation:
+    # ln(I) = b0 + b1 ln(GDP) + b2 ln(P) + b3 ln(AP) + b4 ln(DP) + b5 ln(UR) + b6 AT
+    #
+    # Coefficients are generic, commonly used-sign forms rather than a fitted country-specific model.
+    b0 = -14.0
+    b1 = 0.95
+    b2 = 0.85
+    b3 = 0.40
+    b4 = 0.10
+    b5 = 0.30
+    b6 = -0.02
+
+    log_I = (
+        b0
+        + b1 * np.log(GDP)
+        + b2 * np.log(TP)
+        + b3 * np.log(AP)
+        + b4 * np.log(DP)
+        + b5 * np.log(UR)
+        + b6 * AT
+    )
+
+    return np.exp(log_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    GDP = X[:, 0]   # GDP per capita
+    TP  = X[:, 1]   # total population
+    AP  = X[:, 2]   # working-age share
+    DP  = X[:, 3]   # population density
+    UR  = X[:, 4]   # urbanization rate
+    AT  = X[:, 5]   # annual mean temperature
+
+    # STIRPAT-style canonical log-linear form for national fossil CO2 emissions:
+    # I = a * A^b * P^c * T^d * D^e * U^f * exp(g * AT)
+    # Without fitted data, use the standard unit-elastic baseline (exponents = 1)
+    # and a neutral scale factor of 1.0.
+    I_CO2 = (
+        1.0
+        * GDP
+        * TP
+        * AP
+        * DP
+        * UR
+        * np.exp(0.0 * AT)
+    )
+
+    return I_CO2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]   # GDP per capita
+    P = X[:, 1]   # population
+    AP = X[:, 2]  # working-age share
+    DP = X[:, 3]  # population density
+    UR = X[:, 4]  # urbanization rate
+    AT = X[:, 5]  # annual mean temperature
+
+    # Standard IPAT / STIRPAT-style reduced-form for CO2 emissions:
+    # ln(I_CO2) = a + b1 ln(A) + b2 ln(P) + b3 AP + b4 ln(DP) + b5 UR + b6 AT
+    # Coefficients are commonly estimated empirically; here we use the canonical
+    # closed-form structure with neutral placeholder coefficients.
+    a = 0.0
+    b1 = 1.0
+    b2 = 1.0
+    b3 = 0.0
+    b4 = 0.0
+    b5 = 0.0
+    b6 = 0.0
+
+    ln_I = (
+        a
+        + b1 * np.log(A)
+        + b2 * np.log(P)
+        + b3 * AP
+        + b4 * np.log(DP)
+        + b5 * UR
+        + b6 * AT
+    )
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]   # GDP per capita
+    P = X[:, 1]   # total population
+    AP = X[:, 2]  # working-age share
+    DP = X[:, 3]  # population density
+    UR = X[:, 4]  # urbanization rate
+    AT = X[:, 5]  # annual mean temperature
+
+    # Common Kaya-style identity: CO2 = Population × GDP per capita × Energy intensity × Carbon intensity
+    # With only socioeconomic and climate covariates available, a standard closed-form proxy is a log-linear
+    # extended Kaya / STIRPAT-type relationship.
+    #
+    # This is a generic canonical form (not a fitted empirical estimate):
+    ln_I = (
+        np.log(P)
+        + 1.0 * np.log(A)
+        + 0.0 * np.log(np.maximum(AP, 1e-12))
+        + 0.0 * np.log(np.maximum(DP, 1e-12))
+        + 0.0 * np.log(np.maximum(UR, 1e-12))
+        + 0.0 * AT
+    )
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kaya identity / IPAT-style standard closed-form approximation:
+    # CO2 emissions = population × affluence × emissions intensity
+    # Here we use GDP per capita as the affluence term and a simple
+    # multiplicative form for national fossil CO2 emissions.
+    gdp_pc = X[:, 0]
+    pop = X[:, 1]
+    
+    # Emissions intensity proxy calibrated generically as proportional to economic activity
+    # (no data provided, so use the standard structural form only).
+    #
+    # Since the quantity is national annual emissions in kg CO2, and GDP per capita is in
+    # constant 2015 USD, this returns emissions in proportional units consistent with the
+    # canonical closed-form relationship.
+    return pop * gdp_pc

@@ -1,0 +1,26 @@
+{
+  "task": "cosmic_ray_eas_auger__dE_dX",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeII",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "aab_2019",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "schiel_2007",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

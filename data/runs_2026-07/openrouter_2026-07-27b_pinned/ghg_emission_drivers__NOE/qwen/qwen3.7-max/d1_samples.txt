@@ -1,0 +1,170 @@
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) model
+    # Standard log-linear specification:
+    # ln(I_N2O) = beta_0 + beta_P*ln(P) + beta_A*ln(A) + beta_AP*ln(AP) + beta_DP*ln(DP) + beta_UR*ln(UR) + beta_AT*AT
+    # Note: AT (Temperature) is kept linear in the log-model to accommodate negative values.
+    
+    beta_0 = 0.0
+    beta_P = 1.0
+    beta_A = 1.0
+    beta_AP = 0.0
+    beta_DP = 0.0
+    beta_UR = 0.0
+    beta_AT = 0.0
+    
+    I_N2O = np.exp(beta_0) * (P ** beta_P) * (A ** beta_A) * (AP ** beta_AP) * (DP ** beta_DP) * (UR ** beta_UR) * np.exp(beta_AT * AT)
+    
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    A = X[:, 0]   # GDP per capita
+    P = X[:, 1]   # Total population
+    AP = X[:, 2]  # Active population share (%)
+    DP = X[:, 3]  # Population density
+    UR = X[:, 4]  # Urbanization rate (%)
+    AT = X[:, 5]  # Annual mean temperature
+    
+    # STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) 
+    # extended log-linear model for N2O emissions.
+    # Coefficients represent typical empirical elasticities and marginal effects 
+    # found in macro-environmental panel data literature for N2O.
+    
+    beta_0 = -4.85      # Intercept
+    beta_P = 0.92       # Elasticity of Population
+    beta_A = 0.68       # Elasticity of Affluence (GDP per capita)
+    beta_AP = 0.008     # Marginal effect of Active Population share
+    beta_DP = 0.075     # Elasticity of Population Density
+    beta_UR = 0.012     # Marginal effect of Urbanization rate
+    beta_AT = 0.015     # Marginal effect of Temperature
+    
+    # Log-linear formulation
+    ln_I_N2O = (beta_0 + 
+                beta_P * np.log(P) + 
+                beta_A * np.log(A) + 
+                beta_AP * AP + 
+                beta_DP * np.log(DP) + 
+                beta_UR * UR + 
+                beta_AT * AT)
+    
+    # Convert back to levels (kg N2O)
+    I_N2O = np.exp(ln_I_N2O)
+    
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]  # GDP per capita
+    P = X[:, 1]  # Total population
+    AP = X[:, 2] # Working-age population share
+    DP = X[:, 3] # Population density
+    UR = X[:, 4] # Urbanization rate
+    AT = X[:, 5] # Annual mean temperature
+    
+    # STIRPAT model parameters (named constants)
+    # Note: Temperature (AT) can be negative, so it is modeled with a semi-elasticity 
+    # (exponential term) rather than a log-transformed elasticity.
+    alpha = 1.0    # Scaling factor (exp(intercept))
+    beta_P = 1.0   # Elasticity of population
+    beta_A = 1.0   # Elasticity of GDP per capita
+    beta_AP = 0.0  # Elasticity of working-age population share
+    beta_DP = 0.0  # Elasticity of population density
+    beta_UR = 0.0  # Elasticity of urbanization rate
+    gamma_AT = 0.0 # Semi-elasticity of temperature
+    
+    I_N2O = (alpha * 
+             (P ** beta_P) * 
+             (A ** beta_A) * 
+             (AP ** beta_AP) * 
+             (DP ** beta_DP) * 
+             (UR ** beta_UR) * 
+             np.exp(gamma_AT * AT))
+    
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # Extended STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) model
+    # Canonical multiplicative power-law form for positive variables, with exponential term for temperature
+    a = 1.0
+    b_P = 1.0
+    b_A = 1.0
+    b_AP = 0.0
+    b_DP = 0.0
+    b_UR = 0.0
+    b_AT = 0.0
+    
+    I_N2O = a * (P ** b_P) * (A ** b_A) * (AP ** b_AP) * (DP ** b_DP) * (UR ** b_UR) * np.exp(b_AT * AT)
+    
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual N2O emissions (excluding LULUCF) using a
+    STIRPAT (Stochastic Impacts by Regression on Population, Affluence,
+    and Technology) extended model in log-linear form:
+
+        ln(I_N2O) = b0 + b1*ln(P) + b2*ln(A) + b3*ln(AP)
+                     + b4*ln(DP) + b5*ln(UR) + b6*AT
+
+    which is equivalent to the multiplicative closed-form:
+
+        I_N2O = exp(b0) * P^b1 * A^b2 * AP^b3 * DP^b4 * UR^b5 * exp(b6*AT)
+
+    Temperature enters linearly (not logged) because it can be negative.
+    """
+    A  = X[:, 0]   # GDP per capita [constant 2015 USD]
+    P  = X[:, 1]   # Total population [persons]
+    AP = X[:, 2]   # Active-age population share [%]
+    DP = X[:, 3]   # Population density [persons / km2]
+    UR = X[:, 4]   # Urbanisation rate [%]
+    AT = X[:, 5]   # Annual mean surface air temperature [deg C]
+
+    # --- STIRPAT elasticities / coefficients ---
+    b0 = -9.30      # intercept (calibrated to kg N2O)
+    b1 =  1.00      # population elasticity  (~proportional scaling)
+    b2 =  0.70      # affluence elasticity    (sub-proportional, partial decoupling)
+    b3 =  0.30      # active-population elasticity
+    b4 =  0.05      # density elasticity      (slight positive / infrastructure effect)
+    b5 =  0.20      # urbanisation elasticity
+    b6 =  0.02      # temperature semi-elasticity (soil nitrification/denitrification)
+
+    ln_I = (b0
+            + b1 * np.log(P)
+            + b2 * np.log(A)
+            + b3 * np.log(AP)
+            + b4 * np.log(DP)
+            + b5 * np.log(UR)
+            + b6 * AT)
+
+    return np.exp(ln_I)

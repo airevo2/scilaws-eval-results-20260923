@@ -1,0 +1,184 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    q_c = X[:, 0]  # Cloud liquid water mixing ratio [kg/kg]
+    q_i = X[:, 1]  # Cloud ice mixing ratio [kg/kg]
+    RH = X[:, 2]  # Relative humidity [dimensionless]
+    q_v = X[:, 5]  # Specific humidity [kg/kg]
+
+    # Total cloud condensate (liquid + ice)
+    q_l = q_c + q_i
+
+    # Estimate saturation specific humidity (q_s) from q_v and RH
+    # RH = q_v / q_s -> q_s = q_v / RH
+    q_s = q_v / np.maximum(RH, 1e-8)
+
+    # Xu-Randall (1996) sub-grid cloud fraction scheme:
+    # C = RH**0.25 * (1 - exp(- alpha * q_l / ((1 - RH) * q_s)**beta))
+    # where alpha = 100.0, beta = 0.49
+    alpha = 100.0
+    beta = 0.49
+
+    # Safely compute (1 - RH) term to avoid division by zero as RH -> 1
+    om_RH = np.maximum(1.0 - RH, 1e-6)
+    denom = (om_RH * q_s) ** beta
+    denom = np.maximum(denom, 1e-12)
+
+    # Compute cloud cover
+    RH_term = np.maximum(RH, 0.0) ** 0.25
+    C = RH_term * (1.0 - np.exp(-alpha * q_l / denom))
+
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    q_c = X[:, 0]  # Cloud liquid water mixing ratio [kg/kg]
+    q_i = X[:, 1]  # Cloud ice mixing ratio [kg/kg]
+    RH = X[:, 2]  # Relative humidity
+    q_v = X[:, 5]  # Specific humidity [kg/kg]
+
+    # Estimate saturation specific humidity q_s (kg/kg) from q_v and RH
+    q_s = q_v / np.maximum(RH, 1e-6)
+
+    # Convert mixing ratios from kg/kg to g/kg for the standard Xu-Randall (1996) formulation
+    qc_g = q_c * 1000.0
+    qi_g = q_i * 1000.0
+    qs_g = q_s * 1000.0
+
+    # Xu-Randall empirical parameters
+    alpha = 100.0
+    beta = 0.49
+
+    # Avoid division by zero and negative bases in the fractional power
+    rh_diff = np.maximum(1.0 - RH, 1e-6)
+    denom = np.maximum((rh_diff * qs_g) ** beta, 1e-12)
+
+    # Calculate cloud cover C
+    C = (np.maximum(RH, 0.0) ** 0.25) * (
+        1.0 - np.exp(-alpha * (qc_g + qi_g) / denom)
+    )
+
+    # Clip to physical boundaries [0, 1]
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    q_c = X[:, 0]  # Cloud liquid water mixing ratio (kg/kg)
+    q_i = X[:, 1]  # Cloud ice mixing ratio (kg/kg)
+    RH = X[:, 2]   # Relative humidity (dimensionless)
+    q_v = X[:, 5]  # Specific humidity (kg/kg)
+    
+    # Estimate saturation specific humidity q_s (kg/kg) from RH and q_v
+    RH_clipped = np.clip(RH, 1e-6, 1.0)
+    q_s = q_v / RH_clipped
+    
+    # Convert mixing ratios to g/kg (Xu-Randall scheme is tuned for g/kg)
+    q_cond_gkg = (q_c + q_i) * 1000.0
+    q_s_gkg = np.maximum(q_s * 1000.0, 1e-6)
+    
+    # Xu-Randall (1996) parameters
+    alpha = 100.0
+    beta = 0.49
+    
+    # Compute term (1 - RH) and ensure it is strictly positive to avoid division by zero
+    om_RH = np.clip(1.0 - RH, 1e-6, 1.0)
+    denom = (om_RH * q_s_gkg) ** beta
+    
+    # Calculate sub-grid cloud cover fraction C
+    C = (RH_clipped ** 0.25) * (1.0 - np.exp(-alpha * q_cond_gkg / denom))
+    
+    # Clip output to the valid range [0, 1]
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    qc = X[:, 0]  # Cloud liquid water mixing ratio (kg/kg)
+    qi = X[:, 1]  # Cloud ice mixing ratio (kg/kg)
+    RH = X[:, 2]  # Relative humidity (fraction, [0, 1])
+    qv = X[:, 5]  # Specific humidity (kg/kg)
+
+    # Convert mixing ratios from kg/kg to g/kg, as the classic
+    # Xu-Randall (1996) formulation is defined using g/kg.
+    qc_g = qc * 1000.0
+    qi_g = qi * 1000.0
+    qv_g = qv * 1000.0
+
+    # Total cloud condensate in g/kg
+    q_cloud = qc_g + qi_g
+
+    # Calculate saturation specific humidity (qs) in g/kg
+    qs_g = qv_g / np.maximum(RH, 1e-8)
+
+    # Standard Xu-Randall parameters:
+    # C = RH^p * (1 - exp(-alpha * q_cloud / ((1 - RH) * qs)^beta))
+    p = 0.25
+    beta = 0.49
+    alpha = 100.0
+
+    # Avoid division by zero and negative bases in fractional powers
+    omRH = np.clip(1.0 - RH, 1e-6, 1.0)
+    denom = np.power(omRH * qs_g, beta)
+    denom = np.maximum(denom, 1e-10)
+
+    # Calculate cloud cover
+    exponent = -alpha * q_cloud / denom
+    C = np.power(np.maximum(RH, 0.0), p) * (1.0 - np.exp(exponent))
+
+    # Clip output to physical range [0, 1]
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    q_c = X[:, 0]  # Cloud liquid water mixing ratio [kg/kg]
+    q_i = X[:, 1]  # Cloud ice mixing ratio [kg/kg]
+    RH = X[:, 2]  # Relative humidity [dimensionless]
+    T = X[:, 3]  # Air temperature [K]
+    p = X[:, 4]  # Pressure [Pa]
+
+    # Total cloud condensate mixing ratio
+    q_l = q_c + q_i
+
+    # Calculate saturation vapor pressure (e_s) in Pa using Tetens formula
+    T_c = T - 273.15
+    e_s = 610.78 * np.exp(17.27 * T_c / (T_c + 237.3))
+
+    # Saturation specific humidity (q_s) [kg/kg]
+    q_s = 0.622 * e_s / np.maximum(p, 1.0)
+
+    # Xu-Randall (1996) semi-empirical cloud cover parameterization constants
+    p_exp = 0.25
+    alpha = 100.0
+    beta = 0.49
+
+    # Clip RH to [0, 1] for the diagnostic formula
+    RH_clipped = np.clip(RH, 0.0, 1.0)
+
+    # Avoid division by zero when RH is close to 1.0
+    om_RH = np.maximum(1.0 - RH_clipped, 1e-6)
+    denom = np.maximum((om_RH * q_s) ** beta, 1e-12)
+
+    # Compute cloud fraction
+    C = (RH_clipped**p_exp) * (1.0 - np.exp(-alpha * q_l / denom))
+
+    return np.clip(C, 0.0, 1.0)

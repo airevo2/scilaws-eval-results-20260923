@@ -1,0 +1,127 @@
+import numpy as np
+
+def predict(X):
+    Q_in = X[:, 0]
+    
+    # Parameters for the non-rectangular hyperbola light response curve
+    alpha = 0.06    # Apparent quantum yield (umol CO2 / umol photons)
+    A_max = 15.0    # Light-saturated gross photosynthesis rate (umol CO2 m-2 s-1)
+    theta = 0.8     # Convexity factor (dimensionless)
+    R_d = 1.0       # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Non-rectangular hyperbola equation for gross assimilation
+    # theta * A_gross^2 - A_gross * (alpha * Q_in + A_max) + alpha * Q_in * A_max = 0
+    term1 = alpha * Q_in + A_max
+    discriminant = term1**2 - 4 * theta * alpha * Q_in * A_max
+    term2 = np.sqrt(np.maximum(discriminant, 0.0))
+    
+    A_gross = (term1 - term2) / (2 * theta)
+    
+    # Net assimilation rate
+    A_n = A_gross - R_d
+    
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Non-rectangular hyperbola light-response model for net CO2 assimilation rate.
+    
+    A_g = (alpha*Q + A_max - sqrt((alpha*Q + A_max)**2 - 4*theta*alpha*Q*A_max)) / (2*theta)
+    A_n = A_g - R_d
+    
+    Parameters (typical C3 leaf defaults):
+        alpha : apparent quantum yield of CO2 assimilation [mol CO2 mol-1 photons]
+        A_max : light-saturated gross photosynthetic rate [umol CO2 m-2 s-1]
+        theta : convexity factor (dimensionless, 0 < theta < 1)
+        R_d   : mitochondrial respiration in the light [umol CO2 m-2 s-1]
+    """
+    Q_in = X[:, 0]
+
+    # Typical parameter values for a C3 species
+    alpha = 0.05    # apparent quantum yield [umol CO2 / umol photons]
+    A_max = 14.0    # light-saturated gross assimilation [umol CO2 m-2 s-1]
+    theta = 0.7     # convexity of the light-response curve
+    R_d   = 1.0     # dark respiration rate [umol CO2 m-2 s-1]
+
+    # Non-rectangular hyperbola (Ögren & Evans, 1993)
+    sum_term = alpha * Q_in + A_max
+    sqrt_term = np.sqrt(np.maximum(sum_term**2 - 4.0 * theta * alpha * Q_in * A_max, 0.0))
+    A_g = (sum_term - sqrt_term) / (2.0 * theta)
+
+    A_n = A_g - R_d
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q_in = X[:, 0]
+    
+    # Parameters for the non-rectangular hyperbola light response model
+    alpha = 0.05    # Apparent quantum yield (umol CO2 / umol photons)
+    A_max = 11.0    # Light-saturated gross photosynthesis (umol CO2 m-2 s-1)
+    theta = 0.7     # Convexity parameter (dimensionless, 0 < theta <= 1)
+    R_d = 1.0       # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Gross photosynthesis calculated via the non-rectangular hyperbola
+    b = alpha * Q_in + A_max
+    A_gross = (b - np.sqrt(b**2 - 4.0 * theta * alpha * Q_in * A_max)) / (2.0 * theta)
+    
+    # Net CO2 assimilation rate
+    A_n = A_gross - R_d
+    
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q_in = X[:, 0]
+    
+    # Parameters for the non-rectangular hyperbola light response model
+    alpha = 0.05   # Apparent quantum yield (umol CO2 / umol photons)
+    A_max = 12.0   # Light-saturated gross photosynthesis (umol CO2 m-2 s-1)
+    theta = 0.7    # Convexity parameter (dimensionless)
+    R_d = 1.0      # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Calculate gross photosynthesis (A_g)
+    b = alpha * Q_in + A_max
+    c = 4.0 * theta * alpha * Q_in * A_max
+    
+    A_g = (b - np.sqrt(np.maximum(b**2 - c, 0.0))) / (2.0 * theta)
+    
+    # Net CO2 assimilation rate (A_n)
+    A_n = A_g - R_d
+    
+    return A_n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q_in = X[:, 0]
+    
+    # Parameters for the non-rectangular hyperbola light response curve
+    alpha = 0.05    # Apparent quantum yield (mol CO2 / mol photons)
+    A_max = 12.0    # Light-saturated gross photosynthetic rate (umol CO2 m-2 s-1)
+    theta = 0.7     # Curvature factor (dimensionless, 0 < theta <= 1)
+    R_d = 1.0       # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Calculate gross photosynthesis using the non-rectangular hyperbola
+    # theta * A^2 - (alpha * Q_in + A_max) * A + alpha * Q_in * A_max = 0
+    b = alpha * Q_in + A_max
+    c = alpha * Q_in * A_max
+    
+    A_gross = (b - np.sqrt(b**2 - 4 * theta * c)) / (2 * theta)
+    
+    # Net CO2 assimilation rate
+    A_n = A_gross - R_d
+    
+    return A_n

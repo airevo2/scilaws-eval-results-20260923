@@ -1,0 +1,72 @@
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Oren et al. (1999) log-linear stomatal response to VPD:
+    # Gc = Gc_ref - m * ln(D), with the canonical proportionality m ≈ 0.6 * Gc_ref
+    Gc_ref = 1.0   # reference conductance at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    m = 0.6 * Gc_ref
+    Gc = Gc_ref - m * np.log(D)
+    return np.maximum(Gc, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Oren et al. (1999) stomatal sensitivity to VPD:
+    # Gc = Gc_ref - m * ln(D), with m ≈ 0.6 * Gc_ref (hydraulic constraint)
+    D = X[:, 0]
+    Gc_ref = 30.0   # canopy conductance proxy at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    m = 0.6 * Gc_ref  # sensitivity ~0.6 of reference conductance
+    Gc = Gc_ref - m * np.log(D)
+    return np.maximum(Gc, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Oren et al. (1999) log-linear stomatal response to VPD:
+    # Gc = Gc_ref - m * ln(D)
+    # with the widely cited proportionality m ≈ 0.6 * Gc_ref.
+    Gc_ref = 1.0   # reference conductance at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    m = 0.6 * Gc_ref
+    Gc = Gc_ref - m * np.log(D)
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Oren et al. (1999) log-linear stomatal response to VPD
+    # Gc = Gc_ref - m * ln(D)
+    # Canonical result: m ≈ 0.6 * Gc_ref (stomatal regulation to maintain
+    # constant minimum leaf water potential / isohydric behavior)
+    Gc_ref = 100.0   # canopy conductance proxy at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    m = 0.6 * Gc_ref # slope, per the ~0.6 proportionality
+    Gc = Gc_ref - m * np.log(D)
+    return np.maximum(Gc, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Oren et al. (1999) log-linear stomatal response to VPD:
+    # Gc = Gc_ref - m * ln(D)
+    # Canonical result: m ≈ 0.6 * Gc_ref (hydraulic regulation constraint)
+    # Gc_ref is conductance at D = 1 kPa.
+    D = X[:, 0]
+
+    Gc_ref = 30.0   # cm3 cm-2 h-1 kPa-1, reference conductance at D = 1 kPa
+    m = 0.6 * Gc_ref  # sensitivity, ~0.6 * Gc_ref per Oren et al. 1999
+
+    Gc = Gc_ref - m * np.log(D)
+
+    # conductance cannot be negative
+    Gc = np.maximum(Gc, 0.0)
+    return Gc

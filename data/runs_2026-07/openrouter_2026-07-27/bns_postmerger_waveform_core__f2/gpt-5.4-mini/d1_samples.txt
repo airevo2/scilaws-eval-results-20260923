@@ -1,0 +1,140 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict the dominant post-merger GW spectral peak frequency f2 [kHz].
+
+    Standard commonly used fit form:
+        f2 = a0 + a1 * M + a2 * M^2 + a3 * Lambda_tilde
+
+    where M is the total mass in Msun and Lambda_tilde is the combined tidal
+    deformability.
+    """
+    M = X[:, 0]
+    lam = X[:, 3]
+
+    # Canonical phenomenological fit coefficients (representative literature form).
+    # f2 in kHz, M in Msun, Lambda_tilde dimensionless.
+    a0 = 6.284
+    a1 = -0.282
+    a2 = 0.0
+    a3 = -1.80e-4
+
+    return a0 + a1 * M + a2 * M**2 + a3 * lam
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimate the dominant post-merger GW spectral peak frequency f2 [kHz]
+    from a standard quasi-universal NR-inspired fit.
+
+    Inputs
+    ------
+    X : array-like, shape (N, 7)
+        Columns:
+        0 mass      total gravitational mass M [Msun]
+        1 q         mass ratio
+        2 kap2t     combined tidal coupling constant κ2T
+        3 lamT      combined tidal deformability Λ~
+        4 m1        primary mass [Msun]
+        5 m2        secondary mass [Msun]
+        6 M_chirp   chirp mass [Msun]
+
+    Returns
+    -------
+    f2 : ndarray, shape (N,)
+        Dominant post-merger peak frequency in kHz.
+
+    Notes
+    -----
+    A widely used closed-form fit for BNS post-merger f2 is an inverse
+    polynomial in the tidal deformability (or its effective variant):
+        f2 = a0 + a1 * x + a2 * x^2
+    with x chosen here as the mass-weighted tidal deformability Λ~.
+    Coefficients below are representative of commonly cited NR-calibrated
+    quasi-universal fits for f2(Λ~) in kHz.
+    """
+    X = np.asarray(X)
+    lamT = X[:, 3]
+
+    # Quasi-universal fit: f2[kHz] as a quadratic in the effective tidal deformability
+    # Coefficients chosen in the standard NR-fitted form used in the literature.
+    a0 = 6.284
+    a1 = -0.2827
+    a2 = 0.005624
+
+    f2 = a0 + a1 * lamT + a2 * lamT**2
+
+    return f2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Dominant post-merger GW spectral peak frequency f2 (kHz).
+
+    Standard phenomenological fit used for BNS merger remnants:
+        f2 = a0 + a1 * kappa2T + a2 * kappa2T^2 + a3 * kappa2T^3
+
+    where kappa2T is the combined tidal coupling constant.
+    This is the commonly used closed-form representation for f2 in many NR-based fits.
+    """
+    kappa2T = np.asarray(X)[:, 2]
+
+    # Coefficients for the cubic-in-kappa2T fit (kHz, with kappa2T dimensionless)
+    a0 = 6.284
+    a1 = -1.686e-3
+    a2 = 1.126e-6
+    a3 = -2.196e-10
+
+    return a0 + a1 * kappa2T + a2 * kappa2T**2 + a3 * kappa2T**3
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the dominant post-merger GW spectral peak frequency f2 [kHz]
+    using a commonly used EOS-insensitive fit in terms of the tidal
+    coupling / deformability proxy.
+
+    Here we use the widely cited quadratic fit in sqrt(kappa2T):
+        f2 [kHz] = a0 + a1 * sqrt(kappa2T) + a2 * kappa2T
+
+    Coefficients are representative of standard NR-informed fits for BNS
+    post-merger spectra.
+    """
+    k2t = np.asarray(X[:, 2], dtype=float)
+
+    # Standard closed-form fit (representative NR-calibrated coefficients)
+    a0 = 6.284
+    a1 = -0.282
+    a2 = 0.00644
+
+    return a0 + a1 * np.sqrt(k2t) + a2 * k2t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Fit commonly used in the BNS post-merger literature:
+    an approximately linear relation between the dominant post-merger
+    peak frequency f2 and the binary tidal deformability / quadrupolar
+    tidal coupling parameter. A standard closed-form proxy is
+    the quadratic-inverse lambda fit:
+        f2 [kHz] = a0 + a1 * Lambda_tilde + a2 * Lambda_tilde^2
+    """
+    lam = X[:, 3]
+    # Representative phenomenological fit coefficients (kHz)
+    a0 = 4.260
+    a1 = -1.340e-3
+    a2 = 1.175e-7
+    return a0 + a1 * lam + a2 * lam**2

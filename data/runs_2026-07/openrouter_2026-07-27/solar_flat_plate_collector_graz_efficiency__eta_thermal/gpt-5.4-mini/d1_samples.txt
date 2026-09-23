@@ -1,0 +1,99 @@
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # Reversed-order Hottel-Whillier-Bliss / ISO 9806-style quadratic efficiency curve
+    # eta = eta0 - a1 * ((T_in - T_amb)/G) - a2 * ((T_in - T_amb)^2 / G)
+    # Coefficients are representative of a high-performance solar-thermal collector field.
+    eta0 = 0.75
+    a1 = 1.70
+    a2 = 0.010
+
+    deltaT = T_in - T_amb
+    eta = eta0 - a1 * (deltaT / G) - a2 * (deltaT * deltaT / G)
+
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hottel-Whillier-Bliem style gross-area efficiency:
+    # eta = eta0 - a1 * (T_in - T_amb) / G
+    # Wind is ignored as a distractor.
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    deltaT_over_G = (T_in - T_amb) / G
+
+    # Representative flat-plate / collector-array coefficients
+    eta0 = 0.77
+    a1 = 3.5e-3  # W m^-2 K^-1 per (W m^-2)^-1 -> dimensionally consistent in this form
+
+    eta = eta0 - a1 * deltaT_over_G
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    # Gross-area thermal efficiency, canonical ISO 9806 / Hottel-Whillier form:
+    # eta = eta0 - a1*(T_in - T_amb)/G - a2*((T_in - T_amb)/G)^2
+    # Wind speed is ignored in the core form.
+    dT_over_G = (T_in - T_amb) / G
+    
+    eta0 = 0.75
+    a1 = 1.90
+    a2 = 0.015
+    
+    eta = eta0 - a1 * dT_over_G - a2 * dT_over_G**2
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # Standard linear Hottel–Whillier–Bliss form for gross-area thermal efficiency
+    # eta = eta0 - a1 * ((T_in - T_amb) / G)
+    eta0 = 0.62
+    a1 = 8.0  # W m^-2 K^-1
+
+    eta = eta0 - a1 * ((T_in - T_amb) / G)
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    # Common flat-plate/collector-array efficiency form:
+    # eta = eta0 - a1 * ((T_in - T_amb)/G) - a2 * ((T_in - T_amb)^2 / G)
+    # Using a simple canonical reduced-temperature quadratic form.
+    dT = T_in - T_amb
+    x = dT / G
+    
+    eta0 = 0.62
+    a1 = 3.20
+    a2 = 0.010
+    
+    eta = eta0 - a1 * x - a2 * x * x
+    return eta

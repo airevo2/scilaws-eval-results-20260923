@@ -1,0 +1,77 @@
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    sin2_phi = np.sin(phi)**2
+    
+    # WGS84 Somigliana formula constants
+    gamma_e = 9.7803253359       # Normal gravity at the equator [m/s^2]
+    k = 0.00193185265241         # Gravity flattening parameter
+    e2 = 0.00669437999014        # First eccentricity squared
+    
+    gamma = gamma_e * (1.0 + k * sin2_phi) / np.sqrt(1.0 - e2 * sin2_phi)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    sin2_phi = np.sin(phi)**2
+    
+    # WGS84 Somigliana formula constants
+    ge = 9.7803253141       # Normal gravity at the equator [m/s^2]
+    k = 0.00193185265241    # Somigliana constant
+    e2 = 0.00669437999014   # First eccentricity squared
+    
+    gamma = ge * (1.0 + k * sin2_phi) / np.sqrt(1.0 - e2 * sin2_phi)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    sin2_phi = np.sin(phi)**2
+    
+    # WGS84 Somigliana formula constants
+    gamma_e = 9.7803253141
+    k = 0.00193185265241
+    e2 = 0.00669437999014
+    
+    gamma = gamma_e * (1.0 + k * sin2_phi) / np.sqrt(1.0 - e2 * sin2_phi)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    sin2_phi = np.sin(phi)**2
+    
+    # WGS84 Somigliana formula constants
+    gamma_e = 9.7803253359
+    k = 0.00193185265241
+    e2 = 0.00669437999014
+    
+    gamma = gamma_e * (1.0 + k * sin2_phi) / np.sqrt(1.0 - e2 * sin2_phi)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    sin2_phi = np.sin(phi)**2
+    
+    # WGS84 Somigliana formula constants
+    gamma_e = 9.7803253359  # Normal gravity at the equator [m/s^2]
+    k = 0.00193185265241    # Somigliana constant
+    e2 = 0.00669437999014   # First eccentricity squared
+    
+    gamma = gamma_e * (1.0 + k * sin2_phi) / np.sqrt(1.0 - e2 * sin2_phi)
+    return gamma

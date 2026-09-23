@@ -1,0 +1,90 @@
+task_id: spirometry_nhanes__FEV1_L
+domain: biology / pulmonology
+
+# Type I — each row is an independent individual; one global formula.
+type: typeI
+has_group_id: false
+
+# Audit history:
+#   2026-05-28  created (Wave 19b, batch09 HF Type I expansion)
+#   2026-05-29  audit re-build: scoped from the full 8-stratum / 32-constant
+#               Johnson 2023 equation to a SINGLE stratum (Female, Caucasian/
+#               Mexican-American, adult >= 18). The 32-constant version was a
+#               per-segment coefficient lookup (no constant invariant across
+#               strata -> no compact law, only piecewise regression); this
+#               single stratum is a clean 4-constant closed-form Type I law.
+#               Inputs reduced to age + height (sex/ethnicity now constant).
+#               Added empty priors block (schema symmetry with GOLD).
+#               See VERDICT.md "Audit re-build — 2026-05-29".
+
+context: >-
+  Forced expiratory volume in one second (FEV1) measures how much air a person
+  can forcibly exhale in the first second of a maximum-effort blow. It is the
+  primary index of airflow obstruction in spirometry. In adults, FEV1 rises
+  with body height (taller lungs hold more air) and declines with age as lung
+  elastic recoil decreases. This task covers adult women of Caucasian/Mexican-
+  American background (a single demographic stratum), measured on NHANES
+  2007-2012 participants who met ATS spirometry quality standards, so that the
+  reference relationship is a single closed-form function of age and height.
+
+target:
+  name: FEV1_L
+  symbol: "FEV1"
+  unit: L
+  description: Forced expiratory volume in the first second, directly measured by spirometry (litres).
+  range: [0.476, 4.765]
+
+inputs:
+  - name: age
+    symbol: t
+    unit: yr
+    dtype: float
+    description: Age at examination in fractional years.
+    range: [18.0, 80.0]
+  - name: height_cm
+    symbol: h
+    unit: cm
+    dtype: float
+    description: Standing height in centimetres.
+    range: [135.3, 188.3]
+
+# Background knowledge — science framing only; no column listing, no constants.
+# Empty: no leak-free numeric prior is natural for this task (the b0..b3
+# coefficients are the LAW recovery target; there are no auxiliary physical
+# constants to offer). Present for schema symmetry with the GOLD exemplar.
+priors: []
+
+data_files:
+  train: data/train.csv
+  test: data/test.csv
+n_train: 2900
+n_test: 725
+
+license: CC-BY-4.0
+
+references:
+  - id: johnson_2023
+    label: "Johnson & Johnson 2023 Table 1b (Female, Caucasian/Mexican-American, age>=18) — FEV1 = b0 + b1*age + b2*age^2 + b3*height^2"
+    formula_file: formulas/johnson_2023.py
+    reference_pdf: reference/johnson_2023.pdf
+    n_law_constants: 4
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.4073
+      r2: 0.6287
+
+# Auditor note (2026-05-29): the four coefficients are the frozen NHANES III
+# (1988-1994) published values from Table 1b, applied out-of-cohort to the
+# NHANES 2007-2012 test data -> honest baseline R²=0.629 (beats naive, whose
+# test R²≈0). A free fit of the same 4-constant form on this train set reaches
+# R²≈0.638, so SR has headroom over the published anchor.
+
+caps:
+  max_law_constants: 4
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+best_baseline: 0.4073

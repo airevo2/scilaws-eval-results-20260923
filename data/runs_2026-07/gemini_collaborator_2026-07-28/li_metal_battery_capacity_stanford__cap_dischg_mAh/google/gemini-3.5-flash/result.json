@@ -1,0 +1,35 @@
+{
+  "task": "li_metal_battery_capacity_stanford__cap_dischg_mAh",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeII",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "he_2011",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "pinson_2013",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "spotnitz_2003",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the time-averaged eruption-column top height (H_top) in km
+
+    above vent level using the empirical relationship from Mastin et al. (2009).
+
+    Parameters:
+    X : 2-D numpy array
+        X[:, 0] = MER_kg_per_s (Mass Eruption Rate, kg/s)
+
+    Returns:
+    1-D numpy array of H_top in km.
+    """
+    # Extract Mass Eruption Rate (MER) in kg/s
+    mer = X[:, 0]
+
+    # Convert MER to volumetric flow rate Q (m^3/s DRE) using a standard DRE
+    # density of 2500 kg/m^3, as defined in Mastin et al. (2009).
+    rho_dre = 2500.0
+    q_vol = mer / rho_dre
+
+    # Mastin et al. (2009) empirical scaling: H = 2.00 * Q^0.241
+    h_top = 2.00 * (q_vol**0.241)
+
+    return h_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = MER_kg_per_s (Mass Eruption Rate in kg/s)
+    # Using the standard Mastin et al. (2009) empirical relationship:
+    # H = 2.00 * Q^0.241
+    # where Q is the volumetric eruption rate in m^3/s DRE.
+    # We convert mass eruption rate (MER) to volumetric rate (Q) 
+    # using a standard magma dense-rock equivalent (DRE) density of 2500 kg/m^3.
+    
+    mer = X[:, 0]
+    density_dre = 2500.0  # kg/m^3
+    q_vol = mer / density_dre
+    
+    h_top = 2.00 * (q_vol ** 0.241)
+    return h_top
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the time-averaged eruption-column top height (H_top) in km
+
+    above vent level from the Mass Eruption Rate (MER) in kg/s, using the
+    standard empirical relationship from Mastin et al. (2009).
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the MER in kg/s.
+
+    Returns:
+    - 1-D numpy array of predicted plume heights in km.
+    """
+    mer = X[:, 0]
+    # Mastin et al. (2009) relation: MER = 140 * H_top^4.15
+    H_top = (mer / 140.0) ** (1.0 / 4.15)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] is the Mass Eruption Rate (MER) in kg/s
+    mer = X[:, 0]
+    
+    # Mastin et al. (2009) empirical relation: 
+    # H = 2.00 * Q^0.241, where Q is the volumetric flow rate in m^3/s (DRE).
+    # Assuming a standard magma dense-rock equivalent (DRE) density of 2500 kg/m^3:
+    rho = 2500.0
+    q = mer / rho
+    
+    # Calculate column height above vent level (H_top) in km
+    h_top = 2.00 * (q ** 0.241)
+    
+    return h_top
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = MER in kg/s
+    # Mastin et al. (2009) empirical relation:
+    # H = 2.00 * Q^(0.241), where Q is the volumetric flow rate (m^3/s)
+    # assuming a standard magma density of 2500 kg/m^3 (Q = MER / 2500)
+    mer = X[:, 0]
+    q = mer / 2500.0
+    h_top = 2.00 * np.power(q, 0.241)
+    return h_top

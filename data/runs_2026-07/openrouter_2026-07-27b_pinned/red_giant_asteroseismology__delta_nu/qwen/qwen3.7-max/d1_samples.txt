@@ -1,0 +1,109 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the large frequency separation (delta_nu) using the canonical 
+    empirical scaling relation with nu_max for red giants.
+    
+    Based on Stello et al. (2009), ApJ, 700, 1589.
+    While Teff, [Fe/H], and evolutionary phase are provided in the catalog, 
+    the standard closed-form prediction for delta_nu in red giants relies 
+    almost exclusively on the extremely tight correlation with nu_max.
+    """
+    nu_max = X[:, 0]
+    
+    # Stello et al. (2009) empirical relation coefficients
+    a = 0.263
+    b = 0.772
+    
+    delta_nu = a * (nu_max ** b)
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    Teff = X[:, 1]
+    FeH = X[:, 2]
+    phase = X[:, 3]
+    
+    # The most commonly cited canonical empirical scaling relation for red giants 
+    # (e.g., Stello et al. 2009, Mosser et al. 2010, and evaluated in Yu et al. 2018)
+    # is the tight correlation between delta_nu and nu_max.
+    # While some extended forms include weak dependencies on Teff or [Fe/H], 
+    # the pure nu_max relation remains the standard baseline.
+    
+    A = 0.263
+    a = 0.772
+    
+    delta_nu = A * (nu_max ** a)
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    Teff = X[:, 1]
+    
+    # Solar reference values
+    delta_nu_sun = 135.1  # uHz
+    nu_max_sun = 3090.0   # uHz
+    Teff_sun = 5777.0     # K
+    
+    # Canonical asteroseismic scaling relation (e.g., Mosser et al. 2013; Chaplin & Miglio 2013)
+    delta_nu = delta_nu_sun * (nu_max / nu_max_sun)**0.75 * (Teff / Teff_sun)**0.25
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    Teff = X[:, 1]
+
+    # Solar reference values
+    DELTA_NU_SUN = 135.1   # uHz
+    NU_MAX_SUN   = 3090.0  # uHz
+    TEFF_SUN     = 5777.0  # K
+
+    # Standard asteroseismic scaling relation for Δν.
+    # Derived by combining the two scaling relations:
+    #   Δν/Δν_sun  = (M/M_sun)^{1/2} (R/R_sun)^{-3/2}
+    #   ν_max/ν_max,sun = (M/M_sun) (R/R_sun)^{-2} (Teff/Teff_sun)^{-1/2}
+    # Eliminating R and expressing in terms of ν_max, Teff, and M:
+    #   Δν/Δν_sun = (ν_max/ν_max,sun)^{3/4} (Teff/Teff_sun)^{3/8} (M/M_sun)^{-1/4}
+    # For the typical Kepler red-giant sample M ≈ M_sun, giving:
+    delta_nu = DELTA_NU_SUN * (nu_max / NU_MAX_SUN) ** 0.75 \
+                          * (Teff  / TEFF_SUN)   ** 0.375
+
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    Teff = X[:, 1]
+
+    # Solar reference values (standard in asteroseismology)
+    dnu_sun = 135.1      # uHz  (large frequency separation of the Sun)
+    numax_sun = 3090.0   # uHz  (frequency of maximum power of the Sun)
+    Teff_sun = 5777.0    # K    (effective temperature of the Sun)
+
+    # Asteroseismic scaling relation for delta_nu derived from:
+    #   dnu/dnu_sun = (M/M_sun)^0.5 * (R/R_sun)^{-1.5}
+    #   numax/numax_sun = (M/M_sun) * (R/R_sun)^{-2} * (Teff/Teff_sun)^{-0.5}
+    # Eliminating R and assuming M ~ M_sun (weak M^{-0.25} dependence):
+    #   dnu/dnu_sun = (numax/numax_sun)^{3/4} * (Teff/Teff_sun)^{3/8}
+    delta_nu = dnu_sun * (nu_max / numax_sun) ** 0.75 * (Teff / Teff_sun) ** 0.375
+
+    return delta_nu

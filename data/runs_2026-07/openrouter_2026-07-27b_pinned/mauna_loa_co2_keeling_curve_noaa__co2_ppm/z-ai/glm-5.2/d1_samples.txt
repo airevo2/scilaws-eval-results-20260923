@@ -1,0 +1,117 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    dt = t - 1958.0
+    
+    # Long-term accelerating trend (quadratic approximation)
+    trend = 315.0 + 0.8 * dt + 0.012 * dt**2
+    
+    # Seasonal cycle (annual and semi-annual harmonics)
+    # Peak around May (~0.33 yr), trough around September/October
+    seasonal = 4.0 * np.cos(2 * np.pi * (dt - 0.33)) - 1.0 * np.cos(4 * np.pi * (dt - 0.33))
+    
+    c = trend + seasonal
+    return c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form approximation for monthly mean CO2 at Mauna Loa
+    Observatory on the WMO X2019 calibration scale.
+
+    The model uses a quadratic secular trend plus four seasonal harmonics
+    (annual, semiannual, terannual, quadrennial) following the canonical
+    Thoning et al. (1989) parameterization.  Coefficients are typical
+    fitted values for the 1958–present record; only year_decimal (X[:,0])
+    is used as the physical predictor.
+    """
+    t = X[:, 0]
+    t0 = 1958.0
+    dt = t - t0
+
+    # Quadratic trend
+    trend = 315.0 + 0.84 * dt + 0.012 * dt**2
+
+    # Seasonal harmonics (sin/cos pairs for k = 1..4)
+    seasonal = (
+        2.50 * np.sin(2.0 * np.pi * t) - 2.50 * np.cos(2.0 * np.pi * t) +
+        0.50 * np.sin(4.0 * np.pi * t) + 0.00 * np.cos(4.0 * np.pi * t) +
+        0.20 * np.sin(6.0 * np.pi * t) - 0.10 * np.cos(6.0 * np.pi * t) +
+        0.10 * np.sin(8.0 * np.pi * t) - 0.05 * np.cos(8.0 * np.pi * t)
+    )
+
+    c = trend + seasonal
+    return c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    dt = t - 1958.0
+    
+    # Long-term quadratic trend
+    c = 315.0 + 0.8 * dt + 0.013 * dt**2
+    
+    # Annual seasonal cycle (peaks in May, troughs in Sept)
+    c += 2.0 * np.sin(2 * np.pi * t) - 2.0 * np.cos(2 * np.pi * t)
+    
+    # Semi-annual seasonal cycle
+    c += 0.5 * np.sin(4 * np.pi * t)
+    
+    return c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form harmonic-regression model for Mauna Loa monthly mean CO2.
+    Uses only decimal year (X[:, 0]); all other columns are distractors.
+    Form: quadratic trend + two-harmonic seasonal cycle.
+    Coefficients are approximate values fitted to the 1958–2023 record.
+    """
+    t = X[:, 0]
+
+    # Quadratic trend (ppm)
+    a0 = 315.0          # intercept at t = 1958
+    a1 = 0.9            # linear growth rate (ppm/yr)
+    a2 = 0.011          # quadratic acceleration (ppm/yr^2)
+    trend = a0 + a1 * (t - 1958.0) + a2 * (t - 1958.0)**2
+
+    # Seasonal cycle (two harmonics, amplitude in ppm)
+    # First harmonic: amplitude ~3.0 ppm, maximum in May (t ≈ 0.4)
+    # Second harmonic: amplitude ~0.5 ppm, phase shifted to sharpen the peak
+    seasonal = (3.0 * np.cos(2.0 * np.pi * (t - 0.4)) +
+                0.5 * np.cos(4.0 * np.pi * (t - 0.6)))
+
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Only the decimal year (column 0) is used; all other columns are distractors.
+    t = X[:, 0]
+    tau = t - 1958.0
+    
+    # Quadratic long-term trend (approximate fit to the Keeling curve)
+    trend = 314.5 + 0.8 * tau + 0.013 * tau**2
+    
+    # Seasonal cycle: annual + semi-annual harmonics (Fourier coefficients
+    # calibrated to the observed Mauna Loa phase/amplitude)
+    seasonal = (
+        2.18 * np.sin(2.0 * np.pi * t)
+        - 0.88 * np.cos(2.0 * np.pi * t)
+        - 0.58 * np.sin(4.0 * np.pi * t)
+        + 0.58 * np.cos(4.0 * np.pi * t)
+    )
+    
+    return trend + seasonal

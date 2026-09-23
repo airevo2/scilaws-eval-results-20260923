@@ -1,0 +1,26 @@
+{
+  "task": "solar_sunspot_silso__ssn",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "hathaway_2015",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "volobuev_2009",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

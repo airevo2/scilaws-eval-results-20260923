@@ -1,0 +1,148 @@
+import numpy as np
+
+def predict(X):
+    """
+    Simple-shear Cauchy stress of an incompressible neo-Hookean solid.
+
+    For homogeneous simple shear of an incompressible neo-Hookean material
+    the shear component of the Cauchy stress is exactly
+
+        tau = mu * gamma
+
+    (the classic linear-in-gamma closed form; higher-order Mooney-Rivlin
+    corrections vanish for the shear stress component in simple shear).
+
+    The per-specimen shear modulus mu is treated as a global function of the
+    fiber-network density controls (fibrinogen concentration and maturation
+    time).  A minimal, commonly-cited form makes mu grow with both.
+    """
+    gamma    = X[:, 0]
+    conc_mM  = X[:, 1]
+    time_min = X[:, 2]
+
+    # Baseline shear modulus [kPa] plus mild dependence on network density.
+    # (Reference baselines use a single fitted modulus ~ few kPa.)
+    mu0 = 1.5          # [kPa] baseline shear modulus
+    a_c = 0.03         # [kPa/mM]  stiffening per unit fibrinogen
+    a_t = 0.005        # [kPa/min] stiffening per unit maturation time
+
+    mu = mu0 + a_c * conc_mM + a_t * time_min   # [kPa]
+
+    tau_ss = mu * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form for homogeneous simple shear of an incompressible,
+    isotropic neo-Hookean solid:
+
+        tau_ss (Cauchy shear stress, 1-2 component)  =  G * gamma
+
+    where G is the small-strain shear modulus [kPa].  For a neo-Hookean
+    material the simple-shear response is exactly linear in the engineering
+    shear amount gamma (no higher-order terms appear in tau_12).
+
+    The per-specimen modulus G is, to first approximation, set by the fiber
+    network density, which grows with fibrinogen concentration and with
+    maturation time.  A simple separable power-law form is used here.
+    """
+    gamma   = X[:, 0]
+    conc_mM = X[:, 1]
+    t_min   = X[:, 2]
+
+    # Reference (baseline) shear modulus and reference conditions
+    G0     = 2.0          # kPa at reference state
+    c_ref  = 20.0         # mM
+    t_ref  = 90.0         # min
+    p_c    = 0.5          # concentration exponent
+    p_t    = 0.5          # maturation-time exponent
+
+    G = G0 * (conc_mM / c_ref) ** p_c * (t_min / t_ref) ** p_t
+
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard continuum-mechanics closed form for simple shear of an
+    # incompressible (neo-Hookean) solid: the Cauchy shear stress is
+    #     tau = mu * gamma
+    # where mu is the small-strain shear modulus of the specimen.
+    #
+    # For whole-blood thrombus mimics the shear modulus is on the order of
+    # a few kPa. Reference baselines use a single global modulus (they do
+    # not consume conc_mM / time_min), so we adopt one fitted constant.
+    gamma = X[:, 0]
+
+    mu = 2.0  # shear modulus [kPa], typical fitted value for these clots
+
+    tau_ss = mu * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Simple-shear Cauchy stress of an incompressible neo-Hookean solid.
+
+    For homogeneous simple shear x1 -> x1 + gamma*x2, the deformation
+    gradient is F = [[1, gamma, 0],[0,1,0],[0,0,1]], and the incompressible
+    neo-Hookean Cauchy stress gives the standard closed form for the
+    (1,2) shear component:
+
+        tau_12 = mu * gamma
+
+    where mu is the (small-strain) shear modulus. The specimen stiffness is
+    controlled by the fiber-network density, which grows with fibrinogen
+    concentration and maturation time; we express mu as a global modulus
+    mapping mu = mu0 * (c/c_ref) * (t/t_ref).
+    """
+    gamma   = X[:, 0]
+    conc_mM = X[:, 1]
+    time_min = X[:, 2]
+
+    # reference conditions and baseline modulus [kPa]
+    c_ref = 20.0     # mM
+    t_ref = 90.0     # min
+    mu0   = 2.0      # kPa, baseline shear modulus at reference conditions
+
+    # global modulus mapping (fiber-density driven)
+    mu = mu0 * (conc_mM / c_ref) * (time_min / t_ref)
+
+    tau_ss = mu * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form for whole-blood thrombus simple shear.
+
+    The most commonly cited constitutive approximation for an incompressible
+    (nearly) neo-Hookean soft tissue under homogeneous simple shear gives a
+    Cauchy shear stress that is linear in the amount of shear:
+
+        tau_ss = mu * gamma
+
+    where mu is the small-strain shear modulus [kPa].  For in-vitro whole-blood
+    thrombus mimics the shear modulus is on the order of a couple of kPa.
+    """
+    X = np.asarray(X, dtype=float)
+    gamma = X[:, 0]
+
+    # Small-strain shear modulus of whole-blood thrombus (order ~kPa).
+    mu = 2.0  # kPa
+
+    tau_ss = mu * gamma
+    return tau_ss

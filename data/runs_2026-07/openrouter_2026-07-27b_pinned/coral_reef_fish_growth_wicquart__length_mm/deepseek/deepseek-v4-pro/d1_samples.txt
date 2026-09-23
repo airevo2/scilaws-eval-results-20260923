@@ -1,0 +1,136 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict back-calculated total length (mm) at age using the standard
+    von Bertalanffy growth function (VBGF). This is the canonical closed-form
+    relationship for fish length-at-age, often used as the underlying growth
+    model even when the data are back-calculated lengths (Li_sp_m).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = Agei (years since hatching)
+
+    Returns
+    -------
+    np.ndarray, shape (n_samples,)
+        Predicted Li_sp_m (mm)
+    """
+    # VBGF parameters (typical literature values; replace with fitted ones)
+    L_inf = 600.0   # asymptotic length (mm)
+    K = 0.15        # Brody growth coefficient (yr^-1)
+    t0 = -0.5       # theoretical age at zero length (yr)
+
+    age = X[:, 0]
+    return L_inf * (1.0 - np.exp(-K * (age - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict back-calculated total length (mm) at age using the standard 
+    von Bertalanffy growth function (VBGF).
+    
+    Li = L_inf * (1 - exp(-K * (Age - t0)))
+    
+    This is the most commonly cited closed-form relationship for fish 
+    length-at-age, including back-calculated lengths from otoliths.
+    """
+    # Typical VBGF parameters for a hypothetical fish species
+    L_inf = 800.0   # asymptotic length (mm)
+    K = 0.15        # growth rate coefficient (yr^-1)
+    t0 = -0.5       # theoretical age at zero length (yr)
+    
+    age = X[:, 0]
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (age - t0)))
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict back-calculated total length (Li_sp_m) from age (Agei).
+    
+    Li_sp_m is the individual-level posterior mean from a species-level
+    Bayesian hierarchical back-calculation model applied to otolith radius
+    measurements. Under the standard biological intercept / Fraser-Lee
+    back-calculation framework, assuming isometric otolith growth (radius
+    proportional to age), the relationship reduces to a linear function:
+    
+        Li_sp_m = L0 + G * Agei
+    
+    where L0 is the species-level length at hatching (age 0) and G is the
+    species-level growth rate (mm/year). These constants are estimated by
+    the hierarchical model. Typical placeholder values are used below.
+    """
+    # Species-level back-calculation parameters (illustrative constants)
+    L0 = 0.0    # length at hatching (mm)
+    G  = 10.0   # linear growth rate (mm per year)
+    
+    Agei = X[:, 0]
+    Li_sp_m = L0 + G * Agei
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict back-calculated total length (Li_sp_m) from age (Agei) using the
+    standard von Bertalanffy growth function (VBGF). Although Li_sp_m originates
+    from a hierarchical otolith back-calculation model, the underlying
+    length-at-age relationship is classically described by the VBGF.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = Agei (years since hatching)
+
+    Returns
+    -------
+    Li_sp_m : np.ndarray, shape (n_samples,)
+        Back-calculated total length in mm.
+    """
+    age = X[:, 0]
+    # Typical VBGF parameters (species-specific; here chosen as illustrative constants)
+    L_inf = 500.0   # asymptotic length (mm)
+    k = 0.2         # growth coefficient (yr^-1)
+    t0 = -0.5       # theoretical age at zero length (yr)
+
+    Li_sp_m = L_inf * (1.0 - np.exp(-k * (age - t0)))
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts back-calculated total length (mm) at age using the 
+    von Bertalanffy growth function (VBGF), the most standard 
+    closed-form relationship for fish length-at-age.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = Agei (years since hatching)
+    
+    Returns
+    -------
+    np.ndarray, shape (n_samples,)
+        Li_sp_m: back-calculated total length in mm at the given ages.
+    """
+    # VBGF coefficients (typical placeholder values)
+    L_inf = 1000.0   # asymptotic length (mm)
+    K = 0.1          # growth rate coefficient (yr^-1)
+    t0 = 0.0         # theoretical age at zero length (yr)
+    
+    age = X[:, 0]
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (age - t0)))
+    return Li_sp_m

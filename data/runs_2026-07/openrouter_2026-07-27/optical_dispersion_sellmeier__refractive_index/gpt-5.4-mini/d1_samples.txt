@@ -1,0 +1,92 @@
+import numpy as np
+
+def predict(X):
+    lam = np.asarray(X)[:, 0]
+
+    # Sellmeier-type dispersion relation (common closed-form form)
+    # n^2(λ) = 1 + Σ_i [ B_i λ^2 / (λ^2 - C_i) ]
+    # Here written in the standard 3-term form with placeholder constants.
+    # Since no material-specific data were provided, use the generic canonical form structure.
+    B1, C1 = 1.0, 0.01
+    B2, C2 = 0.5, 0.04
+    B3, C3 = 0.1, 100.0
+
+    lam2 = lam * lam
+    n2 = 1.0 + (B1 * lam2) / (lam2 - C1) + (B2 * lam2) / (lam2 - C2) + (B3 * lam2) / (lam2 - C3)
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = np.asarray(X)[:, 0]  # wavelength in micrometers
+
+    # Standard Sellmeier form: n^2 = 1 + sum_i B_i * lam^2 / (lam^2 - C_i)
+    # Replace coefficients with the appropriate material constants if known.
+    # Generic placeholder structure:
+    B1, B2, B3 = 1.0, 0.0, 0.0
+    C1, C2, C3 = 0.0, 0.0, 0.0
+
+    lam2 = lam * lam
+    n2 = 1.0 + (B1 * lam2 / (lam2 - C1)) + (B2 * lam2 / (lam2 - C2)) + (B3 * lam2 / (lam2 - C3))
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = np.asarray(X)[:, 0]
+    # Cauchy-type closed-form dispersion relation
+    # n(λ) = A + B/λ^2 + C/λ^4
+    A = 1.0
+    B = 0.0
+    C = 0.0
+    return A + B / lam**2 + C / lam**4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form dispersion relation: Cauchy equation.
+    n(λ) = A + B/λ^2 + C/λ^4
+    """
+    lam = X[:, 0]
+    # Generic placeholder coefficients for a standard Cauchy form
+    A = 1.0
+    B = 0.0
+    C = 0.0
+    return A + B / (lam ** 2) + C / (lam ** 4)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Real refractive index n as a function of vacuum wavelength (um).
+
+    Since no specific material/system is provided, the standard closed-form
+    dispersion relation most commonly used in optics is the Sellmeier form.
+    Here a generic 3-term Sellmeier structure is returned, with coefficients
+    left as constants placeholder defaults (unity-scale) because no dataset
+    or material-specific coefficients were given.
+    """
+    lam = np.asarray(X)[:, 0]
+    lam2 = lam * lam
+
+    # Generic Sellmeier form:
+    # n^2 = 1 + sum_i B_i * lam^2 / (lam^2 - C_i)
+    # Material-specific coefficients must be supplied for a real prediction.
+    B1, B2, B3 = 1.0, 0.0, 0.0
+    C1, C2, C3 = 0.01, 0.1, 10.0
+
+    n2 = 1.0 \
+        + B1 * lam2 / (lam2 - C1) \
+        + B2 * lam2 / (lam2 - C2) \
+        + B3 * lam2 / (lam2 - C3)
+
+    return np.sqrt(n2)

@@ -1,0 +1,35 @@
+{
+  "task": "geomagnetic_storm_dst__dDst_dt",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "burton_1975",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "markidis_2025",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "obrien_2000",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

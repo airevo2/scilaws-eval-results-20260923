@@ -1,0 +1,84 @@
+task_id: spirometry_nhanes__FVC_L
+domain: biology / pulmonology
+
+# Type I — each row is an independent individual. Single demographic stratum,
+# so sex and ethnicity are constant (not inputs); only age and height vary.
+type: typeI
+has_group_id: false
+
+context: >-
+  Forced vital capacity (FVC) is the total volume of air a person can forcibly
+  exhale in a single maximum-effort breath, and is a primary spirometry measure
+  of lung size. In children and adolescents FVC rises steeply as the lungs and
+  thorax grow, driven mainly by increasing body height (taller lungs hold more
+  air) and advancing age. This cohort is a fixed demographic slice — adolescent
+  males of Caucasian/Mexican-American background, aged 8 to 20 — measured on
+  NHANES 2007-2012 participants who met ATS spirometry quality standards, so the
+  systematic differences between sexes and ethnic groups are held constant and
+  the remaining variation is governed by age and standing height.
+
+target:
+  name: FVC_L
+  symbol: "FVC"
+  unit: L
+  description: Forced vital capacity, directly measured by spirometry (litres).
+  range: [1.122, 7.205]
+
+inputs:
+  - name: age
+    symbol: t
+    unit: yr
+    dtype: float
+    description: Age at examination in fractional years.
+    range: [8.0, 19.75]
+  - name: height_cm
+    symbol: h
+    unit: cm
+    dtype: float
+    description: Standing height in centimetres.
+    range: [116.8, 199.5]
+
+data_files:
+  train: data/train.csv
+  test: data/test.csv
+n_train: 1038
+n_test: 260
+
+license: CC-BY-4.0
+
+references:
+  - id: johnson_2023
+    label: "Johnson & Johnson 2023 — spirometry reference equation FVC = b0+b1*age+b2*age^2+b3*height^2 (Male / Caucasian-Mexican-American / youth stratum, Table 1a)"
+    formula_file: formulas/johnson_2023.py
+    reference_pdf: reference/johnson_2023.pdf
+    n_law_constants: 4
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.4433
+      r2: 0.8915
+
+# --- Audit history ---
+# 2026-05-29 (逐条审核): provenance corrected. The data is Zavorsky (2024) "Refined NHANES
+#   2007-2012 spirometry dataset" (Mendeley doi:10.17632/dwjykg3xww.1, CC-BY-4.0) — an
+#   INDEPENDENT cohort from the NHANES III (1988-1994) sample the Johnson 2023 equations were
+#   fit on. Confirmed by SEQN 41475-71916 (continuous-NHANES bands; NHANES III is 1-33994) +
+#   the Mendeley landing page + min age 6.0. Fixed fabricated "data are NHANES III / released
+#   by Johnson" claims in summary_formula + references.bib (G13a); fixed stale Type II text (E2).
+# 2026-05-30 (audit re-build): scoped from a 32-constant 8-stratum lookup (R2 0.826) to a SINGLE
+#   stratum — Male / Caucasian-Mexican-American / youth (age 8 to <20), Table 1a FVC row — a
+#   clean 4-constant closed-form law (R2 0.892). Highest-fit of all 8 strata on the 2007-2012
+#   data; shares ethnicity with sister spirometry_nhanes__FEV1_L. sex_male/ethnicity_black
+#   dropped from inputs (constant within the stratum). See VERDICT.md.
+# priors intentionally empty: the baseline is an empirical regression with no fundamental
+#   physical constants; exposing its fit coefficients as priors would leak the answer (FM-H1/C12).
+priors: []
+
+caps:
+  max_law_constants: 4
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+best_baseline: 0.4433

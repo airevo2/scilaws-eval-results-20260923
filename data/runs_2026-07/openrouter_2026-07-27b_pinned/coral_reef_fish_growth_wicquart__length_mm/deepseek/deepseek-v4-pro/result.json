@@ -1,0 +1,17 @@
+{
+  "task": "coral_reef_fish_growth_wicquart__length_mm",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "ricker_1975",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

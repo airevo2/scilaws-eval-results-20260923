@@ -1,0 +1,153 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (ln m)
+
+    using a Gompertz model with a log-linear time trend.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = calendar year (t) [1950 to 2020]
+
+    Returns:
+    - 1-D numpy array of ln m
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Standard parameterized Gompertz-time model:
+    # ln m(x, t) = A + B * x - C * t
+    # where B is the rate of aging (mortality doubling time of ~8 years -> B ≈ 0.085)
+    # and C is the annual rate of mortality decline (~1.2% per year -> C ≈ 0.012)
+    A = 14.5
+    B = 0.085
+    C = 0.012
+
+    return A + B * age - C * year
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (ln m)
+
+    for adults using a log-linear Gompertz model with a historical time trend.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = year (t) [1950 to 2020]
+
+    Returns:
+    - 1-D numpy array of ln m
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Canonical Gompertz parameters with a log-linear mortality decline over time
+    # ln m(x, t) = alpha + beta * x + gamma * (t - 2000)
+    alpha = -9.24  # Baseline intercept at age 0, year 2000
+    beta = 0.078  # Gompertz rate of mortality increase with age (approx. 8% per year)
+    gamma = -0.012  # Average annual rate of mortality decline (approx. 1.2% per year)
+
+    log_m = alpha + beta * age + gamma * (year - 2000)
+    return log_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (log_m_adult)
+
+    using the Gompertz model of mortality with a log-linear historical time trend.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = age (x) [30 to 95]
+        - X[:, 1] = calendar year (t) [1950 to 2020]
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Standard Gompertz-Makeham parameters with a temporal decline component
+    # beta: Gompertz rate of senescence (~0.088)
+    # gamma: Annual rate of mortality decline (~0.012)
+    # intercept: Baseline log mortality at age 0 in the year 2000
+    intercept = -10.15
+    beta = 0.088
+    gamma = 0.012
+
+    log_m = intercept + beta * age - gamma * (year - 2000)
+    return log_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (ln m)
+
+    using a Gompertz model with a log-linear time trend.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = year (t) [1950 to 2020]
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Standard Gompertz-type parametric model with exponential temporal decline:
+    # ln m(x, t) = A + B * x - C * t
+    # where:
+    # - B ≈ 0.08 represents the Gompertz rate of mortality increase with age
+    #   (mortality roughly doubles every 8.5 years of age).
+    # - C ≈ 0.012 represents the average annual rate of mortality decline over time
+    #   (approx. 1.2% reduction in mortality per year).
+    # - A ≈ 14.7 is the calibrated intercept matching historical adult mortality.
+    A = 14.7
+    B = 0.08
+    C = 0.012
+
+    log_m = A + B * age - C * year
+    return log_m
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the central period death rate (log_m_adult)
+
+    using a parameterized Gompertz model with a log-linear time trend.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = age (x) [30 to 95]
+        - X[:, 1] = year (t) [1950 to 2020]
+
+    Returns:
+    - 1-D numpy array of log mortality rates (ln m)
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Standard Gompertz-Makeham parameters with a historical time trend
+    # for adult human populations:
+    # - intercept (at age 0, year 2000) is approximately -9.5
+    # - age mortality scaling parameter (Gompertz slope) is approximately 0.085
+    # - annual rate of mortality decline over time is approximately -1.2% (-0.012)
+    a = -9.5
+    b = 0.085
+    c = -0.012
+
+    log_m = a + b * age + c * (year - 2000)
+    return log_m

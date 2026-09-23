@@ -1,0 +1,26 @@
+{
+  "task": "ttauri_accretion__L_acc",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "manara_2017",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "manara_2017_bpl",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

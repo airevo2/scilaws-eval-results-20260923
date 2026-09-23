@@ -1,0 +1,232 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict annual national primary energy consumption (EC, I_E) in TJ.
+    
+    Uses a log-linear (STIRPAT / Cobb-Douglas) specification, the most commonly
+    cited closed-form for national energy demand:
+    
+        I_E = exp(b0) * P^{b1} * A^{b2} * f_active^{b3} * rho^{b4} * f_urban^{b5} * exp(b6 * T)
+    
+    where:
+        P       = total population
+        A       = GDP per capita (constant 2015 USD)
+        f_active= working-age fraction (15-64)
+        rho     = population density (persons/km2)
+        f_urban = urban fraction
+        T       = mean annual surface air temperature (deg C)
+    
+    Coefficients are set to typical elasticities found in the energy-economics literature.
+    """
+    # Unpack inputs
+    A = X[:, 0]          # GDP per capita (USD)
+    P = X[:, 1]          # Population (persons)
+    f_active = X[:, 2]   # working-age share (%)
+    rho = X[:, 3]        # population density (persons/km2)
+    f_urban = X[:, 4]    # urban share (%)
+    T = X[:, 5]          # mean annual temperature (deg C)
+
+    # Convert percentages to fractions
+    f_active_frac = f_active / 100.0
+    f_urban_frac = f_urban / 100.0
+
+    # Small constant to avoid log(0)
+    eps = 1e-12
+
+    # Coefficients (typical literature values)
+    b0 = -9.5            # intercept (calibrated to global totals ~ 6e8 TJ)
+    b1 = 1.0             # population elasticity
+    b2 = 0.8             # affluence elasticity
+    b3 = 0.5             # working-age fraction elasticity
+    b4 = -0.1            # density elasticity (negative: denser countries use less energy per capita)
+    b5 = 0.3             # urbanization elasticity
+    b6 = 0.02            # temperature semi-elasticity (per deg C)
+
+    log_I = (b0
+             + b1 * np.log(P + eps)
+             + b2 * np.log(A + eps)
+             + b3 * np.log(f_active_frac + eps)
+             + b4 * np.log(rho + eps)
+             + b5 * np.log(f_urban_frac + eps)
+             + b6 * T)
+
+    I_E = np.exp(log_I)
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict annual national primary energy consumption (I_E) in TJ using an
+    extended STIRPAT (Stochastic Impacts by Regression on Population,
+    Affluence and Technology) closed-form relationship.
+
+    The model is multiplicative (log-linear in the natural logarithms):
+        I_E = C * P^b * A^c * f_active^d * rho^e * f_urban^f * exp(g * T)
+
+    where:
+        P        = total population [persons]
+        A        = GDP per capita [constant 2015 USD]
+        f_active = working-age fraction (15-64) [fraction, 0-1]
+        rho      = population density [persons per km2]
+        f_urban  = urban population fraction [fraction, 0-1]
+        T        = mean annual surface air temperature [°C]
+
+    Coefficients are chosen to reflect typical cross-country elasticities
+    reported in the energy-economics literature.
+    """
+    # Unpack columns (note the order specified in the prompt)
+    A = X[:, 0]                     # GDP per capita
+    P = X[:, 1]                     # Total population
+    f_active = X[:, 2] / 100.0      # Active population % -> fraction
+    rho = X[:, 3]                   # Population density
+    f_urban = X[:, 4] / 100.0       # Urban population % -> fraction
+    T = X[:, 5]                     # Mean annual temperature
+
+    # --- Fitted coefficients (named constants) ---
+    C = 7.0e-5      # Scaling constant [TJ per composite unit]
+    b = 1.0         # Population elasticity (~unit scaling)
+    c = 0.8         # Affluence elasticity (sub-linear, energy intensity declines with income)
+    d = 0.5         # Working-age fraction elasticity
+    e = -0.1        # Population density elasticity (density reduces transport energy)
+    f = 0.3         # Urban fraction elasticity
+    g = 0.02        # Temperature coefficient [1/°C] (net positive from cooling demand)
+
+    # --- Closed-form prediction ---
+    I_E = (C
+           * np.power(P, b)
+           * np.power(A, c)
+           * np.power(f_active, d)
+           * np.power(rho, e)
+           * np.power(f_urban, f)
+           * np.exp(g * T))
+
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Columns
+    A = X[:, 0]                 # GDP per capita [USD/person]
+    P = X[:, 1]                 # population [persons]
+    f_active = X[:, 2] / 100.0  # working-age fraction [0-1]
+    rho = X[:, 3]               # population density [persons/km2]
+    f_urban = X[:, 4] / 100.0   # urban fraction [0-1]
+    T = X[:, 5]                 # mean annual air temperature [deg C]
+
+    # Kaya/IPAT core: primary energy = GDP * energy intensity = P * A * EI.
+    # EI is written in the usual log-linear STIRPAT form, with demographic,
+    # urban-density, and heating/cooling degree-day climate corrections.
+    EI0 = 1.0e-5          # base energy intensity [TJ per constant-2015 USD]
+    a_active = 0.10
+    a_density = -0.10
+    a_urban = 0.10
+    T_base = 18.0         # deg C, common degree-day reference
+    eta_hdd = 0.03
+    eta_cdd = 0.05
+
+    hdd = np.maximum(0.0, T_base - T)
+    cdd = np.maximum(0.0, T - T_base)
+
+    EI = (EI0 *
+          (f_active ** a_active) *
+          (rho ** a_density) *
+          (f_urban ** a_urban) *
+          np.exp(eta_hdd * hdd + eta_cdd * cdd))
+
+    I_E = P * A * EI
+    return np.asarray(I_E, dtype=float).ravel()
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Extended STIRPAT model for annual national primary energy consumption.
+    
+    I_E = a * P^b * A^c * f_active^d * rho^e * f_urban^f * exp(g1*T + g2*T^2)
+    
+    The STIRPAT (Stochastic Impacts by Regression on Population, 
+    Affluence, and Technology) model is the most commonly cited 
+    closed-form relationship for environmental impact as a function 
+    of population, affluence, and technological/structural factors.
+    The temperature enters as a quadratic (U-shaped) term capturing 
+    both heating demand in cold climates and cooling demand in hot climates.
+    """
+    # Extract inputs
+    A   = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P   = X[:, 1]   # Total population (persons)
+    fa  = X[:, 2]   # Working-age share (%)
+    rho = X[:, 3]   # Population density (persons/km²)
+    fu  = X[:, 4]   # Urban share (%)
+    T   = X[:, 5]   # Mean annual temperature (°C)
+
+    # Coefficients (calibrated to typical global energy statistics)
+    a   = 1.5e-6    # Scale constant [TJ]
+    b   = 1.0       # Population elasticity (~unitary)
+    c   = 0.7       # Affluence elasticity (sublinear: saturation effect)
+    d   = 1.0       # Working-age fraction elasticity
+    e   = -0.05     # Density elasticity (negative: agglomeration efficiency)
+    f   = 0.15      # Urbanization elasticity (positive but modest)
+    g1  = -0.02     # Temperature linear coefficient
+    g2  = 0.001     # Temperature quadratic coefficient (U-shaped)
+
+    # Guard against non-positive values in power terms
+    A   = np.maximum(A, 1.0)
+    P   = np.maximum(P, 1.0)
+    fa  = np.maximum(fa, 0.01)
+    rho = np.maximum(rho, 0.01)
+    fu  = np.maximum(fu, 0.01)
+
+    # Extended STIRPAT: multiplicative power-law with exponential temperature
+    I_E = (a
+           * np.power(P,   b)
+           * np.power(A,   c)
+           * np.power(fa,  d)
+           * np.power(rho, e)
+           * np.power(fu,  f)
+           * np.exp(g1 * T + g2 * np.square(T)))
+
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    A = X[:, 0]        # GDP per capita
+    P = X[:, 1]        # Total population
+    f_active = X[:, 2] # Working-age fraction (%)
+    rho = X[:, 3]      # Population density
+    f_urban = X[:, 4]  # Urban fraction (%)
+    T = X[:, 5]        # Mean annual temperature
+    
+    # Canonical extended STIRPAT / Cobb-Douglas form for energy demand:
+    # I_E = a * P^b * A^c * f_active^d * rho^e * f_urban^f * exp(g * T)
+    
+    # Named coefficients (representative fitted elasticities)
+    a = 1.0   # scale factor
+    b = 1.0   # population elasticity
+    c = 1.0   # affluence (GDP per capita) elasticity
+    d = 0.5   # active population elasticity
+    e = -0.1  # population density elasticity
+    f = 0.5   # urbanization elasticity
+    g = 0.02  # temperature coefficient
+    
+    # Ensure strictly positive bases for the power-law terms
+    A = np.maximum(A, 1.0)
+    P = np.maximum(P, 1.0)
+    rho = np.maximum(rho, 1e-6)
+    f_active_frac = np.maximum(f_active / 100.0, 1e-6)
+    f_urban_frac = np.maximum(f_urban / 100.0, 1e-6)
+    
+    I_E = a * (P ** b) * (A ** c) * (f_active_frac ** d) * (rho ** e) * (f_urban_frac ** f) * np.exp(g * T)
+    
+    return I_E

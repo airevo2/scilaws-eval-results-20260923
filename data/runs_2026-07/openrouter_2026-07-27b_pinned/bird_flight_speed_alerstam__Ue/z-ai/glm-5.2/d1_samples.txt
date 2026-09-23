@@ -1,0 +1,75 @@
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = body mass in kg
+    # X[:, 1] = wing area in m^2
+    # Convert mass to grams for the standard allometric tracking-radar equation
+    # (Alerstam et al. 2007, PLoS Biology)
+    mass_g = X[:, 0] * 1000.0
+    S = X[:, 1]
+    Ue = 4.7 * mass_g**0.13 * S**(-0.17)
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]
+    S = X[:, 1]
+    Ue = 4.77 * np.sqrt(m / S)
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean equivalent airspeed (Ue) for migratory flapping flight.
+    
+    The relationship follows from steady-state lift equilibrium:
+        L = 0.5 * rho0 * Ue^2 * S * CL = m * g
+        
+    Solving for Ue at sea-level density (rho0) gives:
+        Ue = sqrt( (2 * m * g) / (rho0 * S * CL) )
+    
+    A typical lift coefficient for cruising flapping flight is CL ≈ 0.5
+    (e.g. Tennekes, 'The Simple Science of Flight').
+    """
+    m = X[:, 0]          # body mass [kg]
+    S = X[:, 1]          # wing area [m^2]
+    
+    g = 9.81             # gravitational acceleration [m/s^2]
+    rho0 = 1.225         # sea-level air density [kg/m^3]
+    CL = 0.5             # typical cruising lift coefficient
+    
+    Ue = np.sqrt((2.0 * g * m) / (rho0 * S * CL))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]
+    S = X[:, 1]
+    return 4.9 * np.sqrt(m / S)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]  # mass in kg
+    S = X[:, 1]  # wing area in m^2
+    
+    # Physical constants
+    g = 9.81      # gravitational acceleration [m/s^2]
+    rho_0 = 1.225 # sea-level air density [kg/m^3]
+    C_L = 1.0     # assumed lift coefficient for standard closed-form relationship
+    
+    # Equivalent airspeed corrected to sea-level air density
+    Ue = np.sqrt((2 * m * g) / (rho_0 * S * C_L))
+    
+    return Ue

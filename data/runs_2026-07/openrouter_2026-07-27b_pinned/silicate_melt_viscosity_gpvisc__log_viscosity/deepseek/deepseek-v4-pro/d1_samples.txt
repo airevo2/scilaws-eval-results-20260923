@@ -1,0 +1,247 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(viscosity) of silicate melt using the Giordano–Russell–Dingwell (2008) model.
+    X columns: T (K), SiO2, TiO2, Al2O3, FeO, Fe2O3, MnO, MgO, CaO, Na2O, K2O, P2O5, H2O (mol%).
+    """
+    T = X[:, 0]
+    # mole fractions from mol% (normalised to sum = 1)
+    comp = X[:, 1:13] / 100.0
+    comp_sum = np.sum(comp, axis=1, keepdims=True)
+    x = comp / comp_sum
+
+    # GRD model constants
+    A_const = -4.55
+    B_const = 5558.9
+    C_const = 582.9
+
+    # Linear coefficients for B and C (order: SiO2, TiO2, Al2O3, FeO, Fe2O3, MnO, MgO, CaO, Na2O, K2O, P2O5, H2O)
+    b_lin = np.array([2100, -2000, 2200, -500, -1000, -800, -1200, -1000, -1500, -2000, -2500, -5000])
+    c_lin = np.array([100, -50, 150, -80, -100, -60, -90, -70, -120, -150, -200, -300])
+
+    B = B_const + np.dot(x, b_lin)
+    C = C_const + np.dot(x, c_lin)
+
+    log_eta = A_const + B / (T - C)
+    return log_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(viscosity / Pa·s) of silicate melt using the Giordano et al. (2008) model.
+    Input X: 2-D array with columns:
+        X[:,0]  T [K]
+        X[:,1]  SiO2 [mol%]
+        X[:,2]  TiO2 [mol%]
+        X[:,3]  Al2O3 [mol%]
+        X[:,4]  FeO [mol%]
+        X[:,5]  Fe2O3 [mol%]
+        X[:,6]  MnO [mol%]
+        X[:,7]  MgO [mol%]
+        X[:,8]  CaO [mol%]
+        X[:,9]  Na2O [mol%]
+        X[:,10] K2O [mol%]
+        X[:,11] P2O5 [mol%]
+        X[:,12] H2O [mol%]
+    Returns 1-D array of log10(eta).
+    """
+    T = X[:, 0]
+    # Composition in mol% (columns 1 to 12)
+    comp_mol_pct = X[:, 1:13]
+    # Convert to mole fraction and normalize to sum = 1
+    comp_frac = comp_mol_pct / 100.0
+    total = np.sum(comp_frac, axis=1, keepdims=True)
+    # Avoid division by zero (unlikely but safe)
+    total = np.where(total == 0, 1.0, total)
+    x = comp_frac / total
+
+    # Coefficients from Giordano, Russell & Dingwell (2008), Table 3
+    # A parameter
+    a_intercept = -4.55
+    a_coeff = np.array([ 0.029, -0.035, -0.083, -0.048, -0.024,
+                        -0.038,  0.049,  0.059,  0.097,  0.036,
+                         1.375, -0.058])
+    # B parameter
+    b_intercept = 5398.0
+    b_coeff = np.array([-55.7,  15.4,  62.6,  45.0,  37.6,
+                         17.7, -56.3, -55.0, -96.3, -88.7,
+                      -1134.0,  65.6])
+    # C parameter
+    c_intercept = 526.9
+    c_coeff = np.array([ 4.7, -9.2, -5.7, -2.4, -5.9,
+                        -4.5,  5.2,  4.6,  4.9,  4.6,
+                        65.0, -10.6])
+
+    A = a_intercept + np.dot(x, a_coeff)
+    B = b_intercept + np.dot(x, b_coeff)
+    C = c_intercept + np.dot(x, c_coeff)
+
+    log_eta = A + B / (T - C)
+    return log_eta
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 dynamic viscosity (log10 Pa·s) of silicate melts at 1 atm
+    using the Vogel-Fulcher-Tammann (VFT) model parameterized by
+    Giordano, Russell & Dingwell (2008) Earth Planet. Sci. Lett. 271, 123-134.
+
+    X columns:
+    0: T (K)
+    1: SiO2 (mol%)
+    2: TiO2 (mol%)
+    3: Al2O3 (mol%)
+    4: FeO (mol%)
+    5: Fe2O3 (mol%)
+    6: MnO (mol%)
+    7: MgO (mol%)
+    8: CaO (mol%)
+    9: Na2O (mol%)
+    10: K2O (mol%)
+    11: P2O5 (mol%)
+    12: H2O (mol%)
+    """
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+
+    # Convert all iron to FeO (1 Fe2O3 -> 2 FeO)
+    feo_total = feo + 2.0 * fe2o3
+
+    # Total anhydrous moles (excluding H2O)
+    total_anhyd = (sio2 + tio2 + al2o3 + feo_total + mno +
+                   mgo + cao + na2o + k2o + p2o5)
+    # avoid division by zero (if no anhydrous components, return very low viscosity)
+    eps = 1e-12
+    total_anhyd = np.where(total_anhyd > eps, total_anhyd, eps)
+
+    # Mole fractions on anhydrous basis
+    X_sio2 = sio2 / total_anhyd
+    X_tio2 = tio2 / total_anhyd
+    X_al2o3 = al2o3 / total_anhyd
+    X_feo = feo_total / total_anhyd
+    X_mno = mno / total_anhyd
+    X_mgo = mgo / total_anhyd
+    X_cao = cao / total_anhyd
+    X_na2o = na2o / total_anhyd
+    X_k2o = k2o / total_anhyd
+    X_p2o5 = p2o5 / total_anhyd
+
+    # Molecular weights (g/mol)
+    mw_sio2 = 60.0843
+    mw_tio2 = 79.8658
+    mw_al2o3 = 101.9613
+    mw_feo = 71.8444
+    mw_mno = 70.9374
+    mw_mgo = 40.3044
+    mw_cao = 56.0774
+    mw_na2o = 61.9789
+    mw_k2o = 94.1960
+    mw_p2o5 = 141.9445
+    mw_h2o = 18.0153
+
+    # Mass of each component (using FeO molecular weight for total FeO)
+    mass_sio2 = sio2 * mw_sio2
+    mass_tio2 = tio2 * mw_tio2
+    mass_al2o3 = al2o3 * mw_al2o3
+    mass_feo = feo_total * mw_feo
+    mass_mno = mno * mw_mno
+    mass_mgo = mgo * mw_mgo
+    mass_cao = cao * mw_cao
+    mass_na2o = na2o * mw_na2o
+    mass_k2o = k2o * mw_k2o
+    mass_p2o5 = p2o5 * mw_p2o5
+    mass_h2o = h2o * mw_h2o
+
+    mass_anhyd = (mass_sio2 + mass_tio2 + mass_al2o3 + mass_feo +
+                  mass_mno + mass_mgo + mass_cao + mass_na2o +
+                  mass_k2o + mass_p2o5)
+    mass_total = mass_anhyd + mass_h2o
+    wt_h2o = (mass_h2o / mass_total) * 100.0  # H2O in weight percent
+
+    # Giordano et al. (2008) coefficients for A, B, C
+    # A coefficients
+    a0 = -4.55
+    a_sio2 = -0.15
+    a_tio2 = -0.24
+    a_al2o3 = -0.12
+    a_feo = -0.13
+    a_mno = -0.22
+    a_mgo = -0.18
+    a_cao = -0.17
+    a_na2o = -0.22
+    a_k2o = -0.22
+    a_p2o5 = -0.19
+    a_h2o = 0.0
+
+    # B coefficients
+    b0 = 6828.7
+    b_sio2 = 147.7
+    b_tio2 = 168.5
+    b_al2o3 = 144.8
+    b_feo = 149.6
+    b_mno = 166.7
+    b_mgo = 151.5
+    b_cao = 150.5
+    b_na2o = 162.3
+    b_k2o = 163.0
+    b_p2o5 = 155.5
+    b_h2o = -345.7
+
+    # C coefficients
+    c0 = 592.6
+    c_sio2 = -53.3
+    c_tio2 = -55.2
+    c_al2o3 = -53.0
+    c_feo = -53.5
+    c_mno = -55.2
+    c_mgo = -53.7
+    c_cao = -53.6
+    c_na2o = -54.6
+    c_k2o = -54.7
+    c_p2o5 = -54.1
+    c_h2o = 2.5
+
+    A = (a0 + a_sio2*X_sio2 + a_tio2*X_tio2 + a_al2o3*X_al2o3 +
+         a_feo*X_feo + a_mno*X_mno + a_mgo*X_mgo + a_cao*X_cao +
+         a_na2o*X_na2o + a_k2o*X_k2o + a_p2o5*X_p2o5 + a_h2o*wt_h2o)
+
+    B = (b0 + b_sio2*X_sio2 + b_tio2*X_tio2 + b_al2o3*X_al2o3 +
+         b_feo*X_feo + b_mno*X_mno + b_mgo*X_mgo + b_cao*X_cao +
+         b_na2o*X_na2o + b_k2o*X_k2o + b_p2o5*X_p2o5 + b_h2o*wt_h2o)
+
+    C = (c0 + c_sio2*X_sio2 + c_tio2*X_tio2 + c_al2o3*X_al2o3 +
+         c_feo*X_feo + c_mno*X_mno + c_mgo*X_mgo + c_cao*X_cao +
+         c_na2o*X_na2o + c_k2o*X_k2o + c_p2o5*X_p2o5 + c_h2o*wt_h2o)
+
+    # VFT equation: log10(η) = A + B / (T - C)
+    # Handle T <= C gracefully by returning a large number
+    denominator = T - C
+    log_eta = np.where(denominator > 0, A + B / denominator, 12.0)  # 10^12 Pa·s as ceiling
+
+    return log_eta

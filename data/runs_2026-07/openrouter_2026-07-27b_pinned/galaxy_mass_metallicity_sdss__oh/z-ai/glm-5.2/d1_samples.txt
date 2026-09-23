@@ -1,0 +1,86 @@
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Mannucci et al. (2010) Fundamental Metallicity Relation (FMR)
+    mu_32 = log_Mstar - 0.32 * log_SFR
+    oh = 8.90 + 0.47 * (mu_32 - 10.5)
+    
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Fundamental Metallicity Relation (FMR) parameters from Mannucci et al. (2010)
+    alpha = 0.32
+    mu_pivot = 10.5
+    oh_saturation = 9.08
+    slope = 0.47
+    
+    # Calculate the mass-SFR parameter mu
+    mu = log_Mstar - alpha * log_SFR
+    
+    # Initialize with the saturation metallicity for high-mu galaxies
+    oh = np.full_like(mu, oh_saturation)
+    
+    # Apply the linear FMR for galaxies below the pivot mu
+    mask = mu < mu_pivot
+    oh[mask] = oh_saturation + slope * (mu[mask] - mu_pivot)
+    
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Fundamental Metallicity Relation (FMR) parameterization
+    # using the Mannucci et al. (2010) mu32 parameter and the 
+    # Tremonti et al. (2004) Mass-Metallicity Relation (MZR) polynomial form.
+    mu32 = log_Mstar - 0.32 * log_SFR
+    
+    oh = -1.492 + 1.847 * mu32 - 0.08026 * (mu32 ** 2)
+    
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Fundamental Metallicity Relation (FMR) from Mannucci et al. (2010)
+    mu32 = log_Mstar - 0.32 * log_SFR
+    x = mu32 - 10.0
+    
+    oh = 8.90 + 0.37 * x - 0.14 * x**2 - 0.03 * x**3
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Fundamental Metallicity Relation (FMR) projection parameter (Mannucci et al. 2010)
+    mu = log_Mstar - 0.32 * log_SFR
+    
+    # Linear relation below the saturation limit, constant above it
+    oh = 8.90 + 0.47 * (mu - 10.5)
+    oh = np.where(mu >= 10.5, 8.90, oh)
+    
+    return oh

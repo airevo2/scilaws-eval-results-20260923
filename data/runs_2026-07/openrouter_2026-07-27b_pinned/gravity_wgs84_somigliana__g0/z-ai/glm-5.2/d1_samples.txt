@@ -1,0 +1,86 @@
+import numpy as np
+
+def predict(X):
+    # WGS84 normal gravity parameters (Somigliana equation)
+    gamma_e = 9.7803253359      # Normal gravity at the equator [m/s^2]
+    k = 0.001931852652453       # Spherical harmonic coefficient k = (b * gamma_p) / (a * gamma_e) - 1
+    e2 = 0.0066943799901413165  # First eccentricity squared
+    
+    # Convert geodetic latitude from degrees to radians
+    phi = np.radians(X[:, 0])
+    sin2_phi = np.sin(phi) ** 2
+    
+    # Compute normal gravity on the ellipsoid surface
+    gamma = gamma_e * (1 + k * sin2_phi) / np.sqrt(1 - e2 * sin2_phi)
+    
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lat = np.radians(X[:, 0])
+    sin2 = np.sin(lat) ** 2
+    
+    gamma_e = 9.7803253359
+    k = 0.00193185265241
+    e2 = 0.00669437999014
+    
+    gamma = gamma_e * (1 + k * sin2) / np.sqrt(1 - e2 * sin2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    
+    # WGS84 reference ellipsoid parameters
+    gamma_e = 9.7803253359  # Normal gravity at the equator (m/s^2)
+    k = 0.00193185265241    # WGS84 normal gravity formula constant
+    e2 = 0.00669437999014   # First eccentricity squared
+    
+    sin2_phi = np.sin(phi)**2
+    
+    # Somigliana equation for normal gravity on the ellipsoid
+    gamma = gamma_e * (1.0 + k * sin2_phi) / np.sqrt(1.0 - e2 * sin2_phi)
+    
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    sin_phi = np.sin(phi)
+    sin2_phi = sin_phi ** 2
+    
+    gamma_e = 9.7803253359  # Normal gravity at equator (m/s^2)
+    k = 0.00193185265241    # Somigliana constant (b*gamma_p / (a*gamma_e) - 1)
+    e2 = 0.00669437999014   # First eccentricity squared of WGS84 ellipsoid
+    
+    gamma = gamma_e * (1 + k * sin2_phi) / np.sqrt(1 - e2 * sin2_phi)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = np.radians(X[:, 0])
+    
+    # WGS84 normal gravity parameters
+    gamma_e = 9.7803253359  # Normal gravity at the equator (m/s^2)
+    k = 0.001931852652458   # Somigliana constant (derived from WGS84)
+    e2 = 0.006694379990141  # First eccentricity squared
+    
+    sin_phi = np.sin(phi)
+    sin2_phi = sin_phi ** 2
+    
+    # Somigliana equation for normal gravity on the ellipsoid
+    gamma = gamma_e * (1.0 + k * sin2_phi) / np.sqrt(1.0 - e2 * sin2_phi)
+    
+    return gamma

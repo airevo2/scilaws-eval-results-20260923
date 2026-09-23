@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Frequency"
+    symbol: "omega"
+    unit: ""
+    description: "Frequency"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"

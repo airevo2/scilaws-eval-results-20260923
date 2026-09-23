@@ -1,0 +1,249 @@
+import numpy as np
+
+def predict(X):
+    """
+    ln M(x,t): natural log of central death rate at single-year ages.
+
+    Canonical closed form = Heligman-Pollard mortality law (three additive
+    components: infant/childhood mortality, the young-adult accident hump,
+    and the Gompertz senescent rise), combined with a Lee-Carter-style
+    log-linear mortality-improvement trend over calendar time.
+
+        q(x) ~ A^((x+B)^C)            # falling childhood mortality
+             + D*exp(-E*(ln x - ln F)^2)   # accident hump
+             + G*H^x                   # Gompertz senescence
+
+    M(x,t) is then scaled by an exponential secular decline in time.
+    """
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # avoid log(0) at age 0
+    xs = np.clip(x, 1e-6, None)
+
+    # --- Heligman-Pollard parameters (typical human-population values) ---
+    A = 0.0005
+    B = 0.004
+    C = 0.08
+    D = 0.0008
+    E = 8.0
+    F = 20.0
+    G = 3.0e-5    # Gompertz level
+    H = 1.10      # Gompertz rate (~10% rise per year of age)
+
+    # three components of q(x)
+    child = A ** ((xs + B) ** C)
+    hump  = D * np.exp(-E * (np.log(xs) - np.log(F)) ** 2)
+    senes = G * (H ** x)
+
+    q = child + hump + senes
+    q = np.clip(q, 1e-8, 0.999)
+
+    # central death rate m ~ -ln(1-q) (approx m from q)
+    m = -np.log(1.0 - q)
+
+    # --- secular mortality improvement (Lee-Carter time trend) ---
+    # roughly ~1% average annual decline relative to a reference year
+    t0 = 1900.0
+    improvement = -0.010 * (t - t0)
+
+    log_m = np.log(m) + improvement
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    ln M(x,t) for single-year ages, Total sex, 1x1.
+
+    Age structure: Heligman-Pollard 8-parameter law (gives q_x),
+    converted to a central death rate m_x, then modulated by a
+    log-linear calendar-time mortality-decline term (Lee-Carter-like).
+
+    Heligman-Pollard:
+        q_x/(1-q_x) = A^((x+B)^C)                # infant/child fall
+                    + D*exp(-E*(ln x - ln F)^2)  # accident hump
+                    + G*H^x                       # senescent (Gompertz) rise
+    """
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # --- Heligman-Pollard parameters (typical human all-cause values) ---
+    A = 0.0005
+    B = 0.004
+    C = 0.08
+    D = 0.0008
+    E = 10.0
+    F = 20.0
+    G = 0.00004
+    H = 1.100
+
+    xs = np.where(x <= 0.0, 1e-6, x)  # guard ln(0)
+
+    term1 = A ** ((x + B) ** C)
+    term2 = D * np.exp(-E * (np.log(xs) - np.log(F)) ** 2)
+    term3 = G * (H ** x)
+
+    odds = term1 + term2 + term3          # q/(1-q)
+    q = odds / (1.0 + odds)
+    q = np.clip(q, 1e-8, 0.999999)
+
+    # central death rate from probability (constant-hazard approx over 1 yr)
+    m = -np.log(1.0 - q)
+
+    # --- calendar-time decline (secular mortality improvement) ---
+    # roughly ~1% per year decline over the modern era, referenced to 1900
+    beta = 0.010
+    t0 = 1900.0
+    log_m = np.log(m) - beta * (t - t0)
+
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    ln M(x,t): Heligman-Pollard age pattern (converted to a central death rate)
+    combined with a Lee-Carter-style log-linear mortality improvement over time.
+
+    Age structure (Heligman-Pollard, giving q_x):
+        q/p = A^((x+B)^C)          # infant/childhood fall-off
+            + D*exp(-E*(ln x - ln F)^2)  # young-adult accident hump
+            + G*H^x                 # senescent (Gompertz) rise
+    with q = (q/p)/(1+q/p), and m ~= -ln(1-q).
+
+    Time structure: multiplicative decline in mortality (improvement),
+    anchored around year t0 with rate rho per year.
+    """
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # avoid log(0) at age 0
+    xs = np.where(x < 0.5, 0.5, x)
+
+    # Heligman-Pollard coefficients (typical fitted values)
+    A = 0.0005
+    B = 0.004
+    C = 0.08
+    D = 0.0008
+    E = 10.0
+    F = 20.0
+    G = 0.00005
+    H = 1.10
+
+    childhood = A ** ((xs + B) ** C)
+    accident  = D * np.exp(-E * (np.log(xs) - np.log(F)) ** 2)
+    senescent = G * (H ** xs)
+
+    odds = childhood + accident + senescent          # q/p
+    q = odds / (1.0 + odds)                           # probability of death
+    q = np.clip(q, 1e-8, 0.999999)
+
+    m = -np.log(1.0 - q)                              # central death rate (approx.)
+    log_m = np.log(m)
+
+    # Mortality improvement over calendar time (Lee-Carter style)
+    t0 = 1900.0
+    rho = 0.012                                       # ~1.2% annual improvement
+    log_m = log_m - rho * (t - t0)
+
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # Heligman-Pollard style age pattern (three terms) giving mortality "odds" q/p,
+    # combined with a Lee-Carter style calendar-time mortality decline.
+    # Coefficients are canonical illustrative values for a full-age human schedule.
+
+    # --- Heligman-Pollard parameters (period ~ mid 20th century reference) ---
+    A = 0.0005    # early childhood decline
+    B = 0.017
+    C = 0.10
+    D = 0.0008    # accident / young-adult hump
+    E = 10.0
+    F = 20.0      # age at hump
+    G = 3.0e-5    # Gompertz-Makeham level
+    H = 1.10      # senescent rate of increase (~10%/yr of age)
+
+    xa = np.clip(x, 0.0, None)
+
+    # infant/childhood term
+    term1 = A ** ((xa + B) ** C)
+    # young-adult accident hump (log-normal in age)
+    lx = np.log(np.clip(xa, 1e-6, None) / F)
+    term2 = D * np.exp(-E * lx ** 2)
+    # senescent (Gompertz-Makeham) term
+    term3 = (G * H ** xa)
+
+    odds = term1 + term2 + term3          # q/p in Heligman-Pollard
+    q = odds / (1.0 + odds)               # probability of death
+    m = -np.log(1.0 - np.clip(q, 1e-12, 1 - 1e-12))  # central death rate approx
+
+    log_m = np.log(m)
+
+    # --- Calendar-time mortality improvement (Lee-Carter drift) ---
+    # reference year ~1950, average decline ~1.2% per year in recent era
+    t0 = 1950.0
+    drift = -0.012
+    log_m = log_m + drift * (t - t0)
+
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Closed-form ln M(x,t) using a Heligman-Pollard style age schedule
+    (infant + accident-hump + Gompertz senescent components) combined
+    with a Lee-Carter style log-linear mortality improvement over time.
+    """
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    # --- Heligman-Pollard parameters (q(x) ~ m(x) for single-year rates) ---
+    A = 0.00060   # infant / early childhood level
+    B = 0.00500   # childhood adjustment
+    C = 0.12000   # childhood decline shape
+    D = 0.00080   # accident-hump magnitude
+    E = 10.0000   # accident-hump spread
+    Fh = 20.000   # accident-hump location (age)
+    G = 0.00003   # Gompertz baseline (senescent)
+    H = 1.10500   # Gompertz rate of aging
+
+    xs = np.maximum(x, 0.0)
+
+    # infant/childhood term: A^((x+B)^C)
+    term1 = A ** ((xs + B) ** C)
+
+    # accident hump: D * exp(-E * (ln x - ln F)^2)
+    lx = np.log(np.maximum(xs, 0.5))
+    term2 = D * np.exp(-E * (lx - np.log(Fh)) ** 2)
+
+    # senescent Gompertz term: G * H^x
+    term3 = G * (H ** xs)
+
+    m_ref = term1 + term2 + term3          # mortality schedule at reference year
+    log_m_ref = np.log(np.maximum(m_ref, 1e-8))
+
+    # --- temporal mortality improvement (Lee-Carter style) ---
+    # reference year and average log-improvement per calendar year
+    t0 = 1900.0
+    kappa = -0.010                          # ~1% annual decline in modern era
+    # age sensitivity to improvement (younger ages improve faster)
+    beta = 1.0 + 0.5 * np.exp(-xs / 30.0)
+
+    log_m = log_m_ref + beta * kappa * (t - t0)
+
+    return log_m

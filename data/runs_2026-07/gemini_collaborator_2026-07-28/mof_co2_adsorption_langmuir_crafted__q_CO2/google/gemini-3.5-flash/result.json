@@ -1,0 +1,17 @@
+{
+  "task": "mof_co2_adsorption_langmuir_crafted__q_CO2",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeII",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "swenson_stadie_2019",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+import numpy as np
+
+def predict(X):
+    # Canonical gravity equation in log-linear form:
+    # ln X_ij = β0 + β1 ln Y_i + β2 ln Y_j + β3 ln d_ij
+    #           + β4 contig + β5 comlang_off + β6 col_dep_ever + β7 fta_wto
+    #
+    # Standard textbook/theoretical coefficient values are not universal, so this
+    # returns the usual structural/log-linear form with unit coefficients on the
+    # listed regressors except distance, which enters negatively in the canonical way.
+    X = np.asarray(X)
+
+    log_gdp_o = X[:, 0]
+    log_gdp_d = X[:, 1]
+    log_dist = X[:, 2]
+    contig = X[:, 3]
+    comlang_off = X[:, 4]
+    col_dep_ever = X[:, 5]
+    fta_wto = X[:, 6]
+
+    # Intercept absorbed into a constant; set to 0 in the generic closed form.
+    return (
+        0.0
+        + 1.0 * log_gdp_o
+        + 1.0 * log_gdp_d
+        - 1.0 * log_dist
+        + 1.0 * contig
+        + 1.0 * comlang_off
+        + 1.0 * col_dep_ever
+        + 1.0 * fta_wto
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical gravity equation in log-linear form:
+    # ln X_ij = beta0 + beta1 ln GDP_o + beta2 ln GDP_d + beta3 ln dist
+    #           + beta4 contig + beta5 comlang_off + beta6 col_dep_ever + beta7 fta_wto
+    #
+    # Since no data are provided, use the standard theoretical coefficients:
+    # +1 on exporter GDP, +1 on importer GDP, -1 on distance, and positive
+    # effects for gravity-boosting dummies. Intercept is set to 0.
+
+    beta0 = 0.0
+    beta_gdp_o = 1.0
+    beta_gdp_d = 1.0
+    beta_dist = -1.0
+    beta_contig = 1.0
+    beta_comlang = 1.0
+    beta_coldep = 1.0
+    beta_fta = 1.0
+
+    return (
+        beta0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang * X[:, 4]
+        + beta_coldep * X[:, 5]
+        + beta_fta * X[:, 6]
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical gravity equation in log-linear form:
+    # ln X_ij = a + b1 ln Y_i + b2 ln Y_j + b3 ln d_ij + b4 contig + b5 comlang + b6 colony + b7 FTA
+    # Standard theoretical priors: b1 = b2 = +1, b3 = -1, others positive.
+    beta0 = 0.0
+    beta_gdp_o = 1.0
+    beta_gdp_d = 1.0
+    beta_dist = -1.0
+    beta_contig = 0.5
+    beta_comlang_off = 0.5
+    beta_col_dep_ever = 0.5
+    beta_fta_wto = 0.5
+
+    return (
+        beta0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang_off * X[:, 4]
+        + beta_col_dep_ever * X[:, 5]
+        + beta_fta_wto * X[:, 6]
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard log-linear gravity equation for bilateral trade:
+    ln X_ij = beta0 + beta1 ln Y_i + beta2 ln Y_j + beta3 ln d_ij
+              + beta4 contig + beta5 comlang_off + beta6 col_dep_ever + beta7 fta_wto
+    """
+    beta0 = 0.0
+    beta_gdp_o = 1.0
+    beta_gdp_d = 1.0
+    beta_dist = -1.0
+    beta_contig = 0.5
+    beta_comlang = 0.5
+    beta_coldep = 0.5
+    beta_fta = 0.5
+
+    return (
+        beta0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang * X[:, 4]
+        + beta_coldep * X[:, 5]
+        + beta_fta * X[:, 6]
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard gravity model in log-linear form:
+    # ln X_ij = beta0 + beta1 ln Y_i + beta2 ln Y_j + beta3 ln d_ij
+    #          + beta4 contig + beta5 comlang_off + beta6 col_dep_ever + beta7 fta_wto
+    #
+    # Common canonical coefficients are often close to:
+    # GDPs positive, distance negative, and positive effects for trade frictions/reductions.
+    # Since no data are provided, use a standard illustrative specification with typical signs.
+
+    beta0 = -10.0
+    beta_gdp_o = 1.0
+    beta_gdp_d = 1.0
+    beta_dist = -1.0
+    beta_contig = 0.8
+    beta_comlang = 0.5
+    beta_coldep = 0.4
+    beta_fta = 0.3
+
+    X = np.asarray(X)
+    return (
+        beta0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang * X[:, 4]
+        + beta_coldep * X[:, 5]
+        + beta_fta * X[:, 6]
+    )

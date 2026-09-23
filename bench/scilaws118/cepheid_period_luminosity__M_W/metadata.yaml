@@ -1,0 +1,115 @@
+task_id: cepheid_period_luminosity__M_W
+domain: astronomy / stellar_astrophysics
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  Classical Cepheids are pulsating variable stars used as standard candles in astronomy.
+
+target:
+  name: M_W
+  symbol: "M_W"
+  unit: mag
+  description: Absolute Gaia Wesenheit magnitude — a reddening-free combination of broadband Gaia photometry referenced to the source distance via parallax.
+  range: [-8.47, -4.38]
+
+inputs:
+  - name: log_P
+    symbol: "log P"
+    unit: ""
+    description: Base-10 logarithm of the fundamental-mode pulsation period, with the period measured in days.
+    range: [0.41, 1.66]
+  - name: feh
+    symbol: "[Fe/H]"
+    unit: dex
+    description: Photospheric iron abundance relative to solar on a logarithmic scale.
+    range: [-0.18, 0.33]
+
+data_files:
+  train: data/train.csv   # log_P < 1.0 (short-to-medium period; P < 10 d)
+  test:  data/test.csv    # log_P >= 1.0 (long-period OOD; P >= 10 d)
+
+# === Wave-12 NaN-row drop, 2026-05-26 ===
+# Dropped 3 rows from train (col feh had NaN).
+# Pre-drop: n_train=27 / n_test=7. Post-drop: n_train=24 / n_test=7.
+# Reason: simplify eval (no mask logic); aligns with GOLD (0-NaN) data shape.
+# Ref: audit/NAN_IN_DATA_SCAN_2026-05-26.md.
+n_train: 24
+n_test: 7
+
+# Historical note: pre-wave12 the train split had 3/27 rows with missing
+# [Fe/H] (empty feh field); all 7 test rows had valid [Fe/H]. The harness
+# used to exclude train NaN predictions from metrics; this is no longer
+# needed since those rows are now dropped at prep-time.
+# The OOD split tests extrapolation from log_P in [0.41, 0.99] to [1.01, 1.66];
+# the period-luminosity relation is linear throughout so baselines remain
+# physically applicable in the test regime.
+
+# Audit history:
+#   C12 2026-05-26: removed priors pivot_logP_1=1.0 / pivot_logP_0p7=0.7 (leaked to
+#     cruzreyes/breuval OTHER_CONSTANTS['pivot']) and gamma_WG=-0.384 (leaked to both
+#     baselines' LAW_CONSTANTS['gamma']). All three were paper-specific empirical values.
+#     Replaced with M_V_sun=4.83 / distance_modulus_factor=5.0 candidates + gamma_WH/R_WG distractors.
+#   2026-05-28: removed M_V_sun=4.83 and distance_modulus_factor=5.0 candidate priors —
+#     no source PDF on disk (data_spec §0.2: Allen's, Mamajek 2015, Carroll & Ostlie all off-disk),
+#     and neither value is consumed by any shipped W_G baseline. Final priors: 2 distractors
+#     anchored to disk PDFs (gamma_WH from riess_2022 / cruzreyes_2023 Eq. 15; R_WG from
+#     cruzreyes_2023 Eq. 6).
+priors:
+  - name: gamma_WH
+    value: -0.217
+    unit: mag/dex
+    description: Metallicity coefficient for the NIR W_H Wesenheit band, from Riess 2022; adopted as fixed in Cruz Reyes 2023 W_H fit. Not applicable to the Gaia W_G band used in this task.
+    source: riess_2022; Cruz Reyes 2023 Eq. 15, PDF p. 14
+    _role: distractor
+  - name: R_WG
+    value: 1.921
+    unit: ""
+    description: Reddening ratio for the Gaia W_G Wesenheit definition (G − 1.921*(Bp − Rp)). A photometric construction constant, not a PLZ slope or zero-point.
+    source: cruzreyes_2023, Eq. 6, PDF p. 12
+    _role: distractor
+
+references:
+  - id: breuval_2022
+    label: Breuval 2022 — WG PLZ (Table 4+5, pivot 0.7)
+    formula_file: formulas/breuval_2022.py
+    reference_pdf: reference/breuval_2022.pdf
+    n_law_constants: 3    # alpha, gamma, delta
+    n_other_constants: 1  # pivot
+    n_local_params: 0
+    measured:
+      rmse: 0.373263
+      r2: 0.840889
+  - id: cruzreyes_2023
+    label: Cruz Reyes & Anderson 2023 — WG PLZ ABL fit (Eqs. 23-24, pivot 1.0)
+    formula_file: formulas/cruzreyes_2023.py
+    reference_pdf: reference/cruzreyes_2023.pdf
+    n_law_constants: 3    # alpha, delta, gamma
+    n_other_constants: 1  # pivot
+    n_local_params: 0
+    measured:
+      rmse: 0.376446
+      r2: 0.838163
+
+caps:
+  max_law_constants: 3
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted absolute Wesenheit magnitude M_W decreases (Cepheid becomes intrinsically brighter) with increasing log pulsation period at fixed [Fe/H] — the Leavitt-law period term has a negative slope"
+  - "predicted absolute Wesenheit magnitude M_W decreases (becomes brighter) with increasing photospheric iron abundance [Fe/H] at fixed log_P — a negative metallicity slope"
+  - "model the period dependence of M_W as linear in log_P (a single straight-line Leavitt law with no curvature or period break) over the Cepheid period range"
+  - "keep the period and metallicity contributions additively separable, with no log_P-by-[Fe/H] cross term so the metallicity offset is independent of period"
+  - "predict a negative absolute Wesenheit magnitude (M_W < 0) across the Cepheid regime, reflecting that classical Cepheids are intrinsically luminous standard candles"
+
+best_baseline: 0.373263    # breuval_2022 — rmse (lower is better); regenerated 2026-05-30

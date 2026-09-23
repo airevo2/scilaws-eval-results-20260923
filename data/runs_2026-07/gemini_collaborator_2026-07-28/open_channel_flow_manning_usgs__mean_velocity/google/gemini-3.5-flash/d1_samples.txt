@@ -1,0 +1,103 @@
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = R_m (Hydraulic depth/radius in meters)
+    # X[:, 1] = SLOPE (Channel bed slope, dimensionless)
+    
+    R = X[:, 0]
+    S = X[:, 1]
+    
+    # Manning's roughness coefficient (n) typically averages around 0.035 
+    # for natural channels monitored by the USGS.
+    n = 0.035
+    
+    # Manning's equation in SI units: V = (1/n) * R^(2/3) * S^(1/2)
+    # Using np.maximum to avoid issues with any potential non-positive values
+    R_clipped = np.maximum(R, 0.0)
+    S_clipped = np.maximum(S, 0.0)
+    
+    V = (1.0 / n) * np.power(R_clipped, 2.0/3.0) * np.sqrt(S_clipped)
+    
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = R_m (hydraulic radius/depth in meters)
+    # X[:, 1] = SLOPE (friction slope, dimensionless)
+    R = np.maximum(X[:, 0], 0.0)
+    S = np.maximum(X[:, 1], 0.0)
+
+    # Manning's roughness coefficient (n)
+    # A typical representative value for natural channels is ~0.035
+    n = 0.035
+
+    # Manning's equation for mean velocity (V) in metric units:
+    # V = (1 / n) * R^(2/3) * S^(1/2)
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * (S**0.5)
+
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the hydraulic depth/radius R_m (m)
+    # X[:, 1] is the channel bed slope SLOPE (dimensionless)
+    R = X[:, 0]
+    S = X[:, 1]
+
+    # Manning's roughness coefficient (n) for typical natural channels
+    n = 0.035
+
+    # Manning's equation for mean velocity (m/s) in SI units:
+    # V = (1 / n) * R^(2/3) * S^(1/2)
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * np.sqrt(S)
+
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = R_m (Hydraulic depth/radius in meters)
+    # X[:, 1] = SLOPE (Channel bed slope, dimensionless)
+    R = X[:, 0]
+    S = X[:, 1]
+
+    # Manning's roughness coefficient (n) is typically assumed to be ~0.035
+    # for natural channels (ranging from 0.025 for clean/straight to 0.075 for major streams)
+    n = 0.035
+
+    # Standard Manning's equation for mean velocity (V) in m/s
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * (S**0.5)
+
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = R_m (Hydraulic depth/radius in meters)
+    # X[:, 1] = SLOPE (Channel bed/friction slope, dimensionless)
+    R = X[:, 0]
+    S = X[:, 1]
+
+    # Manning's roughness coefficient (n)
+    # A typical average value of 0.035 is used for natural channels
+    n = 0.035
+
+    # Manning's equation for mean velocity in metric units:
+    # V = (1 / n) * R^(2/3) * S^(1/2)
+    V = (1.0 / n) * (R ** (2.0 / 3.0)) * (np.maximum(S, 0.0) ** 0.5)
+
+    return V

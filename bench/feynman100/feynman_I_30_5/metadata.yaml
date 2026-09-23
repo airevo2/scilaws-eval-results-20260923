@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Dimensionless"
+  symbol: "theta"
+  unit: ""
+  description: "Dimensionless"
+inputs:
+  - name: "Length"
+    symbol: "lambd"
+    unit: ""
+    description: "Length"
+  - name: "Length"
+    symbol: "d"
+    unit: ""
+    description: "Length"
+  - name: "Dimensionless"
+    symbol: "n"
+    unit: ""
+    description: "Dimensionless"

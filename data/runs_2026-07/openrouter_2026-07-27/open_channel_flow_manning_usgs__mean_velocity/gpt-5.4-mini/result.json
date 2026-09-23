@@ -1,0 +1,26 @@
+{
+  "task": "open_channel_flow_manning_usgs__mean_velocity",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "engineering ",
+  "formulas": [
+    {
+      "formula": "jobson_1988",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "jobson_1988_chezy",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

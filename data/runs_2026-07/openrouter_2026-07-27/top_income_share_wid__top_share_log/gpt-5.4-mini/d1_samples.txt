@@ -1,0 +1,198 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln S(p): log share of pre-tax national income held by the top p fraction.
+
+    Canonical Pareto-top-share form:
+        S(p) = A * p^(1 - alpha)
+        ln S(p) = ln A + (1 - alpha) * ln p
+
+    Here we use a simple region-specific baseline plus a mild secular time trend
+    on the log-share level, while correctly ignoring the redundant top_pct input.
+    """
+    X = np.asarray(X, dtype=object)
+
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Region baselines for ln S(p) at year 2000, chosen to reflect typical WID
+    # top-share levels: Europe lowest, Africa/Américas higher, Asia intermediate.
+    region_baseline = {
+        "Africa":   -1.75,
+        "Americas": -1.95,
+        "Asia":     -2.05,
+        "Europe":   -2.30,
+        "Oceania":  -2.10,
+    }
+
+    # Mild common time trend: top shares drift up over time in many countries.
+    trend = 0.008 * (year - 2000.0)
+
+    # Pareto slope over the top tail: ln S(p) linear in ln p with slope < 1.
+    # A typical top-tail elasticity implies alpha > 1, so coefficient on ln p is negative.
+    slope = 0.18  # corresponds to (1 - alpha) in a reduced-form log-share approximation
+
+    baseline = np.array([region_baseline.get(r, -2.10) for r in region], dtype=float)
+
+    return baseline + trend + slope * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical Pareto form for the top income share:
+    #   S(p) = (p / p0)^(1 - alpha) * S(p0)
+    # Taking logs:
+    #   ln S(p) = a(region, year) + b(region, year) * ln p
+    # The released top-pct is redundant with log_p_above and is ignored.
+    
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Region effects (broad, standard income-inequality pattern):
+    # Africa and Latin America/Americas tend to have higher top shares,
+    # Europe and Oceania lower, Asia intermediate.
+    reg = np.zeros(len(X), dtype=float)
+    reg = np.where(region == "Africa",   0.18, reg)
+    reg = np.where(region == "Americas", 0.12, reg)
+    reg = np.where(region == "Asia",     -0.02, reg)
+    reg = np.where(region == "Europe",   -0.10, reg)
+    reg = np.where(region == "Oceania",  -0.06, reg)
+
+    # Time trend: gradual decline in top income shares in many countries over long run,
+    # with mild recent rebound. Use a simple centered quadratic trend.
+    t = year - 2000.0
+    time_trend = -0.0018 * t + 0.00003 * (t ** 2)
+
+    # Baseline log top share at p=1 (top 100%) is zero by construction,
+    # but for finite p we use a standard top-share approximation:
+    # ln S(p) = c + beta*ln(p) + region + time
+    # beta is negative; larger magnitude means more unequal top tail.
+    c = -0.65
+    beta = 0.72
+
+    return c + beta * log_p + reg + time_trend
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Closed-form benchmark for top-share schedules:
+    # ln S(p) = a_region + b * ln(p) + c * year
+    # where p is the top income fraction (log_p_above = ln p).
+    #
+    # Since the prompt gives only the canonical structural form and no fitted data,
+    # use the standard Pareto-style log-linear relationship in p with a mild time trend
+    # and region fixed effects.
+    
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+    
+    # Region fixed effects in a standard order
+    regions = np.array(["Africa", "Americas", "Asia", "Europe", "Oceania"], dtype=object)
+    region_idx = np.zeros(len(region), dtype=int)
+    for i, r in enumerate(regions):
+        region_idx[region == r] = i
+    
+    # Canonical coefficients: top shares rise as p falls, and generally drift over time.
+    # These are generic structural constants, not data-fitted.
+    a0 = -0.75
+    region_fe = np.array([0.00, 0.18, 0.10, 0.25, 0.15])
+    b = 0.82
+    c = 0.004
+    
+    return a0 + region_fe[region_idx] + b * log_p + c * (year - 2000.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln S(p), the log share of pre-tax national income held by the top p fraction.
+
+    Canonical closed-form approximation:
+        S(p) = C * p^(1 - alpha)
+        ln S(p) = ln C + (1 - alpha) * ln p
+
+    In WID-style Pareto upper-tail parameterizations, the log share is commonly
+    modeled as approximately linear in ln(p), with a region/year-dependent intercept
+    absorbing the scale of top income concentration.
+    """
+    X = np.asarray(X)
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Region effects (macro-region fixed effects)
+    regions = np.array(["Africa", "Americas", "Asia", "Europe", "Oceania"])
+    region_effects = {
+        "Africa": 0.00,
+        "Americas": 0.18,
+        "Asia": 0.08,
+        "Europe": 0.12,
+        "Oceania": 0.10,
+    }
+
+    # Baseline intercept and mild secular trend in top shares
+    intercept = -0.55
+    year_trend = 0.006 * (year - 2000.0)
+
+    # Pareto-like slope: ln S(p) rises as p gets larger; top share declines with smaller p
+    slope = 0.86  # corresponds to (1 - alpha) in the Pareto log-share formula
+
+    # Map categorical region to effects
+    reg_eff = np.array([region_effects.get(r, 0.0) for r in region], dtype=float)
+
+    return intercept + year_trend + reg_eff + slope * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln S(p), the natural log of the top-p income share.
+
+    Canonical Pareto-tail relationship:
+        S(p) = A * p^(1 - alpha)
+    so
+        ln S(p) = ln A + (1 - alpha) * ln p
+
+    Because top_pct is redundant with log_p_above, we use log_p_above only.
+    We include a simple time trend and region fixed effects as a standard
+    closed-form panel specification.
+    """
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Region fixed effects: baseline = Africa
+    region_fe = {
+        "Africa":   0.0,
+        "Americas": 0.18,
+        "Asia":     0.10,
+        "Europe":   0.24,
+        "Oceania":  0.20,
+    }
+
+    # Center year for numerical stability / interpretability
+    y = year - 2000.0
+
+    # Typical smooth evolution of top shares over time:
+    # modest global decline in many settings, with regional level differences.
+    intercept = -1.10
+    beta_year = -0.0045
+
+    # Pareto slope (1 - alpha) for top shares; alpha > 1
+    beta_log_p = 0.55
+
+    fe = np.array([region_fe.get(r, 0.0) for r in region], dtype=float)
+
+    return intercept + beta_year * y + beta_log_p * log_p + fe

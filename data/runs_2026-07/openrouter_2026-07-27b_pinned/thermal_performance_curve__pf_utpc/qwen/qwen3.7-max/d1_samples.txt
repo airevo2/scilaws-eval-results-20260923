@@ -1,0 +1,134 @@
+import numpy as np
+
+def predict(X):
+    T_C = X[:, 0]
+    T_K = T_C + 273.15
+    
+    # Sharpe-Schoolfield equation parameters
+    P_ref = 1.0          # Scale parameter (absorbs trait units)
+    T_ref = 298.15       # Reference temperature (25 °C in Kelvin)
+    E = 0.60             # Activation energy (eV)
+    E_h = 2.00           # High-temperature inactivation energy (eV)
+    T_h = 303.15         # Temperature of half-inactivation (30 °C in Kelvin)
+    k = 8.617333e-5      # Boltzmann constant (eV / K)
+    
+    # Numerator: Arrhenius activation
+    num = P_ref * np.exp((E / k) * (1.0 / T_ref - 1.0 / T_K))
+    
+    # Denominator: High-temperature enzyme inactivation
+    den = 1.0 + np.exp((E_h / k) * (1.0 / T_h - 1.0 / T_K))
+    
+    P = num / den
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts biological performance (P) as a function of temperature (T) 
+    using the Sharpe-Schoolfield equation (with high-temperature inactivation),
+    the canonical mechanistic model in thermal physiology for rate-like traits.
+    """
+    T_C = X[:, 0]
+    T_K = T_C + 273.15
+    
+    # Boltzmann constant (eV / K)
+    k = 8.62e-5 
+    
+    # Typical canonical parameters for biological thermal performance curves
+    P_ref = 1.0       # Scale parameter (absorbs trait-specific units)
+    T_ref = 293.15    # Reference temperature (20 °C in Kelvin)
+    E = 0.60          # Average activation energy (eV)
+    E_h = 4.00        # High-temperature deactivation energy (eV)
+    T_h = 303.15      # Transition temperature for high-T inactivation (30 °C in Kelvin)
+    
+    # Arrhenius term (exponential increase driven by kinetic energy)
+    arrhenius = P_ref * np.exp(-E / k * (1.0 / T_K - 1.0 / T_ref))
+    
+    # Inactivation term (sigmoidal decrease due to protein denaturation at high T)
+    inactivation = 1.0 + np.exp(-E_h / k * (1.0 / T_K - 1.0 / T_h))
+    
+    # Combined performance
+    P = arrhenius / inactivation
+    
+    # Biological rates cannot be negative
+    P = np.maximum(P, 0.0)
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    T_K = T + 273.15
+    k = 8.617333262e-5  # Boltzmann constant in eV/K
+    
+    # Parameters for the Sharpe-Schoolfield model
+    R_ref = 1.0         # Scale parameter (absorbs trait units)
+    T_ref = 298.15      # Reference temperature (25°C in Kelvin)
+    E = 0.65            # Activation energy (eV)
+    E_h = 4.5           # Deactivation energy (eV)
+    T_h = 305.15        # Temperature at 50% high-temperature deactivation (K)
+    
+    # Sharpe-Schoolfield equation
+    numerator = R_ref * np.exp(-E / k * (1.0 / T_K - 1.0 / T_ref))
+    denominator = 1.0 + np.exp(E_h / k * (1.0 / T_h - 1.0 / T_K))
+    
+    P = numerator / denominator
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T_C = X[:, 0]
+    T = T_C + 273.15
+    k = 8.617333262145e-5  # Boltzmann constant in eV/K
+    
+    # Canonical biophysical parameters (Sharpe-Schoolfield model)
+    E = 0.65       # Activation energy (eV)
+    E_h = 3.5      # Deactivation energy (eV)
+    T_h = 305.0    # Temperature of half-inactivation (K)
+    T_ref = 293.15 # Reference temperature (K)
+    
+    numerator = np.exp(-E / k * (1.0 / T - 1.0 / T_ref))
+    denominator = 1.0 + np.exp(E_h / k * (1.0 / T_h - 1.0 / T))
+    
+    P = numerator / denominator
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts biological performance (P) as a function of temperature 
+    using the Sharpe-Schoolfield equation, the standard model in 
+    thermal physiology for rate-like traits incorporating both 
+    Arrhenius activation and high-temperature enzyme deactivation.
+    """
+    T_C = X[:, 0]
+    T_K = T_C + 273.15  # Convert Celsius to Kelvin
+    
+    # Boltzmann constant (eV/K)
+    k = 8.62e-5
+    
+    # Default fitted coefficients / named constants
+    R_tref = 1.0    # Scale parameter (absorbs trait-specific units)
+    E = 0.65        # Activation energy (eV)
+    E_h = 4.0       # Deactivation energy (eV)
+    T_ref = 293.15  # Reference temperature (20°C in Kelvin)
+    T_h = 303.15    # Temperature at which 50% deactivation occurs (30°C in Kelvin)
+    
+    # Sharpe-Schoolfield closed-form relationship
+    numerator = R_tref * np.exp((E / k) * (1.0 / T_ref - 1.0 / T_K))
+    denominator = 1.0 + np.exp((E_h / k) * (1.0 / T_h - 1.0 / T_K))
+    
+    P = numerator / denominator
+    return P

@@ -1,0 +1,195 @@
+task_id: silicate_melt_viscosity_gpvisc__log_viscosity
+domain: materials_science / geophysics
+license: etalab-2.0
+
+type: typeII
+has_group_id: true
+
+context: >-
+  Silicate melts are the molten rocks and glasses studied in geology and volcanology, where their flow properties control magma and lava behaviour.
+
+target:
+  name: log_viscosity
+  symbol: "log₁₀(η)"
+  unit: log10 Pa·s
+  description: Log base-10 of the dynamic viscosity of the silicate melt,
+    measured by laboratory rheometry at ambient pressure (1 atm).
+  range: [-3.451, 15.82]
+
+inputs:
+  - name: T
+    symbol: T
+    unit: K
+    description: Temperature of the silicate melt during the viscosity measurement.
+    range: [275.15, 2775.0]
+  - name: sio2
+    symbol: "X_{SiO₂}"
+    unit: mol%
+    description: Silicon dioxide content of the melt composition.
+    range: [0.0, 100.0]
+  - name: tio2
+    symbol: "X_{TiO₂}"
+    unit: mol%
+    description: Titanium dioxide content of the melt composition.
+    range: [0.0, 37.26]
+  - name: al2o3
+    symbol: "X_{Al₂O₃}"
+    unit: mol%
+    description: Aluminium oxide content of the melt composition.
+    range: [0.0, 100.0]
+  - name: feo
+    symbol: "X_{FeO}"
+    unit: mol%
+    description: Iron(II) oxide content of the melt composition.
+    range: [0.0, 71.5]
+  - name: fe2o3
+    symbol: "X_{Fe₂O₃}"
+    unit: mol%
+    description: Iron(III) oxide content of the melt composition.
+    range: [0.0, 32.87]
+  - name: mno
+    symbol: "X_{MnO}"
+    unit: mol%
+    description: Manganese oxide content of the melt composition.
+    range: [0.0, 31.53]
+  - name: mgo
+    symbol: "X_{MgO}"
+    unit: mol%
+    description: Magnesium oxide content of the melt composition.
+    range: [0.0, 65.1]
+  - name: cao
+    symbol: "X_{CaO}"
+    unit: mol%
+    description: Calcium oxide content of the melt composition.
+    range: [0.0, 69.91]
+  - name: na2o
+    symbol: "X_{Na₂O}"
+    unit: mol%
+    description: Sodium oxide content of the melt composition.
+    range: [0.0, 54.15]
+  - name: k2o
+    symbol: "X_{K₂O}"
+    unit: mol%
+    description: Potassium oxide content of the melt composition.
+    range: [0.0, 40.0]
+  - name: p2o5
+    symbol: "X_{P₂O₅}"
+    unit: mol%
+    description: Phosphorus pentoxide content of the melt composition.
+    range: [0.0, 6.67]
+  - name: h2o
+    symbol: "X_{H₂O}"
+    unit: mol%
+    description: Water content of the melt composition.
+    range: [0.0, 100.0]
+
+data_files:
+  train:     data/train.csv        # all rows from 843 train compositions; no group_id
+  test_fit:  data/test_fit.csv     # lower-T 60% of each test composition (VFT fit window)
+  test_test: data/test_test.csv    # upper-T 40% of each test composition (prediction target)
+
+n_train:         10289
+n_test_fit:       1672
+n_test_test:       964
+n_clusters_train:  843
+n_clusters_test:   210
+
+# Audit note (not visible to SR systems): The VFT parameters (A, B, C) are
+# per-composition fitted values; the SR challenge is to recover the functional form
+# A + B/(T-C) from composition-labelled data. The baseline (le_losq_2025) fits A, B, C
+# independently per test composition and achieves RMSE ~0.3-0.8 log10 Pa.s on well-sampled
+# clusters. Compositions with < 6 measurements are excluded (1053 viable out of 1869 total).
+# The within-cluster split is temperature-sorted 60/40 (lower T = fit, upper T = test),
+# testing extrapolation to higher temperatures within each composition.
+
+references:
+  - id: le_losq_2025
+    label: "VFT equation log η = A + B/(T-C), per-cluster fit (A,B,C); Le Losq 2025 Eq. 2"
+    formula_file: formulas/le_losq_2025.py
+    reference_pdf: reference/le_losq_2025.pdf
+    n_law_constants:   0
+    n_other_constants: 0
+    n_local_params:    3
+    measured:
+      rmse: 1.5964
+      r2: 0.8034
+
+  - id: giordano_2008
+    label: "Global VFT model log η = A + B(X)/(T-C(X)); Giordano, Russell & Dingwell 2008 EPSL 271:123-134, Eqs. 1-3 + Table 1"
+    formula_file: formulas/giordano_2008.py
+    reference_pdf: reference/giordano_2008.pdf
+    n_law_constants:   18
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 2.1985
+      r2: 0.6271
+    note: >-
+      Global model; no per-cluster fitting. predict() clips outputs to the physically
+      meaningful viscosity range [A=-4.55, log10(eta_Tg)=12.0] documented in the paper
+      itself (p. 127 for A as the high-T limit; p. 130/Eq. 5 for Tg defined as
+      log10 eta = 12). The clip prevents the VFT singularity at T<=C from contaminating
+      pooled metrics on extreme-composition OOD rows outside the silicate-melt
+      calibration set (e.g. cluster 304: SiO2=12/Al2O3=44/CaO=44 ca-aluminate, where
+      C exceeds T; cluster 184: pure Al2O3, where B has large-magnitude polynomial value
+      far outside the calibration regime). With the clip, post-fix RMSE = 2.20 / R² = 0.63
+      (vs per-cluster VFT le_losq_2025 RMSE = 1.60 / R² = 0.80). Paper reports RMSE ~0.4
+      on its geological calibration melts (Giordano 2008, Table 3). Wave-17 fix history:
+      (1) LOCAL_FITTABLE schema list -> dict; (2) physical-range clip per paper p.127 + p.130.
+    # FM-Type2-I latent-leak fix (2026-05-26 wave-9 O):
+    # The nested `priors:` block here mirrored ALL 18 LAW_CONSTANTS of giordano_2008.py
+    # verbatim. Currently latent (harness exposes only top-level priors[]; this block is
+    # not forwarded to the LLM), but a future harness change could turn it into a massive
+    # leak. Removed to defense-in-depth. Per-coefficient values remain in formulas/giordano_2008.py
+    # (the canonical source) and Table 1, p. 126 of the paper PDF.
+
+caps:
+  max_law_constants:       18
+  max_local_params:        3
+  max_init_size_per_param: 3
+  fit_timeout_seconds:     10
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "uses a Vogel-Tammann-Fulcher temperature law, log(viscosity) = A + B/(T - C), so that at fixed composition log_viscosity decreases monotonically and continuously with increasing T, approaching a finite high-temperature Arrhenian limit A and diverging upward toward the glass-transition as T approaches the ideal glass-transition temperature C from above"
+  - "makes the VFT steepness/activation term B and the glass-transition (Kauzmann) temperature C depend on melt oxide composition, so that different compositions weaken in viscosity at different rates with temperature (melt fragility / network connectivity)"
+  - "represents melt polymerization through a network-former contribution (SiO2, TiO2, Al2O3) that raises viscosity and an opposing network-modifier contribution (alkali and alkaline-earth oxides such as Na2O, K2O, CaO, MgO, FeO, MnO) that lowers viscosity by depolymerizing the melt"
+  - "includes a strongly nonlinear dissolved water / volatile (H2O) term that lowers viscosity as water content increases"
+  - "includes nonlinear network-former-by-network-modifier composition interaction terms beyond additive single-oxide contributions"
+
+best_baseline: 0.365461    # le_losq_2025 — mean per-cluster rmse (lower is better); regenerated 2026-05-30
+
+auditor_notes:
+  neg_r2_resolved:
+    baseline: giordano_2008
+    severity: RESOLVED
+    pre_fix_pooled_r2: -12642
+    pre_fix_pooled_rmse: 404
+    post_fix_pooled_r2: 0.6271
+    post_fix_pooled_rmse: 2.1985
+    summary: >-
+      Wave-17 fix: VFT singularity at T<=C on extreme-composition OOD rows
+      (cluster 304 ca-aluminate, cluster 184 pure Al2O3) was producing
+      non-physical predictions of order +/-1000 in log10 Pa·s, dominating
+      pooled metrics. predict() now clips to the paper's own physically
+      meaningful range [A=-4.55, log10(eta_Tg)=12.0]. Post-fix R² = 0.63
+      sits in the expected band (smaller than per-cluster VFT le_losq_2025
+      R² = 0.80, as expected for a global model vs per-cluster fit; close to
+      the Giordano 2008 paper's own RMSE ~0.4 on calibration melts adjusted
+      for OOD width of GPVisc).
+    citation: "AUDIT_CHECKLIST.md §C2 (transcription/coefficient hygiene) — model itself verified against Giordano 2008 Table 2 sample calculation (andesite + 2% H2O, T=1273 K, predicted log eta = 3.674 vs paper 3.67). Clip bounds traced to Giordano 2008 p.127 (A high-T limit) and p.130 Eq. 5 (Tg <=> log10 eta = 12)."
+    root_cause: |
+      The Vogel-Tammann-Fulcher form log(eta) = A + B/(T - C) has a vertical
+      asymptote at T = C. For a handful of extreme-composition OOD rows in
+      the GPVisc test set (e.g. ca-aluminate SiO2=12/Al2O3=44/CaO=44), the
+      shipped T fell at or below the model's calibrated C, producing
+      physically meaningless predictions of order ~10^3 in log10 Pa·s.
+      The fix applies the paper's own physical bounds (A=-4.55 high-T limit;
+      log10 eta = 12 at the glass-transition Tg) as a clip inside predict().
+    detected: 2026-05-26 (wave-8 subagent Y; FM-E6 + FM-J2 cross-class)
+    fixed:    2026-05-28 (wave-17 diagnosis agent)

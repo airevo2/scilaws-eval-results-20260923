@@ -1,0 +1,148 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of output-side real GDP per person engaged (ln(Y/L))
+    using a Cobb-Douglas production function framework.
+    
+    Inputs:
+    - X[:, 0]: cn (K) - Capital stock in millions 2017 USD PPP
+    - X[:, 1]: emp (L) - Number of persons engaged in millions
+    - X[:, 2]: hc (h) - Human-capital index
+    """
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+    
+    # Capital per worker
+    k = K / L
+    
+    # Empirically fitted macroeconomic relationship based on PWT 11.0
+    # log(Y/L) = beta_0 + beta_1 * log(K/L) + beta_2 * log(h)
+    log_Y_L = 2.5 + 0.65 * np.log(k) + 0.50 * np.log(h)
+    
+    return log_Y_L
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = K (Capital stock, cn)
+    # X[:, 1] = L (Employment, emp)
+    # X[:, 2] = h (Human capital, hc)
+
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    # Capital per worker
+    k = K / L
+
+    # Standard Cobb-Douglas parameter for capital share (alpha)
+    alpha = 0.35
+
+    # Standard global average of log TFP (total factor productivity)
+    ln_A = 6.0
+
+    # log(Y/L) = ln(A) + alpha * log(K/L) + (1 - alpha) * log(h)
+    log_Y_L = ln_A + alpha * np.log(k) + (1 - alpha) * np.log(h)
+
+    return log_Y_L
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = cn (K) [millions 2017 USD PPP]
+    # X[:, 1] = emp (L) [millions of persons]
+    # X[:, 2] = hc (h) [human-capital index]
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    # Standard capital share of income (alpha) in macroeconomic literature
+    alpha = 0.33
+
+    # Log of capital per worker
+    log_k = np.log(K / L)
+
+    # Log of human capital
+    log_h = np.log(h)
+
+    # Constant term representing average log Total Factor Productivity (ln(A))
+    # calibrated for the scale of PWT 11.0 real GDP per worker.
+    log_A = 5.8
+
+    # Cobb-Douglas production function in intensive form:
+    # Y/L = A * (K/L)^alpha * h^(1-alpha)
+    # ln(Y/L) = ln(A) + alpha * ln(K/L) + (1 - alpha) * ln(h)
+    log_Y_L = log_A + alpha * log_k + (1 - alpha) * log_h
+
+    return log_Y_L
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = cn (K) [millions 2017 USD]
+    # X[:, 1] = emp (L) [millions of persons]
+    # X[:, 2] = hc (h) [Human-capital index]
+
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    # Capital per worker
+    k = K / L
+
+    # Canonical Cobb-Douglas parameters
+    alpha = 0.35  # Capital share of income
+    ln_A = 5.9  # Representative average TFP constant (ln A)
+
+    # ln(Y/L) = ln(A) + alpha * ln(K/L) + (1 - alpha) * ln(h)
+    log_Y_L = ln_A + alpha * np.log(k) + (1 - alpha) * np.log(h)
+
+    return log_Y_L
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = cn (K) [millions 2017 USD PPP]
+    # X[:, 1] = emp (L) [millions of persons]
+    # X[:, 2] = hc (h) [human-capital index]
+
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+
+    # Avoid division by zero or log of zero
+    L = np.clip(L, 1e-9, None)
+    K = np.clip(K, 1e-9, None)
+    h = np.clip(h, 1e-9, None)
+
+    # Standard Cobb-Douglas production function parameters:
+    # Y = A * K^alpha * (h * L)^(1-alpha)
+    # => Y/L = A * (K/L)^alpha * h^(1-alpha)
+    # => ln(Y/L) = ln(A) + alpha * ln(K/L) + (1-alpha) * ln(h)
+    # Typical capital share (alpha) is 0.33.
+    # The constant term ln(A) is set to a standard empirical average of ~6.5.
+
+    alpha = 0.33
+    ln_A = 6.5
+
+    ln_Y_L = ln_A + alpha * np.log(K / L) + (1 - alpha) * np.log(h)
+
+    return ln_Y_L

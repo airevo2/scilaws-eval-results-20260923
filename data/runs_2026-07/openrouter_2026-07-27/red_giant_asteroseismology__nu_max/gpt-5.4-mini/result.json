@@ -1,0 +1,17 @@
+{
+  "task": "red_giant_asteroseismology__nu_max",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "yu_2018_inverted",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

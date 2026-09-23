@@ -1,0 +1,153 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log of annual wage (ln Y) using the canonical Mincer Earnings Function.
+    
+    Formula:
+        ln Y = beta_0 + beta_1 * S + beta_2 * X + beta_3 * X^2
+        where:
+        S = years of schooling (SCHL_years)
+        X = potential experience (exp)
+        
+    Coefficients are standard OLS estimates for US census/ACS data:
+        beta_0 (intercept) = 9.0
+        beta_1 (rate of return to education) = 0.09  (approx. 9% per year)
+        beta_2 (experience coefficient) = 0.04
+        beta_3 (experience squared coefficient) = -0.0007
+    """
+    # Extract inputs
+    s = X[:, 0]  # Years of schooling
+    x = X[:, 1]  # Potential experience
+    
+    # Coefficients
+    beta_0 = 9.0
+    beta_1 = 0.09
+    beta_2 = 0.04
+    beta_3 = -0.0007
+    
+    # Mincerian earnings equation
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x ** 2)
+    
+    return log_wage
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    s = X[:, 0]  # Years of schooling (SCHL_years)
+    x = X[:, 1]  # Potential experience (exp)
+
+    # Canonical Mincerian Earnings Function coefficients:
+    # ln(Y) = beta_0 + beta_1 * s + beta_2 * x + beta_3 * x^2
+    beta_0 = 8.5  # Intercept (log base wage)
+    beta_1 = 0.10  # Return to schooling (approx. 10% per year of education)
+    beta_2 = 0.07  # Linear return to experience (approx. 7% per year initially)
+    beta_3 = (
+        -0.0008
+    )  # Quadratic term for experience (concave profile peaking around 43 years)
+
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x**2)
+
+    return log_wage
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts log annual wage using the standard Mincer Earnings Function.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = SCHL_years (s)
+        - X[:, 1] = exp (x)
+
+    Returns:
+    - 1-D numpy array of ln Y
+    """
+    s = X[:, 0]
+    x = X[:, 1]
+
+    # Canonical Mincerian coefficients (empirical approximations for US ACS data):
+    # ln(Y) = beta_0 + beta_1 * s + beta_2 * x + beta_3 * x^2
+    beta_0 = 9.50  # Base intercept (log of baseline annual earnings ~ $13,360)
+    beta_1 = 0.10  # ~10% return per year of schooling
+    beta_2 = 0.04  # Linear return to experience
+    beta_3 = -0.0006  # Quadratic term for experience (concave profile)
+
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x**2)
+
+    return log_wage
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log of annual wage income using the canonical Mincer Earnings Function.
+
+    ln(Y) = beta_0 + beta_1 * schooling + beta_2 * experience + beta_3 *
+    experience^2
+
+    Parameters:
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] is SCHL_years (s) [years of formal schooling]
+        - X[:, 1] is exp (x) [potential years of experience]
+
+    Returns:
+    np.ndarray
+        1-D array of predicted log annual wages (ln USD).
+    """
+    # Extract inputs
+    s = X[:, 0]
+    x = X[:, 1]
+
+    # Canonical Mincerian coefficients (typical US Census/ACS OLS estimates)
+    beta_0 = 9.10  # Intercept (base log wage)
+    beta_1 = 0.10  # Return to a year of schooling (~10%)
+    beta_2 = 0.04  # Return to experience (~4%)
+    beta_3 = -0.0006  # Quadratic experience term (reflects diminishing returns)
+
+    # Calculate log wage
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x**2)
+
+    return log_wage
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log of annual wage income using the canonical Mincer Earnings Function.
+
+    Parameters:
+    X : np.ndarray
+        A 2-D array where:
+        - X[:, 0] represents years of schooling (s)
+        - X[:, 1] represents potential experience (x)
+
+    Returns:
+    np.ndarray
+        1-D array of predicted log annual wages (ln Y)
+    """
+    s = X[:, 0]
+    x = X[:, 1]
+
+    # Canonical Mincerian coefficients estimated from typical US ACS/CPS data:
+    # ln(Y) = beta_0 + beta_1 * s + beta_2 * x + beta_3 * x^2
+    beta_0 = 8.5  # Baseline log wage (intercept)
+    beta_1 = 0.10  # Rate of return to schooling (approx 10% per year)
+    beta_2 = 0.04  # Linear return to potential experience
+    beta_3 = -0.0006  # Quadratic experience term representing diminishing returns
+
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x**2)
+
+    return log_wage

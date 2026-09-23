@@ -1,0 +1,144 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log sex ratio (ln α) = ln(m_male / m_female) from age and year.
+    
+    Standard closed-form relationship from Gompertz-derived adult mortality models
+    (e.g., Glei and Horiuchi 2007). The log ratio is modeled as a linear function
+    of age, with a secular time trend and an age-time interaction to capture the
+    narrowing sex differential over time.
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Fitted coefficients based on typical values for high-income populations.
+    # Reference period centred around year 2000.
+    INTERCEPT = 0.85          # base log ratio at age 0 in 2000 (extrapolated)
+    AGE_SLOPE = -0.010        # decline in log ratio per year of age
+    YEAR_TREND = -0.0015      # overall decline per calendar year
+    AGE_YEAR_INTER = 0.00002  # change in age slope per year (narrowing gap flattens slope)
+    
+    year_centered = year - 2000.0
+    
+    ln_alpha = (INTERCEPT 
+                + AGE_SLOPE * age 
+                + YEAR_TREND * year_centered 
+                + AGE_YEAR_INTER * age * year_centered)
+    
+    return ln_alpha
+
+=====
+
+import numpy as np
+
+# Standard bilinear closed-form for log male/female mortality ratio.
+# Derived from the Gompertz model ln(m) = a(t) + b(t)*age with linear time
+# trends in the sex differentials, as used in decompositions of the
+# narrowing sex gap (e.g., Glei & Horiuchi 2007, based on Gompertz for ages 30–95).
+# ln(alpha) = ln(m_male / m_female) =
+#       beta0 + beta1 * age_c + beta2 * year_c + beta3 * age_c * year_c
+# where year_c = year - 2000, age_c = age (already in years).
+
+# Typical values for high-income populations (reference year 2000)
+BETA0 =  0.40      # intercept: log-ratio at age 0 (scaled), year 2000
+BETA1 = -0.006     # decline of log-ratio with age
+BETA2 = -0.004     # time trend: ratio narrowing over time
+BETA3 =  0.00004   # age*year interaction: slope becoming less negative
+
+def predict(X):
+    age = X[:, 0]                # single-year age (30..95)
+    year = X[:, 1] - 2000.0      # centred calendar year
+    return (BETA0
+            + BETA1 * age
+            + BETA2 * year
+            + BETA3 * age * year)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the male-to-female central death rate ratio,
+    ln(m_male / m_female), as a function of age and calendar year.
+
+    The standard closed-form relationship is based on the Gompertz mortality
+    model, extended to allow the sex-specific Gompertz parameters to vary
+    linearly with time. Under the Gompertz law, ln(m) = a + b * age, so
+    ln(m_male / m_female) = (a_m - a_f) + (b_m - b_f) * age.  Allowing the
+    differences a_m - a_f and b_m - b_f to change linearly with year yields
+    a bilinear form in age and year:
+
+        ln(alpha) = beta0 + beta1 * age + beta2 * year + beta3 * age * year.
+
+    Coefficients below are typical values derived from the analysis of
+    high-income countries in Glei & Horiuchi (2007), representing the
+    adult age range 30–95.
+    """
+    # Fitted coefficients (named constants)
+    beta0 =  0.62      # intercept at age=0, year=0 (extrapolated)
+    beta1 = -0.0085    # age slope (per year of age)
+    beta2 =  0.0018    # year trend (per calendar year)
+    beta3 =  0.00004   # age * year interaction
+
+    age = X[:, 0]
+    year = X[:, 1]
+
+    ln_alpha = beta0 + beta1 * age + beta2 * year + beta3 * age * year
+    return ln_alpha
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the natural log of the sex ratio of central death rates, ln(m_male / m_female),
+    as a function of age (x) and calendar year (t). The standard closed-form relationship
+    derived from the Gompertz model (Glei-Horiuchi 2007) assumes that the Gompertz parameters
+    for each sex change linearly over time, yielding a bilinear form in age and year.
+    
+    Parameters:
+    X : ndarray of shape (n, 2)
+        X[:, 0] : age in years (30 to 95)
+        X[:, 1] : calendar year (1751 to 2025)
+    
+    Returns:
+    log_sex_ratio : ndarray of shape (n,)
+        ln(m_male / m_female)
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Fitted coefficients (can be replaced with empirical estimates)
+    beta0 = -2.0       # intercept
+    beta1 =  0.1       # linear effect of age
+    beta2 = -0.005     # linear effect of year
+    beta3 = -0.0002    # age-by-year interaction
+
+    log_sex_ratio = beta0 + beta1 * age + beta2 * year + beta3 * age * year
+    return log_sex_ratio
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the natural log of the sex ratio of central death rates,
+    ln(m_male / m_female), as a function of age and calendar year.
+
+    Standard closed-form: linear in age and year with interaction,
+    derived from Gompertz mortality models with time-varying parameters.
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Named coefficients (placeholder values; replace with fitted parameters)
+    beta_0 = 0.0   # intercept
+    beta_1 = 0.0   # age slope
+    beta_2 = 0.0   # year slope
+    beta_3 = 0.0   # age-year interaction
+
+    return beta_0 + beta_1 * age + beta_2 * year + beta_3 * age * year

@@ -1,0 +1,152 @@
+import numpy as np
+
+def predict(X):
+    A = np.asarray(X[:, 0], dtype=float)   # upland_area_skm
+    Ac = np.asarray(X[:, 1], dtype=float)  # catch_area_skm
+    Ls = np.asarray(X[:, 2], dtype=float)  # segment_length_km
+    e = np.asarray(X[:, 3], dtype=float)   # endorheic
+    omega = np.asarray(X[:, 4], dtype=float)  # strahler_order
+
+    # Common closed-form hydraulic-geometry / basin-scaling style relation:
+    # main-stem length scales approximately as a power of drainage area,
+    # with minor modifiers for outlet segment geometry, endorheic termination,
+    # and channel order.
+    #
+    # Because no data are provided, use a standard canonical multiplicative form.
+    L = 1.4 * (A ** 0.6) * ((Ls + 1e-6) ** 0.15) * ((omega + 1.0) ** 0.3) * (0.85 ** e) * ((1.0 + Ac / (A + 1e-12)) ** 0.05)
+
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length (km) from drainage area, outlet catchment,
+    terminal segment length, endorheic indicator, and Strahler order.
+
+    Canonical geomorphic form:
+        L = a * A^b * Ls^c * Ac^d * exp(f*e) * omega^g
+
+    This is the standard power-law style relationship commonly used for
+    river-network scaling, with an endorheic adjustment.
+    """
+    X = np.asarray(X)
+    A = X[:, 0]
+    Ac = X[:, 1]
+    Ls = X[:, 2]
+    e = X[:, 3]
+    omega = X[:, 4]
+
+    # Representative coefficients for a closed-form allometric model
+    a = 1.0
+    b = 0.56
+    c = 0.32
+    d = 0.08
+    f = -0.12
+    g = 0.18
+
+    L = a * (A ** b) * (Ls ** c) * (Ac ** d) * np.exp(f * e) * (omega ** g)
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length (km) from basin descriptors using the
+    standard Hack-type power-law form with simple multipliers for outlet
+    reach length, endorheic status, and Strahler order.
+
+    Parameters
+    ----------
+    X : numpy.ndarray, shape (n, 5)
+        Columns:
+        0 = upland_area_skm (A) [km^2]
+        1 = catch_area_skm (A_c) [km^2]
+        2 = segment_length_km (L_s) [km]
+        3 = endorheic (e) [0/1]
+        4 = strahler_order (omega) [1..10]
+
+    Returns
+    -------
+    numpy.ndarray, shape (n,)
+        Predicted main-stem river length L [km]
+    """
+    A = np.asarray(X[:, 0], dtype=float)
+    Ac = np.asarray(X[:, 1], dtype=float)
+    Ls = np.asarray(X[:, 2], dtype=float)
+    e = np.asarray(X[:, 3], dtype=float)
+    omega = np.asarray(X[:, 4], dtype=float)
+
+    # Commonly used basin-length scaling (Hack's law):
+    # L ~ c * A^h, with h typically around 0.6
+    c = 1.4
+    h = 0.6
+
+    # Small multiplicative adjustment for terminal segment contribution
+    # and basin type/order effects.
+    # These are generic closed-form modifiers rather than data-fitted coefficients.
+    term_factor = 1.0 + 0.5 * (Ac / np.maximum(A, 1e-12)) + 0.25 * (Ls / np.maximum(A**h, 1e-12))
+    endorheic_factor = 1.0 + 0.10 * e
+    order_factor = omega ** 0.05
+
+    L = c * (A ** h) * term_factor * endorheic_factor * order_factor
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+    A = X[:, 0]          # upland_area_skm
+    Ac = X[:, 1]         # catch_area_skm
+    Ls = X[:, 2]         # segment_length_km
+    e = X[:, 3]          # endorheic
+    omega = X[:, 4]      # strahler_order
+
+    # Common hydraulic-geomorphologic scaling for main-stem length:
+    # L ~ c * A^b, with a small adjustment for outlet segment and basin type/order.
+    # Since no data are provided, use a standard sublinear area-length power law
+    # with mild modifiers for terminal reach, endorheic basins, and stream order.
+    c = 1.4
+    b = 0.55
+
+    L = c * np.power(A, b) \
+        * np.power(np.maximum(Ls, 1e-12), 0.10) \
+        * np.power(np.maximum(Ac, 1e-12), 0.05) \
+        * np.power(1.0 + 0.12 * e, 1.0) \
+        * np.power(np.maximum(omega, 1.0), 0.08)
+
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = np.asarray(X[:, 0], dtype=float)      # upland area [km^2]
+    Ac = np.asarray(X[:, 1], dtype=float)     # catchment area of outlet segment [km^2]
+    Ls = np.asarray(X[:, 2], dtype=float)     # terminal segment length [km]
+    e = np.asarray(X[:, 3], dtype=float)      # endorheic indicator
+    omega = np.asarray(X[:, 4], dtype=float)  # Strahler order
+
+    # Common closed-form hydrologic scaling for main-stem length:
+    # L = a * A^b, with optional adjustment for network geometry / basin termination.
+    # Here we include weak multiplicative corrections using available local descriptors.
+    a = 1.4
+    b = 0.58
+
+    L = a * np.power(A, b)
+
+    # Small correction for outlet-segment scale and stream order
+    L *= np.power(np.maximum(Ls / np.maximum(Ac, 1e-12), 1e-12), 0.06)
+    L *= np.power(np.maximum(omega, 1.0), 0.12)
+
+    # Slight reduction for endorheic basins
+    L *= np.where(e > 0.5, 0.92, 1.0)
+
+    return L

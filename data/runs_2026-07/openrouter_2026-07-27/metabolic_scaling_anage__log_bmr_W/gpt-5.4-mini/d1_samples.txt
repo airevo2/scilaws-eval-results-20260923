@@ -1,0 +1,50 @@
+import numpy as np
+
+def predict(X):
+    M = X[:, 0].astype(float)  # body mass in g
+    # Commonly cited mammalian/animal basal metabolic scaling: B ≈ 70 * M^0.75 (M in kg, B in W)
+    # Convert mass from grams to kg:
+    M_kg = M / 1000.0
+    B_W = 70.0 * np.power(M_kg, 0.75)
+    return np.log10(B_W)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0].astype(float)  # body mass in g
+    # Kleiber-type scaling: B ≈ 3.4 * M^0.75  (B in watts when M is in kg)
+    # Convert to grams: M_kg = M / 1000
+    B = 3.4 * (M / 1000.0) ** 0.75
+    return np.log10(B)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = np.asarray(X)[:, 0].astype(float)  # body mass in g
+    # Kleiber-type allometric scaling for basal metabolic rate:
+    # B (W) ≈ 3.4 * M^0.75, with M in grams
+    return np.log10(3.4) + 0.75 * np.log10(M)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = np.asarray(X)[:, 0]
+    # Kleiber's law: B ≈ 3.4 * M^(3/4), with B in watts and M in kg.
+    # Here M is given in grams, so convert to kg.
+    B = 3.4 * (M / 1000.0) ** 0.75
+    return np.log10(B)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]  # body mass in grams
+    # Kleiber's law: B ≈ 3.4 * M^0.75, with B in watts and M in grams
+    return np.log10(3.4) + 0.75 * np.log10(M)

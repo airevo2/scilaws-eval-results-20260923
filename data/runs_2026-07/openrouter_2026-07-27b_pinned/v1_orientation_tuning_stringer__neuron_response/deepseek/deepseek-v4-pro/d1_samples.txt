@@ -1,0 +1,132 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean deconvolved calcium fluorescence for a V1 neuron as a function of orientation.
+    Uses a von Mises tuning curve, which is the standard closed-form for circular orientation data.
+    Parameters are typical for a well-tuned V1 neuron.
+    """
+    theta_deg = X[:, 0]                     # orientation in degrees
+    theta_rad = np.deg2rad(theta_deg)       # convert to radians
+
+    # Parameters (canonical values for a typical V1 neuron)
+    theta_pref_deg = 90.0                   # preferred orientation [deg]
+    theta_pref_rad = np.deg2rad(theta_pref_deg)
+    baseline = 0.5                          # spontaneous activity [au]
+    amplitude = 1.0                         # peak evoked response above baseline [au]
+    kappa = 2.0                             # concentration (~inverse variance)
+
+    # Von Mises tuning curve on doubled angle (periodic with 180 deg)
+    R = baseline + amplitude * np.exp(kappa * (np.cos(2 * (theta_rad - theta_pref_rad)) - 1))
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict mean deconvolved calcium fluorescence of a V1 neuron
+    from the stimulus orientation (degrees). The tuning curve is
+    a standard von Mises (circular Gaussian) function commonly
+    used for orientation selectivity.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1)
+        X[:, 0] = orientation_deg in degrees, folded to [0, 180).
+
+    Returns
+    -------
+    R : np.ndarray, shape (n,)
+        Predicted neuron response (arbitrary units).
+    """
+    theta = X[:, 0]                     # degrees
+    theta_rad = np.deg2rad(theta)       # convert to radians
+
+    # Canonical parameters for a typical V1 neuron
+    baseline = 0.5                      # spontaneous activity
+    amplitude = 1.0                     # peak response above baseline
+    kappa = 2.0                         # concentration (tuning width)
+    theta_pref = np.deg2rad(90.0)       # preferred orientation (rad)
+
+    # von Mises tuning curve (periodic on 180°)
+    R = baseline + amplitude * np.exp(
+        kappa * (np.cos(2.0 * (theta_rad - theta_pref)) - 1.0)
+    )
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # orientation_deg in degrees, folded to [0, 180)
+    theta_deg = X[:, 0]
+    # convert to radians
+    theta_rad = np.deg2rad(theta_deg)
+    
+    # canonical von Mises tuning curve parameters (typical V1 values)
+    pref_rad = np.deg2rad(90.0)   # preferred orientation [rad]
+    kappa = 2.0                    # concentration (~tuning width)
+    baseline = 0.2                 # spontaneous firing (au)
+    amplitude = 1.0                # max amplitude above baseline
+    
+    # von Mises for orientation (period 180 deg → argument 2*theta)
+    R = baseline + amplitude * np.exp(kappa * (np.cos(2 * (theta_rad - pref_rad)) - 1))
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard orientation tuning curve for a V1 neuron using a von Mises function.
+    Orientation is pi-periodic (0° and 180° are identical).
+    """
+    theta_deg = X[:, 0]
+
+    # Canonical parameters (typical values for a sharply tuned neuron)
+    theta_pref_deg = 90.0   # preferred orientation [deg]
+    R0 = 0.1                # baseline firing rate [au]
+    Rmax = 1.0              # peak amplitude above baseline [au]
+    kappa = 2.0             # concentration (width) parameter
+
+    # Convert to radians; note 2*theta accounts for 180° periodicity
+    theta_rad = np.deg2rad(theta_deg)
+    theta_pref_rad = np.deg2rad(theta_pref_deg)
+
+    # Von Mises tuning curve
+    R = R0 + Rmax * np.exp(kappa * (np.cos(2.0 * (theta_rad - theta_pref_rad)) - 1.0))
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the mean deconvolved calcium fluorescence response R(theta) of a V1 neuron
+    to a static sinusoidal grating of orientation theta (degrees).
+
+    The standard model for orientation tuning is a von Mises function (circular Gaussian),
+    which respects the 180-degree periodicity of orientation (0 deg = 180 deg).
+    """
+    # Extract orientation (degrees) from the input array
+    theta = X[:, 0]
+
+    # Canonical parameters of a typical orientation-tuned V1 neuron
+    R0 = 0.5          # baseline response (arbitrary units)
+    A = 10.0          # peak amplitude above baseline
+    theta_pref = 45.0 # preferred orientation (degrees)
+    k = 2.0           # concentration (inversely related to tuning width)
+
+    # Convert to radians and compute the von Mises tuning curve
+    theta_rad = np.deg2rad(theta)
+    theta_pref_rad = np.deg2rad(theta_pref)
+
+    # R(theta) = R0 + A * exp( k * (cos(2*(theta - theta_pref)) - 1) )
+    R = R0 + A * np.exp(k * (np.cos(2 * (theta_rad - theta_pref_rad)) - 1.0))
+
+    return R

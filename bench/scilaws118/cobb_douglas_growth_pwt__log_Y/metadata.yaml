@@ -1,0 +1,143 @@
+task_id: cobb_douglas_growth_pwt__log_Y
+domain: social_science / macroeconomics
+license: CC-BY-4.0
+
+# Type II — cluster = country. Each country's log GDP per worker is modeled
+# as a Cobb-Douglas function of physical capital and human-capital-adjusted
+# labor, with per-country total factor productivity (TFP) and capital
+# elasticities fit locally.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  The output of a national economy depends on the stocks of physical capital
+  and effective labor it employs. At the country level, labor productivity —
+  real GDP per worker — rises with the capital-to-labor ratio and with the
+  quality of the workforce, but the precise strength of each channel varies
+  across countries and time. A power-law relationship between output and
+  inputs has been the dominant framework in growth economics for nearly a
+  century. Richer countries tend to have both more capital per worker and
+  more educated workforces, yet the elasticities linking these inputs to
+  output are not universal: they reflect institutions, technology adoption,
+  and factor-market efficiency, all of which differ across national
+  economies.
+
+target:
+  name: log_Y
+  symbol: "ln(Y/L)"
+  unit: ""
+  description: Natural log of output-side real GDP per person engaged (cgdpo / emp), in log-millions-2017-USD per log-millions-persons. A real national-accounts measurement from PWT 11.0.
+  range: [5.66, 13.36]
+
+inputs:
+  - name: cn
+    symbol: K
+    unit: millions 2017 USD PPP
+    description: Capital stock at current PPPs — the stock of physical capital in the country in a given year (PWT column cn).
+    range: [287.0, 171874300.0]
+  - name: emp
+    symbol: L
+    unit: millions of persons
+    description: Number of persons engaged in work — total employment (PWT column emp).
+    range: [0.04, 774.5]
+  - name: hc
+    symbol: h
+    unit: ""
+    description: Human-capital index based on average years of schooling and Mincer returns to education (PWT column hc).
+    range: [1.00, 4.0]
+
+data_files:
+  train:     data/train.csv     # 116 train countries, all years 1950-2023 (even and odd ranks)
+  test_fit:  data/test_fit.csv  # 28 test countries, even year ranks -> submission.fit()
+  test_test: data/test_test.csv # 28 test countries, odd year ranks -> held out, scored
+
+n_train:          7145
+n_test_fit:        825
+n_test_test:       817
+n_clusters_train:  116
+n_clusters_test:    28
+
+# Forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# batch02 cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emit for forward-compat.
+unseen_group_strategy: error
+
+# Candidate prior constants traceable to reference papers.
+priors:
+  - name: labor_elasticity_classical
+    value: 0.75
+    unit: dimensionless
+    description: Labor elasticity of output estimated by Cobb and Douglas (1928) on US manufacturing 1899-1922 (k = 3/4).
+    source: Cobb and Douglas (1928) AER 18:139-165, PDF p. 14 / journal p. 151, §6.
+    _role: candidate
+  - name: capital_elasticity_modern
+    value: 0.3333333
+    unit: dimensionless
+    description: Canonical capital income share (one-third) used as prior for alpha in modern cross-country growth accounting.
+    source: Mankiw, Romer, Weil (1992) QJE 107:407-437, Table II (intermediate sample alpha ~0.31); standard 1/3 prior from factor income shares.
+    _role: candidate
+  - name: capital_elasticity_mankiw
+    value: 0.31
+    unit: dimensionless
+    description: Physical capital income share estimated by Mankiw-Romer-Weil (1992) augmented model, intermediate country sample.
+    source: Mankiw, Romer, Weil (1992) QJE 107:407-437, Table II, restricted regression, PDF p. 14 / journal p. 420.
+    _role: candidate
+  - name: human_capital_elasticity_mankiw
+    value: 0.28
+    unit: dimensionless
+    description: Human capital income share estimated by Mankiw-Romer-Weil (1992) augmented model, intermediate country sample.
+    source: Mankiw, Romer, Weil (1992) QJE 107:407-437, Table II, restricted regression, PDF p. 14 / journal p. 420.
+    _role: candidate
+  - name: depreciation_plus_growth
+    value: 0.05
+    unit: yr^-1
+    description: Assumed sum of depreciation rate delta and technology growth rate g, uniform across countries (delta + g = 0.05) used in the steady-state Solow model.
+    source: Mankiw, Romer, Weil (1992) QJE 107:407-437, p. 7 footnote 5 / journal p. 413.
+    _role: distractor
+
+# Audit history — 2026-06-02 (逐条审核, Opus 4.8):
+#   Removed an artificial fitting clamp from both baselines' fit() that was
+#   crippling the reference anchor (NOT in either source paper):
+#     • cobb_1928 fit() clamped alpha to (1e-6, 1-1e-6) but did NOT re-derive
+#       log_A after clamping → corrupt extrapolation on held-out rows.
+#     • mankiw_1992 fit() clamped alpha/beta >= 1e-6, rescaled when alpha+beta>=1,
+#       and pinned beta to 1/3 when log(hc) std < 0.03 → same corruption.
+#   Cobb (1928) and Mankiw-Romer-Weil (1992) both estimate their log-linear forms
+#   by plain OLS with no coefficient constraints; 0<alpha<1 / alpha+beta<1 are
+#   ECONOMIC interpretations of the elasticities, not fit constraints. Replaced
+#   both with pure unconstrained OLS (the intercept log_A absorbs any out-of-range
+#   slope). Effect: cobb R2 0.19->0.97, mankiw R2 -3.06->0.975; the anchor (best
+#   baseline by mean-per-cluster RMSE) moves from cobb to mankiw — as MRW's paper
+#   argues (the human-capital-augmented form fits better). The former E6/§9.14
+#   "mixed negative-R2 bank" note is deleted: the negative R2 was a clamp artifact,
+#   not a legitimate OOD degradation. Per-cluster coefficients are still re-fit on
+#   test_fit and scored on test_test (Type II contract unchanged).
+
+references:
+  - id: cobb_1928
+    label: Cobb and Douglas (1928) — classic CRS Cobb-Douglas, per-country alpha
+    formula_file: formulas/cobb_1928.py
+    reference_pdf: reference/cobb_douglas_1928_original.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2     # log_A, alpha
+    measured: {rmse: 0.187831, r2: 0.969462}
+  - id: mankiw_1992
+    label: Mankiw-Romer-Weil (1992) — augmented Cobb-Douglas with human capital
+    formula_file: formulas/mankiw_1992.py
+    reference_pdf: reference/mankiw_1992.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3     # log_A, alpha, beta
+    measured: {rmse: 0.169163, r2: 0.975230}
+
+caps:
+  max_law_constants:       0
+  max_local_params:        3
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     10
+
+metric: rmse
+best_baseline: 0.169163     # mankiw_1992 (augmented form; lower mean-per-cluster RMSE than cobb_1928)

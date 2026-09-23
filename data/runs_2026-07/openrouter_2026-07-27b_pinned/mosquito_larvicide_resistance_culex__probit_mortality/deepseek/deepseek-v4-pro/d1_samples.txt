@@ -1,0 +1,158 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict Abbott-corrected mortality proportion (P) for third-instar Culex
+    mosquito larvae exposed to Lysinibacillus sphaericus using a standard
+    two-parameter logistic dose–response model on natural-log concentration.
+
+    Model: P = 1 / (1 + exp(-(alpha + beta * ln(C))))
+    where ln(C) is the natural logarithm of concentration in ppb.
+    """
+    # Typical fitted coefficients for a microbial larvicide bioassay
+    alpha = -9.0   # intercept
+    beta  =  2.0   # slope
+
+    # Natural-log concentration (column 1)
+    log_conc = X[:, 1]
+    linear = alpha + beta * log_conc
+    P = 1.0 / (1.0 + np.exp(-linear))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Abbott-corrected mortality proportion (P) for third-instar Culex
+    mosquito larvae after 48 h exposure to Lysinibacillus sphaericus.
+
+    Uses the standard log-logistic (sigmoid) dose-response model:
+        P = 1 / {1 + exp[-slope_ln * (ln(C) - ln(LC50))]}
+
+    Parameters
+    ----------
+    X : numpy.ndarray, shape (n_samples, 2)
+        Column 0 : log10_conc_ppb (log10(C))
+        Column 1 : log_conc_ppb (ln(C))
+
+    Returns
+    -------
+    P : numpy.ndarray, shape (n_samples,)
+        Predicted corrected mortality proportions (0 <= P <= 1).
+    """
+    # Typical values for L. sphaericus against susceptible Culex quinquefasciatus.
+    LC50 = 0.1           # ppb (µg/L)
+    slope_log10 = 3.0    # Hill slope on log10 scale
+    
+    # Convert slope to natural log scale because we use X[:,1] (ln C).
+    slope_ln = slope_log10 / np.log(10.0)
+    
+    lnC = X[:, 1]
+    P = 1.0 / (1.0 + np.exp(-slope_ln * (lnC - np.log(LC50))))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Abbott-corrected mortality proportion (P) for Culex mosquito larvae
+    exposed to Lysinibacillus sphaericus using a logistic dose-response model.
+
+    Model:
+        P = 1 / (1 + exp(-(beta0 + beta1 * log10(C))))
+
+    Parameters
+    ----------
+    X : np.ndarray
+        2-D array where:
+            X[:, 0] = log10_conc_ppb (log10 of concentration in ppb)
+            X[:, 1] = log_conc_ppb   (natural log of concentration, not used here)
+
+    Returns
+    -------
+    P : np.ndarray
+        1-D array of predicted Abbott-corrected mortality proportions (0 <= P <= 1).
+    """
+    # Fitted coefficients (intercept and slope) – replace with actual estimates
+    beta0 = -4.5   # example intercept
+    beta1 = 1.8    # example slope
+
+    log10_conc = X[:, 0]
+    linear = beta0 + beta1 * log10_conc
+    P = 1.0 / (1.0 + np.exp(-linear))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Abbott-corrected mortality proportion P for third-instar Culex
+    mosquito larvae after 48-h exposure to Lysinibacillus sphaericus.
+
+    Standard log-logistic (logit) dose–response model:
+        P = 1 / (1 + (C / LC50)^(-slope))
+    where C is concentration in ppb.  Equivalent to:
+        logit(P) = slope * (ln(C) - ln(LC50))
+    """
+    # Fitted constants (illustrative values for L. sphaericus vs Culex)
+    LC50 = 15.0       # ppb
+    slope = 2.5       # dimensionless hill slope
+
+    # Natural log of concentration (X[:, 1] = ln(C))
+    ln_conc = X[:, 1]
+    ln_LC50 = np.log(LC50)
+
+    # Linear predictor
+    eta = slope * (ln_conc - ln_LC50)
+
+    # Log-logistic inverse link (logistic function)
+    P = 1.0 / (1.0 + np.exp(-eta))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Abbott-corrected mortality proportion for third-instar Culex mosquito
+    larvae after 48-hour exposure to Lysinibacillus sphaericus.
+
+    Uses the standard log-logistic (logit) dose–response model, which is the
+    most commonly cited closed-form relationship for bioassay mortality.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 2)
+        X[:,0] = log10_conc_ppb  (base-10 log concentration in ppb)
+        X[:,1] = log_conc_ppb    (natural log concentration in ppb)
+
+    Returns
+    -------
+    P : np.ndarray, shape (n_samples,)
+        Predicted Abbott-corrected mortality proportion (0 to 1).
+    """
+    # Extract base-10 log concentration (the standard predictor for logit models)
+    log10_conc = X[:, 0]
+
+    # Fitted coefficients (typical values for a susceptible Culex population)
+    # Intercept and slope of the logit line: logit(P) = alpha + beta * log10(C)
+    alpha = -4.0   # intercept (determines LC50 = 10^(-alpha/beta))
+    beta  =  2.0   # slope (steepness of the dose–response curve)
+
+    # Logit (log-odds) of mortality
+    logit = alpha + beta * log10_conc
+
+    # Inverse logit (logistic function) to obtain mortality proportion
+    P = 1.0 / (1.0 + np.exp(-logit))
+
+    # Optionally clip to [0, 1] to account for possible numerical rounding
+    P = np.clip(P, 0.0, 1.0)
+
+    return P

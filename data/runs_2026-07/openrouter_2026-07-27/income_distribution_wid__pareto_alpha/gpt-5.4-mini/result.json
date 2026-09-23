@@ -1,0 +1,35 @@
+{
+  "task": "income_distribution_wid__pareto_alpha",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "atkinson_2011",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "gabaix_2016",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "reed_2001",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

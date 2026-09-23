@@ -1,0 +1,73 @@
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # NHANES III reference equation for FEV1 (Caucasian males, Hankinson et al., 1999)
+    # FEV1 = 0.5536 - 0.01303 * age - 0.000172 * age^2 + 0.00014098 * height_cm^2
+    
+    fev1 = 0.5536 - 0.01303 * age - 0.000172 * (age ** 2) + 0.00014098 * (height_cm ** 2)
+    
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Using the European Coal and Steel Community (ECSC) reference equations, 
+    # averaged between male and female since sex is not provided as an input.
+    # Male:   FEV1 = 0.04301 * height_cm - 0.0290 * age - 2.492
+    # Female: FEV1 = 0.03953 * height_cm - 0.0250 * age - 2.600
+    
+    fev1 = 0.04127 * height_cm - 0.0270 * age - 2.546
+    
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict FEV1 (L) using the ECSC / Crapo reference equation for adult males.
+    Inputs:
+        X[:, 0] = age (years)
+        X[:, 1] = height (cm)
+    """
+    age = X[:, 0]
+    height = X[:, 1]
+    fev1 = 0.0414 * height - 0.0244 * age - 2.190
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Using a standard linear approximation based on ECSC (European Community for Steel and Coal) 
+    # coefficients averaged across sexes, as sex is not provided as an input.
+    fev1 = 0.0378 * height_cm - 0.0246 * age - 2.157
+    
+    return fev1
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict FEV1 (litres) using the ECSC/ERS 1993 reference equation
+    for adult Caucasian males (height in cm, age in years).
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    fev1 = 0.0414 * height_cm - 0.0244 * age - 2.190
+    return fev1

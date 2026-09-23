@@ -1,0 +1,90 @@
+import numpy as np
+
+def predict(X):
+    Y = X[:, 0]
+    # Preston (1975) semi-logarithmic curve for the 1960s cross-section
+    # e0 = alpha + beta * ln(gdppc)
+    alpha = 5.0
+    beta = 8.5
+    e0 = alpha + beta * np.log(Y)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts sex-averaged life expectancy at birth (e0) based on GDP per capita 
+    using the canonical Preston Curve (1975) semi-logarithmic relationship.
+    
+    Parameters:
+    X : numpy.ndarray
+        2-D array where X[:, 0] is GDP per capita in constant 1963 USD.
+        
+    Returns:
+    numpy.ndarray
+        1-D array of predicted life expectancy at birth (years).
+    """
+    # Canonical semi-log functional form: e0 = a + b * ln(Y)
+    # Coefficients are representative of Preston's 1960s cross-section estimates
+    a = 15.0
+    b = 8.0
+    
+    gdppc = X[:, 0]
+    e0 = a + b * np.log(gdppc)
+    
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Preston Curve (1975): semi-logarithmic relationship between
+    sex-averaged life expectancy at birth and national income per capita.
+    
+    e0 = a + b * ln(Y)
+    
+    Coefficients approximate Preston's OLS estimates for the 1960s
+    cross-section (national income per head, 1963 USD).
+    """
+    Y = X[:, 0]  # GDP per capita in constant 1963 USD
+    a = 21.77
+    b = 6.71
+    e0 = a + b * np.log(Y)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Y = X[:, 0]
+    # Canonical Preston Curve (1975) semi-logarithmic functional form
+    # e0 = a + b * ln(Y)
+    # Coefficients approximate the 1960s cross-section for sex-averaged life expectancy
+    a = 10.86
+    b = 7.35
+    
+    e0 = a + b * np.log(Y)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Preston curve (1960s): semi-log relationship between sex-averaged life
+    expectancy at birth and national income per capita (1963 USD).
+    
+    Canonical form from Preston (1975):
+        e0 = a + b * ln(Y)
+    """
+    gdppc = X[:, 0]
+    a = 14.45
+    b = 7.0
+    e0 = a + b * np.log(gdppc)
+    return e0

@@ -1,0 +1,201 @@
+import numpy as np
+
+def predict(X):
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    Pdyn = X[:, 2]
+    Vsw = X[:, 3]
+    Bz = X[:, 4]
+    nsw = X[:, 5]
+    Bmag = X[:, 6]
+    Tsw = X[:, 7]
+
+    # Standard Burton et al. (1975)-style Dst evolution:
+    # dDst/dt = Q(t) - Dst/tau
+    # with a common empirical coupling for the source term and pressure correction.
+    Ey_pos = np.maximum(Ey, 0.0)
+    Q = -0.20 * (Ey_pos - 0.5)  # nT/hr, simple canonical injection term
+
+    # Typical pressure correction for the Dst index
+    Dst_star = Dst - 7.26 * np.sqrt(np.maximum(Pdyn, 0.0)) + 11.0
+
+    # Decay timescale (constant canonical form)
+    tau = 7.7  # hr
+
+    dDst_dt = Q - Dst_star / tau
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict hourly dDst/dt [nT/hr] using a standard ring-current / Dst coupling form.
+
+    Inputs
+    ------
+    X : ndarray, shape (n_samples, 8)
+        Columns:
+        0 Dst [nT]
+        1 Ey [mV/m]
+        2 P_dyn [nPa]
+        3 V_sw [km/s]
+        4 Bz_GSM [nT]
+        5 n_sw [cm^-3]
+        6 B_mag [nT]
+        7 T_sw [K]
+
+    Returns
+    -------
+    ndarray, shape (n_samples,)
+        dDst/dt [nT/hr]
+    """
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    Pdyn = X[:, 2]
+
+    # Commonly used Burton et al. (1975)-type Dst pressure correction and decay/injection form.
+    # dDst/dt = Q(Ey) - Dst/tau + pressure-correction tendency
+    #
+    # We use the standard canonical exponential coupling:
+    #   Q = -4.4 * (Ey - 0.5)   for Ey > 0.5 mV/m, else 0
+    # and a characteristic decay time:
+    #   tau = 7.7 hr
+    #
+    # Dst pressure correction:
+    #   Dst* = Dst - 7.26 * sqrt(Pdyn) + 11
+    # so d/dt of the pressure term is approximated here as zero in the closed-form
+    # tendency model; the evolution is dominated by injection and decay.
+    Q = np.where(Ey > 0.5, -4.4 * (Ey - 0.5), 0.0)
+    tau = 7.7  # hr
+
+    dDst_dt = Q - Dst / tau
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard Burton et al. (1975)-style closed-form relationship for Dst tendency:
+    # dDst/dt = Q(t) - Dst/tau
+    #
+    # Here we use the commonly cited canonical form with:
+    #   Q = -a * max(0, Ey - Ey0)
+    # where Ey is the solar-wind dawn-to-dusk electric field.
+    #
+    # Note: In many applications the pressure-corrected Dst* is used; with only Dst
+    # provided here, this is the standard direct tendency form.
+
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+
+    # Common Burton-like parameterization constants
+    a = 1.5     # nT / (hr * mV/m)
+    Ey0 = 0.5   # mV/m
+    tau = 7.7   # hr
+
+    Q = -a * np.maximum(0.0, Ey - Ey0)
+    dDst_dt = Q - Dst / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimate hourly tendency of Dst (dDst/dt) in nT/hr using the Burton-type
+    closed-form ring-current charging/decay relationship.
+
+    Inputs
+    ------
+    X : ndarray, shape (n_samples, 8)
+        Columns:
+        0 Dst      [nT]
+        1 Ey       [mV/m]
+        2 P_dyn    [nPa]
+        3 V_sw     [km/s]   (unused in canonical Burton form)
+        4 Bz_GSM   [nT]     (unused directly; Ey already captures solar-wind driving)
+        5 n_sw     [cm^-3]  (unused)
+        6 B_mag    [nT]     (unused)
+        7 T_sw     [K]      (unused)
+
+    Returns
+    -------
+    ndarray, shape (n_samples,)
+        dDst/dt [nT/hr]
+    """
+    Dst = np.asarray(X[:, 0], dtype=float)
+    Ey = np.asarray(X[:, 1], dtype=float)
+    Pdyn = np.asarray(X[:, 2], dtype=float)
+
+    # Canonical Burton et al. (1975)-type relation:
+    # dDst/dt = Q(t) - Dst/tau
+    # Q(t) = a * (Ey - Ey0) for Ey > Ey0, else 0
+    # For hourly tendency, multiply the canonical per-minute coefficients by 60.
+    Ey0 = 0.5  # mV/m threshold
+    a = -0.20 * 60.0  # nT/hr per (mV/m), canonical Burton injection term
+    tau = 7.7 * 60.0   # hr, canonical decay time
+
+    Q = np.where(Ey > Ey0, a * (Ey - Ey0), 0.0)
+
+    # Magnetopause current correction used in the original Dst formulation
+    # (canonical square-root pressure term; included as an additive correction
+    # to the index tendency via the pressure-dependent Dst offset derivative
+    # only insofar as the closed-form Dst expression is concerned).
+    # Since the prompt asks specifically for dDst/dt from the hourly Dst series,
+    # the standard Burton differential form uses only Dst and Ey.
+    dDst_dt = Q - Dst / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict hourly tendency of Dst, dDst/dt [nT/hr], using the standard
+    Burton-like ring-current evolution form.
+
+    Inputs (columns of X):
+      0: Dst      [nT]
+      1: Ey       [mV/m]
+      2: P_dyn    [nPa]
+      3: V_sw     [km/s]
+      4: Bz_GSM   [nT]
+      5: n_sw     [cm^-3]
+      6: B_mag    [nT]
+      7: T_sw     [K]
+
+    Returns:
+      1-D numpy array of dDst/dt [nT/hr]
+    """
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    Pdyn = X[:, 2]
+
+    # Commonly used magnetopause correction (Burton et al.-type):
+    # Dst* = Dst - 7.26 * sqrt(Pdyn) + 11
+    # d(Dst*)/dt = Q(t) - Dst*/tau
+    # with Q = alpha * (Ey - Ey0) for Ey > Ey0, else 0
+    # and constants commonly adopted in the literature:
+    alpha = 0.20   # nT/hr per (mV/m)
+    Ey0 = 0.5      # mV/m threshold
+    tau = 7.7      # hr
+
+    # Injection term
+    Q = np.where(Ey > Ey0, -alpha * (Ey - Ey0), 0.0)  # negative for storm-time decrease
+
+    # Recover the tendency of the observed Dst from Dst* dynamics:
+    # Dst = Dst* + 7.26*sqrt(Pdyn) - 11
+    # so dDst/dt = dDst*/dt + d/dt(magnetopause correction)
+    #
+    # No time derivative of Pdyn is available here, so the standard closed-form
+    # tendency uses the ring-current decay/injection term only.
+    dDst_dt = Q - (Dst - 7.26 * np.sqrt(Pdyn) + 11.0) / tau
+
+    return dDst_dt

@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Velocity"
+  symbol: "v"
+  unit: ""
+  description: "Velocity"
+inputs:
+  - name: "Drift velocity constant"
+    symbol: "mu_drift"
+    unit: ""
+    description: "Drift velocity constant"
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Voltage"
+    symbol: "Volt"
+    unit: ""
+    description: "Voltage"
+  - name: "Length"
+    symbol: "d"
+    unit: ""
+    description: "Length"

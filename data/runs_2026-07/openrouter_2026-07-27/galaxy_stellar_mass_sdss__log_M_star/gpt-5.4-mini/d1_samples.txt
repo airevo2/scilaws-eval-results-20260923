@@ -1,0 +1,157 @@
+import numpy as np
+
+def predict(X):
+    """
+    Estimate log10 stellar mass from SDSS ugriz photometry and redshift using a
+    commonly used color–mass-to-light calibration (a Bell et al.-style relation
+    adapted to a Kroupa IMF).
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, 7)
+        Columns:
+        u, g, r, i, z_mag, redshift, DM
+
+    Returns
+    -------
+    ndarray of shape (n_samples,)
+        log10(M_star / M_sun)
+    """
+    u = X[:, 0]
+    g = X[:, 1]
+    r = X[:, 2]
+    i = X[:, 3]
+    z_mag = X[:, 4]
+    dm = X[:, 6]
+
+    # Absolute r-band magnitude
+    M_r = r - dm
+
+    # Rest-frame color proxy commonly used for stellar-mass estimates
+    g_r = g - r
+
+    # Kroupa-IMF mass-to-light calibration in r band:
+    # log10(M*/L_r) = -0.306 + 1.097*(g-r)
+    # log10(M_r,Lsun) = 4.67 for the SDSS r band
+    log_ml_r = -0.306 + 1.097 * g_r
+    log_L_r = -0.4 * (M_r - 4.67)
+
+    log_M_star = log_ml_r + log_L_r
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    u = X[:, 0]
+    g = X[:, 1]
+    r = X[:, 2]
+    i = X[:, 3]
+    z_mag = X[:, 4]
+    redshift = X[:, 5]
+    DM = X[:, 6]
+
+    # Absolute r-band magnitude
+    M_r = r - DM
+
+    # Commonly used photometric stellar-mass estimator
+    # (Bell et al. style color–M/L relation, Kroupa-like IMF normalization)
+    g_minus_r = g - r
+    log_M_star = -0.406 + 1.097 * g_minus_r - 0.4 * M_r
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimate log10 stellar mass (M_star/Msun) using a standard photometric
+    color-luminosity relation commonly used for SDSS galaxies.
+
+    Inputs
+    ------
+    X : ndarray, shape (n, 7)
+        columns: [u, g, r, i, z_mag, redshift, DM]
+
+    Returns
+    -------
+    log_M_star : ndarray, shape (n,)
+    """
+    u = X[:, 0]
+    g = X[:, 1]
+    r = X[:, 2]
+    i = X[:, 3]
+    zmag = X[:, 4]
+    dm = X[:, 6]
+
+    # Rest-frame approximate g-r color and r-band absolute magnitude
+    g_minus_r = g - r
+    M_r = r - dm
+
+    # A commonly used closed-form SDSS stellar-mass estimator
+    # (Bell et al.-style color–M/L relation, in Kroupa-like normalization)
+    log_M_star = -0.306 + 1.097 * g_minus_r - 0.4 * (M_r - 4.67)
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Approximate stellar mass-to-light estimator commonly used for SDSS galaxies.
+    Returns log10(M_star / Msun).
+    """
+    u = X[:, 0]
+    g = X[:, 1]
+    r = X[:, 2]
+    i = X[:, 3]
+    zmag = X[:, 4]
+    redshift = X[:, 5]
+    DM = X[:, 6]
+
+    # Absolute magnitude in the r-band
+    M_r = r - DM
+
+    # Common Bell et al.-style color--M/L relation (Kroupa-like IMF normalization)
+    g_minus_r = g - r
+
+    # log10(M*/L_r) = a + b (g-r)
+    # A widely used canonical form for a Kroupa/Chabrier-like IMF:
+    log_ML_r = -0.306 + 1.097 * g_minus_r
+
+    # Solar absolute magnitude in SDSS r band (AB)
+    M_sun_r = 4.64
+
+    # log10(L_r / Lsun) from absolute magnitude
+    log_L_r = -0.4 * (M_r - M_sun_r)
+
+    log_M_star = log_ML_r + log_L_r
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    u = X[:, 0]
+    g = X[:, 1]
+    r = X[:, 2]
+    i = X[:, 3]
+    z_mag = X[:, 4]
+    redshift = X[:, 5]
+    DM = X[:, 6]
+
+    # Common closed-form stellar-mass estimator based on broad-band colors and luminosity
+    # (a standard Bell et al.-style relation with a Kroupa-like IMF normalization).
+    # Here we use the r-band absolute magnitude and g-r color.
+    Mr = r - DM
+    g_r = g - r
+
+    log_M_star = -0.306 + 1.097 * g_r - 0.4 * (Mr - 4.67)
+
+    return log_M_star

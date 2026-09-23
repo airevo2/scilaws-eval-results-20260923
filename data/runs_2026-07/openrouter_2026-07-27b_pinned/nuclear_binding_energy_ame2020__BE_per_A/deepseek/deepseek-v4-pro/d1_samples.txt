@@ -1,0 +1,216 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy per nucleon (B/A) in MeV using the semi-empirical mass formula.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 7)
+        Columns: Z, N, A, N-Z, (N-Z)/A, Z(Z-1)/A^{1/3}, delta (+1, 0, -1)
+
+    Returns
+    -------
+    BE_per_A : ndarray, shape (n_samples,)
+        Binding energy per nucleon in MeV.
+    """
+    A = X[:, 2]                 # mass number
+    I = X[:, 4]                 # isospin asymmetry (N-Z)/A
+    coul_proxy = X[:, 5]        # Z(Z-1) / A^{1/3}
+    delta = X[:, 6]             # pairing indicator: +1 (e-e), 0 (odd), -1 (o-o)
+
+    # Standard Bethe-Weizsäcker coefficients (MeV)
+    a_v = 15.67                 # volume
+    a_s = 17.23                 # surface
+    a_c = 0.714                 # Coulomb
+    a_a = 23.285                # asymmetry
+    a_p = 11.0                  # pairing (∝ A^{-1/2})
+
+    # Terms contributing to B/A = B / A
+    volume   = a_v
+    surface  = -a_s / A**(1.0/3.0)
+    coulomb  = -a_c * coul_proxy / A          # -a_c * Z(Z-1) / A^{4/3}
+    asym     = -a_a * I**2
+    pairing  = delta * a_p / A**(1.5)         # delta * a_p / A^{3/2}
+
+    BE_per_A = volume + surface + coulomb + asym + pairing
+    return BE_per_A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy per nucleon (B/A) in MeV using the semi-empirical
+    Bethe–Weizsäcker mass formula (liquid drop model).
+
+    Input X is a 2-D numpy array with columns:
+        X[:,0] = Z         - proton number
+        X[:,1] = N         - neutron number
+        X[:,2] = A         - mass number
+        X[:,3] = NZ_diff   - neutron excess (N-Z)
+        X[:,4] = I         - isospin asymmetry (N-Z)/A
+        X[:,5] = coul      - Coulomb proxy Z(Z-1)/A^(1/3)
+        X[:,6] = pair      - pairing indicator: +1 even-even, 0 odd-A, -1 odd-odd
+    """
+    # Standard coefficients (MeV) – consistent with common modern fits.
+    a_v = 15.75      # volume term
+    a_s = 17.8       # surface term
+    a_c = 0.711      # Coulomb term
+    a_a = 23.7       # asymmetry term
+    a_p = 34.0       # pairing strength (corresponding to A^(-3/4) form in total B)
+
+    A = X[:, 2]      # mass number
+    I = X[:, 4]      # asymmetry (N-Z)/A
+    coul = X[:, 5]   # Z(Z-1)/A^(1/3)
+    pair = X[:, 6]   # +1, 0, -1
+
+    # B/A = volume - surface - Coulomb - asymmetry + pairing
+    # Surface term: -a_s * A^{-1/3}
+    # Coulomb term: -a_c * Z(Z-1)/A^{4/3} = -a_c * coul / A
+    # Asymmetry term: -a_a * I^2
+    # Pairing term: +pair * a_p * A^{-7/4}   (since total B has ±a_p A^{-3/4})
+    BE_per_A = (a_v
+                - a_s * A**(-1.0/3.0)
+                - a_c * coul / A
+                - a_a * I**2
+                + pair * a_p * A**(-7.0/4.0))
+
+    return BE_per_A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy per nucleon (B/A) in MeV using the semi-empirical
+    mass formula (Bethe-Weizsäcker formula).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 7)
+        Columns:
+        0: Z          - proton number
+        1: N          - neutron number
+        2: A          - mass number A = Z + N
+        3: NZ_diff    - neutron excess N - Z
+        4: asym (I)   - isospin asymmetry (N - Z) / A
+        5: coul_proxy - Coulomb proxy Z(Z-1) / A^(1/3)
+        6: pair (delta) - parity indicator (+1 even-even, 0 odd-mass, -1 odd-odd)
+
+    Returns
+    -------
+    BE_per_A : np.ndarray, shape (n_samples,)
+        Binding energy per nucleon in MeV.
+    """
+    # Extract needed columns
+    A = X[:, 2]          # mass number
+    I = X[:, 4]          # isospin asymmetry (N-Z)/A
+    coul_proxy = X[:, 5] # Z(Z-1) / A^(1/3)
+    pair = X[:, 6]       # delta: +1, 0, -1
+
+    # Standard coefficients of the Bethe-Weizsäcker formula (in MeV)
+    a_v = 15.5    # volume term
+    a_s = 16.8    # surface term
+    a_c = 0.72    # Coulomb term
+    a_a = 23.0    # asymmetry term
+    a_p = 34.0    # pairing amplitude (for A^{-3/4} dependence)
+
+    # B/A = a_v - a_s * A^{-1/3} - a_c * coul_proxy / A - a_a * I^2 + a_p * A^{-7/4} * delta
+    BE_per_A = (
+        a_v
+        - a_s * A ** (-1.0 / 3.0)
+        - a_c * coul_proxy / A
+        - a_a * I**2
+        + a_p * A ** (-7.0 / 4.0) * pair
+    )
+
+    return BE_per_A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Unpack inputs
+    Z = X[:, 0]
+    N = X[:, 1]
+    A = X[:, 2]
+    # NZ_diff = X[:, 3]  # not needed directly
+    # asym = X[:, 4]     # not needed directly
+    # coul_proxy = X[:, 5]  # not needed directly
+    delta = X[:, 6]
+
+    # Coefficients of the Bethe-Weizsäcker semi-empirical mass formula (SEMF)
+    # in MeV, typical set
+    a_v = 15.75      # volume term
+    a_s = 17.8       # surface term
+    a_c = 0.711      # Coulomb term
+    a_a = 23.7       # asymmetry term
+    a_p = 11.18      # pairing term
+
+    # Volume term
+    vol = a_v
+
+    # Surface term
+    surf = -a_s * A**(-1./3.)
+
+    # Coulomb term
+    coul = -a_c * Z * (Z - 1) * A**(-4./3.)
+
+    # Asymmetry term
+    asym = -a_a * ((N - Z) / A) ** 2
+
+    # Pairing term
+    pair = a_p * delta * A**(-7./4.)
+
+    # Binding energy per nucleon
+    BE_per_A = vol + surf + coul + asym + pair
+
+    return BE_per_A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy per nucleon (B/A) in MeV using the
+    semi-empirical mass formula (Bethe–Weizsäcker).
+
+    Input X columns:
+        0 : Z            Proton number
+        1 : N            Neutron number
+        2 : A            Mass number (A = Z + N)
+        3 : NZ_diff      Neutron excess (N - Z)  [unused, derived]
+        4 : asym         Isospin asymmetry I = (N - Z) / A
+        5 : coul_proxy   Coulomb proxy Z(Z-1) / A^(1/3)
+        6 : pair         Pairing delta: +1 even-even, 0 odd-mass, -1 odd-odd
+
+    Returns:
+        1-D numpy array of B/A in MeV.
+    """
+    # Standard coefficients (MeV)
+    a_v = 15.75     # volume
+    a_s = 17.8      # surface
+    a_c = 0.711     # Coulomb
+    a_a = 23.7      # asymmetry
+    a_p = 11.18     # pairing (exponent -1/2 for B)
+
+    A = X[:, 2]
+    asym = X[:, 4]
+    coul_proxy = X[:, 5]
+    pair = X[:, 6]
+
+    # B/A = volume - surface - Coulomb - asymmetry + pairing
+    be_per_a = (
+        a_v
+        - a_s / np.cbrt(A)                # surface: -a_s / A^{1/3}
+        - a_c * coul_proxy / A            # Coulomb: -a_c * Z(Z-1) / A^{4/3}
+        - a_a * asym**2                   # asymmetry: -a_a * I^2
+        + pair * a_p / (A * np.sqrt(A))   # pairing: delta * a_p / A^{3/2}
+    )
+
+    return be_per_a

@@ -1,0 +1,151 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy (cm^-1) of a Rydberg level using the standard
+    Rydberg-Ritz formula with quantum defects.
+
+    E_bind = R_inf / (n - delta_l)^2
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (N, 2)
+        X[:,0] = n_qm (principal quantum number)
+        X[:,1] = l_qm (orbital angular momentum quantum number: 0=s,1=p,...)
+
+    Returns
+    -------
+    E_bind : np.ndarray, shape (N,)
+        Binding energy in cm^-1.
+    """
+    # Rydberg constant in cm^-1 (infinite nuclear mass)
+    R_inf = 109737.315685
+
+    # Quantum defects for l = 0, 1, 2, 3, 4, 5
+    # These are typical values; in practice they are fitted constants.
+    delta = np.array([1.35, 0.85, 0.01, 0.0, 0.0, 0.0])
+
+    n = X[:, 0]
+    l = X[:, 1].astype(int)
+
+    # Effective principal quantum number
+    n_star = n - delta[l]
+
+    # Binding energy from the Rydberg formula (core charge Z=1 for neutral atom)
+    E_bind = R_inf / (n_star ** 2)
+
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy (cm^-1) from principal quantum number n and 
+    orbital angular momentum l using the hydrogenic Rydberg formula.
+
+    E_bind = R_inf / n^2
+
+    where R_inf is the Rydberg constant for infinite nuclear mass.
+    The l quantum number is accepted but not used in this fundamental
+    closed-form relationship (it enters through quantum defects, which
+    require empirical fitting and are not provided here).
+    """
+    # Rydberg constant in cm^-1 (infinite mass)
+    R_inf = 109737.315685  # cm^-1
+
+    n = X[:, 0]  # principal quantum number
+    # Hydrogenic binding energy (ionization limit minus level energy)
+    E_bind = R_inf / (n ** 2)
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy E_bind (cm^-1) of a Rydberg level using the
+    standard Rydberg formula with l-dependent quantum defects.
+
+    E_bind = R_inf / (n - delta_l)^2
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (N, 2)
+        X[:, 0] = n_qm (principal quantum number)
+        X[:, 1] = l_qm (orbital angular momentum: 0=s, 1=p, 2=d, 3=f, 4=g, 5=h)
+
+    Returns
+    -------
+    E_bind : np.ndarray, shape (N,)
+        Binding energy in cm^-1.
+    """
+    # Rydberg constant for infinite nuclear mass (cm^-1)
+    R_inf = 109737.315685
+
+    # Quantum defects delta_l for l = 0,1,2,3,4,5 (s,p,d,f,g,h).
+    # These are illustrative values for a generic alkali metal (e.g., sodium);
+    # they can be replaced by fitted coefficients as needed.
+    delta = np.array([1.35, 0.85, 0.01, 0.0, 0.0, 0.0])
+
+    n = X[:, 0]
+    l = X[:, 1].astype(int)
+
+    # Effective principal quantum number
+    n_star = n - delta[l]
+
+    # Binding energy (term value) in cm^-1
+    E_bind = R_inf / (n_star ** 2)
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy (term value) in cm^-1 for Rydberg levels
+    using the hydrogenic Rydberg formula: E_bind = R_inf / n^2.
+    Note: The orbital angular momentum l is not used in this simple
+    approximation; quantum defects are assumed zero.
+    """
+    # Rydberg constant (infinite mass) in cm^-1
+    R_inf = 109737.31
+    n = X[:, 0]  # principal quantum number
+    E_bind = R_inf / n**2
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict binding energy (cm^-1) of a Rydberg level using the Rydberg formula
+    with a constant quantum defect for each orbital angular momentum.
+
+    E_bind = R_infinity / (n - delta_l)^2
+
+    The quantum defects delta_l are empirical constants for a given atomic series.
+    Here they are provided as a placeholder array (typical for a light alkali metal)
+    and should be replaced by fitted values for the specific data set.
+    """
+    # Rydberg constant in cm^-1 (CODATA 2018 value for infinite nuclear mass)
+    R_inf = 109737.31568154
+
+    # Quantum defects for l = 0,1,2,3,4,5 (s, p, d, f, g, h)
+    # These are illustrative; in practice they are fitted to observed data.
+    delta = np.array([1.35, 0.85, 0.01, 0.0, 0.0, 0.0])
+
+    n = X[:, 0]                   # principal quantum number
+    l = X[:, 1].astype(int)       # orbital angular momentum quantum number
+
+    # Effective principal quantum number
+    n_star = n - delta[l]
+
+    # Binding energy in cm^-1
+    E_bind = R_inf / (n_star ** 2)
+
+    return E_bind

@@ -1,0 +1,128 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = log_P (base-10 logarithm of fundamental-mode period in days)
+    # X[:, 1] = feh ([Fe/H] metallicity in dex)
+    log_P = X[:, 0]
+    feh = X[:, 1]
+
+    # Canonical Period-Wesenheit-Metallicity (PWZ) relation for Classical Cepheids
+    # based on Gaia DR3 / EDR3 calibrations (e.g., Ripepi et al. 2022).
+    # M_W = slope * (log_P - 1.0) + metallicity_term * [Fe/H] + zero_point
+    slope = -3.268
+    metallicity_term = -0.220
+    zero_point = -5.971
+
+    M_W = slope * (log_P - 1.0) + metallicity_term * feh + zero_point
+    return M_W
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the absolute Gaia Wesenheit magnitude (M_W) for Classical Cepheids
+    using the Period-Luminosity-Metallicity (PLZ) relation from Ripepi et al. (2021).
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = log_P: Base-10 logarithm of the fundamental-mode period (in days)
+        - X[:, 1] = feh: Metallicity [Fe/H] (in dex)
+
+    Returns:
+    - 1-D numpy array of absolute Gaia Wesenheit magnitudes (M_W).
+    """
+    log_P = X[:, 0]
+    feh = X[:, 1]
+
+    # Standard PLZ relation coefficients for Gaia Wesenheit magnitude W_BP,RP
+    slope = -3.251
+    metallicity_coeff = -0.217
+    zero_point = -5.918
+
+    # PLZ relation with a pivot period of 10 days (log_P = 1.0)
+    M_W = slope * (log_P - 1.0) + metallicity_coeff * feh + zero_point
+
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the absolute Gaia Wesenheit magnitude (M_W) for Classical Cepheids
+    using the Period-Wesenheit-Metallicity (PWZ) relation.
+    
+    Inputs:
+    - X[:, 0]: log_P - Base-10 logarithm of the pulsation period in days.
+    - X[:, 1]: feh - Metallicity [Fe/H] in dex.
+    
+    Output:
+    - 1-D numpy array of M_W.
+    """
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    
+    # Standard PWZ relation for Classical Cepheids in the Gaia bands 
+    # (e.g., Ripepi et al. 2022, Gaia DR3)
+    # M_W = -5.882 - 3.168 * (log_P - 1.0) - 0.387 * feh
+    M_W = -2.714 - 3.168 * log_P - 0.387 * feh
+    
+    return M_W
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the absolute Gaia Wesenheit magnitude (M_W) for Classical Cepheids
+
+    using the Period-Wesenheit-Metallicity (PWZ) relation from Gaia DR3.
+
+    Inputs:
+    - X[:, 0]: log_P - Base-10 logarithm of the fundamental-mode period (in days)
+    - X[:, 1]: feh - Metallicity [Fe/H] (in dex)
+    """
+    log_P = X[:, 0]
+    feh = X[:, 1]
+
+    # Standard PWZ relation for fundamental-mode Classical Cepheids (Ripepi et al. 2022)
+    M_W = -3.292 * (log_P - 1.0) - 0.221 * feh - 5.897
+
+    return M_W
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the absolute Gaia Wesenheit magnitude (M_W) for classical Cepheids
+
+    using the Period-Luminosity-Metallicity (PLZ) relation from Gaia DR3 (Ripepi et al. 2023).
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = log_P: Base-10 logarithm of the fundamental-mode period in days.
+        - X[:, 1] = feh: Metallicity [Fe/H] in dex.
+
+    Returns:
+    - 1-D numpy array of M_W.
+    """
+    log_P = X[:, 0]
+    feh = X[:, 1]
+
+    # Standard PLZ relation for Fundamental-mode Classical Cepheids in the Gaia Wesenheit band:
+    # M_W = alpha * (log_P - 1.0) + beta * [Fe/H] + gamma
+    alpha = -3.268
+    beta = -0.11
+    gamma = -5.92
+
+    M_W = alpha * (log_P - 1.0) + beta * feh + gamma
+    return M_W

@@ -1,0 +1,92 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length using Hack's Law (1957).
+    
+    Hack's Law is the canonical geomorphological relationship between
+    main-stem length and drainage area:
+        L = C * A^h
+    
+    Original (Hack, 1957): L(mi) = 1.4 * A(mi^2)^0.6
+    Metric conversion:
+        C_km = 1.4 * 1.60934 / (2.58999^0.6) ≈ 1.27
+    """
+    A = X[:, 0]  # upland_area_skm (total upstream drainage area, km^2)
+    
+    # Hack's Law parameters (metric)
+    C = 1.27
+    h = 0.6
+    
+    L = C * np.power(A, h)
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]  # upland_area_skm [km^2]
+
+    # Hack's Law (Hack, 1957) — the canonical geomorphic scaling
+    # relationship between main-stem river length and drainage area.
+    # L = C * A^h
+    C = 1.4
+    h = 0.6
+
+    L = C * A ** h
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length using Hack's Law (1957).
+    
+    Hack's Law: L = C * A^h
+    
+    The most widely cited empirical relationship between main-stem
+    channel length and drainage basin area in fluvial geomorphology.
+    """
+    A = X[:, 0]  # upland_area_skm — total upstream drainage area [km^2]
+    
+    # Hack's Law coefficients (canonical values)
+    C = 1.4      # empirical coefficient
+    h = 0.6      # scaling exponent
+    
+    L = C * A ** h
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract total upstream drainage area (A) in km^2
+    A = X[:, 0]
+    
+    # Hack's Law (1957) relates main-stem river length (L) to drainage area (A).
+    # The original empirical relationship was derived in imperial units: L_mi = 1.4 * A_mi^0.6
+    # Converting to metric (km and km^2): 
+    # L_km = 1.4 * 1.60934 * (A_km2 / 2.58999)^0.6 ≈ 1.27 * A_km2^0.6
+    
+    C = 1.27
+    h = 0.6
+    
+    L = C * (A ** h)
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hack's Law (Hack, 1957): L = C * A^h
+    # The most widely cited canonical form relating main-stem length to drainage area.
+    C = 1.4
+    h = 0.6
+    A = X[:, 0]  # upland_area_skm [km^2]
+    L = C * A ** h
+    return L

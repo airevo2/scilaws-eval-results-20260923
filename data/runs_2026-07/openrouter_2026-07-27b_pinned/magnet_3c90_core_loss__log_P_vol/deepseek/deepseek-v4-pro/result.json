@@ -1,0 +1,35 @@
+{
+  "task": "magnet_3c90_core_loss__log_P_vol",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "materials_and_energy ",
+  "formulas": [
+    {
+      "formula": "bertotti_1988",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "steinmetz_1892",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "steinmetz_temperature_extended",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    }
+  ]
+}

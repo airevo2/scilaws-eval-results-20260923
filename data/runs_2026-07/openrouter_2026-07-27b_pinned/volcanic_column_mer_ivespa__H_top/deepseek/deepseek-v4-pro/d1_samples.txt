@@ -1,0 +1,105 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict eruption column top height above vent (H_top) in km from mass eruption rate (MER) in kg/s.
+
+    Input:
+        X : 2-D numpy array; X[:, 0] = MER in kg/s
+
+    Returns:
+        1-D numpy array of H_top in km above vent level.
+
+    The relationship uses the classical buoyant plume scaling:
+        H_top = 2.0 * (DRE volume flux [m^3/s])^(1/4)
+    where DRE volume flux = MER / rho_dre, with typical dense rock equivalent density
+    rho_dre = 2500 kg/m^3.  This leads to H_top = 2.0 * (MER / 2500.0)**0.25.
+    """
+    MER = X[:, 0]
+    # DRE density in kg/m^3 (commonly 2500)
+    rho_dre = 2500.0
+    H = 2.0 * (MER / rho_dre) ** 0.25
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict column-top height (H_top) in km above vent from mass eruption rate (MER) in kg/s.
+
+    The canonical empirical scaling of Mastin et al. (2009):
+        H_top_km = 2.00 * (MER_kg_per_s)**0.241
+    """
+    a = 2.00
+    b = 0.241
+    MER = X[:, 0]
+    H_top = a * np.power(MER, b)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict time-averaged eruption-column top height above vent level [km]
+    from mass eruption rate [kg/s].
+
+    Uses the standard power-law scaling of Mastin et al. (2009):
+      H_top(km) = 2.0 * (MER / 1000)^0.241
+    where MER is in kg/s. The relation has multiplicative ~53% scatter,
+    consistent with the reported log-space standard deviation of ~0.2.
+    """
+    # Mastin et al. (2009) coefficients
+    A = 2.0          # scaling factor for H in km, MER in 10^3 kg/s
+    B = 0.241        # power-law exponent
+    C = 1000.0       # conversion from kg/s to 10^3 kg/s
+
+    MER = X[:, 0]    # mass eruption rate [kg/s]
+    H_top = A * (MER / C) ** B
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict time-averaged eruption-column top height above vent (H_top_km_avl) 
+    from mass eruption rate (MER_kg_per_s) using the standard Morton-Sparks 
+    buoyant plume scaling (Sparks et al., 1997).
+
+    H_top (km) = 0.287 * (MER in kg/s)^0.242
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = MER_kg_per_s (kg s^-1)
+
+    Returns
+    -------
+    H_top : np.ndarray, shape (n_samples,)
+        Column top height in km above vent level.
+    """
+    MER = X[:, 0]
+    H_top = 0.287 * np.power(MER, 0.242)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts time-averaged eruption-column top height above vent (H_top) from mass eruption rate (MER).
+    
+    Uses the standard empirical power-law relationship of Mastin et al. (2009):
+    H_top = 0.304 * MER**0.241
+    where H_top is in km above vent level and MER is in kg/s.
+    The relationship has a multiplicative scatter of ~53% (log-space standard error).
+    """
+    MER = X[:, 0]            # mass eruption rate in kg/s
+    H_top = 0.304 * (MER ** 0.241)
+    return H_top

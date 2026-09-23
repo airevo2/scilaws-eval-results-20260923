@@ -1,0 +1,178 @@
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+
+    # Wind turbine power curve parameters (typical utility-scale turbine)
+    v_cut_in = 3.0      # cut-in wind speed [m/s]
+    v_rated = 12.0      # rated wind speed [m/s]
+    v_cut_out = 25.0    # cut-out wind speed [m/s]
+    P_rated = 2000.0    # rated power [kW]
+
+    # Air density and rotor parameters folded into Cp*A term
+    # Standard cubic law in region between cut-in and rated:
+    # P = 0.5 * rho * A * Cp * v^3, capped at P_rated
+    # Fit constant so that P(v_rated) = P_rated
+    k = P_rated / (v_rated**3 - v_cut_in**3)
+
+    P = np.zeros_like(v, dtype=float)
+
+    # Region 1: below cut-in -> no power
+    # (already zero)
+
+    # Region 2: cubic region between cut-in and rated
+    mask2 = (v >= v_cut_in) & (v < v_rated)
+    P[mask2] = k * (v[mask2]**3 - v_cut_in**3)
+
+    # Region 3: rated region between rated and cut-out
+    mask3 = (v >= v_rated) & (v <= v_cut_out)
+    P[mask3] = P_rated
+
+    # Region 4: above cut-out -> turbine shut down
+    P[v > v_cut_out] = 0.0
+
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+
+    # Standard wind turbine power curve model
+    # P = 0.5 * rho * A * Cp * v^3, bounded by rated power,
+    # with cut-in and cut-out (region control) applied.
+
+    rho = 1.225      # air density [kg/m^3]
+    Cp = 0.4         # typical power coefficient (below Betz limit 0.593)
+    D = 82.0         # rotor diameter [m] (typical ~2 MW class turbine)
+    A = np.pi * (D / 2.0) ** 2
+
+    v_cut_in = 3.0   # cut-in wind speed [m/s]
+    v_rated = 12.0   # rated wind speed [m/s]
+    v_cut_out = 25.0 # cut-out wind speed [m/s]
+
+    # Rated power [kW]
+    P_rated = 0.5 * rho * A * Cp * v_rated ** 3 / 1000.0
+
+    # Cubic power extraction below rated
+    P = 0.5 * rho * A * Cp * v ** 3 / 1000.0
+
+    # Apply operating regions
+    P = np.where(v < v_cut_in, 0.0, P)
+    P = np.where(v >= v_rated, P_rated, P)
+    P = np.where(v > v_cut_out, 0.0, P)
+
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+    
+    # Standard wind turbine power curve model
+    # P = 0.5 * rho * A * Cp * v^3  (in the operating region between cut-in and rated)
+    
+    # Air density (kg/m^3) at standard conditions
+    rho = 1.225
+    
+    # Turbine parameters (typical utility-scale turbine, ~2 MW class)
+    # inferred from typical range where rated ~ reached near upper wind speeds
+    D = 90.0                 # rotor diameter [m]
+    A = np.pi * (D / 2.0)**2 # swept area [m^2]
+    Cp = 0.40                # power coefficient (aerodynamic + drivetrain efficiency)
+    
+    # Characteristic speeds
+    v_cut_in = 3.0           # cut-in wind speed [m/s]
+    v_rated = 12.0           # rated wind speed [m/s]
+    v_cut_out = 25.0         # cut-out wind speed [m/s]
+    
+    # Rated power [kW] from cubic law at rated wind speed
+    P_rated = 0.5 * rho * A * Cp * v_rated**3 / 1000.0
+    
+    P = np.zeros_like(v, dtype=float)
+    
+    # Region below cut-in: no power
+    # Region between cut-in and rated: cubic law
+    region2 = (v >= v_cut_in) & (v < v_rated)
+    P[region2] = 0.5 * rho * A * Cp * v[region2]**3 / 1000.0
+    
+    # Region between rated and cut-out: constant rated power
+    region3 = (v >= v_rated) & (v <= v_cut_out)
+    P[region3] = P_rated
+    
+    # Above cut-out: turbine shut down (no power)
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Wind turbine power curve model
+    # P = 0.5 * rho * A * Cp * v^3, bounded by cut-in, rated, cut-out
+    v = X[:, 0]
+
+    # Air density [kg/m^3]
+    rho = 1.225
+    # Rotor swept area [m^2] (assume rotor diameter ~ 90 m => R=45)
+    R = 45.0
+    A = np.pi * R**2
+    # Power coefficient (typical operating value, below Betz limit 0.593)
+    Cp = 0.4
+
+    # Turbine control parameters [m/s]
+    v_cut_in = 3.0
+    v_rated = 12.0
+    v_cut_out = 25.0
+
+    # Rated electrical power [kW]
+    P_rated = 0.5 * rho * A * Cp * v_rated**3 / 1000.0
+
+    # Cubic power in the partial-load region [kW]
+    P = 0.5 * rho * A * Cp * np.power(v, 3) / 1000.0
+
+    # Apply piecewise power curve
+    P = np.where(v < v_cut_in, 0.0, P)
+    P = np.where(v >= v_rated, P_rated, P)
+    P = np.where(v > v_cut_out, 0.0, P)
+
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+
+    # Turbine parameters (typical utility-scale turbine, ~2 MW class)
+    rho = 1.225        # air density [kg/m^3]
+    D = 90.0           # rotor diameter [m]
+    A = np.pi * (D / 2.0) ** 2   # swept area [m^2]
+    Cp = 0.40          # power coefficient (below Betz limit 0.593)
+
+    v_cut_in = 3.0     # cut-in wind speed [m/s]
+    v_rated = 12.0     # rated wind speed [m/s]
+    v_cut_out = 25.0   # cut-out wind speed [m/s]
+    P_rated = 2000.0   # rated power [kW]
+
+    # Ideal aerodynamic power (in kW)
+    P_aero = 0.5 * rho * A * Cp * v ** 3 / 1000.0
+
+    P = np.zeros_like(v, dtype=float)
+
+    # Region 2: cubic power capture between cut-in and rated
+    region2 = (v >= v_cut_in) & (v < v_rated)
+    P[region2] = np.minimum(P_aero[region2], P_rated)
+
+    # Region 3: rated (constant) power between rated and cut-out
+    region3 = (v >= v_rated) & (v <= v_cut_out)
+    P[region3] = P_rated
+
+    # Below cut-in and above cut-out: zero power
+    return P

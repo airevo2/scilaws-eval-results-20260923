@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Electric field"
+  symbol: "Ef"
+  unit: ""
+  description: "Electric field"
+inputs:
+  - name: "Surface Charge density"
+    symbol: "sigma_den"
+    unit: ""
+    description: "Surface Charge density"
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"
+  - name: "Dimensionless"
+    symbol: "chi"
+    unit: ""
+    description: "Dimensionless"

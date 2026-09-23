@@ -1,0 +1,143 @@
+task_id: li_metal_battery_capacity_stanford__cap_dischg_mAh
+domain: materials_science / electrochemistry
+license: CC-BY-NC-4.0
+
+# Type II — cluster = cell (cell_id).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task is from electrochemical energy storage, concerning the usable discharge capacity of a rechargeable lithium battery cell as it is repeatedly cycled.
+
+target:
+  name: cap_dischg_mAh
+  symbol: Q_dis
+  unit: mAh
+  description: Per-cycle discharge capacity (integral of |I| over the discharge phase of each cycle).
+  range: [0.5, 317.47]
+
+inputs:
+  - name: cycle_index
+    symbol: k
+    unit: ""
+    description: One-based integer cycle counter for each cell, reset to 1 at the start of each cell's test.
+    range: [1, 844]
+  - name: efc
+    symbol: EFC
+    unit: ""
+    description: Equivalent full cycle count, cumulative Ah-throughput / (2 × nominal capacity).
+    range: [0.76, 654.2]
+  - name: nominal_capacity_mAh
+    symbol: Q_0
+    unit: mAh
+    description: Design (rated) discharge capacity for the cell; constant within each cell.
+    range: [3.8, 1000.0]
+  - name: v_cutoff_low_V
+    symbol: V_low
+    unit: V
+    description: Lower voltage cutoff applied during discharge.
+    range: [2.8, 3.0]
+  - name: v_cutoff_high_V
+    symbol: V_high
+    unit: V
+    description: Upper voltage cutoff at end of charge.
+    range: [4.2, 4.3]
+  - name: i_cutoff_crate
+    symbol: I_CV
+    unit: ""
+    description: Constant-voltage termination current as a fraction of the 1 C rate.
+    range: [0.02, 0.05]
+  - name: i_chg_crate_max
+    symbol: I_chg
+    unit: ""
+    description: Group-level upper bound on the charge C-rate.
+    range: [0.2, 0.5]
+  - name: group
+    symbol: g
+    unit: ""
+    description: Integer label 1..4 identifying the cell's design configuration group.
+    range: [1, 4]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-cell-out)
+# plus a temporal within-test split. 23 Stanford Li-metal cells across 4
+# design groups split 15 train / 8 test (lexicographic; sorted indices
+# 1, 4, 7, ... -> test). For each test cell, fit() sees its early-life
+# cycles (cycle_index < median) and predict() is scored on its late-life
+# cycles (cycle_index >= median) — the standard "predict end-of-life
+# from early-cycle data" evaluation in battery degradation research.
+data_files:
+  train:     data/train.csv        # 15 train cells, all cycles
+  test_fit:  data/test_fit.csv     # 8 test cells, early half of cycles
+  test_test: data/test_test.csv    # 8 test cells, late half of cycles
+n_train:     7487
+n_test_fit:  1768
+n_test_test: 1774
+n_clusters_train: 15
+n_clusters_test:  8
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: sei_sqrt_growth_exponent
+    value: 0.5
+    unit: dimensionless
+    description: Exponent of cycle / time in the SEI-growth capacity-fade law (sqrt(k)).
+    source: Pinson & Bazant (2013) Eq. 4 and Spotnitz (2003) Eq. 6b — the diffusion-limited large-time SEI growth has thickness ∝ sqrt(t). A candidate constant for any SR system fitting capacity-fade.
+    _role: candidate
+  - name: graphite_sei_density_proxy
+    value: 2.0
+    unit: g/cm³
+    description: Order-of-magnitude SEI layer density.
+    source: A representative materials value cited in early Li-ion SEI literature; not used by any of the reference closed-form expressions (their material constants are absorbed into per-cell alpha/Rf0/D).
+    _role: distractor
+
+# === Reference baselines ===
+# Three capacity-fade laws:
+# - pinson_2013    : Q = Q0 - alpha*sqrt(k) + beta (large-t sqrt asymptote; OLS).
+# - spotnitz_2003  : Q = Q0 * (1 - (sqrt(1+2*D*Rf0*k) - 1)/D) (explicit SEI growth).
+# - he_2011        : Q = a*exp(b*k) + c*exp(d*k) (double-exponential, no Q0 anchor).
+references:
+  - id: pinson_2013
+    label: Pinson & Bazant (2013) sqrt-time SEI capacity fade (closed-form OLS)
+    formula_file: formulas/pinson_2013.py
+    reference_pdf: reference/pinson_2013.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # alpha, beta
+    measured: {rmse: 2.5580, r2: 0.6348}   # mean per-cluster
+  - id: he_2011
+    label: He, Williard, Osterman & Pecht (2011) double-exponential capacity fade (nonlinear LS)
+    formula_file: formulas/he_2011.py
+    reference_pdf: reference/he_2011.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # a, b, c, d
+    measured: {rmse: 0.6964, r2: 0.8610}   # mean per-cluster
+# spotnitz_2003 is documented in reference/ and formulas/ but is NOT in the
+# active bank: its closed form is jointly unidentifiable in (D, Rf0) on
+# this Li-metal dataset (the optimiser falls into a degenerate manifold,
+# yielding RMSE ~10x the target range on high-capacity cells). It is the
+# canonical SEI-growth expression for graphite Li-ion cells; the v1 task
+# kept it as a "red-team" chemistry-mismatch reference, but it cannot
+# anchor scoring here.
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on cap_dischg_mAh (mAh)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes slow long-term capacity loss from continued cycling aging"
+  - "predicted capacity stays within [0, nominal_capacity_mAh]"
+  - "predicted capacity is non-increasing as accumulated use increases for the same cell and protocol"
+
+best_baseline: 0.6964     # he_2011, mean per-cluster rmse

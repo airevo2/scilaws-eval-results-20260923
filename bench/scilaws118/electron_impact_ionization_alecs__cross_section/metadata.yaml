@@ -1,0 +1,152 @@
+task_id: electron_impact_ionization_alecs__cross_section
+domain: physics / atomic_molecular_physics
+license: CC-BY-4.0
+
+# Type II — cluster = target species (molecule or noble gas atom).
+# Within each cluster, rows are (electron_energy_eV, cross_section_cm2) pairs
+# at different incident electron energies from primary experimental measurements.
+type: typeII
+has_group_id: true
+
+# Forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# batch02 standard cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emit for forward-compat.
+unseen_group_strategy: error
+
+context: >-
+  When an electron collides with a neutral atom or molecule with sufficient
+  kinetic energy, it can ionize the target by ejecting one of its bound
+  electrons. The probability of this process is described by the total
+  ionization cross-section, which peaks near a few times the ionization
+  potential and falls off at higher energies following an approximate
+  ln(E)/E asymptotic form. The peak magnitude and shape depend on the
+  electronic structure of each target species — in particular on the binding
+  energies and occupation numbers of the occupied molecular orbitals.
+  Cross-section data across different molecular targets span roughly two
+  orders of magnitude in magnitude and exhibit a characteristic near-
+  threshold rise, a broad peak, and a gradual high-energy decline.
+
+target:
+  name: cross_section_1e16cm2
+  symbol: "σ(E_e)"
+  unit: 1e-16 cm^2
+  description: Total electron-impact single-ionization cross-section in units of 10^-16 cm^2 — the effective area presented by the target molecule or atom for single-ionization by an electron of kinetic energy E_e. Measured by primary experiment (beam current ratio methods).
+  range: [0.009, 8.5]
+
+inputs:
+  - name: electron_energy_eV
+    symbol: "E_e"
+    unit: eV
+    description: Kinetic energy of the incident electron.
+    range: [10.0, 8000.0]
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Cluster = target species (molecule or noble gas). Train/test boundary is
+# whole-species holdout: test species are entirely absent from train.csv.
+# Within each test cluster, test_fit rows are the lowest-energy 60% (sorted by
+# E_e); test_test rows are the highest-energy 40% (OOD energy extrapolation).
+# K_test = 9 (per task K-floor requirement); K_train = 7.
+# Note: train (176 rows) < test_fit + test_test (354 rows) due to K_test=9
+# requirement with only 16 total species. Train has 7 structurally diverse
+# species including the two largest non-test species (NO2=86 rows, O2=43 rows).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 176
+n_test_fit: 209
+n_test_test: 145
+n_clusters_train: 7
+n_clusters_test: 9
+
+# Candidate prior constants — grounded in Gaches 2024 and NIST CODATA 2018.
+# Audit 2026-06-02: bohr_radius_cm / rydberg_eV are now legitimate OTHER candidates
+# (gaches a0_cm/R_inf_eV demoted LAW->OTHER, CODATA givens not defining coefficients);
+# the prior<->LAW value leak they used to form is resolved (LAW is empty for both
+# baselines). No prior changed value; classification only.
+# Field-class re-audit 2026-06-02: lotz_amplitude_unit (1e-14) is now backed by an
+# OTHER_CONSTANTS entry in lotz_1968.py (a unit-conversion GIVEN, MANUAL §1 kind-a),
+# so OTHER ⊆ priors holds for it too. LAW stays empty for both baselines → LAW∩priors=∅.
+priors:
+  - name: bohr_radius_cm
+    value: 5.29177210903e-9
+    unit: cm
+    description: Bohr radius a_0 — the characteristic length scale in atomic cross-section formulas (BEB amplitude S = 4*pi*a0^2 * n * R_inf / B).
+    source: NIST CODATA 2018; Gaches et al. (2024) Eq. (9); Kim & Rudd (1994) Eq. (8).
+    _role: candidate
+  - name: rydberg_eV
+    value: 13.605693122994
+    unit: eV
+    description: Rydberg constant in electron-volts — the energy scale factor in BEB amplitude S_ell = 4*pi*a0^2 * n * R_inf / B.
+    source: NIST CODATA 2018; Gaches et al. (2024) Eq. (9); Kim & Rudd (1994) Eq. (8).
+    _role: candidate
+  - name: lotz_amplitude_unit
+    value: 1.0e-14
+    unit: cm^2 eV^2
+    description: Unit conversion factor for the Lotz (1968) formula amplitude a_i — cross-section is in units of 10^-14 cm^2 eV^2 divided by E*P (eV^2).
+    source: Lotz (1968) Eq. (1), PDF p. 241.
+    _role: candidate
+  - name: bohr_magneton_eV_T
+    value: 5.7884e-5
+    unit: eV/T
+    description: Bohr magneton in eV/T — a fundamental atomic constant appearing in magnetic-field-dependent ionization theories; not used by BEB or Lotz.
+    source: NIST CODATA 2018.
+    _role: distractor
+  - name: ionization_potential_N2_eV
+    value: 15.58
+    unit: eV
+    description: Ionization potential of N2 from NIST Webbook — the minimum electron energy to ionize N2 (threshold for the BEB formula).
+    source: NIST WebBook (accessed 2026); NIST Standard Reference Database 69.
+    _role: distractor
+
+# Reference-baseline bank
+references:
+  - id: gaches_2024
+    label: "Gaches et al. (2024) BEB — binary-encounter Bethe (Kim & Rudd 1994), two effective orbitals"
+    formula_file: formulas/gaches_2024.py
+    reference_pdf: reference/gaches_2024.pdf
+    n_law_constants: 0
+    n_other_constants: 2
+    n_local_params: 6
+    measured:
+      rmse: 0.4340389009525869
+      r2: 0.8232342387429837
+  - id: lotz_1968
+    label: "Lotz (1968) — semi-empirical two-subshell formula Eq. (1)"
+    formula_file: formulas/lotz_1968.py
+    reference_pdf: reference/lotz_1968.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 8
+    measured:
+      rmse: 0.22985592643937874
+      r2: 0.950426195561486
+
+caps:
+  max_law_constants: 0
+  max_local_params: 8
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 13
+
+metric: rmse
+best_baseline: 0.22985592643937874
+
+# Audit note (§9.18 hard OOD probe): the within-cluster split uses the lowest 60%
+# of energy rows for test_fit and the top 40% for test_test, so test_test probes
+# high-energy extrapolation (the ln(E)/E Bethe tail) from a peak-region fit.
+# Best baseline = Lotz (1968): beats the per-cluster naive constant in 9/9 test
+# clusters, mean-per-cluster RMSE 0.115, per-cluster R^2 median 0.974 (min 0.584),
+# pooled R^2 0.950. BEB (Gaches 2024, two effective orbitals): beats naive in 7/9
+# clusters (mean-per-cluster RMSE 0.281); 2 clusters (CO2, H2O) go R^2<0 under the
+# high-E extrapolation because the two-orbital BEB reduction extrapolates less well
+# than Lotz at high energy — consistent with Gaches 2024 (BEB underestimates at
+# higher energies). This is a legitimate mixed bank (§9.14): the strongest baseline
+# clears naive everywhere; BEB is the weaker, physically-motivated alternative, and
+# the Lotz-vs-BEB gap on the extrapolation tail is the discriminating signal.
+# NOTE on the fit: both reference fit() routines least-squares in the released
+# 10^-16 cm^2 units with x_scale="jac" + a deterministic 4-start (no RNG). An
+# earlier version fitted in raw cm^2 (~1e-16), which starved the optimizer (cost
+# ~1e-32 < tolerance) so parameters never left their start values and every
+# baseline spuriously lost to the naive constant — fixed in the 2026-06-02 audit
+# (see VERDICT.md); metrics above are post-fix.

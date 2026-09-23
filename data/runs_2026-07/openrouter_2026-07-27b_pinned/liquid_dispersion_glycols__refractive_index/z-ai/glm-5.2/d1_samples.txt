@@ -1,0 +1,133 @@
+import numpy as np
+
+def predict(X):
+    lambda_um = X[:, 0]
+    temperature_C = X[:, 1]
+    
+    # Cauchy equation coefficients (typical for ethylene glycol at 20 degC)
+    A = 1.4164
+    B = 0.00534
+    
+    # Linear temperature dependence (dn/dT)
+    C = -0.00026
+    T_ref = 20.0
+    
+    n = A + B / (lambda_um**2) + C * (temperature_C - T_ref)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Refractive index of ethylene glycol as a function of wavelength and
+    temperature using a standard Cauchy-type dispersion formula with
+    linear temperature dependence of the coefficients.
+
+    n(lambda, T) = A(T) + B(T)/lambda^2 + C(T)/lambda^4
+
+    with
+        A(T) = A0 + A1 * (T - 20)
+        B(T) = B0 + B1 * (T - 20)
+        C(T) = C0 + C1 * (T - 20)
+
+    The coefficients are typical values for pure ethylene glycol in the
+    visible / near-infrared region (lambda in micrometres, T in Celsius).
+    """
+    lam = X[:, 0]   # wavelength [um]
+    T   = X[:, 1]   # temperature [degC]
+
+    # Cauchy coefficients at 20 degC
+    A0 = 1.4165
+    B0 = 0.00440
+    C0 = 0.00030
+
+    # Temperature coefficients (per degC)
+    A1 = -2.5e-4
+    B1 = -1.0e-6
+    C1 = -1.0e-8
+
+    A = A0 + A1 * (T - 20.0)
+    B = B0 + B1 * (T - 20.0)
+    C = C0 + C1 * (T - 20.0)
+
+    n = A + B / lam**2 + C / lam**4
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]          # wavelength in micrometres
+    T = X[:, 1]            # temperature in degrees Celsius
+    # Cauchy dispersion for ethylene glycol at 20 °C
+    A = 1.4222
+    B = 0.00316
+    C = 0.00006
+    # linear temperature coefficient (1/°C)
+    dndT = -0.00026
+    n = A + B / lam**2 + C / lam**4 + dndT * (T - 20.0)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Refractive index of ethylene glycol as a function of wavelength and temperature.
+
+    Uses a Cauchy dispersion relation with a linear temperature correction:
+        n(λ, T) = A + B/λ^2 + C/λ^4 + D*(T - 20°C)
+
+    λ is in micrometres, T in degrees Celsius.
+    Coefficients are typical literature values for pure ethylene glycol.
+    """
+    lam = X[:, 0]   # wavelength [um]
+    T   = X[:, 1]   # temperature [degC]
+
+    # Cauchy coefficients at 20 °C
+    A = 1.4164
+    B = 0.00578
+    C = -0.00014
+
+    # Temperature coefficient [1/degC]
+    D = -0.00026
+
+    n = A + B / lam**2 + C / lam**4 + D * (T - 20.0)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the refractive index of ethylene glycol as a function of 
+    wavelength (in micrometers) and temperature (in Celsius).
+    
+    Uses a Cauchy-like dispersion equation fitted to standard data 
+    for ethylene glycol at 20°C, combined with a linear temperature 
+    coefficient.
+    """
+    lam = X[:, 0]
+    T = X[:, 1]
+    
+    # Cauchy coefficients for ethylene glycol at 20°C
+    A = 1.4043
+    B = 0.01297
+    C = -0.00118
+    
+    # Linear temperature coefficient (dn/dT) in 1/°C
+    dn_dt = -0.00026
+    T_ref = 20.0
+    
+    # Refractive index at 20°C
+    n_20 = A + B / (lam ** 2) + C / (lam ** 4)
+    
+    # Adjust for temperature
+    n = n_20 + dn_dt * (T - T_ref)
+    
+    return n

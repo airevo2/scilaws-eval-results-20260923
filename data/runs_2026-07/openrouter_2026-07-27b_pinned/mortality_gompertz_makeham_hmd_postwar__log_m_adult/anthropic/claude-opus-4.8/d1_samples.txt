@@ -1,0 +1,96 @@
+import numpy as np
+
+def predict(X):
+    # Gompertz(-Makeham) law of adult mortality with a linear calendar-year
+    # mortality-improvement term:
+    #   ln m(x,t) = ln A + b * x + c * (t - t0)
+    x = X[:, 0].astype(float)   # age
+    t = X[:, 1].astype(float)   # calendar year
+
+    ln_A = -10.5      # Gompertz intercept (ln of baseline hazard)
+    b     = 0.090     # Gompertz rate of aging (~9% increase per year of age)
+    c     = -0.012    # secular mortality improvement (~1.2% decline per year)
+    t0    = 1950.0    # reference year
+
+    return ln_A + b * x + c * (t - t0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gompertz(-Makeham) law of mortality with a Lee-Carter-style linear
+    # temporal mortality decline.
+    #
+    #   m(x, t) = A + B * exp(alpha * x) * exp(-rho * (t - t0))
+    #
+    # For adult ages (30-95) the age-dependent Gompertz term dominates, giving
+    # an approximately log-linear rise of ln m with age, plus a secular decline
+    # in calendar time.
+    x = X[:, 0]
+    t = X[:, 1]
+
+    t0    = 1950.0     # reference year
+    A     = 2.0e-4     # Makeham background (age-independent) hazard
+    lnB   = -10.7      # ln of Gompertz baseline level at age 0
+    alpha = 0.092      # Gompertz rate-of-ageing (slope of ln m vs age)
+    rho   = 0.011      # annual rate of mortality improvement
+
+    hazard = A + np.exp(lnB + alpha * x - rho * (t - t0))
+    return np.log(hazard)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gompertz-Makeham style adult mortality with linear time decline.
+    # log m(x,t) = alpha + beta * age + gamma * (year - 1950)
+    x = X[:, 0].astype(float)
+    t = X[:, 1].astype(float)
+
+    alpha = -9.05    # baseline log-rate constant
+    beta = 0.085     # Gompertz rate of aging (per year of age)
+    gamma = -0.012   # secular mortality decline (per calendar year)
+
+    log_m = alpha + beta * x + gamma * (t - 1950.0)
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gompertz law of adult mortality (log-linear in age) with a
+    # secular mortality-improvement term in calendar time.
+    #   ln m(x,t) = ln B + alpha * x + gamma * (t - t0)
+    age  = X[:, 0]
+    year = X[:, 1]
+
+    lnB   = -10.7        # ln of Gompertz baseline level
+    alpha = 0.090        # Gompertz rate-of-aging (per year of age)
+    gamma = -0.010       # ~1% annual mortality decline
+    t0    = 1950.0
+
+    return lnB + alpha * age + gamma * (year - t0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gompertz law of adult mortality with a linear time-improvement term:
+    #   m(x, t) = A * exp(B * x) * exp(-k * (t - t0))
+    #   ln m    = ln A + B * x - k * (t - t0)
+    #
+    # Canonical Gompertz parameters for adult (30-95) all-cause mortality:
+    x = X[:, 0]
+    t = X[:, 1]
+
+    ln_A = -10.0      # ln of baseline level (Gompertz intercept)
+    B    = 0.090      # Gompertz slope (~8-10% rise in hazard per year of age)
+    k    = 0.010      # secular mortality improvement (~1% decline per calendar year)
+    t0   = 1950.0     # reference year
+
+    log_m = ln_A + B * x - k * (t - t0)
+    return log_m

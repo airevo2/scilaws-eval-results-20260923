@@ -1,0 +1,609 @@
+{
+  "probe": "D1-only cold recall (no citation, no data); binary: memorized iff >=3/5 else clean",
+  "level": "task",
+  "counts": {
+    "tasks": 118,
+    "tasks_I": 66,
+    "tasks_II": 52,
+    "rows": 944,
+    "models": 8
+  },
+  "models": [
+    "gpt-4o-mini",
+    "gpt-4o",
+    "gpt-4.1-mini",
+    "gpt-4.1",
+    "gpt-5-nano",
+    "gpt-5-mini",
+    "gpt-5",
+    "gpt-5.5"
+  ],
+  "ladder": {
+    "gpt-4o-mini": {
+      "mem": 15.2542,
+      "clean": 84.7458,
+      "n": 118
+    },
+    "gpt-4o": {
+      "mem": 19.4915,
+      "clean": 80.5085,
+      "n": 118
+    },
+    "gpt-4.1-mini": {
+      "mem": 24.5763,
+      "clean": 75.4237,
+      "n": 118
+    },
+    "gpt-4.1": {
+      "mem": 25.4237,
+      "clean": 74.5763,
+      "n": 118
+    },
+    "gpt-5-nano": {
+      "mem": 27.9661,
+      "clean": 72.0339,
+      "n": 118
+    },
+    "gpt-5-mini": {
+      "mem": 31.3559,
+      "clean": 68.6441,
+      "n": 118
+    },
+    "gpt-5": {
+      "mem": 35.5932,
+      "clean": 64.4068,
+      "n": 118
+    },
+    "gpt-5.5": {
+      "mem": 34.7458,
+      "clean": 65.2542,
+      "n": 118
+    },
+    "ALL": {
+      "mem": 26.8008,
+      "clean": 73.1992,
+      "n": 944
+    }
+  },
+  "feynman": {
+    "gpt-4o-mini": {
+      "mem": 45.0,
+      "clean": 55.0,
+      "n": 100
+    },
+    "gpt-4o": {
+      "mem": 48.0,
+      "clean": 52.0,
+      "n": 100
+    },
+    "gpt-4.1-mini": {
+      "mem": 52.0,
+      "clean": 48.0,
+      "n": 100
+    },
+    "gpt-4.1": {
+      "mem": 56.0,
+      "clean": 44.0,
+      "n": 100
+    },
+    "gpt-5-nano": {
+      "mem": 51.0,
+      "clean": 49.0,
+      "n": 100
+    },
+    "gpt-5-mini": {
+      "mem": 61.0,
+      "clean": 39.0,
+      "n": 100
+    },
+    "gpt-5": {
+      "mem": 63.0,
+      "clean": 37.0,
+      "n": 100
+    },
+    "gpt-5.5": {
+      "mem": 71.0,
+      "clean": 29.0,
+      "n": 100
+    },
+    "ALL": {
+      "mem": 55.875,
+      "clean": 44.125,
+      "n": 800
+    }
+  },
+  "ratio_all": 2.08,
+  "frontier": {
+    "model": "gpt-5.5",
+    "real_mem": 34.7458,
+    "feyn_mem": 71.0,
+    "gap_pp": 36.3
+  },
+  "anatomy": {
+    "memorized": 26.8,
+    "clean": 73.2
+  },
+  "per_type": {
+    "I": {
+      "mem": 20.1,
+      "clean": 79.9,
+      "n": 528,
+      "tasks": 66
+    },
+    "II": {
+      "mem": 35.3,
+      "clean": 64.7,
+      "n": 416,
+      "tasks": 52
+    }
+  },
+  "ladder_by_type": {
+    "I": {
+      "gpt-4o-mini": 7.58,
+      "gpt-4o": 13.64,
+      "gpt-4.1-mini": 22.73,
+      "gpt-4.1": 18.18,
+      "gpt-5-nano": 21.21,
+      "gpt-5-mini": 25.76,
+      "gpt-5": 24.24,
+      "gpt-5.5": 27.27
+    },
+    "II": {
+      "gpt-4o-mini": 25.0,
+      "gpt-4o": 26.92,
+      "gpt-4.1-mini": 26.92,
+      "gpt-4.1": 34.62,
+      "gpt-5-nano": 36.54,
+      "gpt-5-mini": 38.46,
+      "gpt-5": 50.0,
+      "gpt-5.5": 44.23
+    }
+  },
+  "recall_spectrum": [
+    63,
+    9,
+    3,
+    9,
+    10,
+    3,
+    3,
+    6,
+    12
+  ],
+  "per_domain": [
+    {
+      "domain": "Materials & Engineering",
+      "tasks": 19,
+      "n": 152,
+      "mem_pct": 13.2,
+      "clean_pct": 86.8,
+      "moat_pct": 73.7,
+      "moat_n": 14,
+      "canon_n": 1,
+      "front_pct": 15.8
+    },
+    {
+      "domain": "Astronomy",
+      "tasks": 20,
+      "n": 160,
+      "mem_pct": 18.8,
+      "clean_pct": 81.2,
+      "moat_pct": 55.0,
+      "moat_n": 11,
+      "canon_n": 1,
+      "front_pct": 30.0
+    },
+    {
+      "domain": "Earth & Physics",
+      "tasks": 24,
+      "n": 192,
+      "mem_pct": 24.5,
+      "clean_pct": 75.5,
+      "moat_pct": 62.5,
+      "moat_n": 15,
+      "canon_n": 3,
+      "front_pct": 29.2
+    },
+    {
+      "domain": "Biology",
+      "tasks": 16,
+      "n": 128,
+      "mem_pct": 29.7,
+      "clean_pct": 70.3,
+      "moat_pct": 50.0,
+      "moat_n": 8,
+      "canon_n": 3,
+      "front_pct": 31.2
+    },
+    {
+      "domain": "Ecology & Hydrology",
+      "tasks": 22,
+      "n": 176,
+      "mem_pct": 36.9,
+      "clean_pct": 63.1,
+      "moat_pct": 40.9,
+      "moat_n": 9,
+      "canon_n": 2,
+      "front_pct": 59.1
+    },
+    {
+      "domain": "Social Sciences",
+      "tasks": 17,
+      "n": 136,
+      "mem_pct": 39.0,
+      "clean_pct": 61.0,
+      "moat_pct": 35.3,
+      "moat_n": 6,
+      "canon_n": 2,
+      "front_pct": 41.2
+    }
+  ],
+  "moat": {
+    "never_cold_all8": {
+      "n": 63,
+      "pct": 53.4
+    },
+    "universal_canon_all8": {
+      "n": 12,
+      "pct": 10.2
+    },
+    "clean_frontier_gpt55": {
+      "n": 77,
+      "pct": 65.3
+    },
+    "moat_members": [
+      "baseflow_recession_nwis__Q_t",
+      "biodiversity_distance_decay__Sim_sor",
+      "blood_clot_constitutive__tau_ss",
+      "bns_merger_disk_ejecta__Mdisk",
+      "bns_merger_disk_ejecta__Mej",
+      "bns_merger_disk_ejecta__vej",
+      "bns_postmerger_waveform_core__f2",
+      "budyko_partitioning_mach__et_over_p",
+      "catchment_mean_runoff_camels__q_mean",
+      "chiller_gordon_ng_universal__one_over_COP_minus_1",
+      "cloud_cover_parameterization__cloud_cover",
+      "co2_adsorption_zeolite_isodb_toth__n_ads",
+      "commuting_gravity_lodes__flow_Tij",
+      "cosmic_ray_eas_auger__dE_dX",
+      "dna_melting_temperature_khandelwal__Tm",
+      "drosophila_isolation_by_distance_dest__M_stat",
+      "eclipsing_binary_mass_luminosity_debcat__log_L_Lsun",
+      "ecoli_antibiotic_temperature_growth__OD24h",
+      "ecoli_growth_curve_chemically_defined__od600",
+      "electron_impact_ionization_alecs__cross_section",
+      "galaxy_mass_metallicity_sdss__oh",
+      "geomagnetic_storm_dst__dDst_dt",
+      "ghg_emission_drivers__CDE",
+      "ghg_emission_drivers__EC",
+      "ghg_emission_drivers__ME",
+      "ghg_emission_drivers__NOE",
+      "ground_motion_ita18__log10_pga",
+      "hea_hardness_lattice_distortion_couzinie__HV",
+      "her_hor_pt_acid_kucernak__current_density",
+      "island_species_richness_terceira__S_terceira",
+      "lake_thermocline_depth_pilla__z_t",
+      "latent_heat_flux_kgdsr__LE",
+      "li_metal_battery_capacity_stanford__cap_dischg_mAh",
+      "life_expectancy_preston__e0_vs_gdppc",
+      "liquid_dispersion_glycols__refractive_index",
+      "lpbf_meltpool_rosenthal_inconel__depth",
+      "magnet_3c90_core_loss__log_P_vol",
+      "mars_crater_size_frequency__N_cum",
+      "materials_project_elastic_birch_murnaghan__K_VRH",
+      "mauna_loa_co2_keeling_curve_noaa__co2_ppm",
+      "mincer_earnings_acs_pums__log_wage",
+      "mortality_heligman_pollard_hmd__log_m_full",
+      "mouse_skin_biaxial_constitutive__sigma22",
+      "nuclear_binding_energy_ame2020__BE_per_A",
+      "open_channel_flow_manning_usgs__mean_velocity",
+      "optical_dispersion_sellmeier__refractive_index",
+      "plant_competition_reciprocal_yield__mean_plant_mass",
+      "polymer_melt_viscosity_polyverse__log10_eta_poise",
+      "pp_total_cross_section_donnachie_landshoff__sigma_tot",
+      "proton_em_form_factor__GE_over_GD",
+      "running_endurance_iaaf__velocity",
+      "silicate_melt_viscosity_gpvisc__log_viscosity",
+      "smbh_mass_sigma_relation__log_M_BH",
+      "sne_ia_distance_modulus_pantheonplus__mu",
+      "solar_flat_plate_collector_graz_efficiency__eta_thermal",
+      "solar_sunspot_silso__ssn",
+      "spirometry_nhanes__FEV1_L",
+      "spirometry_nhanes__FVC_L",
+      "thermal_performance_curve__pf_utpc",
+      "traffic_flow_density_ngsim__q_flow",
+      "ttauri_accretion__L_acc",
+      "weir_flow_tilting_pugh__discharge",
+      "wind_turbine_power_curve_engie__power_kW"
+    ],
+    "canon_members": [
+      "afm_nanoindentation_spherical_zef18__force_indentation",
+      "cepheid_period_luminosity__M_W",
+      "gravity_wgs84_somigliana__g0",
+      "gutenberg_richter_b_value_usgs__gr_freq_mag",
+      "metabolic_scaling_anage__log_bmr_W",
+      "mof_co2_adsorption_langmuir_crafted__q_CO2",
+      "predator_functional_response_forage__prey_eaten",
+      "soil_exoenzyme_kinetics_alves__activity_rate",
+      "spectrophotometry_beer_lambert_chromate__absorbance",
+      "streamchannel_at_station_hydraulic_geometry_ifmha__chan_width",
+      "trade_gravity_cepii__log_tradeflow",
+      "urban_scaling_msa_bea__log_GMP"
+    ]
+  },
+  "relax": {
+    "good_threshold": 0.9,
+    "main": {
+      "thr": 0.9,
+      "case1": 16,
+      "case2a": 25,
+      "case2b": 77,
+      "delta_all_pp": 0.85,
+      "delta_5p5_pp": 0.0,
+      "flip_cells": 8,
+      "flip_tasks": [
+        "alkali_rydberg_levels_quantum_defect__binding_energy",
+        "neo_size_frequency_distribution__N_cum_H",
+        "red_giant_asteroseismology__delta_nu"
+      ],
+      "union_uncertain_cells": 5,
+      "union_ceiling_all_pp": 1.38
+    },
+    "sweep": [
+      {
+        "thr": 0.8,
+        "case1": 30,
+        "case2a": 29,
+        "case2b": 59,
+        "delta_all_pp": 3.5,
+        "delta_5p5_pp": 4.24,
+        "flip_cells": 33,
+        "flip_tasks": [
+          "alkali_rydberg_levels_quantum_defect__binding_energy",
+          "baseball_pythagorean_winpct_lahman__win_pct",
+          "co2_adsorption_zeolite_isodb_toth__n_ads",
+          "eclipsing_binary_mass_luminosity_debcat__log_L_Lsun",
+          "neo_size_frequency_distribution__N_cum_H",
+          "pp_total_cross_section_donnachie_landshoff__sigma_tot",
+          "proton_em_form_factor__GE_over_GD",
+          "red_giant_asteroseismology__delta_nu",
+          "tumor_growth_mouse__tumor_volume",
+          "wind_turbine_power_curve_engie__power_kW"
+        ],
+        "union_uncertain_cells": 12,
+        "union_ceiling_all_pp": 4.77
+      },
+      {
+        "thr": 0.85,
+        "case1": 26,
+        "case2a": 25,
+        "case2b": 67,
+        "delta_all_pp": 2.33,
+        "delta_5p5_pp": 3.39,
+        "flip_cells": 22,
+        "flip_tasks": [
+          "alkali_rydberg_levels_quantum_defect__binding_energy",
+          "baseball_pythagorean_winpct_lahman__win_pct",
+          "eclipsing_binary_mass_luminosity_debcat__log_L_Lsun",
+          "neo_size_frequency_distribution__N_cum_H",
+          "pp_total_cross_section_donnachie_landshoff__sigma_tot",
+          "proton_em_form_factor__GE_over_GD",
+          "red_giant_asteroseismology__delta_nu",
+          "tumor_growth_mouse__tumor_volume",
+          "wind_turbine_power_curve_engie__power_kW"
+        ],
+        "union_uncertain_cells": 9,
+        "union_ceiling_all_pp": 3.28
+      },
+      {
+        "thr": 0.9,
+        "case1": 16,
+        "case2a": 25,
+        "case2b": 77,
+        "delta_all_pp": 0.85,
+        "delta_5p5_pp": 0.0,
+        "flip_cells": 8,
+        "flip_tasks": [
+          "alkali_rydberg_levels_quantum_defect__binding_energy",
+          "neo_size_frequency_distribution__N_cum_H",
+          "red_giant_asteroseismology__delta_nu"
+        ],
+        "union_uncertain_cells": 5,
+        "union_ceiling_all_pp": 1.38
+      },
+      {
+        "thr": 0.95,
+        "case1": 9,
+        "case2a": 18,
+        "case2b": 91,
+        "delta_all_pp": 0.53,
+        "delta_5p5_pp": 0.0,
+        "flip_cells": 5,
+        "flip_tasks": [
+          "alkali_rydberg_levels_quantum_defect__binding_energy",
+          "neo_size_frequency_distribution__N_cum_H"
+        ],
+        "union_uncertain_cells": 4,
+        "union_ceiling_all_pp": 0.95
+      },
+      {
+        "thr": 0.99,
+        "case1": 1,
+        "case2a": 6,
+        "case2b": 111,
+        "delta_all_pp": 0.53,
+        "delta_5p5_pp": 0.0,
+        "flip_cells": 5,
+        "flip_tasks": [
+          "alkali_rydberg_levels_quantum_defect__binding_energy",
+          "neo_size_frequency_distribution__N_cum_H"
+        ],
+        "union_uncertain_cells": 1,
+        "union_ceiling_all_pp": 0.64
+      }
+    ],
+    "case1_detail": [
+      {
+        "task": "alkali_rydberg_levels_quantum_defect__binding_energy",
+        "II": true,
+        "ngood": 2,
+        "r2_hi": 1.0,
+        "r2_lo": 1.0,
+        "spread": 0.0,
+        "best": "martin_1996",
+        "best_is_good": true
+      },
+      {
+        "task": "blood_clot_constitutive__tau_ss",
+        "II": true,
+        "ngood": 3,
+        "r2_hi": 0.98,
+        "r2_lo": 0.974,
+        "spread": 0.005,
+        "best": "sugerman_2021_yeoh",
+        "best_is_good": true
+      },
+      {
+        "task": "leaf_light_response_photosynthesis_schmiege__net_assimilation",
+        "II": true,
+        "ngood": 2,
+        "r2_hi": 0.985,
+        "r2_lo": 0.982,
+        "spread": 0.002,
+        "best": "lobo_2013",
+        "best_is_good": true
+      },
+      {
+        "task": "magnet_3c90_core_loss__log_P_vol",
+        "II": false,
+        "ngood": 2,
+        "r2_hi": 0.943,
+        "r2_lo": 0.925,
+        "spread": 0.018,
+        "best": "steinmetz_temperature_extended",
+        "best_is_good": true
+      },
+      {
+        "task": "mauna_loa_co2_keeling_curve_noaa__co2_ppm",
+        "II": false,
+        "ngood": 2,
+        "r2_hi": 0.951,
+        "r2_lo": 0.909,
+        "spread": 0.042,
+        "best": "noaa_curve_fit_k4",
+        "best_is_good": true
+      },
+      {
+        "task": "metabolic_scaling_anage__log_bmr_W",
+        "II": false,
+        "ngood": 2,
+        "r2_hi": 0.969,
+        "r2_lo": 0.963,
+        "spread": 0.006,
+        "best": "kleiber_1932",
+        "best_is_good": true
+      },
+      {
+        "task": "mortality_gompertz_makeham_hmd_postwar__log_m_adult",
+        "II": true,
+        "ngood": 2,
+        "r2_hi": 0.982,
+        "r2_lo": 0.969,
+        "spread": 0.013,
+        "best": "gompertz_age_year",
+        "best_is_good": true
+      },
+      {
+        "task": "neo_size_frequency_distribution__N_cum_H",
+        "II": false,
+        "ngood": 2,
+        "r2_hi": 0.991,
+        "r2_lo": 0.966,
+        "spread": 0.026,
+        "best": "dohnanyi_exponential_sfd",
+        "best_is_good": true
+      },
+      {
+        "task": "nuclear_binding_energy_ame2020__BE_per_A",
+        "II": false,
+        "ngood": 2,
+        "r2_hi": 0.987,
+        "r2_lo": 0.973,
+        "spread": 0.014,
+        "best": "wang_2014",
+        "best_is_good": true
+      },
+      {
+        "task": "optical_dispersion_sellmeier__refractive_index",
+        "II": true,
+        "ngood": 3,
+        "r2_hi": 0.992,
+        "r2_lo": 0.976,
+        "spread": 0.017,
+        "best": "sellmeier_1871",
+        "best_is_good": true
+      },
+      {
+        "task": "red_giant_asteroseismology__delta_nu",
+        "II": false,
+        "ngood": 2,
+        "r2_hi": 0.964,
+        "r2_lo": 0.941,
+        "spread": 0.023,
+        "best": "yu_2018",
+        "best_is_good": true
+      },
+      {
+        "task": "spectrophotometry_beer_lambert_chromate__absorbance",
+        "II": true,
+        "ngood": 2,
+        "r2_hi": 0.98,
+        "r2_lo": 0.949,
+        "spread": 0.031,
+        "best": "yeh_2023",
+        "best_is_good": true
+      },
+      {
+        "task": "streamchannel_at_station_hydraulic_geometry_ifmha__chan_width",
+        "II": true,
+        "ngood": 2,
+        "r2_hi": 0.953,
+        "r2_lo": 0.914,
+        "spread": 0.039,
+        "best": "leopold_1953",
+        "best_is_good": true
+      },
+      {
+        "task": "tumor_growth_mouse__tumor_volume",
+        "II": true,
+        "ngood": 6,
+        "r2_hi": 0.939,
+        "r2_lo": 0.931,
+        "spread": 0.009,
+        "best": "benzekry_2014_gompertz",
+        "best_is_good": true
+      },
+      {
+        "task": "urban_scaling_msa_bea__log_GMP",
+        "II": true,
+        "ngood": 2,
+        "r2_hi": 0.949,
+        "r2_lo": 0.949,
+        "spread": 0.0,
+        "best": "bettencourt_2007",
+        "best_is_good": true
+      },
+      {
+        "task": "weir_flow_tilting_pugh__discharge",
+        "II": true,
+        "ngood": 2,
+        "r2_hi": 0.995,
+        "r2_lo": 0.979,
+        "spread": 0.016,
+        "best": "pugh_2025",
+        "best_is_good": true
+      }
+    ],
+    "note": "any baseline with r2>=thr (TypeII: mean per-cluster r2) is also a valid recall target, unioned with the best baseline (monotone). delta = relaxed minus strict D1-memorized%. union_ceiling = rigorous upper bound on the per-sample union variant."
+  }
+}

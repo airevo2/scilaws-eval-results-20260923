@@ -1,0 +1,118 @@
+import numpy as np
+
+def predict(X):
+    # Hottel-Whillier-Bliss (HWB) equation: eta = F_R(tau*alpha) - F_R*U_L * (T_in - T_amb) / G
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    # Typical flat-plate collector coefficients chosen to fit the observed efficiency range
+    FR_tau_alpha = 0.78  # Optical efficiency (intercept)
+    FR_UL = 4.0          # Overall heat loss coefficient [W m^-2 K^-1]
+    
+    reduced_temp_diff = (T_in - T_amb) / G
+    eta = FR_tau_alpha - FR_UL * reduced_temp_diff
+    
+    # Clip to physical bounds (0, 1) just in case of extreme inputs
+    eta = np.clip(eta, 0.0, 1.0)
+    
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the gross-area thermal efficiency of the collector array
+    using the Hottel-Whillier-Bliss (HWB) equation.
+    """
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    # HWB coefficients (fitted to match typical observed range)
+    FR_tau_alpha = 0.62   # Optical gain coefficient (F_R * tau * alpha)
+    FR_UL = 1.8           # Heat loss coefficient (F_R * U_L)
+    
+    # Reduced temperature difference
+    reduced_T = (T_in - T_amb) / G
+    
+    # HWB efficiency equation
+    eta = FR_tau_alpha - FR_UL * reduced_T
+    
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    # Hottel-Whillier-Bliss (HWB) standard linear form:
+    # eta = eta_0 - a1 * (T_in - T_amb) / G
+    eta_0 = 0.75  # F_R * (tau * alpha)
+    a1 = 5.0      # F_R * U_L
+    
+    reduced_temp = (T_in - T_amb) / G
+    eta = eta_0 - a1 * reduced_temp
+    
+    # Ensure efficiency is bounded within [0, 1]
+    eta = np.clip(eta, 0.0, 1.0)
+    
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    # Hottel-Whillier-Bliss (HWB) coefficients
+    # eta_0: Optical efficiency (F_R * (tau * alpha))
+    # a_1: Heat loss coefficient (F_R * U_L) in W/(m^2*K)
+    eta_0 = 0.72
+    a_1 = 2.5
+    
+    # Reduced temperature difference
+    reduced_T = (T_in - T_amb) / G
+    
+    # HWB thermal efficiency equation
+    eta = eta_0 - a_1 * reduced_T
+    
+    # Ensure efficiency is bounded within (0, 1)
+    eta = np.clip(eta, 0.0, 1.0)
+    
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    G = X[:, 0]          # Plane-of-array irradiance [W/m^2]
+    T_in = X[:, 1]       # Inlet fluid temperature [deg C]
+    T_amb = X[:, 2]      # Ambient temperature [deg C]
+    
+    # Hottel-Whillier-Bliss (HWB) equation:
+    # eta = F_R*(tau*alpha) - F_R*U_L * (T_in - T_amb) / G
+    F_R_tau_alpha = 0.62  # Optical efficiency term [-]
+    F_R_U_L = 1.8         # Heat loss coefficient term [W m^-2 K^-1]
+    
+    # Reduced temperature difference
+    reduced_temp = (T_in - T_amb) / G
+    
+    # Calculate thermal efficiency
+    eta = F_R_tau_alpha - F_R_U_L * reduced_temp
+    
+    # Constrain to physically valid bounds
+    eta = np.clip(eta, 0.0, 1.0)
+    
+    return eta

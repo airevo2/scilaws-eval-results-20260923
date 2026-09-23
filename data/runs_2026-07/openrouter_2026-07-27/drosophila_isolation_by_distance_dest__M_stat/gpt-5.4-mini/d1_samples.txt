@@ -1,0 +1,72 @@
+import numpy as np
+
+def predict(X):
+    # Rousset's linearized differentiation statistic is commonly modeled as increasing
+    # approximately linearly with geographic distance under isolation by distance.
+    # A standard simple closed-form form is:
+    #   M = a + b * ln(d)
+    # where d is distance in km. Since no fitted coefficients are provided, we return
+    # the canonical unparameterized form with unit slope and zero intercept.
+    log_distance_km = X[:, 0]
+    M = log_distance_km
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rousset's classic isolation-by-distance linearization:
+    # M = F_ST / (1 - F_ST) is often modeled as approximately linear in geographic distance,
+    # with a canonical closed-form expectation:
+    #     M ≈ a + b * ln(d)
+    # where d is pairwise distance (here in km).
+    #
+    # With no data provided, we return the standard functional form using a unit-slope
+    # log-distance relationship and no intercept shift beyond the transform itself.
+    ln_d = X[:, 0]
+    return ln_d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rousset's linearised differentiation statistic:
+    # M = F_ST / (1 - F_ST)
+    #
+    # Standard isolation-by-distance expectation is a linear relationship with
+    # geographic distance, often written approximately as:
+    # M = a + b * ln(d)
+    #
+    # Here we use the canonical closed-form linear form with unknown fitted
+    # coefficients represented as placeholders.
+    log_d = X[:, 0]
+    a = 0.0
+    b = 1.0
+    return a + b * log_d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rousset's linearized differentiation statistic is commonly modeled as
+    # M = a + b * ln(distance)
+    # Here we use the standard simplest closed-form dependence on geographic distance.
+    x = np.asarray(X)
+    ln_d = x[:, 0]
+    return ln_d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rousset's linearised differentiation: M = F_ST / (1 - F_ST)
+    # For isolation-by-distance, the standard closed-form expectation is:
+    # M ≈ a + b * ln(distance)
+    #
+    # Here we use the canonical linear form with distance in km.
+    ln_d = X[:, 0]
+    return ln_d

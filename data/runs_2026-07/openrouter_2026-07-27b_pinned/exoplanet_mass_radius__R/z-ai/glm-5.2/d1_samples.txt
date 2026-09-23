@@ -1,0 +1,117 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the radius R of an astronomical object given its mass M.
+    Uses the standard solid-exoplanet mass-radius power law (e.g., Valencia et al. 2006; 
+    Seager et al. 2007) where R ~ M^0.274.
+    """
+    M = X[:, 0]
+    R = np.power(M, 0.274)
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    
+    # Breakpoints in Earth masses (Chen & Kipping 2017)
+    M1 = 2.04
+    M2 = 0.414 * 317.828   # 0.414 Jupiter masses
+    M3 = 0.080 * 332946.0  # 0.080 solar masses
+    
+    # Power-law slopes for each regime
+    a1 = 0.279   # Terran
+    a2 = 0.589   # Neptunian
+    a3 = -0.044  # Jovian
+    a4 = 0.881   # Stellar
+    
+    # Radii at breakpoints (Earth radii), enforcing continuity
+    R1 = M1 ** a1
+    R2 = R1 * (M2 / M1) ** a2
+    R3 = R2 * (M3 / M2) ** a3
+    
+    R = np.empty_like(M)
+    
+    mask1 = M < M1
+    mask2 = (M >= M1) & (M < M2)
+    mask3 = (M >= M2) & (M < M3)
+    mask4 = M >= M3
+    
+    R[mask1] = M[mask1] ** a1
+    R[mask2] = R1 * (M[mask2] / M1) ** a2
+    R[mask3] = R2 * (M[mask3] / M2) ** a3
+    R[mask4] = R3 * (M[mask4] / M3) ** a4
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the radius R of an astronomical object in Earth radii (R_earth)
+    given its mass M in Earth masses (M_earth).
+    
+    Uses the broken power-law mass-radius relation from Chen & Kipping (2017),
+    which is the canonical empirical model spanning Terran, Neptunian, Jovian, 
+    and Stellar regimes.
+    """
+    M = X[:, 0]
+    R = np.zeros_like(M, dtype=float)
+    
+    # Transition points (in M_earth)
+    M1 = 2.04
+    M2 = 0.414 * 317.8  # ~131.58 M_earth (0.414 M_Jup)
+    M3 = 0.080 * 333000 # ~26640 M_earth (0.080 M_Sun)
+    
+    # 1. Terran regime (M < 2.04 M_earth)
+    mask = M < M1
+    R[mask] = 1.008 * M[mask]**0.279
+    
+    # 2. Neptunian regime (2.04 <= M < 131.58 M_earth)
+    mask = (M >= M1) & (M < M2)
+    R[mask] = 0.808 * M[mask]**0.594
+    
+    # 3. Jovian regime (131.58 <= M < 26640 M_earth)
+    # Coefficient derived for continuity at M2: C = 0.808 * M2**(0.594 - (-0.044))
+    mask = (M >= M2) & (M < M3)
+    R[mask] = 18.40 * M[mask]**(-0.044)
+    
+    # 4. Stellar regime (M >= 26640 M_earth)
+    # Coefficient derived for continuity at M3: C = 18.40 * M3**(-0.044 - 0.80)
+    mask = M >= M3
+    R[mask] = 0.00434 * M[mask]**0.80
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    
+    # Chen & Kipping (2017) broken power-law mass-radius relation
+    M1 = 2.04
+    M2 = 131.58  # 0.414 M_Jup
+    M3 = 26640.0 # 0.08 M_sun
+    
+    # Continuity pivots
+    R1 = 1.008 * (M1 ** 0.279)
+    R2 = R1 * ((M2 / M1) ** 0.590)
+    R3 = R2 * ((M3 / M2) ** (-0.044))
+    
+    R = np.where(M < M1, 1.008 * (M ** 0.279),
+        np.where(M < M2, R1 * ((M / M1) ** 0.590),
+        np.where(M < M3, R2 * ((M / M2) ** (-0.044)),
+                           R3 * ((M / M3) ** 0.80))))
+    
+    return R

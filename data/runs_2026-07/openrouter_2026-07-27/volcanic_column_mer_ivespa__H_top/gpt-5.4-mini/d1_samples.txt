@@ -1,0 +1,51 @@
+import numpy as np
+
+def predict(X):
+    MER = np.asarray(X)[:, 0].astype(float)
+    # Classical empirical plume-height scaling (Sparks et al.-type power law):
+    # H_top ≈ 2.00 * MER^0.259, with H in km above vent and MER in kg/s.
+    return 2.00 * np.power(MER, 0.259)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    MER = np.asarray(X)[:, 0]
+    # Commonly used empirical buoyant-plume scaling for eruption-column height:
+    # H_top ≈ 2.00 * MER^0.259  (H in km above vent, MER in kg/s)
+    return 2.00 * np.power(MER, 0.259)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    MER = np.asarray(X)[:, 0]
+    # Commonly used buoyant-plume scaling (Pyle-like power law):
+    # H_top (km a.s.l. above vent) ≈ 2.00 * MER^(0.241)
+    return 2.0 * np.power(MER, 0.241)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    MER = np.asarray(X)[:, 0]
+    # Classic buoyant plume scaling (e.g., Sparks et al.-type relationship):
+    # plume height above vent scales with MER^(1/4)
+    # Coefficients commonly used for volcanic eruption columns:
+    # H (km) = 2.00 * MER^(1/4), with MER in kg/s
+    return 2.0 * np.power(MER, 0.25)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    MER = np.asarray(X)[:, 0]
+    # Classical plume-rise scaling for eruption-column top height:
+    # H_top ∝ MER^(1/4), with height in km above vent and MER in kg/s.
+    # A commonly used calibrated form for volcanic eruption columns is:
+    # H_top(km) = 2.00 * MER^(1/4)
+    return 2.0 * np.power(MER, 0.25)

@@ -1,0 +1,189 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log sex ratio of central death rates, ln(m_male / m_female),
+
+    using a Gompertz-based derivation where the Gompertz parameters (intercept
+    and slope) for each sex evolve over time.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = year (t) [1751 to 2025]
+
+    Returns:
+    - 1-D numpy array of ln(m_male / m_female)
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Time-varying Gompertz parameters for females
+    # ln(a_female) decreases over time (mortality decline)
+    ln_a_f = -11.5 - 0.011 * (t - 1950)
+    b_f = 0.095 + 0.00005 * (t - 1950)
+
+    # Time-varying Gompertz parameters for males
+    # ln(a_male) also decreases, but historically at a slightly different rate
+    ln_a_m = -10.2 - 0.009 * (t - 1950)
+    b_m = 0.085 + 0.00005 * (t - 1950)
+
+    # Log central death rates
+    ln_m_female = ln_a_f + b_f * x
+    ln_m_male = ln_a_m + b_m * x
+
+    # Log sex ratio: ln(m_male / m_female) = ln(m_male) - ln(m_female)
+    log_sex_ratio = ln_m_male - ln_m_female
+
+    return log_sex_ratio
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of the sex ratio of central death rates,
+
+    ln(m_male / m_female), using a Gompertz-derived relation with
+    time-varying coefficients to capture historical mortality transitions.
+
+    Inputs:
+    X : 2-D numpy array
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = calendar year (t) [1751 to 2025]
+
+    Returns:
+    1-D numpy array of ln(alpha)
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Normalize year to represent the mid-to-late 20th-century transition peak (around 1980)
+    t_scaled = (year - 1980) / 50.0
+
+    # Under the Gompertz model, ln(m_M / m_F) = ln(a_M / a_F) + (b_M - b_F) * age.
+    # We parameterize the intercept and slope to vary with calendar time,
+    # capturing the rise and subsequent decline of the sex mortality gap.
+    intercept = 1.35 - 0.20 * t_scaled - 0.15 * (t_scaled**2)
+    slope = -0.012 + 0.002 * t_scaled
+
+    # Calculate log sex ratio of mortality
+    log_sex_ratio = intercept + slope * (age - 30)
+
+    return log_sex_ratio
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log sex ratio of central death rates, ln(m_male / m_female),
+
+    using a standard Gompertz-based closed-form relationship for adult mortality
+    (ages 30-95) across historical years.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = age (x) [years]
+        - X[:, 1] = year (t) [years]
+
+    Returns:
+    - 1-D numpy array of the predicted log sex ratio.
+    """
+    age = X[:, 0]
+    year = X[:, 1]
+
+    # Under the Gompertz law of mortality, the log of the sex ratio of mortality
+    # is modeled as the difference between male and female Gompertz curves:
+    # ln(m_m / m_f) = [ln(a_m) - ln(a_f)] + (b_m - b_f) * age
+    #
+    # 1. Gompertz rate of senescence difference (delta_b = b_male - b_female):
+    # Females typically have a steeper increase in mortality with age (larger b),
+    # making delta_b negative (the sex ratio narrows at older ages).
+    delta_b = -0.0105
+
+    # 2. Time-dependent intercept difference (intercept_t = ln(a_male) - ln(a_female)):
+    # This captures the historical expansion and subsequent contraction of the sex
+    # mortality differential, which peaked globally around 1980.
+    t_centered = year - 1980.0
+    intercept_t = 0.58 + 0.0015 * t_centered - 0.00011 * (t_centered**2)
+
+    # 3. Closed-form prediction centered at age 65
+    log_sex_ratio = intercept_t + delta_b * (age - 65.0)
+
+    return log_sex_ratio
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log of the sex ratio of central death rates (ln(m_male / m_female))
+
+    based on the Gompertz-derived relations of Glei & Horiuchi (2007).
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = age (x) [30 to 95]
+        X[:, 1] = year (t) [1751 to 2025]
+
+    Returns:
+    - 1-D numpy array of ln(m_male / m_female)
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Center the year around 1950
+    dt = t - 1950
+
+    # Gompertz-based difference parameters representing the historical
+    # evolution of male vs. female mortality rates.
+    # ln(m_m / m_f) = (ln(a_m) - ln(a_f)) + (b_m - b_f) * x
+    intercept_diff = 1.1 + 0.003 * dt
+    slope_diff = -0.012 - 0.00005 * dt
+
+    ln_sex_ratio = intercept_diff + slope_diff * x
+    return ln_sex_ratio
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log sex ratio of central death rates, ln(m_male / m_female),
+
+    using the Gompertz-derived relationship for ages 30 to 95 based on Glei and
+    Horiuchi (2007).
+
+    Parameters:
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] is age (x) [30 to 95]
+        - X[:, 1] is calendar year (t)
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+
+    # Reference year for centering
+    dt = t - 1950
+
+    # Gompertz parameters modeled as linear functions of time (t)
+    # reflecting historical trends in adult mortality (30-95)
+    ln_a_m = -8.5 - 0.012 * dt
+    ln_a_f = -9.5 - 0.015 * dt
+
+    b_m = 0.080 + 0.0001 * dt
+    b_f = 0.090 + 0.0001 * dt
+
+    # Gompertz formulation: ln(m_x) = ln(a) + b * x
+    ln_m_male = ln_a_m + b_m * x
+    ln_m_female = ln_a_f + b_f * x
+
+    # ln(alpha) = ln(m_male / m_female) = ln(m_male) - ln(m_female)
+    log_sex_ratio = ln_m_male - ln_m_female
+
+    return log_sex_ratio

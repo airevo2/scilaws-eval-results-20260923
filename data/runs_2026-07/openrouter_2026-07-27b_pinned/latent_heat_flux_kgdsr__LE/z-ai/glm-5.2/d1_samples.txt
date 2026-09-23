@@ -1,0 +1,237 @@
+import numpy as np
+
+def predict(X):
+    # Unpack inputs
+    SWdown = X[:, 0]        # W m^-2
+    VPD = X[:, 1]           # kPa
+    Tair = X[:, 2]          # K
+    # RH = X[:, 3]          # not needed (VPD already provided)
+    # Wind = X[:, 4]        # not needed (Ga already provided)
+    Rnet = X[:, 5]          # W m^-2
+    Qg = X[:, 6]            # W m^-2
+    LAI = X[:, 7]           # m^2 m^-2
+    # LWdown = X[:, 8]      # not needed (Rnet already provided)
+    Ga = X[:, 9]            # m s^-1
+    delta = X[:, 10]        # kPa K^-1
+    # theta_FC = X[:, 11]   # not used (no observed soil moisture)
+    # theta_WP = X[:, 12]   # not used
+
+    # Physical constants
+    gamma = 0.066           # psychrometric constant [kPa K^-1]
+    rho = 1.2               # air density [kg m^-3]
+    cp = 1010.0             # specific heat of air [J kg^-1 K^-1]
+    g_max = 0.006           # maximum leaf stomatal conductance [m s^-1]
+
+    # Jarvis-type environmental stress factors (multiplicative)
+    f_rad = SWdown / (SWdown + 200.0)                 # light response
+    f_vpd = 1.0 / (1.0 + VPD / 1.5)                   # VPD response (Leuning-type)
+    f_temp = np.exp(-((Tair - 298.15) / 15.0)**2)     # temperature response
+    # Soil moisture stress omitted because instantaneous θ is not provided
+
+    # Canopy (surface) conductance [m s^-1]
+    Gc = LAI * g_max * f_rad * f_vpd * f_temp
+    Gc = np.maximum(Gc, 1e-6)  # avoid division by zero
+
+    # Available energy [W m^-2]
+    A = Rnet - Qg
+
+    # Convert kPa-based quantities to Pa for unit consistency
+    delta_Pa = delta * 1000.0
+    gamma_Pa = gamma * 1000.0
+    VPD_Pa = VPD * 1000.0
+
+    # Penman-Monteith equation
+    # λE = [Δ (Rn - G) + ρ cp Ga VPD] / [Δ + γ (1 + Ga/Gc)]
+    numerator = delta_Pa * A + rho * cp * Ga * VPD_Pa
+    denominator = delta_Pa + gamma_Pa * (1.0 + Ga / Gc)
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    VPD = X[:, 1]        # kPa
+    Rnet = X[:, 5]       # W m^-2
+    Qg = X[:, 6]         # W m^-2
+    LAI = X[:, 7]        # m^2 m^-2
+    Ga = X[:, 9]         # m s^-1
+    delta = X[:, 10]     # kPa K^-1
+    
+    # Physical constants
+    rho = 1.225           # air density [kg m^-3]
+    cp = 1013.0           # specific heat of air [J kg^-1 K^-1]
+    gamma = 0.066         # psychrometric constant [kPa K^-1]
+    
+    # Estimate bulk surface resistance (rs) using LAI
+    # Typical leaf stomatal resistance ~ 100 s/m, scaled by LAI
+    rs = np.where(LAI > 0.01, 100.0 / LAI, 1e6)
+    
+    # Available energy (Rn - G)
+    A = Rnet - Qg
+    
+    # Penman-Monteith equation
+    # VPD is in kPa, so multiply by 1000 to convert to Pa for unit consistency
+    numerator = delta * A + rho * cp * Ga * VPD * 1000.0
+    denominator = delta + gamma * (1.0 + rs * Ga)
+    
+    # Latent heat flux (W m^-2)
+    LE = numerator / denominator
+    
+    # Clip to physically plausible range (latent heat flux cannot be negative if available energy is positive, 
+    # but generally clip at 0 for typical daytime conditions)
+    LE = np.clip(LE, 0, None)
+    
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    SWdown = X[:, 0]
+    VPD = X[:, 1]
+    Tair = X[:, 2]
+    RH = X[:, 3]
+    Wind = X[:, 4]
+    Rnet = X[:, 5]
+    Qg = X[:, 6]
+    LAI = X[:, 7]
+    LWdown = X[:, 8]
+    Ga = X[:, 9]
+    delta = X[:, 10]
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+    
+    # Constants
+    rho = 1.2          # Air density [kg m^-3]
+    Cp = 1010.0        # Specific heat of air [J kg^-1 K^-1]
+    psych = 0.066      # Psychrometric constant [kPa K^-1]
+    
+    # Jarvis-type surface conductance (Gs) model
+    # Environmental stress functions
+    f_SW = SWdown / (SWdown + 200.0)
+    f_VPD = 1.0 / (1.0 + VPD)
+    
+    # Maximum stomatal conductance and base soil conductance
+    gs_max = 0.01      # [m s^-1]
+    g_soil = 0.001     # [m s^-1]
+    
+    # Total surface conductance
+    Gs = np.maximum(LAI, 0.0) * gs_max * f_SW * f_VPD + g_soil
+    
+    # Safe aerodynamic conductance
+    Ga_safe = np.maximum(Ga, 1e-6)
+    Gs_safe = np.maximum(Gs, 1e-6)
+    
+    # Penman-Monteith equation
+    # Numerator: delta * (Rn - G) + rho * Cp * Ga * VPD
+    # Denominator: delta + psych * (1 + rs/ra) = delta + psych * (1 + Ga/Gs)
+    numerator = delta * (Rnet - Qg) + rho * Cp * Ga_safe * VPD
+    denominator = delta + psych * (1.0 + Ga_safe / Gs_safe)
+    
+    LE = numerator / denominator
+    
+    # Latent heat flux cannot be negative in this context
+    return np.maximum(LE, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Unpack inputs
+    SWdown = X[:, 0]
+    VPD    = X[:, 1]   # kPa
+    Tair   = X[:, 2]   # K
+    RH     = X[:, 3]
+    Wind   = X[:, 4]
+    Rnet   = X[:, 5]   # W m^-2
+    Qg     = X[:, 6]   # W m^-2
+    LAI    = X[:, 7]   # m^2 m^-2
+    LWdown = X[:, 8]
+    Ga     = X[:, 9]   # m s^-1
+    delta  = X[:, 10]  # kPa K^-1
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+
+    # Physical constants
+    cp   = 1010.0          # J kg^-1 K^-1  (specific heat of air)
+    P    = 101325.0        # Pa            (standard atmospheric pressure)
+    Rd   = 287.05          # J kg^-1 K^-1  (gas constant for dry air)
+    gamma = 0.066          # kPa K^-1      (psychrometric constant at sea level)
+    g_smax = 0.01          # m s^-1        (typical max stomatal conductance)
+
+    # Air density from ideal gas law (kg m^-3)
+    rho = P / (Rd * Tair)
+    rho_cp = rho * cp      # J m^-3 K^-1
+
+    # Bulk surface resistance (s m^-1) from a big-leaf approximation:
+    # canopy conductance Gc = g_smax * LAI  ->  rs = 1 / Gc
+    # Avoid division by zero for bare soil (LAI = 0)
+    LAI_safe = np.where(LAI > 0.0, LAI, 1e-6)
+    rs = 1.0 / (g_smax * LAI_safe)
+
+    # Available energy (W m^-2)
+    A = Rnet - Qg
+
+    # Penman-Monteith equation in SI units.
+    # Because delta, gamma and VPD are all expressed in kPa (or kPa K^-1),
+    # the factor 1000 that would convert kPa to Pa cancels in the ratio.
+    numerator   = delta * A + rho_cp * Ga * VPD
+    denominator = delta + gamma * (1.0 + rs * Ga)
+
+    LE = numerator / denominator
+
+    # Clean up: replace NaN/Inf with 0 and enforce non-negative flux
+    LE = np.where(np.isfinite(LE), LE, 0.0)
+    LE = np.maximum(LE, 0.0)
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    SWdown = X[:, 0]
+    VPD = X[:, 1]       # kPa
+    Tair = X[:, 2]      # K
+    RH = X[:, 3]
+    Wind = X[:, 4]
+    Rnet = X[:, 5]      # W m^-2
+    Qg = X[:, 6]        # W m^-2
+    LAI = X[:, 7]       # m^2 m^-2
+    LWdown = X[:, 8]
+    Ga = X[:, 9]        # m s^-1
+    delta = X[:, 10]    # kPa K^-1
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+    
+    # Physical constants
+    rho = 1.2           # air density [kg m^-3]
+    cp = 1013.0         # specific heat of air [J kg^-1 K^-1]
+    gamma = 0.066       # psychrometric constant [kPa K^-1]
+    
+    # Estimate surface resistance rs [s m^-1] using a simple LAI-based scaling
+    # Assuming a typical minimum stomatal resistance of ~100 s/m scaled by LAI
+    rs = 100.0 / (LAI + 1e-6)
+    
+    # Penman-Monteith equation
+    # Note: VPD is in kPa, delta and gamma are in kPa K^-1, so units are consistent
+    numerator = delta * (Rnet - Qg) + rho * cp * VPD * Ga
+    denominator = delta + gamma * (1.0 + rs * Ga)
+    
+    LE = numerator / (denominator + 1e-6)
+    
+    # Bowen-ratio-preserving energy-balance correction:
+    # Ensure that H + LE = Rnet - Qg, so LE is constrained between 0 and available energy
+    Avail = Rnet - Qg
+    LE = np.where(Avail > 0, np.clip(LE, 0.0, Avail), 0.0)
+    
+    return LE

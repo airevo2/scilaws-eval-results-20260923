@@ -1,0 +1,180 @@
+task_id: catchment_mean_runoff_camels__q_mean
+domain: earth_science / hydrology
+license: CC-BY-4.0    # CAMELS-US attributes (Addor et al. 2017; Newman et al. 2015) — NCAR, CC-BY
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  In catchment hydrology, runoff is the long-term streamflow drained from a river catchment per unit area.
+
+target:
+  name: q_mean
+  symbol: Q
+  unit: mm/day
+  description: Long-term mean daily runoff per unit catchment area (observed streamflow / area).  Bounded above by mean precipitation (water-balance closure) and below by zero.  Spans 0.0046 (most arid test catchment) to 9.69 mm/day; the declared metric is rmse (the field-standard runoff error; a log metric is unsuitable because the demand-limit baseline legitimately predicts exactly zero in arid catchments).
+  range: [0.0, 9.69]
+
+inputs:
+  - name: p_mean
+    symbol: P
+    unit: mm/day
+    description: Long-term mean daily precipitation over the catchment.  PRIMARY input — one of the two Budyko variables; all three reference baselines use it.
+    range: [0.64, 8.94]
+  - name: pet_mean
+    symbol: E_p
+    unit: mm/day
+    description: Long-term mean daily potential evapotranspiration (Priestley-Taylor) over the catchment.  PRIMARY input — the second Budyko variable; all three reference baselines use it.
+    range: [1.89, 4.75]
+  - name: aridity
+    symbol: φ
+    unit: ""
+    description: Aridity index φ = PET/P.  DISTRACTOR — exactly collinear with the ratio of the two primary inputs (aridity = pet_mean/p_mean), so it carries no independent information.  The Budyko curve IS a function of φ, but a formula built from p_mean and pet_mean already has it.
+    range: [0.22, 5.21]
+  - name: p_seasonality
+    symbol: s_P
+    unit: ""
+    description: Precipitation seasonality / phasing index (positive = precip in warm season, negative = cold season).  Candidate secondary predictor; not used by any reference baseline.
+    range: [-1.44, 0.93]
+  - name: frac_snow
+    symbol: f_s
+    unit: ""
+    description: Fraction of annual precipitation falling as snow.  Candidate secondary predictor; not used by any reference baseline.
+    range: [0.0, 0.91]
+  - name: area_gages2
+    symbol: A
+    unit: km^2
+    description: Catchment drainage area (GAGES-II estimate).  Candidate secondary predictor; not used by any reference baseline.
+    range: [4.03, 25791.0]
+  - name: elev_mean
+    symbol: z
+    unit: m
+    description: Catchment-mean surface elevation above sea level.  Candidate secondary predictor; not used by any reference baseline.
+    range: [10.21, 3571.18]
+  - name: slope_mean
+    symbol: S
+    unit: m/km
+    description: Catchment-mean topographic slope.  Candidate secondary predictor; not used by any reference baseline.
+    range: [0.82, 255.69]
+  - name: soil_porosity
+    symbol: n
+    unit: ""
+    description: Catchment-mean soil porosity (volumetric void fraction).  Candidate secondary predictor; not used by any reference baseline.
+    range: [0.37, 0.69]
+  - name: max_water_content
+    symbol: S_max
+    unit: m
+    description: Catchment-mean maximum soil water storage capacity (equivalent water depth).  Candidate secondary predictor; not used by any reference baseline.
+    range: [0.08, 1.06]
+  - name: geol_permeability
+    symbol: log10_k
+    unit: log10(m^2)
+    description: Base-ten log of catchment-mean subsurface permeability.  Candidate secondary predictor; not used by any reference baseline.
+    range: [-16.5, -10.9]
+  - name: frac_forest
+    symbol: f_for
+    unit: ""
+    description: Fraction of catchment area covered by forest.  Candidate secondary predictor; not used by any reference baseline.
+    range: [0.0, 1.0]
+  - name: lai_max
+    symbol: L_max
+    unit: ""
+    description: Catchment-mean annual maximum leaf-area index.  Candidate secondary predictor; not used by any reference baseline.
+    range: [0.36, 5.59]
+
+# NOTE: the target is NOT algebraically reconstructable from the
+# released inputs.  Long-term runoff is Q = P − E_actual, but the
+# actual evapotranspiration E_actual is NOT released — only P and the
+# POTENTIAL evapotranspiration PET are.  Recovering Q therefore requires
+# discovering the Budyko curve E_actual/P = f(PET/P); this is a genuine
+# closed-form law, not a circular identity (contrast `thermoelectric_zt`,
+# `cex_dex_arbitrage`, `traffic_flow_density` where the target WAS an
+# algebraic function of released inputs).  `aridity` is released but is
+# merely the collinear ratio pet_mean/p_mean; the other 10 attributes
+# are recognised candidate secondary predictors that the closed-form
+# Budyko law does not require (distractors for input selection).
+
+# Dataset — Type I, two-file flat layout.  Source: CAMELS-US catchment
+# attributes (Addor et al. 2017; Newman et al. 2015), aggregated by
+# `data_raw/aggregate_attributes.py` into one static record per basin
+# (670 basins; 1 of the original 671 dropped for NaN geol_permeability).
+# Split is aridity range-OOD: sort by aridity ascending, test = top 30%
+# highest-aridity (arid) catchments, train = remaining 70%
+# (humid/sub-humid).  Deterministic, no seed.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 469
+n_test:  201
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: budyko_fu_exponent
+    value: 2.6
+    unit: dimensionless
+    description: Typical Budyko/Fu/Choudhury shape exponent for mid-latitude catchments; a candidate value for the one-parameter Budyko curve's exponent.
+    source: Choudhury 1999 J. Hydrol. 216:99 — found α ≈ 1.8-2.6 across field sites and large basins.  Yang et al. 2008 report n ≈ 1.5-3.0.  A candidate for the shape exponent (v2 train fit gives ≈ 1.69).
+    _role: candidate
+  - name: priestley_taylor_alpha
+    value: 1.26
+    unit: dimensionless
+    description: Priestley-Taylor coefficient relating equilibrium to potential evapotranspiration.
+    source: Priestley & Taylor 1972 Mon. Weather Rev. 100:81.  Used in computing pet_mean for CAMELS; a DISTRACTOR for the Budyko runoff curve, which takes PET as a given input.
+    _role: distractor
+  - name: runoff_ratio_global_mean
+    value: 0.39
+    unit: dimensionless
+    description: Approximate global-mean runoff ratio Q/P for continental land surfaces.
+    source: Budyko 1974 "Climate and Life".  A rough scale for Q/P; not a closed-form constant (the actual ratio varies from ~0 in deserts to ~0.9 in wet maritime catchments).
+    _role: candidate
+
+# === Reference baselines ===
+references:
+  - id: demand_limit
+    label: Demand/energy-limit water balance Q = max(P − PET, 0) (Type I, frozen; parameter-free)
+    formula_file: formulas/demand_limit.py
+    reference_pdf: reference/choudhury_1999.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.6703}
+  - id: pike_1964
+    label: Pike (1964) parameter-free Budyko curve Q = P·(1 − PET/√(P²+PET²)) (Type I, frozen)
+    formula_file: formulas/pike_1964.py
+    reference_pdf: reference/pike_1964.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.4378}
+  - id: choudhury_yang_1999
+    label: Choudhury-Yang (1999) one-parameter Budyko curve, exponent N pre-fit on v2 train (Type I, frozen)
+    formula_file: formulas/choudhury_yang_1999.py
+    reference_pdf: reference/choudhury_1999.pdf
+    n_law_constants: 1         # N (Budyko shape exponent)
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.4096}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        1
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on q_mean (mm/day); field-standard runoff error.
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "compute runoff as precipitation remaining after actual evapotranspiration"
+  - "include atmospheric energy demand from PET as an evapotranspiration loss"
+  - "predicted runoff is non-negative"
+  - "predicted runoff does not exceed p_mean"
+  - "predicted runoff is not less than p_mean - pet_mean"
+
+best_baseline: 0.4096     # choudhury_yang_1999 — best of three Budyko rungs on the arid OOD test

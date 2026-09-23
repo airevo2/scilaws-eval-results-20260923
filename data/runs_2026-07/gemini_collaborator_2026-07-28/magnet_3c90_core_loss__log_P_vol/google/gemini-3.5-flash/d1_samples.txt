@@ -1,0 +1,206 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    f = X[:, 0]  # Frequency in Hz
+    B = X[:, 1]  # Peak flux density in T
+    T = X[:, 2]  # Temperature in degC
+    w = np.clip(X[:, 3].astype(int), 0, 2)  # Waveform ID (0, 1, 2)
+
+    # Steinmetz parameters for typical power ferrite (e.g., MnZn)
+    alpha = 1.65
+    beta = 2.45
+    C = 10**-3.5
+
+    # Temperature correction factor (parabolic curve with minimum loss around 80 °C)
+    T_corr = 0.00013 * (T - 80.0) ** 2 + 0.6
+
+    # Waveform correction factor (0: sine, 1: triangle, 2: trapezoid)
+    w_factors = np.array([1.0, 1.15, 1.35])
+    W_corr = w_factors[w]
+
+    # Calculate log10(P_vol) in kW/m^3
+    log_P_vol = (
+        np.log10(C)
+        + alpha * np.log10(f)
+        + beta * np.log10(B)
+        + np.log10(T_corr)
+        + np.log10(W_corr)
+    )
+
+    return log_P_vol
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = f_Hz (f) [Hz]
+    # X[:, 1] = B_peak_T (B) [T]
+    # X[:, 2] = T_C (T) [degC]
+    # X[:, 3] = waveform_id (w) (0 = sine, 1 = triangle, 2 = trapezoid)
+
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3].astype(int)
+
+    # Steinmetz parameters for a typical Mn-Zn power ferrite (e.g., N87)
+    alpha = 1.45
+    beta = 2.45
+    log10_k = -2.80
+
+    # Temperature correction factor (U-shaped loss curve typical for ferrites, min around 65-80 °C)
+    F_T = 1.0 - 0.004 * (T - 25.0) + 0.00005 * (T - 25.0) ** 2
+
+    # Waveform correction factor relative to sinusoidal excitation
+    # 0: Sinusoidal (1.0), 1: Triangular (~1.15), 2: Trapezoidal (~1.35)
+    W_factor = np.choose(w, [1.0, 1.15, 1.35])
+
+    # Calculate log10 of volumetric core loss in kW/m^3
+    log10_P_vol = (
+        log10_k
+        + alpha * np.log10(f)
+        + beta * np.log10(B)
+        + np.log10(F_T)
+        + np.log10(W_factor)
+    )
+
+    return log10_P_vol
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the base-10 logarithm of the volumetric core loss (log10(P_vol) [kW/m^3])
+    using an augmented Steinmetz formulation that accounts for frequency, peak flux
+    density, temperature (with a characteristic U-curve), and excitation waveform shape.
+    
+    Inputs:
+        X: 2-D numpy array where:
+           X[:, 0] = f_Hz (Excitation frequency in Hz)
+           X[:, 1] = B_peak_T (Peak flux density in T)
+           X[:, 2] = T_C (Core temperature in degC)
+           X[:, 3] = waveform_id (0 = sinusoidal, 1 = triangular, 2 = trapezoidal)
+           
+    Returns:
+        1-D numpy array of log10(P_vol) in kW/m^3.
+    """
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+    
+    # Avoid domain errors for log calculations
+    log10_f = np.log10(np.maximum(f, 1.0))
+    log10_B = np.log10(np.maximum(B, 1e-4))
+    
+    # Core loss coefficients (representative of typical MnZn power ferrites like N87)
+    c0 = -3.58
+    c_f = 1.65       # Frequency exponent (alpha)
+    c_B = 2.50       # Flux density exponent (beta)
+    
+    # Temperature dependence (quadratic minimum around 80 °C)
+    c_t1 = -0.008
+    c_t2 = 0.00005
+    
+    # Waveform correction factors relative to sinusoidal excitation
+    # Triangular and trapezoidal shapes typically exhibit different loss profiles
+    c_w = np.select(
+        condlist=[np.isclose(w, 1.0), np.isclose(w, 2.0)],
+        choicelist=[-0.05, -0.15],
+        default=0.0
+    )
+    
+    # Extended Steinmetz Equation in log-space
+    log_P_vol = c0 + c_f * log10_f + c_B * log10_B + c_t1 * T + c_t2 * (T ** 2) + c_w
+    
+    return log_P_vol
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = f_Hz (frequency in Hz)
+    # X[:, 1] = B_peak_T (peak flux density in T)
+    # X[:, 2] = T_C (temperature in degC)
+    # X[:, 3] = waveform_id (0: sine, 1: triangle, 2: trapezoid)
+
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+
+    # Core loss parameters (typical for MnZn power ferrites like N87)
+    alpha = 1.65
+    beta = 2.55
+    k0 = 1.8e-4
+
+    # Temperature dependence (quadratic behavior with minimum loss around 75-80 °C)
+    f_T = 1.0 - 0.008 * (T - 75.0) + 0.00011 * (T - 75.0) ** 2
+
+    # Waveform shape correction factor
+    # Triangular waves have slightly lower loss than sine waves for the same peak B and f.
+    # Trapezoidal waves have higher loss due to faster transitions (higher dB/dt).
+    f_W = np.ones_like(w)
+    f_W[w == 1] = 0.88
+    f_W[w == 2] = 1.25
+
+    # Volumetric core loss in kW/m^3 (equivalent to mW/cm^3)
+    P_vol = k0 * f_T * f_W * (f**alpha) * (B**beta)
+
+    # Ensure no non-positive values before log10
+    P_vol = np.clip(P_vol, a_min=1e-6, a_max=None)
+
+    return np.log10(P_vol)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of volumetric core loss (kW/m^3) using an extended
+
+    Steinmetz model with temperature and waveform corrections.
+
+    Inputs:
+    - X[:, 0]: f_Hz (f) [Hz]
+    - X[:, 1]: B_peak_T (B) [T]
+    - X[:, 2]: T_C (T) [degC]
+    - X[:, 3]: waveform_id (w) [0 = sine, 1 = triangle, 2 = trapezoid]
+    """
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = np.clip(X[:, 3].astype(int), 0, 2)
+
+    # Core Steinmetz parameters for representative MnZn power ferrite
+    alpha = 1.45
+    beta = 2.75
+    k = 0.002  # Steinmetz constant scaled for kW/m^3
+
+    # Base Steinmetz loss in log10 space
+    log10_P_base = np.log10(k) + alpha * np.log10(f) + beta * np.log10(B)
+
+    # Temperature dependence: quadratic behavior with minimum loss around 80 °C
+    # (Typical for power ferrites like N87/3C90)
+    temp_correction = 2.6e-5 * (T - 80.0) ** 2
+
+    # Waveform correction offsets (relative to sinusoidal excitation)
+    # Triangular and trapezoidal shapes typically have slightly different duty cycle effects
+    waveform_offsets = np.array([0.0, -0.08, -0.15])
+    waveform_correction = waveform_offsets[w]
+
+    # Combine all terms
+    log10_P_vol = log10_P_base + temp_correction + waveform_correction
+
+    return log10_P_vol

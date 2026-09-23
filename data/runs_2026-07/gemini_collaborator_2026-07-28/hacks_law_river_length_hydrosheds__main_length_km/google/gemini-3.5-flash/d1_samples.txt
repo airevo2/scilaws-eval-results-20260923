@@ -1,0 +1,121 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the main-stem river length (L) in km using Hack's Law,
+    a standard empirical scaling relationship in hydrology relating 
+    drainage basin area (A) to the main-stem length.
+
+    Inputs:
+    - X[:, 0]: upland_area_skm (A) [km^2]
+    - X[:, 2]: segment_length_km (L_s) [km]
+    """
+    A = X[:, 0]
+    L_s = X[:, 2]
+    
+    # Hack's Law in metric units: L = C * A^h
+    # Canonical global values: C ≈ 1.4, h ≈ 0.56
+    L = 1.4 * (A ** 0.56)
+    
+    # Physical constraint: The cumulative main-stem length must be 
+    # at least as long as the terminal outlet segment length.
+    return np.maximum(L, L_s)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    upland_area_skm = X[:, 0]  # Total upstream drainage area (A)
+    segment_length_km = X[:, 2]  # Length of the terminal outlet segment (L_s)
+
+    # Hack's Law is the standard geomorphological relationship between
+    # drainage basin area (A) and main-stem river length (L).
+    # In metric units, a commonly cited form is L = 1.4 * A^0.568.
+    L_estimated = 1.4 * np.power(upland_area_skm, 0.568)
+
+    # Physically, the total main-stem length cannot be shorter than
+    # the length of the terminal outlet segment itself.
+    L = np.maximum(L_estimated, segment_length_km)
+
+    return L
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the main-stem river length (L) in km using Hack's Law,
+    a fundamental empirical relationship in geomorphology and hydrology
+    relating drainage basin area to main-stem length, constrained by the
+    physical length of the terminal segment.
+
+    Inputs:
+    - X[:, 0] = upland_area_skm (A) [km^2]
+    - X[:, 1] = catch_area_skm (A_c) [km^2]
+    - X[:, 2] = segment_length_km (L_s) [km]
+    - X[:, 3] = endorheic (e)
+    - X[:, 4] = strahler_order (omega)
+    """
+    # Extract drainage area (A) and terminal segment length (L_s)
+    A = X[:, 0]
+    L_s = X[:, 2]
+
+    # Hack's Law in metric units: L = 1.27 * A^0.6
+    # (Derived from the classic L_miles = 1.4 * A_miles^0.6)
+    L_estimated = 1.27 * (A**0.6)
+
+    # The total main-stem length must be at least as long as the terminal segment
+    L = np.maximum(L_estimated, L_s)
+
+    return L
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    upland_area_skm = X[:, 0]  # Drainage area A (km^2)
+    segment_length_km = X[:, 2]  # Terminal segment length L_s (km)
+
+    # Hack's Law: L = C * A^h
+    # In metric units, C ~ 1.4 and h ~ 0.55 provides a globally robust estimation.
+    # We also ensure the main-stem length is at least the terminal segment length.
+    L_hack = 1.4 * np.power(upland_area_skm, 0.55)
+    L = np.maximum(segment_length_km, L_hack)
+
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the main-stem river length (L) in km using Hack's Law,
+    which is the standard empirical scaling relationship in hydrology
+    relating basin drainage area to main-stem length.
+    
+    Formula: L = C * A**h
+    Where:
+    - A is the upstream drainage area (upland_area_skm, X[:, 0])
+    - C is a metric scaling constant (typically ~1.4)
+    - h is the Hack exponent (typically ~0.568)
+    
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is upland_area_skm
+    """
+    A = X[:, 0]
+    
+    # Hack's Law parameters for metric units (km and km^2)
+    C = 1.4
+    h = 0.568
+    
+    L = C * (A ** h)
+    return L

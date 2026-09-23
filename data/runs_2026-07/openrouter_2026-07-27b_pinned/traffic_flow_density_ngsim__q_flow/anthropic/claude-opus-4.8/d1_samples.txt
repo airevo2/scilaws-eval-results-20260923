@@ -1,0 +1,57 @@
+import numpy as np
+
+def predict(X):
+    # Greenshields fundamental diagram: q = v_f * k * (1 - k/k_jam)
+    k = X[:, 0]
+    v_f = 100.0      # free-flow speed [km/h]
+    k_jam = 250.0    # jam density [veh/km/lane]
+    q = v_f * k * (1.0 - k / k_jam)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Greenshields fundamental diagram: q = vf * k * (1 - k/kj)
+    k = X[:, 0]
+    vf = 90.0      # free-flow speed [km/h]
+    kj = 160.0     # jam density [veh/km/lane]
+    q = vf * k * (1.0 - k / kj)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    # Greenshields fundamental diagram: q = vf * k * (1 - k/kj)
+    vf = 96.0   # free-flow speed [km/h]
+    kj = 240.0  # jam density [veh/km/lane]
+    q = vf * k * (1.0 - k / kj)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Greenshields fundamental diagram: q = vf * k * (1 - k/kj)
+    k = X[:, 0]
+    vf = 100.0   # free-flow speed [km/h]
+    kj = 200.0   # jam density [veh/km/lane]
+    q = vf * k * (1.0 - k / kj)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    # Greenshields fundamental diagram: q = vf * k * (1 - k/kj)
+    vf = 100.0   # free-flow speed [km/h]
+    kj = 250.0   # jam density [veh/km/lane]
+    q = vf * k * (1.0 - k / kj)
+    return q

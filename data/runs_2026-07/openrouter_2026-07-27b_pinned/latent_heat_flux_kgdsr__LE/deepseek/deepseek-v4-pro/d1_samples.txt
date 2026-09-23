@@ -1,0 +1,248 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict latent heat flux LE (W/m^2) using the Penman-Monteith big-leaf model.
+    The model preserves the energy balance and uses the Bowen-ratio concept implicitly.
+    """
+    # Unpack inputs
+    SWdown = X[:, 0]     # not used (already in Rnet)
+    VPD_kPa = X[:, 1]    # kPa
+    Tair = X[:, 2]       # K
+    RH = X[:, 3]         # not used (VPD given)
+    Wind = X[:, 4]       # not used (Ga given)
+    Rnet = X[:, 5]       # W/m2
+    Qg = X[:, 6]         # W/m2
+    LAI = X[:, 7]        # m2/m2
+    LWdown = X[:, 8]     # not used
+    Ga = X[:, 9]         # m/s  (aerodynamic conductance)
+    delta_kPa = X[:, 10] # kPa/K
+    theta_FC = X[:, 11]  # not used (assumed well-watered)
+    theta_WP = X[:, 12]  # not used
+
+    # --- Constants and unit conversions ---
+    P = 101325.0          # standard pressure (Pa)
+    c_p = 1005.0          # specific heat of air (J/kg/K)
+    R_specific = 287.0    # gas constant dry air (J/kg/K)
+    eps = 0.622           # ratio molecular weights water vapour/dry air
+
+    # Latent heat of vaporisation (J/kg) as function of air temperature
+    lambda_v = 2.501e6 - 2370.0 * (Tair - 273.15)
+
+    # Psychrometric constant (Pa/K)
+    gamma_Pa = (c_p * P) / (lambda_v * eps)
+
+    # Air density (kg/m3) and volumetric heat capacity (J/m3/K)
+    rho = P / (R_specific * Tair)
+    rho_cp = rho * c_p
+
+    # Convert vapour pressure deficit and slope to Pa
+    VPD_Pa = VPD_kPa * 1000.0
+    delta_Pa = delta_kPa * 1000.0
+
+    # Available energy (W/m2)
+    A = Rnet - Qg
+
+    # Canopy conductance (m/s) – big-leaf parameterisation
+    g_smax = 0.01         # max stomatal conductance per unit LAI (m/s)
+    Gc = g_smax * LAI
+    # Prevent division by zero when LAI ~ 0
+    Gc = np.maximum(Gc, 1e-6)
+
+    # Penman-Monteith equation for latent heat flux
+    # LE = (Δ·A + ρ·cp·VPD·Ga) / (Δ + γ·(1 + Ga/Gc))
+    numerator = delta_Pa * A + rho_cp * VPD_Pa * Ga
+    denominator = delta_Pa + gamma_Pa * (1.0 + Ga / Gc)
+
+    LE = numerator / denominator
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict half-hourly latent heat flux (LE) [W m^-2] using the Penman-Monteith
+    combination equation, which preserves the Bowen ratio and enforces surface
+    energy balance.  The formula uses a simple big-leaf parameterisation for
+    surface conductance based on LAI.
+    
+    Inputs:
+        X[:, 0]  = SWdown   [W m^-2]
+        X[:, 1]  = VPD      [kPa]
+        X[:, 2]  = Tair     [K]
+        X[:, 3]  = RH       [-]
+        X[:, 4]  = Wind     [m s^-1]
+        X[:, 5]  = Rnet     [W m^-2]
+        X[:, 6]  = Qg       [W m^-2]
+        X[:, 7]  = LAI      [m^2 m^-2]
+        X[:, 8]  = LWdown   [W m^-2]
+        X[:, 9]  = Ga       [m s^-1]
+        X[:,10]  = delta    [kPa K^-1]
+        X[:,11]  = theta_FC [m^3 m^-3]
+        X[:,12]  = theta_WP [m^3 m^-3]
+    """
+    # Unpack required inputs
+    VPD   = X[:, 1]
+    Rnet  = X[:, 5]
+    Qg    = X[:, 6]
+    LAI   = X[:, 7]
+    Ga    = X[:, 9]
+    delta = X[:, 10]
+
+    # --------------------------------------------------------------------------
+    # Standard constants for the Penman-Monteith equation
+    # --------------------------------------------------------------------------
+    RHO_AIR  = 1.2        # mean air density [kg m^-3]
+    CP_AIR   = 1005.0     # specific heat of air [J kg^-1 K^-1]
+    GAMMA    = 0.066      # psychrometric constant [kPa K^-1]
+    GS_COEFF = 0.01       # max. stomatal conductance per unit LAI [m s^-1]
+
+    # Surface (canopy) conductance – add a tiny offset to avoid division by zero
+    Gs = GS_COEFF * LAI + 1e-6
+
+    # Available energy
+    A = Rnet - Qg
+
+    # Penman-Monteith equation for latent heat flux (LE)
+    numerator   = delta * A + RHO_AIR * CP_AIR * VPD * Ga
+    denominator = delta + GAMMA * (1.0 + Ga / Gs)
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Bowen-ratio-preserving energy-balance-corrected latent heat flux (λE) [W m^-2]
+    using the Penman-Monteith equation with a Jarvis-type canopy conductance.
+
+    Inputs:
+    X[:,0]  = SWdown      [W m^-2]
+    X[:,1]  = VPD         [kPa]
+    X[:,2]  = Tair        [K]
+    X[:,3]  = RH          [-]
+    X[:,4]  = Wind        [m s^-1]
+    X[:,5]  = Rnet        [W m^-2]
+    X[:,6]  = Qg          [W m^-2]
+    X[:,7]  = LAI         [m^2 m^-2]
+    X[:,8]  = LWdown      [W m^-2]
+    X[:,9]  = Ga          [m s^-1]
+    X[:,10] = delta       [kPa K^-1]
+    X[:,11] = theta_FC    [m^3 m^-3]
+    X[:,12] = theta_WP    [m^3 m^-3]
+    """
+    # Extract variables
+    VPD = X[:, 1]
+    Tair = X[:, 2]
+    Rnet = X[:, 5]
+    Qg = X[:, 6]
+    LAI = X[:, 7]
+    Ga = X[:, 9]
+    delta = X[:, 10]
+
+    # Constants
+    P = 101325.0          # atmospheric pressure (Pa)
+    cp = 1005.0           # specific heat of dry air (J kg^-1 K^-1)
+    R_d = 287.058         # gas constant for dry air (J kg^-1 K^-1)
+    epsilon = 0.622       # ratio of molecular weights of water vapour and dry air
+    g_smax = 0.01         # maximum stomatal conductance per unit leaf area (m s^-1)
+    VPD0 = 1.0            # reference VPD for stomatal closure (kPa)
+    Gc_min = 1e-5         # minimum canopy conductance (m s^-1) to avoid division by zero
+
+    # Temperature-dependent latent heat of vaporization (J kg^-1)
+    lambda_v = 2.501e6 - 2370.0 * (Tair - 273.15)
+
+    # Psychrometric constant (kPa K^-1)
+    gamma = (cp * P) / (epsilon * lambda_v) / 1000.0
+
+    # Volumetric heat capacity of air (J m^-3 K^-1)
+    rho_cp = P * cp / (R_d * Tair)
+
+    # Canopy conductance (m s^-1) – simple Jarvis-type with VPD limitation, no water stress
+    f_vpd = 1.0 / (1.0 + VPD / VPD0)
+    Gc = g_smax * LAI * f_vpd
+    Gc = np.maximum(Gc, Gc_min)
+
+    # Available energy
+    A = Rnet - Qg
+
+    # Penman-Monteith equation for latent heat flux (W m^-2)
+    num = delta * A + rho_cp * VPD * Ga
+    den = delta + gamma * (1.0 + Ga / Gc)
+    LE = num / den
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict latent heat flux LE (λE) [W m^-2] using the Penman-Monteith equation,
+    which is a standard energy-balance closed-form relationship for vegetated surfaces.
+
+    Input X columns:
+    0  - SWdown (S↓) [W m^-2]  (not used directly)
+    1  - VPD (VPD) [kPa]
+    2  - Tair (T_a) [K]
+    3  - RH (RH) [-]            (not used directly)
+    4  - Wind (u) [m s^-1]      (not used directly)
+    5  - Rnet (R_n) [W m^-2]
+    6  - Qg (G) [W m^-2]
+    7  - LAI (L) [m^2 m^-2]
+    8  - LWdown (L↓) [W m^-2]  (not used directly)
+    9  - Ga (G_a) [m s^-1]
+    10 - delta (Δ) [kPa K^-1]
+    11 - theta_FC (θ_FC) [m^3 m^-3] (not used directly)
+    12 - theta_WP (θ_WP) [m^3 m^-3] (not used directly)
+    """
+    # Extract required variables
+    VPD  = X[:, 1]      # kPa
+    Tair = X[:, 2]      # K
+    Rnet = X[:, 5]      # W m^-2
+    Qg   = X[:, 6]      # W m^-2
+    LAI  = X[:, 7]      # m^2 m^-2
+    Ga   = X[:, 9]      # m s^-1
+    delta = X[:, 10]    # kPa K^-1
+
+    # --- Physical constants ---
+    P0       = 101325.0       # standard atmospheric pressure (Pa)
+    cp       = 1005.0         # specific heat of air (J kg^-1 K^-1)
+    R_d      = 287.058        # gas constant for dry air (J kg^-1 K^-1)
+    epsilon  = 0.622          # ratio of molecular weights of water vapour to dry air
+
+    # Latent heat of vaporisation as function of temperature (J kg^-1)
+    T_c = Tair - 273.15
+    lambda_v = 2.501e6 - 2370.0 * T_c
+
+    # Psychrometric constant (Pa K^-1), then converted to kPa K^-1
+    gamma_Pa = (cp * P0) / (epsilon * lambda_v)
+    gamma = gamma_Pa / 1000.0   # kPa K^-1
+
+    # Air density (kg m^-3) and volumetric heat capacity (J m^-3 K^-1)
+    rho = P0 / (R_d * Tair)
+    rho_cp = rho * cp
+
+    # Available energy (W m^-2)
+    A = Rnet - Qg
+
+    # Surface conductance (m s^-1) – simple linear scaling with LAI
+    gs_max = 0.01               # maximum stomatal conductance per unit LAI (m s^-1)
+    Gs = gs_max * LAI + 1e-6    # small minimum to avoid division by zero
+
+    # Penman-Monteith equation for latent heat flux (W m^-2)
+    numerator = delta * A + rho_cp * VPD * Ga
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+    LE = numerator / denominator
+
+    return LE

@@ -1,0 +1,133 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict the International Sunspot Number (ISN v2.0) using a simple
+    harmonic solar-cycle model.  This closed-form sinusoidal approximation
+    is widely used as a first-order representation of the ~11-year sunspot
+    cycle when detailed observation files are not available.
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 3)
+        X[:, 0] = t_year  : decimal year (e.g. 1818.542)
+        X[:, 1] = year    : integer year   (e.g. 1818)
+        X[:, 2] = month   : integer month  (1..12)
+
+    Returns
+    -------
+    ssn : ndarray, shape (N,)
+        Predicted monthly mean total International Sunspot Number R_I.
+    """
+    # Solar cycle approximated by a sine wave.
+    # Reference minimum: December 2008 (end of Cycle 23 / start of Cycle 24)
+    t0 = 2008.958333   # decimal year for the minimum
+    P = 11.05          # average period of the solar cycle [yr]
+
+    # The observed sunspot number typically oscillates between near zero and
+    # about 150-200.  A baseline of 75 and amplitude of 75 give a range of
+    # 0 – 150, which matches the historical envelope.
+    A0 = 75.0          # baseline (average) number
+    A  = 75.0          # amplitude
+
+    t = X[:, 0]        # decimal year is the primary input
+    ssn = A0 + A * np.sin(2.0 * np.pi * (t - t0) / P)
+    return ssn
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for the International Sunspot Number (Wolf number).
+    R = k * (10 * N_g + N_s)
+    N_g : number of sunspot groups
+    N_s : total number of individual spots
+    k   : personal reduction factor (k=1 for the standard ISN v2.0 scale)
+    The monthly mean total is the arithmetic mean of the daily Wolf numbers.
+    """
+    k = 1.0  # standard reduction factor
+    N_g = X[:, 0]  # number of sunspot groups
+    N_s = X[:, 1]  # total number of individual spots
+    return k * (10.0 * N_g + N_s)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Return an approximate prediction of the monthly mean International Sunspot
+    Number (ISN v2.0) using a simple sinusoidal model of the 11-year solar cycle.
+
+    The standard elementary closed-form relationship treats the sunspot number
+    as a harmonic oscillation:
+
+        R_I = R0 + A * sin(2*pi*(t - t0) / T)
+
+    where t is the decimal year (X[:,0]), R0 is the long-term mean, A is the
+    amplitude, T is the dominant period (~11 years), and t0 is a reference
+    epoch of solar minimum.
+    """
+    t = X[:, 0]          # decimal year at mid-month
+
+    # ---- Fitted / canonical constants ----
+    R0 = 50.0            # long-term mean sunspot number
+    A  = 100.0           # typical amplitude of the cycle
+    T  = 11.0            # mean solar cycle period [years]
+    t0 = 1755.0          # approximate epoch of a solar minimum (start of cycle 1)
+
+    return R0 + A * np.sin(2.0 * np.pi * (t - t0) / T)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute the International Sunspot Number (ISN v2.0) using the standard Wolf formula:
+    R = k * (10 * g + s)
+    where:
+        g = X[:, 0] = number of sunspot groups
+        s = X[:, 1] = total number of individual sunspots
+        k = X[:, 2] = observer correction factor (normalised to ~1 for the standard network)
+    For monthly mean totals, the formula is applied to daily values and then averaged.
+    """
+    g = X[:, 0]
+    s = X[:, 1]
+    k = X[:, 2]
+    return k * (10.0 * g + s)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict monthly mean International Sunspot Number (ISN v2.0)
+    using a standard sinusoidal solar cycle model.
+
+    Inputs:
+        X : 2-D numpy array
+            X[:, 0] = t_year (decimal year)
+            X[:, 1] = year (integer year)
+            X[:, 2] = month (calendar month, 1-12)
+
+    Returns:
+        R_I : 1-D numpy array of predicted sunspot numbers.
+    """
+    # Use the decimal year for the time variable
+    t = X[:, 0]
+
+    # Parameters of the classical sinusoidal approximation
+    # (values chosen to represent a typical ~11-year solar cycle)
+    amplitude = 80.0      # approximate amplitude of sunspot number variation
+    offset = 80.0         # baseline sunspot number
+    period = 11.07        # average solar cycle length in years
+    t_phase = 2014.0      # reference epoch of a solar maximum (cycle 24 peak)
+
+    # Closed-form harmonic prediction
+    R_I = offset + amplitude * np.sin(2.0 * np.pi * (t - t_phase) / period)
+
+    return R_I

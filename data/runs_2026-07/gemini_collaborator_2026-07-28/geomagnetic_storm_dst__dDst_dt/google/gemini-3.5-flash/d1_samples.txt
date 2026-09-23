@@ -1,0 +1,148 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Rectify the convective electric field (only southward IMF drives injection)
+    Ey_rect = np.maximum(0.0, Ey)
+
+    # O'Brien and McPherron (2000) parameters for pressure correction
+    b = 7.26  # nT / nPa^0.5
+    c = 11.0  # nT
+
+    # Compute pressure-corrected Dst*
+    Dst_star = Dst - b * np.sqrt(P_dyn) + c
+
+    # Injection rate Q (nT/hr)
+    a = 4.4
+    Ec = 0.5
+    Q = np.where(Ey_rect > Ec, -a * (Ey_rect - Ec), 0.0)
+
+    # Variable ring-current decay time tau (hr)
+    tau = 2.4 * np.exp(9.7 / (4.69 + Ey_rect))
+
+    # Hourly tendency dDst/dt (approximated by dDst*/dt)
+    dDst_dt = Q - Dst_star / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract required inputs
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Rectified dawn-to-dusk electric field (only positive Ey drives injection)
+    Ey_pos = np.maximum(0.0, Ey)
+
+    # O'Brien and McPherron (2000) formulation:
+    # 1. Ring current injection rate Q [nT/hr]
+    Q = np.where(Ey_pos > 0.5, -4.4 * (Ey_pos - 0.5), 0.0)
+
+    # 2. Decay time tau [hr] as a function of the electric field
+    tau = 2.4 * np.exp(9.74 / (4.69 + Ey_pos))
+
+    # 3. Pressure-corrected Dst index (Dst*) [nT]
+    # b = 7.26 nT/nPa^0.5, c = 11.0 nT
+    Dst_star = Dst - 7.26 * np.sqrt(P_dyn) + 11.0
+
+    # 4. Hourly tendency dDst/dt [nT/hr]
+    dDst_dt = Q - Dst_star / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Rectify the solar wind convective electric field (only positive Ey drives injection)
+    Ey_rect = np.maximum(0.0, Ey)
+
+    # O'Brien and McPherron (2000) formulation:
+    # 1. Injection term Q (nT/hr)
+    Q = np.where(Ey_rect > 0.5, -4.4 * (Ey_rect - 0.5), 0.0)
+
+    # 2. Variable decay time tau (hours)
+    tau = 2.40 * np.exp(9.74 / (4.69 + Ey_rect))
+
+    # 3. Pressure-corrected Dst index (Dst*)
+    Dst_star = Dst - 7.26 * np.sqrt(np.maximum(0.0, P_dyn)) + 11.0
+
+    # 4. Hourly tendency of Dst (dDst/dt)
+    dDst_dt = Q - Dst_star / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    Dst = X[:, 0]
+    Ey = X[:, 1]  # Dawn-to-dusk electric field [mV/m]
+    P_dyn = X[:, 2]  # Dynamic pressure [nPa]
+
+    # O'Brien and McPherron (2000) formulation
+    # Convert Dst to pressure-corrected Dst* (nT)
+    dst_star = Dst - 7.26 * np.sqrt(P_dyn) + 11.0
+
+    # Only positive Ey (southward IMF) drives the ring current injection
+    Ey_pos = np.maximum(0.0, Ey)
+
+    # Injection term Q [nT/hr]
+    Q = np.where(Ey_pos > 0.5, -4.4 * (Ey_pos - 0.5), 0.0)
+
+    # Decay time tau [hr]
+    tau = 2.40 * np.exp(9.74 / (4.69 + Ey_pos))
+
+    # Hourly tendency dDst*/dt
+    dDst_star_dt = Q - dst_star / tau
+
+    # Under constant or slowly-varying dynamic pressure, dDst/dt ~ dDst*/dt
+    return dDst_star_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract required inputs
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+    
+    # Rectify Ey to isolate the dawn-to-dusk convective electric field (southward IMF driver)
+    Ey_pos = np.maximum(0.0, Ey)
+    
+    # O'Brien and McPherron (2000) formulation:
+    # 1. Compute the corrected Dst (Dst*) by removing magnetopause compression effects
+    Dst_star = Dst - 7.26 * np.sqrt(P_dyn) + 11.0
+    
+    # 2. Compute the ring current injection rate Q (nT/hr)
+    Q = np.where(Ey_pos > 0.49, -4.4 * (Ey_pos - 0.49), 0.0)
+    
+    # 3. Compute the variable decay timescale tau (hr)
+    tau = 2.4 * np.exp(9.74 / (4.69 + Ey_pos))
+    
+    # 4. Compute the hourly tendency dDst/dt (approximated as dDst*/dt)
+    dDst_dt = Q - (Dst_star / tau)
+    
+    return dDst_dt

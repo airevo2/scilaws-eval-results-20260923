@@ -1,0 +1,74 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    # Langmuir isotherm: n = n_max * (b * P) / (1 + b * P)
+    # Using representative coefficients for a typical CO2 adsorbent (e.g., Zeolite 13X)
+    n_max = 4.0  # maximum adsorption capacity [mmol/g]
+    b = 1.5      # Langmuir affinity constant [1/bar]
+    
+    n_ads = n_max * (b * P) / (1.0 + b * P)
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    # Langmuir isotherm: n = (n_m * b * P) / (1 + b * P)
+    # Using representative coefficients for a typical CO2 adsorbent
+    n_m = 4.0  # maximum adsorption capacity [mmol/g]
+    b = 2.0    # Langmuir affinity constant [1/bar]
+    
+    n_ads = (n_m * b * P) / (1.0 + b * P)
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Langmuir isotherm coefficients (typical example values for CO2 adsorption)
+    n_max = 5.0  # Maximum adsorption capacity [mmol/g]
+    b = 0.5      # Langmuir affinity constant [1/bar]
+    
+    # Langmuir isotherm: n_ads = (n_max * b * P) / (1 + b * P)
+    n_ads = (n_max * b * P) / (1.0 + b * P)
+    
+    return n_ads
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    # Langmuir isotherm: n = (n_m * K * P) / (1 + K * P)
+    # n_m = maximum adsorption capacity [mmol/g]
+    # K = Langmuir affinity constant [1/bar]
+    n_m = 5.0
+    K = 0.5
+    
+    n = (n_m * K * P) / (1.0 + K * P)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Langmuir isotherm for CO2 adsorption:
+        n_ads = n_max * b * P / (1 + b * P)
+    
+    Representative parameters for CO2 adsorption on a microporous
+    adsorbent (e.g., zeolite 13X) at ~298 K.
+    """
+    P = X[:, 0]
+    n_max = 5.0   # mmol/g
+    b = 0.5       # 1/bar
+    n = n_max * b * P / (1.0 + b * P)
+    return n

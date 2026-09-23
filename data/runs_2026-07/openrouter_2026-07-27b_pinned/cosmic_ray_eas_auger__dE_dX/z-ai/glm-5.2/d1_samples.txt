@@ -1,0 +1,155 @@
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    
+    # Typical parameters for an average extensive air shower (e.g., ~10 EeV)
+    S_max = 2.0       # Peak energy deposit [PeV/(g/cm^2)]
+    X_max = 700.0     # Depth of shower maximum [g/cm^2]
+    X_0 = -100.0      # First interaction point parameter [g/cm^2]
+    lam = 70.0        # Shower age parameter [g/cm^2]
+    
+    dE_dX = np.zeros_like(x, dtype=float)
+    
+    # Only evaluate where X > X_0 to avoid complex numbers or invalid values
+    mask = x > X_0
+    x_eval = x[mask]
+    
+    # Gaisser-Hillas function for longitudinal profile
+    ratio = (x_eval - X_0) / (X_max - X_0)
+    exponent = (X_max - X_0) / lam
+    decay = np.exp(-(x_eval - X_max) / lam)
+    
+    dE_dX[mask] = S_max * np.power(ratio, exponent) * decay
+    
+    # Ensure strictly positive definite
+    dE_dX = np.maximum(dE_dX, 0)
+    
+    return dE_dX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gaisser-Hillas closed-form for the longitudinal energy deposit
+    profile dE/dX [PeV/(g/cm^2)] as a function of slant depth X [g/cm^2].
+    
+    Parameters are typical fixed values for a 10 EeV vertical shower.
+    """
+    X = np.asarray(X, dtype=float).ravel()
+    
+    # Typical fixed constants
+    X0 = 0.0          # g/cm^2, reference depth
+    Xmax = 700.0      # g/cm^2, depth of shower maximum
+    dEdX_max = 2.0    # PeV/(g/cm^2), peak energy deposit
+    lam = 70.0        # g/cm^2, attenuation length
+    
+    # Ensure positivity of the base for the power term
+    X = np.where(X <= X0, X0 + 1e-6, X)
+    
+    # Gaisser-Hillas profile
+    dEdX = (
+        dEdX_max
+        * ((X - X0) / (Xmax - X0)) ** ((Xmax - X0) / lam)
+        * np.exp(-(X - Xmax) / lam)
+    )
+    
+    return dEdX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the energy deposit per unit slant atmospheric depth (dE/dX) 
+    using the standard Gaisser-Hillas functional form, which describes 
+    the longitudinal development of extensive air showers.
+    
+    Note: While the actual dataset target represents raw measured values 
+    (not the fit prediction itself), the underlying standard closed-form 
+    physical relationship used to model this quantity is the Gaisser-Hillas 
+    function.
+    """
+    x = X[:, 0]
+    
+    # Typical fitted coefficients for an average ultra-high-energy cosmic ray shower
+    X_max = 700.0       # g/cm^2, depth of shower maximum
+    dEdX_max = 5.0      # PeV/(g/cm^2), energy deposit at shower maximum
+    X_0 = 0.0           # g/cm^2, shower starting depth
+    lam = 70.0          # g/cm^2, radiation length / shower age parameter
+    
+    # To avoid log of non-positive values for X < X_0
+    ratio = (x - X_0) / (X_max - X_0)
+    ratio = np.where(ratio <= 0, 1e-10, ratio)
+    
+    # Gaisser-Hillas closed-form relationship
+    exponent = (X_max - X_0) / lam * np.log(ratio) - (x - X_max) / lam
+    dEdX = dEdX_max * np.exp(exponent)
+    
+    return dEdX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X_depth = X[:, 0]
+    
+    # The standard closed-form relationship for the energy deposit profile dE/dX 
+    # in air showers is a modified Gaisser-Hillas function, accounting for the 
+    # energy deposit per particle (a + b*X) multiplied by the charged particle 
+    # number profile N(X):
+    # dE/dX(X) = (a + b*X) * N_max * ((X - X_0) / (X_max - X_0))^((X_max - X_0) / lambda) * exp((X_max - X) / lambda)
+    
+    # Typical dummy constants for the parameterization (as no other shower parameters are provided)
+    a = 1.5e-3       # PeV/(g/cm^2) per particle intercept
+    b = 2.0e-6       # PeV/(g/cm^2) per particle slope
+    N_max = 1.0      # Relative particle number at maximum (scaled)
+    X_0 = -100.0     # g/cm^2, first interaction depth offset
+    X_max = 700.0    # g/cm^2, depth of shower maximum
+    lam = 70.0       # g/cm^2, attenuation length
+    
+    # Calculate the profile safely
+    with np.errstate(divide='ignore', invalid='ignore'):
+        ratio = (X_depth - X_0) / (X_max - X_0)
+        exponent = (X_max - X_0) / lam
+        term_gh = np.power(ratio, exponent) * np.exp((X_max - X_depth) / lam)
+        
+        # Energy deposit per particle term
+        term_edep = a + b * X_depth
+        
+        dE_dX = N_max * term_edep * term_gh
+        
+    # Ensure positive definite and handle invalid values (e.g., when X < X_0)
+    dE_dX = np.where(X_depth > X_0, dE_dX, 0.0)
+    dE_dX = np.nan_to_num(dE_dX, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    return dE_dX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    if X.ndim == 2:
+        x = X[:, 0]
+    else:
+        x = X
+        
+    # Standard Gaisser-Hillas parameterization for the longitudinal profile
+    # Using typical parameters for an extensive air shower
+    X_max = 700.0  # g/cm^2
+    X_0 = -100.0   # g/cm^2
+    lam = 70.0     # g/cm^2
+    dEdX_max = 6.0 # PeV/(g/cm^2)
+    
+    # Ensure the base is positive definite within the fitting window
+    base = np.maximum((x - X_0) / (X_max - X_0), 1e-12)
+    
+    dEdX = dEdX_max * np.power(base, (X_max - X_0) / lam) * np.exp(-(x - X_max) / lam)
+    
+    return dEdX

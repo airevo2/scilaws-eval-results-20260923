@@ -1,0 +1,163 @@
+import numpy as np
+
+def predict(X):
+    """
+    Planck spectral radiance B_lambda(λ, T) in units of W m^-2 nm^-1 sr^-1.
+
+    Uses the standard closed-form Planck law:
+        B_lambda = (2 h c^2 / λ^5) / (exp(h c / (λ k_B T)) - 1)
+
+    Since only wavelength is provided and the target is solar radiance inferred
+    from SORCE SIM daily-mean SSI via L = SSI / Ω, this function returns the
+    solar-disk-equivalent spectral radiance using a canonical effective solar
+    temperature of 5778 K.
+
+    Input:
+        X[:, 0] = wavelength_nm
+
+    Returns:
+        1-D numpy array of spectral radiance in W m^-2 nm^-1 sr^-1
+    """
+    lam_nm = np.asarray(X[:, 0], dtype=float)
+    lam_m = lam_nm * 1e-9
+
+    h = 6.62607015e-34      # J s
+    c = 299792458.0         # m s^-1
+    kB = 1.380649e-23       # J K^-1
+    T = 5778.0              # K
+
+    exponent = (h * c) / (lam_m * kB * T)
+    B_per_m = (2.0 * h * c**2) / (lam_m**5) / np.expm1(exponent)  # W m^-2 m^-1 sr^-1
+    B_per_nm = B_per_m * 1e-9  # W m^-2 nm^-1 sr^-1
+
+    return B_per_nm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Planck spectral radiance as a function of wavelength and temperature.
+    Assumes a solar effective temperature of 5778 K for the Sun.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        X[:, 0] = wavelength_nm
+
+    Returns
+    -------
+    np.ndarray
+        Spectral radiance L(λ, T) in W m^-2 nm^-1 sr^-1
+    """
+    lam_nm = np.asarray(X[:, 0], dtype=float)
+
+    # Constants
+    h = 6.62607015e-34      # Planck constant, J s
+    c = 299792458.0         # speed of light, m s^-1
+    kB = 1.380649e-23       # Boltzmann constant, J K^-1
+    T = 5778.0              # solar effective temperature, K
+
+    # Convert nm -> m
+    lam_m = lam_nm * 1e-9
+
+    # Planck's law: spectral radiance per unit wavelength
+    B_lambda = (2.0 * h * c**2) / (lam_m**5) / (np.exp((h * c) / (lam_m * kB * T)) - 1.0)
+
+    # Convert from per meter to per nanometer
+    return B_lambda * 1e-9
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Planck spectral radiance B_lambda(λ, T) in units of W m^-2 nm^-1 sr^-1.
+    
+    Uses the standard closed-form Planck law with a commonly adopted
+    effective solar photospheric temperature of 5778 K.
+    """
+    lam_nm = np.asarray(X)[:, 0]
+    
+    # Constants
+    h = 6.62607015e-34      # J s
+    c = 299792458.0         # m s^-1
+    k = 1.380649e-23        # J K^-1
+    T = 5778.0              # K
+    
+    # Convert wavelength from nm to m
+    lam_m = lam_nm * 1e-9
+    
+    # Planck spectral radiance per meter of wavelength
+    exponent = (h * c) / (lam_m * k * T)
+    B_lambda_m = (2.0 * h * c**2) / (lam_m**5) / np.expm1(exponent)
+    
+    # Convert from per meter to per nanometer
+    B_lambda_nm = B_lambda_m * 1e-9
+    
+    return B_lambda_nm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Planck spectral radiance L(λ, T) in W m^-2 nm^-1 sr^-1.
+
+    Since only wavelength is provided, this returns the standard Planck-law
+    spectral radiance as a function of wavelength for a fixed effective solar
+    temperature commonly used for the photosphere (~5778 K).
+
+    Input:
+        X[:, 0] = wavelength_nm
+
+    Output:
+        1-D array of L(λ, T) in W m^-2 nm^-1 sr^-1
+    """
+    lam_nm = np.asarray(X)[:, 0]
+    lam_m = lam_nm * 1e-9
+
+    # Physical constants
+    h = 6.62607015e-34      # Planck constant [J s]
+    c = 2.99792458e8        # speed of light [m s^-1]
+    k_B = 1.380649e-23      # Boltzmann constant [J K^-1]
+
+    # Standard effective solar photospheric temperature
+    T = 5778.0  # [K]
+
+    # Planck spectral radiance per unit wavelength [W m^-2 m^-1 sr^-1]
+    exponent = (h * c) / (lam_m * k_B * T)
+    B_lambda_m = (2.0 * h * c**2) / (lam_m**5) / (np.expm1(exponent))
+
+    # Convert from per meter to per nanometer
+    B_lambda_nm = B_lambda_m * 1e-9
+
+    return B_lambda_nm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = wavelength in nm
+    lam_nm = np.asarray(X)[:, 0].astype(float)
+
+    # Physical constants (SI)
+    h = 6.62607015e-34      # Planck constant [J s]
+    c = 299792458.0         # speed of light [m s^-1]
+    kB = 1.380649e-23       # Boltzmann constant [J K^-1]
+
+    # Solar effective temperature commonly used for Planck radiance representation
+    T = 5778.0              # [K]
+
+    # Convert wavelength to meters
+    lam = lam_nm * 1e-9
+
+    # Planck spectral radiance per meter of wavelength [W m^-2 m^-1 sr^-1]
+    B_lambda = (2.0 * h * c**2) / (lam**5) / (np.exp((h * c) / (lam * kB * T)) - 1.0)
+
+    # Convert from per meter to per nanometer [W m^-2 nm^-1 sr^-1]
+    return B_lambda * 1e-9

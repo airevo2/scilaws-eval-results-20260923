@@ -1,0 +1,86 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Standard Langmuir Isotherm parameters (placeholder typical values for CO2 on MOFs)
+    q_max = 5.0  # Saturation capacity [mmol/g]
+    K = 1.0      # Langmuir affinity constant [1/bar]
+    
+    # Langmuir closed-form relationship
+    q = (q_max * K * P) / (1.0 + K * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Langmuir Isotherm Model
+    # q = q_sat * K * P / (1 + K * P)
+    
+    q_sat = 5.0  # Saturation capacity [mmol/g] (placeholder coefficient)
+    K = 1.5      # Langmuir affinity constant [bar^-1] (placeholder coefficient)
+    
+    q = (q_sat * K * P) / (1.0 + K * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Langmuir isotherm parameters (typical representative values for CO2 on MOFs)
+    q_max = 5.0  # Saturation capacity [mmol/g]
+    K = 1.0      # Langmuir affinity constant [bar^-1]
+    
+    # Standard Langmuir closed-form relationship
+    q = (q_max * K * P) / (1.0 + K * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    
+    # Langmuir isotherm parameters (representative constants)
+    q_max = 8.0  # Maximum saturation capacity [mmol/g]
+    K = 0.5      # Langmuir affinity constant [1/bar]
+    
+    # Standard Langmuir closed-form relationship
+    q = (q_max * K * P) / (1.0 + K * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the equilibrium CO2 adsorbed amount (q) using the standard 
+    Langmuir isotherm model, which is the most commonly cited canonical 
+    form for single-component gas adsorption on porous materials like MOFs.
+    
+    Since no material-specific descriptors are provided in X, representative 
+    average coefficients for CO2 adsorption on typical MOFs at 298 K are used.
+    """
+    P = X[:, 0]  # CO2 equilibrium partial pressure in bar
+    
+    # Representative Langmuir fitted coefficients for CO2 on MOFs
+    q_max = 3.5  # Saturation capacity (mmol/g)
+    K = 0.8      # Langmuir affinity/equilibrium constant (bar^-1)
+    
+    # Langmuir isotherm equation
+    q = (q_max * K * P) / (1.0 + K * P)
+    
+    return q

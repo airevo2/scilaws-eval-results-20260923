@@ -1,0 +1,223 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts per-module DC power at maximum-power point (P_mp) in Watts.
+    
+    Inputs:
+    X[:,0] = G (plane-of-array irradiance, W/m²)
+    X[:,1] = T_c (module temperature, °C)
+    X[:,2] = WS (wind speed, m/s)
+    X[:,3] = AM (absolute air mass, dimensionless)
+    
+    Returns:
+    P_mp (W) per module
+    """
+    # Standard single-diode model with temperature and irradiance effects,
+    # commonly expressed as: P_mp = P_mp_ref * (G / G_ref) * [1 + gamma_pmp * (T_c - T_ref)]
+    # with additional air mass and wind speed corrections
+    
+    # Reference conditions
+    G_ref = 1000.0  # W/m²
+    T_ref = 25.0    # °C
+    
+    # Reference maximum power at STC (typical for a ~300W module, scaled to per-module)
+    P_mp_ref = 300.0  # W
+    
+    # Temperature coefficient of P_mp (typically -0.35% to -0.45% per °C for c-Si)
+    gamma_pmp = -0.004  # 1/°C
+    
+    # Irradiance and temperature core relationship
+    G = X[:, 0]
+    T_c = X[:, 1]
+    WS = X[:, 2]
+    AM = X[:, 3]
+    
+    # Basic power prediction from irradiance and temperature
+    P_mp = P_mp_ref * (G / G_ref) * (1.0 + gamma_pmp * (T_c - T_ref))
+    
+    # Air mass correction: power decreases with increasing air mass due to spectral effects
+    # Typical correction factor: f_AM = a0 + a1*AM + a2*AM^2 + a3*AM^3 + a4*AM^4 (Sandia spectral model simplified)
+    # Using a simplified linear-in-AM correction for absolute air mass > 1
+    a0_AM = 1.0
+    a1_AM = -0.02  # slight decrease per unit AM above 1
+    f_AM = np.where(AM <= 1.0, 1.0, a0_AM + a1_AM * (AM - 1.0))
+    f_AM = np.clip(f_AM, 0.85, 1.05)  # bound to reasonable range
+    
+    # Wind speed correction: higher wind cools module slightly more than measured T_c suggests,
+    # or affects effective temperature. A small convective enhancement factor.
+    # f_WS = 1 + c_WS * (WS - WS_ref), where WS_ref = 1 m/s
+    WS_ref = 1.0
+    c_WS = 0.005  # small positive coefficient
+    f_WS = 1.0 + c_WS * (WS - WS_ref)
+    f_WS = np.clip(f_WS, 0.98, 1.02)
+    
+    # Apply corrections
+    P_mp = P_mp * f_AM * f_WS
+    
+    # Ensure non-negative power
+    P_mp = np.maximum(P_mp, 0.0)
+    
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form model for per-module DC maximum power point (P_mp).
+    
+    P_mp = P_ref * (G / G_ref) * (1 + gamma * (T_c - T_ref))
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 4)
+        X[:,0] : G_W_m2, plane-of-array irradiance [W/m²]
+        X[:,1] : T_module_C, back-of-cell module temperature [°C]
+        X[:,2] : WS_m_s, wind speed [m/s] (unused)
+        X[:,3] : air_mass, absolute air mass [-] (unused)
+    
+    Returns
+    -------
+    P_mp : ndarray, shape (n_samples,)
+        Predicted per-module DC power at the maximum-power point [W]
+    """
+    G = X[:, 0]
+    T_c = X[:, 1]
+    
+    # Constants (typical crystalline-silicon module)
+    G_ref = 1000.0        # reference irradiance [W/m²]
+    T_ref = 25.0          # reference module temperature [°C]
+    gamma = -0.0045       # temperature coefficient of Pmax [1/°C] (~ -0.45%/°C)
+    P_ref = 300.0         # nominal module power at STC [W] (a typical value)
+    
+    P_mp = P_ref * (G / G_ref) * (1.0 + gamma * (T_c - T_ref))
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts per-module DC power at the maximum-power point (P_mp) [W]
+    using the standard linear PV power model.
+
+    Inputs:
+    X[:, 0] : G_W_m2      : Plane-of-array irradiance [W/m²]
+    X[:, 1] : T_module_C  : Module temperature [deg C]
+    X[:, 2] : WS_m_s      : Wind speed [m/s]          (unused in standard model)
+    X[:, 3] : air_mass    : Absolute air mass         (unused in standard model)
+
+    Returns:
+    P_mp : 1-D array of predicted DC power [W] per module.
+    """
+    # Extract inputs
+    G = X[:, 0]          # irradiance
+    T_c = X[:, 1]        # module temperature
+
+    # Standard reference / STC values
+    G_ref = 1000.0       # W/m²
+    T_ref = 25.0         # deg C
+
+    # Typical module parameters (crystalline Si)
+    P_mp_ref = 300.0     # [W] rated power at STC
+    gamma = -0.0045      # [1/°C] relative temperature coefficient of Pmax
+
+    # Standard closed-form relationship for maximum power
+    P_mp = (G / G_ref) * P_mp_ref * (1.0 + gamma * (T_c - T_ref))
+
+    return P_mp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-module DC power at maximum power point (P_mp) using the
+    standard single-irradiance cell-temperature model. This is the most
+    commonly cited closed-form relationship for PV module power.
+
+    The model is:
+        P_mp = P_MP_STC * (G / G_STC) * (1 + gamma * (T_c - T_STC)) * f_AM * f_WS
+
+    where f_AM and f_WS are optional spectral (air mass) and wind speed
+    correction factors. In the simplest (and most standard) form they are
+    set to 1.0, i.e. no effect. The coefficients used below are typical for
+    a crystalline silicon module rated at 300 Wp at STC.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (N, 4)
+        X[:,0] = G_W_m2       : plane-of-array irradiance [W/m²]
+        X[:,1] = T_module_C   : back-of-cell module temperature [°C]
+        X[:,2] = WS_m_s       : wind speed [m/s] (not used in basic model)
+        X[:,3] = air_mass     : absolute air mass (not used in basic model)
+
+    Returns
+    -------
+    P_mp : np.ndarray, shape (N,)
+        Predicted DC power at maximum power point [W]
+    """
+    # -------- inputs ----------
+    G = X[:, 0]          # irradiance
+    T_c = X[:, 1]        # module temperature
+    WS = X[:, 2]         # wind speed (not used in standard form)
+    AM = X[:, 3]         # air mass (not used in standard form)
+
+    # -------- standard module parameters ----------
+    P_MP_STC = 300.0     # STC power [W] (example: 300 Wp module)
+    G_STC    = 1000.0    # STC irradiance [W/m²]
+    T_STC    = 25.0      # STC cell temperature [°C]
+    gamma    = -0.0045    # temperature coefficient of P_mp [1/°C] (-0.45%/°C)
+
+    # -------- optional correction factors ----------
+    # Using the simplest form: no spectral or wind dependence
+    f_AM = 1.0           # spectral correction factor (e.g., polynomial in AM)
+    f_WS = 1.0           # wind speed correction factor (e.g., 1 + k_ws * WS)
+
+    # -------- power calculation ----------
+    P_mp = P_MP_STC * (G / G_STC) * (1.0 + gamma * (T_c - T_STC)) * f_AM * f_WS
+
+    # Power cannot be negative; clip to zero
+    return np.maximum(P_mp, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts per-module DC power at maximum power point (P_mp) using the PVUSA model.
+
+    P_mp = G * (A0 + A1*G + A2*T_c + A3*WS + A4*AM)
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 4)
+        Column 0: G_W_m2 (plane-of-array irradiance) [W/m²]
+        Column 1: T_module_C (back-of-cell module temperature) [°C]
+        Column 2: WS_m_s (wind speed) [m/s]
+        Column 3: air_mass (absolute air mass) [dimensionless]
+
+    Returns
+    -------
+    P_mp : np.ndarray, shape (n_samples,)
+        Predicted module DC power at maximum power point [W].
+    """
+    # Coefficients to be obtained by fitting to measured data
+    A0 = 0.0   # (W/W) or dimensionless offset
+    A1 = 0.0   # 1/(W/m²) non-linearity with irradiance
+    A2 = 0.0   # 1/°C temperature coefficient
+    A3 = 0.0   # s/m wind speed coefficient
+    A4 = 0.0   # AM coefficient
+
+    G = X[:, 0]
+    T_c = X[:, 1]
+    WS = X[:, 2]
+    AM = X[:, 3]
+
+    P_mp = G * (A0 + A1 * G + A2 * T_c + A3 * WS + A4 * AM)
+    return P_mp

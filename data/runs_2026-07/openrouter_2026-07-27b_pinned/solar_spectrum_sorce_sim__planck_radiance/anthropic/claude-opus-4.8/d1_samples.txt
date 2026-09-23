@@ -1,0 +1,102 @@
+import numpy as np
+
+def predict(X):
+    # Physical constants (SI)
+    h = 6.62607015e-34   # Planck constant [J s]
+    c = 2.99792458e8     # speed of light [m/s]
+    k = 1.380649e-23     # Boltzmann constant [J/K]
+    T = 5778.0           # solar effective temperature [K]
+
+    lam_nm = X[:, 0]
+    lam = lam_nm * 1e-9  # convert nm -> m
+
+    # Planck spectral radiance per unit wavelength [W m^-2 m^-1 sr^-1]
+    B = (2.0 * h * c**2 / lam**5) / (np.exp(h * c / (lam * k * T)) - 1.0)
+
+    # Convert from per meter to per nanometer: 1e-9 W m^-2 nm^-1 sr^-1
+    L = B * 1e-9
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Planck spectral radiance for the Sun (blackbody at effective temperature)
+    h = 6.62607015e-34   # J s
+    c = 2.99792458e8     # m / s
+    k = 1.380649e-23     # J / K
+    T = 5772.0           # K, solar effective temperature
+
+    lam_nm = X[:, 0]
+    lam = lam_nm * 1e-9  # m
+
+    # spectral radiance in W m^-2 m^-1 sr^-1
+    L_per_m = (2.0 * h * c**2 / lam**5) / (np.exp(h * c / (lam * k * T)) - 1.0)
+
+    # convert per-meter to per-nanometer: W m^-2 nm^-1 sr^-1
+    L = L_per_m * 1e-9
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Physical constants (SI)
+    h = 6.62607015e-34      # Planck constant [J s]
+    c = 2.99792458e8        # speed of light [m/s]
+    k = 1.380649e-23        # Boltzmann constant [J/K]
+    T = 5772.0              # effective solar temperature [K]
+
+    lam_nm = X[:, 0]
+    lam = lam_nm * 1e-9     # wavelength in meters
+
+    # Planck spectral radiance per unit wavelength [W m^-2 m^-1 sr^-1]
+    B = (2.0 * h * c**2 / lam**5) / (np.exp(h * c / (lam * k * T)) - 1.0)
+
+    # Convert from per-meter to per-nanometer: multiply by 1e-9
+    return B * 1e-9
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Physical constants (SI)
+    h = 6.62607015e-34   # Planck constant [J s]
+    c = 2.99792458e8     # speed of light [m/s]
+    k = 1.380649e-23     # Boltzmann constant [J/K]
+    T = 5772.0           # effective solar temperature [K]
+
+    lam_nm = np.asarray(X[:, 0], dtype=float)
+    lam = lam_nm * 1e-9  # wavelength in meters
+
+    # Planck spectral radiance per wavelength [W m^-2 m^-1 sr^-1]
+    B = (2.0 * h * c**2 / lam**5) / (np.exp(h * c / (lam * k * T)) - 1.0)
+
+    # Convert from per-meter to per-nanometer: multiply by 1e-9
+    L = B * 1e-9
+
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Physical constants (SI)
+    h = 6.62607015e-34      # Planck constant [J s]
+    c = 2.99792458e8        # speed of light [m/s]
+    k = 1.380649e-23        # Boltzmann constant [J/K]
+    T = 5772.0              # solar effective temperature [K]
+
+    lam_nm = X[:, 0]
+    lam = lam_nm * 1e-9     # wavelength [m]
+
+    # Planck spectral radiance [W m^-2 m^-1 sr^-1]
+    B = (2.0 * h * c**2 / lam**5) / (np.exp(h * c / (lam * k * T)) - 1.0)
+
+    # convert per-metre to per-nanometre: multiply by 1e-9
+    L = B * 1e-9
+    return L

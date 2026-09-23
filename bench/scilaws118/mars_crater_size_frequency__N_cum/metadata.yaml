@@ -1,0 +1,140 @@
+task_id: mars_crater_size_frequency__N_cum
+domain: astronomy / planetary_science
+license: LicenseRef-NASA-PublicDomain    # Robbins & Hynek 2012 catalog — NASA-funded, effectively public domain
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  The crater size-frequency distribution is a planetary-science measurement of how impact craters of different sizes are distributed across a planetary surface, here Mars.
+
+target:
+  name: N_cum
+  symbol: N(>=D)
+  unit: km^-2
+  description: Cumulative areal density of Mars craters with diameter at or above the bin's lower edge (craters per km^2 of Mars surface).  Spans ~5 orders of magnitude across the diameter range; the declared metric is log_mae (log10-space mean absolute error), the natural error scale for a multi-decade positive target.
+  range: [1.38e-08, 2.66e-03]
+
+inputs:
+  - name: D_lower_km
+    symbol: D_lo
+    unit: km
+    description: Lower diameter edge of the logarithmic bin (km).  PRIMARY input — the cumulative SFD closed form N(>=D) is a function of this threshold diameter alone; all three reference baselines use this input only.
+    range: [1.0, 664.0]
+  - name: D_upper_km
+    symbol: D_up
+    unit: km
+    description: Upper diameter edge of the bin (= D_lower * 2^0.125).  DISTRACTOR — perfectly collinear with D_lower (their ratio is the fixed bin factor 2^0.125 ≈ 1.0905), so it carries no information beyond D_lower.  No reference baseline uses it.
+    range: [1.09, 724.08]
+  - name: D_geomean_km
+    symbol: D_gm
+    unit: km
+    description: Geometric-mean diameter of the bin, sqrt(D_lower * D_upper).  DISTRACTOR — also collinear with D_lower (= D_lower * 2^0.0625).  The natural representative point of a log-spaced bin, but it adds no information for the cumulative target.  No reference baseline uses it.
+    range: [1.04, 689.97]
+
+# NOTE: the aggregated source CSV carries three host-only columns that
+# are NOT released as inputs because each would shortcut the target:
+#   - N_inc       : incremental crater count per bin.  The cumulative
+#                   target is a running sum of N_inc, so releasing it
+#                   leaks the target's finite differences.
+#   - N_cum_count : raw cumulative crater count.  N_cum =
+#                   N_cum_count / 144,798,500 (Mars surface area km^2)
+#                   exactly — a circular target (same pathology as
+#                   `thermoelectric_zt` and `cex_dex_arbitrage`).
+#   - log10_D_lower : log10 of an input; a derived helper, host-only.
+# Only (N_cum, D_lower_km, D_upper_km, D_geomean_km) are released; the
+# two D_* distractors are collinear with D_lower so the task is
+# effectively single-input, matching the 1-D structure of the SFD law.
+
+# Dataset — Type I, two-file flat layout.  Source: Robbins & Hynek
+# (2012) global Mars crater catalog (384,345 craters, D >= 1 km),
+# aggregated by `data_raw/aggregate_sfd.py` into factor-2^0.125
+# logarithmic diameter bins (8 bins/octave) with an n_cum >= 2 floor
+# and flat-step dedupe -> 74 cumulative-SFD points.  Split is
+# range-OOD on diameter: train = D_lower < 128 km (56 bins, dense
+# small/medium-crater regime), test = D_lower >= 128 km (18 bins,
+# large-crater / impact-basin regime).  The v1 sibling binned at
+# factor-2^0.25 (41 bins); v2 re-densifies to 2^0.125 — valid because
+# the cumulative target N(>=D_lower) depends only on the threshold
+# D_lower, so a finer grid samples the same smooth curve at more points.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 56
+n_test:  18
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: neukum_npf_slope_at_1km
+    value: -1.8
+    unit: dimensionless
+    description: Approximate cumulative-SFD slope near D = 1 km on the Neukum production function; a candidate value for the small-crater power-law exponent.
+    source: Neukum 2001 SSR 96:55, Fig. 3 — the NPF slope near D = 1 km is roughly -1.8 to -2.0.  A candidate for the low-D segment slope.
+    _role: candidate
+  - name: large_crater_branch_slope
+    value: -2.6
+    unit: dimensionless
+    description: Approximate cumulative-SFD slope in the large-crater / basin branch (D > 30 km); a candidate value for the steep high-D exponent.
+    source: Hartmann & Neukum 2001 SSR 96:165, Fig. 2 — the SFD steepens to slope ~ -2.5 to -3 in the large-crater regime.  A candidate for the high-D segment slope.
+    _role: candidate
+  - name: simple_to_complex_transition_diameter
+    value: 7.0
+    unit: km
+    description: Diameter of the simple-to-complex crater morphology transition on Mars; a candidate value for an SFD break diameter.
+    source: Ivanov 2001 SSR 96:87, p. 7, Eq. 4 — Mars simple-to-complex transition D* ~ 7 km.  A candidate break-point location (the empirically-fitted SFD-slope break lands lower, near D ~ 2 km).
+    _role: candidate
+  - name: mars_surface_area_km2
+    value: 144798500.0
+    unit: km^2
+    description: Total surface area of Mars, used to convert crater counts to areal densities.
+    source: NASA Mars Fact Sheet.  Used in data preparation (N_cum = count / area); a DISTRACTOR for the SFD-shape formula, which is independent of the absolute area normalisation.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: single_power_law
+    label: Single power-law cumulative SFD N(>=D)=A·D^(-B) (Type I, frozen; A,B pre-fit on v2 train)
+    formula_file: formulas/single_power_law.py
+    reference_pdf: reference/neukum_2001.pdf
+    n_law_constants: 2         # A, B
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.8879}
+  - id: neukum_2001_npf
+    label: Neukum (2001) production function — 11th-degree polynomial, a1..a11 paper-published (Ivanov 2000), a0 pre-fit (Type I, frozen)
+    formula_file: formulas/neukum_2001_npf.py
+    reference_pdf: reference/neukum_2001.pdf
+    n_law_constants: 12        # a0 (fit) + a1..a11 (paper)
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.1747}
+  - id: hartmann_piecewise_power_law
+    label: Hartmann piecewise (3-segment broken) power-law cumulative SFD (Type I, frozen; slopes + breaks pre-fit on v2 train)
+    formula_file: formulas/hartmann_piecewise_power_law.py
+    reference_pdf: reference/hartmann_2001.pdf
+    n_law_constants: 6         # C0, S1, S2, S3, K1, K2
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.0460}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        12
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes the impact-production size-frequency effect that larger craters are rarer than smaller craters"
+  - "predicted N_cum is non-negative"
+  - "predicted N_cum tends to zero as D_lower_km becomes arbitrarily large"
+
+# === Scoring ===
+metric: log_mae           # log10-space MAE on N_cum (km^-2), multi-decade positive target
+best_baseline: 0.0460     # hartmann_piecewise_power_law — best of three Type I rungs on v2 test

@@ -1,0 +1,58 @@
+import numpy as np
+
+def predict(X):
+    # Geiger-Nuttall law (single-variable form): log10(T1/2) = a / sqrt(Q) + b
+    # Fitted representative constants for alpha emitters (Q in MeV)
+    Q = X[:, 0]
+    a = 128.0
+    b = -46.0
+    return a / np.sqrt(Q) + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Geiger-Nuttall type relation using only Q_alpha.
+    # log10(T1/2 / s) = a / sqrt(Q) + b
+    # (single-variable canonical form; coefficients from typical alpha-decay fit)
+    Q = X[:, 0]
+    a = 137.0
+    b = -50.0
+    return a / np.sqrt(Q) + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Geiger-Nuttall law (single-variable form, Q-dependence only):
+    #   log10(T1/2 / s) = a / sqrt(Q_alpha) + b
+    Q = X[:, 0]
+    a = 158.0
+    b = -59.0
+    return a / np.sqrt(Q) + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Geiger-Nuttall law (single-variable form using only Q_alpha):
+    #   log10(T_1/2 / s) = a / sqrt(Q_alpha) + b
+    Q = X[:, 0]
+    a = 137.0
+    b = -49.0
+    return a / np.sqrt(Q) + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Geiger-Nuttall law reduced to Q-only dependence:
+    #   log10(T_1/2 / s) = a * Q_alpha^(-1/2) + b
+    Q = X[:, 0]
+    a = 129.0
+    b = -49.0
+    return a * Q**(-0.5) + b

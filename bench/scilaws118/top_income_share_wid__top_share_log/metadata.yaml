@@ -1,0 +1,138 @@
+task_id: top_income_share_wid__top_share_log
+domain: social_science / income_inequality
+license: CC-BY-NC-4.0
+
+# Type II — cluster = country. Each (country, year) carries 5 rows, one per
+# top-fraction percentile threshold.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  This task is from economics, concerning the upper tail of a country's pre-tax income distribution as recorded in the World Inequality Database (WID).
+
+target:
+  name: top_share_log
+  symbol: ln S(p)
+  unit: ""
+  description: Natural log of the share of pre-tax national income held by the top p fraction of equal-split adults aged 20 and over (a real WID measurement).
+  range: [-8.12, -0.22]
+
+inputs:
+  - name: log_p_above
+    symbol: ln p
+    unit: ""
+    description: Natural log of the top-fraction p (≤ 1), e.g. ln(0.10) for the top-10% bracket. Released values are ln(0.10), ln(0.05), ln(0.01), ln(0.001), ln(0.0001).
+    values: [-2.302585, -2.995732, -4.605170, -6.907755, -9.210340]
+  - name: top_pct
+    symbol: 100p
+    unit: "%"
+    description: Top-fraction p in percentage (10.0, 5.0, 1.0, 0.1, 0.01) — algebraically equivalent to log_p_above (top_pct = 100·exp(log_p_above)). Released alongside log_p_above on purpose; identifying and ignoring the redundancy is part of what the SR/LLM judge channel tests (see CONVERSION_NOTES §5). Mirrors the sister task income_distribution_wid__pareto_alpha.
+    values: [10.0, 5.0, 1.0, 0.1, 0.01]
+  - name: year
+    symbol: t
+    unit: yr
+    description: Calendar year of the observation.
+    range: [1980, 2023]
+  - name: region
+    symbol: ""
+    unit: ""
+    description: WID macro-region of the country (Africa / Americas / Asia / Europe / Oceania) — categorical.
+  - name: group_id
+    symbol: ""
+    unit: ""
+    description: Cluster id — the lex-rank of the country's ISO-2 code among the 216 countries. Carries the Type II cluster identity.
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+#
+# Cluster boundary: a country is a test cluster iff group_id % 4 == 0
+# (over the deterministic lex-rank of ISO-2 codes 0..215). This yields
+# 162 train countries / 54 test countries with no overlap.
+#
+# Within each test cluster, fit() sees the rows with year < cluster's
+# median year, and predict() is scored on the rows with year >=
+# cluster's median year — both halves carry all 5 percentile cutoffs.
+# Deterministic, no RNG.
+#
+# v1 cluster-overlap bug being fixed
+# ----------------------------------
+# v1's split was a per-region chronological 70/30 (mirroring its
+# baselines.py), which is NOT cluster-disjoint — 5 countries appeared in
+# both v1's train.csv and test.csv. v2 README §5 requires
+# cluster-disjointness for Type II; the mod-4 rule above closes this.
+data_files:
+  train:     data/train.csv        # 162 train countries, all years 1980-2023
+  test_fit:  data/test_fit.csv     # 54 test countries, year < cluster median
+  test_test: data/test_test.csv    # 54 test countries, year >= cluster median
+n_train: 35640
+n_test_fit: 5855
+n_test_test: 5860
+n_clusters_train: 162
+n_clusters_test: 54
+n_percentiles_per_cluster_year: 5
+
+# Data-quality note: WID's annual updates do not cover every country every
+# year; some country-year cells are last-observation-carried-forward from
+# the most recent update. The effective sample size is somewhat below the
+# nominal row count, but a per-row stateless predict() cannot exploit this.
+
+# Candidate prior constants — the `priors` prompt slot. This task's reference
+# formulas (per-country Pareto OLS, with optional linear year drift) fit all
+# coefficients on the test_fit window; no external scientific constants are
+# load-bearing. The distractor below is the Atkinson 2011 inverted-Pareto
+# coefficient β — in-domain (a real summary statistic of the same Pareto law)
+# but the reference formulas do not consume it. `_role` is audit-only.
+priors:
+  - name: inverted_pareto_beta
+    value: 2.0
+    unit: dimensionless
+    description: Inverted Pareto coefficient β — ratio of mean income above a threshold to that threshold; β = α/(α−1), typically 1.5-3.0 across WID countries.
+    source: Atkinson-Piketty-Saez 2011 §3.1.1 PDF p. 14 — the paper's preferred summary measure; an alternative parameterisation of the Pareto law, not the form the reference formulas use.
+    _role: distractor
+
+# === Reference baselines ===
+# Two formulas, both applying the per-country log-log Pareto self-similarity
+# form, differing in whether they include a linear calendar-year drift term.
+references:
+  - id: atkinson_piketty_saez_2011
+    label: Atkinson-Piketty-Saez 2011 — Pareto self-similarity, OLS on the log-log slope
+    formula_file: formulas/atkinson_piketty_saez_2011.py
+    reference_pdf: reference/atkinson_piketty_saez_2011.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # a, b
+    measured: {rmse: 0.3564, r2: 0.8327}
+  - id: piketty_saez_2003
+    label: Piketty-Saez 2003 — Pareto self-similarity with linear calendar-year drift, closed-form OLS
+    formula_file: formulas/piketty_saez_2003.py
+    reference_pdf: reference/piketty_saez_2003.pdf
+    n_law_constants: 0
+    n_other_constants: 1       # year_center
+    n_local_params: 3          # a, b, c
+    measured: {rmse: 0.3883, r2: 0.6970}
+
+# === v2 anti-dump caps ===
+# Mirror the harness-derived caps (max across the reference bank). Updated
+# after the first `evaluate.py reference` run if the bank changes.
+caps:
+  max_law_constants:        0
+  max_local_params:         3
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on top_share_log (log-target, dimensionless)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "models Pareto upper-tail self-similarity of top income shares as the top fraction changes"
+  - "keeps the predicted top income share no greater than 1, so top_share_log ≤ 0"
+  - "keeps the predicted top income share at least as large as the population fraction p, so top_share_log ≥ log_p_above"
+  - "makes the predicted top income share nondecreasing as the top fraction p increases"
+  - "makes the predicted share per person in the top group, share/p, nonincreasing as the top fraction p increases"
+
+best_baseline: 0.3564     # atkinson_piketty_saez_2011 mean-per-cluster rmse on test_test

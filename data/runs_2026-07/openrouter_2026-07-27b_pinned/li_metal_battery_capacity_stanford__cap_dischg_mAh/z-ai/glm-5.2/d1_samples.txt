@@ -1,0 +1,220 @@
+import numpy as np
+
+def predict(X):
+    efc = X[:, 1]
+    Q_0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+    
+    # Standard empirical power-law capacity fade model:
+    # Q_dis = Q_0 * (1 - alpha * EFC^beta)
+    # where alpha captures the effect of voltage and current stress factors
+    alpha = 1e-3 * np.exp(5.0 * (V_high - 4.2) + 2.0 * (3.0 - V_low) + 1.0 * (I_chg - 0.2))
+    beta = 0.5
+    
+    Q_dis = Q_0 * (1.0 - alpha * np.power(efc, beta))
+    return np.maximum(Q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh].
+
+    The model implements a standard empirical power-law capacity fade
+    relationship commonly used in lithium-ion battery degradation
+    modeling:
+
+        Q_dis = Q_0 * f_V * f_chg * (1 - alpha * EFC^0.5)
+
+    where:
+      - f_V scales the accessible capacity by the voltage window
+        relative to the nominal 4.2–2.8 V window.
+      - f_chg accounts for incomplete charging due to the constant-
+        voltage termination current.
+      - alpha is a group-specific fade rate that is modulated by the
+        upper cutoff voltage, lower cutoff voltage, charge C-rate,
+        and CV termination current.  The exponent 0.5 reflects the
+        parabolic (diffusion-limited) growth of the SEI layer, which
+        is the most widely cited fade mechanism for lithium-ion cells.
+    """
+    # Unpack columns
+    cycle      = X[:, 0]
+    EFC        = X[:, 1]
+    Q0         = X[:, 2]
+    V_low      = X[:, 3]
+    V_high     = X[:, 4]
+    I_CV       = X[:, 5]
+    I_chg      = X[:, 6]
+    group      = X[:, 7].astype(int)
+
+    # Reference conditions for nominal capacity rating
+    V_high_ref = 4.2
+    V_low_ref  = 2.8
+    dV_ref     = V_high_ref - V_low_ref
+
+    # Voltage-window factor (linear approximation of usable capacity)
+    dV   = V_high - V_low
+    f_V  = dV / dV_ref
+
+    # Charge-completeness factor (higher CV termination current -> less charge)
+    f_chg = 1.0 - 0.5 * I_CV
+
+    # Group-specific base fade coefficients (typical values)
+    alpha0 = np.array([0.0040, 0.0030, 0.0050, 0.0035])
+
+    # Modulate fade rate by operating stressors
+    # Higher V_high, lower V_low, higher I_chg, higher I_CV increase fade
+    fade_mod = np.exp(
+        2.0 * (V_high - V_high_ref) +
+        1.5 * (V_low_ref - V_low) +
+        1.0 * (I_chg - 0.30) +
+        3.0 * (I_CV - 0.03)
+    )
+
+    alpha = alpha0[group - 1] * fade_mod
+
+    # Power-law fade (exponent 0.5 for diffusion-limited SEI growth)
+    Q_dis = Q0 * f_V * f_chg * (1.0 - alpha * np.sqrt(EFC))
+
+    # Physical lower bound
+    Q_dis = np.maximum(Q_dis, 0.0)
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh] using a standard
+    power-law capacity fade model with exponential stress factors.
+
+    The canonical form is:
+        Q_dis = Q0 * (1 - A * EFC^B)
+    where the fade coefficient A is modulated by an exponential stress
+    multiplier that accounts for voltage cutoffs, charge C-rate, CV
+    termination current, and cell design group.
+    """
+    # Unpack inputs
+    cycle_index = X[:, 0]   # EFC is the preferred throughput metric
+    efc = X[:, 1]
+    Q0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_cv = X[:, 5]
+    I_chg = X[:, 6]
+    group = X[:, 7]
+
+    # Base power-law fade parameters (typical for SEI-limited aging)
+    A_base = 0.005   # dimensionless base fade coefficient
+    B = 0.5          # exponent (~1/2 for diffusion-limited SEI growth)
+
+    # Reference operating conditions
+    V_high_ref = 4.2
+    V_low_ref = 3.0
+    I_chg_ref = 0.5
+    I_cv_ref = 0.02
+    group_ref = 1
+
+    # Exponential stress multiplier on the fade rate
+    stress = np.exp(
+        2.0 * (V_high - V_high_ref) +          # over-voltage accelerates fade
+        1.5 * (V_low_ref - V_low) +            # deeper discharge accelerates fade
+        0.8 * (I_chg - I_chg_ref) +            # higher charge rate accelerates fade
+        -5.0 * (I_cv - I_cv_ref) +             # fuller charge (lower I_cv) accelerates fade
+        0.15 * (group - group_ref)             # design group effect
+    )
+
+    A = A_base * stress
+    Q_dis = Q0 * (1.0 - A * np.power(efc, B))
+
+    # Enforce physical lower bound
+    Q_dis = np.maximum(Q_dis, 0.0)
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh] using the standard
+    semi-empirical power-law capacity fade model:
+        Q_dis = Q0 * (1 - alpha * EFC^z)
+    where z = 0.5 reflects diffusion-limited (SEI) degradation, and the
+    fade coefficient alpha is modulated by voltage window, charge rate,
+    CV termination, and cell design group.
+    """
+    # Unpack inputs
+    cycle_index = X[:, 0]      # k (not used directly; EFC is the aging proxy)
+    efc = X[:, 1]              # equivalent full cycles
+    Q0 = X[:, 2]               # nominal capacity [mAh]
+    V_low = X[:, 3]            # lower voltage cutoff [V]
+    V_high = X[:, 4]           # upper voltage cutoff [V]
+    I_cv = X[:, 5]             # CV termination current [C-rate]
+    I_chg = X[:, 6]            # max charge C-rate
+    group = X[:, 7]            # design configuration group (1..4)
+
+    # Power-law exponent: parabolic law for SEI / diffusion-limited fade
+    z = 0.5
+
+    # Base fade coefficient at reference conditions:
+    # V_high = 4.2 V, V_low = 3.0 V, I_chg = 0.2 C, I_cv = 0.05 C, group = 1
+    a0 = 0.012   # ~1.2 % capacity loss per sqrt(EFC) at baseline
+
+    # Stress multipliers (monotonic, positive for typical ranges)
+    # Higher upper cutoff voltage exponentially accelerates fade
+    f_vhigh = np.exp(7.0 * (V_high - 4.2))
+    # Deeper discharge (lower V_low) increases mechanical/chemical stress
+    f_vlow = np.exp(5.0 * (3.0 - V_low))
+    # Higher charge C-rate increases fade (plating, thermal, mechanical)
+    f_ichg = 1.0 + 4.0 * (I_chg - 0.2)
+    # Lower CV termination current => longer high-voltage exposure => more fade
+    f_icv = 1.0 + 6.0 * (0.05 - I_cv)
+
+    # Group-specific protocol/design factors (relative to group 1)
+    g_factor = np.where(group == 1, 0.85,
+               np.where(group == 2, 1.00,
+               np.where(group == 3, 1.25, 1.50)))
+
+    # Effective fade coefficient
+    alpha = a0 * g_factor * f_vhigh * f_vlow * f_ichg * f_icv
+
+    # Closed-form capacity fade relationship
+    Q_dis = Q0 * (1.0 - alpha * np.power(efc, z))
+
+    # Enforce physical bounds
+    Q_dis = np.clip(Q_dis, 0.0, Q0)
+
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    efc = X[:, 1]
+    Q_0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_chg = X[:, 6]
+    
+    # Standard empirical power-law capacity fade model
+    # Q_dis = Q_0 - A * Q_0 * (V_high - V_low)^B * I_chg^C * EFC^D
+    # where A, B, C, D are empirically fitted constants
+    A = 0.01
+    B = 2.0
+    C = 0.5
+    D = 0.5
+    
+    delta_V = V_high - V_low
+    fade = A * Q_0 * (delta_V ** B) * (I_chg ** C) * (efc ** D)
+    
+    Q_dis = Q_0 - fade
+    return np.maximum(Q_dis, 0.0)

@@ -1,0 +1,128 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = age (t) [yr] (typical range [8.0, 19.75])
+    # X[:, 1] = height_cm (h) [cm] (typical range [116.8, 199.5])
+    age = X[:, 0]
+    height = X[:, 1]
+
+    # Hankinson et al. (NHANES III) spirometry reference equations for pediatric subjects (8-19 years).
+    # Since sex is not provided, the canonical male and female Caucasian coefficients are averaged:
+    # Male:   FVC = -0.1775 + 0.000190 * age^2 + 0.00011110 * height^2
+    # Female: FVC = -0.1341 + 0.000147 * age^2 + 0.00009130 * height^2
+
+    intercept = -0.1558
+    coeff_age2 = 0.0001685
+    coeff_height2 = 0.0001012
+
+    fvc = intercept + coeff_age2 * (age**2) + coeff_height2 * (height**2)
+    return fvc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts Forced Vital Capacity (FVC) in liters using a unisex average
+
+    of the standard Hankinson (NHANES III) reference equations for pediatric/
+    adolescent populations (ages 8-19).
+
+    Inputs:
+    - X[:, 0] = age (t) [years]
+    - X[:, 1] = height (h) [cm]
+
+    Output:
+    - 1-D numpy array of FVC [L]
+    """
+    age = X[:, 0]
+    height = X[:, 1]
+
+    # Averaged coefficients for boys (8-19) and girls (8-17) from NHANES III:
+    # Boys:  -0.2584 - 0.20415 * age + 0.01013 * age^2 + 0.00018642 * height^2
+    # Girls: -0.3160 - 0.13019 * age + 0.00676 * age^2 + 0.00016021 * height^2
+    b0 = -0.2872
+    b1 = -0.16717
+    b2 = 0.008445
+    b3 = 0.00017331
+
+    fvc = b0 + b1 * age + b2 * (age**2) + b3 * (height**2)
+
+    # Ensure physical plausibility (FVC cannot be negative)
+    return np.maximum(fvc, 0.5)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = age (years)
+    # X[:, 1] = height (cm)
+    age = X[:, 0]
+    height = X[:, 1]
+
+    # Based on the NHANES III (Hankinson et al., 1999) reference equations for pediatric subjects (ages 8-19).
+    # Since sex is not provided, we use the average of the male and female reference coefficients
+    # to provide a robust, unisex estimation of Forced Vital Capacity (FVC).
+    #
+    # Male:   FVC = -0.1775 * age + 0.01511 * age^2 + 0.00013005 * height^2
+    # Female: FVC = -0.2754 * age + 0.01695 * age^2 + 0.00010950 * height^2
+
+    c_age = -0.22645
+    c_age2 = 0.01603
+    c_height2 = 0.000119775
+
+    fvc = c_age * age + c_age2 * (age**2) + c_height2 * (height**2)
+    return fvc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = age [yr]
+    # X[:, 1] = height [cm]
+    age = X[:, 0]
+    height = X[:, 1]
+    
+    # Hankinson (NHANES III) spirometry reference equations for pediatric/adolescent
+    # subjects (ages 8-19). Since gender is not specified in the inputs, we use the
+    # average of the male and female reference equations for Caucasian subjects.
+    fvc_male = -0.2584 - 0.2041 * age + 0.01013 * (age ** 2) + 0.0001864 * (height ** 2)
+    fvc_female = -1.2007 + 0.02461 * age + 0.0001281 * (height ** 2)
+    
+    # Return the gender-averaged FVC prediction in Litres
+    return 0.5 * (fvc_male + fvc_female)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts Forced Vital Capacity (FVC) in liters for children and adolescents
+
+    (ages 8-19) using the NHANES III reference equations (Hankinson et al., 1999).
+    Since sex is not provided, the average of the male and female Caucasian
+    coefficients is used.
+
+    Inputs:
+    - X[:, 0]: age [years]
+    - X[:, 1]: height [cm]
+    """
+    age = X[:, 0]
+    height = X[:, 1]
+
+    # Averaged coefficients for male and female (ages 8-19) from Hankinson et al. (1999)
+    # Male:   FVC = -0.1775 + 0.000190 * Age^2 + 0.0001140 * Height^2
+    # Female: FVC = -0.1065 + 0.000116 * Age^2 + 0.0001005 * Height^2
+    intercept = -0.1420
+    coef_age2 = 0.000153
+    coef_height2 = 0.00010725
+
+    fvc_L = intercept + coef_age2 * (age**2) + coef_height2 * (height**2)
+
+    return fvc_L

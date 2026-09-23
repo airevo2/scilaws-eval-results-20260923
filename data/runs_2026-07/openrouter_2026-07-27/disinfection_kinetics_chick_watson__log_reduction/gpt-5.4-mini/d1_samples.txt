@@ -1,0 +1,70 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 microbial reduction (LRV) from CT using the classic
+    Chick-Watson form:
+
+        LRV = k * CT^n
+
+    For the most commonly cited simplified closed-form relationship in
+    disinfection practice, n is often taken as 1 (linear with CT), giving:
+
+        LRV = k * CT
+
+    Since no organism/disinfectant-specific calibration data are provided,
+    this function returns the canonical uncalibrated form with k = 1.
+    """
+    CT = np.asarray(X)[:, 0]
+    return np.maximum(CT, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    CT = X[:, 0]
+    # Chick-Watson-style log10 reduction: LRV = k * CT^n
+    # With no fitted data provided, use the simplest canonical first-order closed form.
+    k = 1.0
+    n = 1.0
+    return k * np.power(CT, n)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Chick-Watson disinfection model:
+    # LRV = log10(N0/N) = k * (CT)^n
+    # A simple commonly used closed-form expression with no fitted data is the
+    # first-order form in dose on a log10 scale:
+    CT = np.asarray(X)[:, 0]
+    CT = np.maximum(CT, 0.0)
+    return CT
+
+=====
+
+import numpy as np
+
+def predict(X):
+    CT = np.asarray(X)[:, 0]
+    # Chick-Watson / CT relationship: LRV = k * (CT^n)
+    # Using the most common simplified form with n ≈ 1 and k = 1
+    # so that LRV scales linearly with CT on a log-reduction basis.
+    LRV = np.maximum(0.0, CT)
+    return LRV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    CT = X[:, 0]
+    # Classic Chick-Watson / log-linear disinfection model:
+    # LRV = k * (CT)^n
+    # In the simplest commonly cited form, n = 1, so LRV is proportional to CT.
+    # Since no organism/process-specific fitted coefficients are provided, use the
+    # standard normalized closed-form expression based on log10 survival reduction:
+    # log10(N0/N) = CT / 2.303 for a first-order base-e rate constant of 1.
+    return np.maximum(0.0, CT / 2.303)

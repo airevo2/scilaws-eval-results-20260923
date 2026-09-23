@@ -1,0 +1,112 @@
+task_id: sex_mortality_ratio_hmd__log_sex_ratio
+domain: social_science / demography
+license: CC-BY-4.0
+
+# Type II — cluster = country (HMD code).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task is from demography, concerning the ratio of male to female central death rates by age and calendar year as recorded in the national life tables of the Human Mortality Database (HMD).
+
+target:
+  name: log_sex_ratio
+  symbol: ln α
+  unit: ""
+  description: Natural log of the ratio of male to female central death rates, ln(m_male / m_female).
+  range: [-3.9757, 3.6937]
+
+inputs:
+  - name: age
+    symbol: x
+    unit: years
+    description: Single-year integer age, 30 to 95 inclusive (adult-only, matching the Glei-Horiuchi (2007) Gompertz-derivation range).
+    range: [30, 95]
+  - name: year
+    symbol: t
+    unit: years
+    description: Calendar year of the observation.
+    range: [1751, 2025]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-country-out)
+# plus a within-test-cluster temporal split. 42 HMD countries split 28 train
+# / 14 test (lexicographic order by year-coverage span). For each test
+# country, fit() sees its first 50% of years (test_fit) and predict() is
+# scored on the remaining 50% (test_test). Sister to the gompertz_makeham,
+# heligman_pollard and life_expectancy HMD tasks (same source data, same
+# split design).
+#
+# Selection: log_m_F and log_m_M (the sex-specific log mortalities from
+# which the target is derived) are NOT released as inputs — they would
+# let any model recover the target as log_m_M - log_m_F trivially. Only
+# age, year, and group_id are exposed.
+data_files:
+  train:     data/train.csv        # 28 train countries, all years
+  test_fit:  data/test_fit.csv     # 14 test countries, early-half years
+  test_test: data/test_test.csv    # 14 test countries, late-half years
+n_train:     177703
+n_test_fit:   43362
+n_test_test:  43824
+n_clusters_train: 28
+n_clusters_test:  14
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: glei_horiuchi_female_gompertz_slope
+    value: 0.10
+    unit: per year of age
+    description: Approximate Gompertz senescence slope b_F for adult female mortality in modern high-income populations.
+    source: Glei & Horiuchi (2007) Table 2, PDF p. 11 — b_F in [0.090, 0.111] across 29 countries (1975-1979). A guide for the magnitude of the slope (and of B = b_M - b_F, slightly less negative); the reference formula re-estimates A and B per country.
+    _role: candidate
+  - name: hp1980_curvature_K
+    value: 1.0
+    unit: dimensionless
+    description: Heligman-Pollard 1980 senescent-curvature parameter (models 2 and 3).
+    source: HP 1980 Tables 2-3 — a sibling-task quantity not used by the sex-mortality-ratio formula (the ratio of two Gompertz exponentials is itself log-linear in age, no curvature term needed). A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+# Two formulas paralleling the gompertz_age / gompertz_age_year pair in
+# the sibling HMD mortality task:
+#  - glei_horiuchi_2007       : age-only linear, 2 LOCAL.
+#  - glei_horiuchi_year_drift : adds a uniform calendar-year drift,
+#                               3 LOCAL + 1 OTHER (year_center).
+references:
+  - id: glei_horiuchi_2007
+    label: Glei & Horiuchi (2007) Gompertz-implied linear sex-mortality ratio (closed-form OLS)
+    formula_file: formulas/glei_horiuchi_2007.py
+    reference_pdf: reference/glei_horiuchi2007.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # A, B
+    measured: {rmse: 0.3047, r2: -0.4992}   # mean per-cluster
+  - id: glei_horiuchi_year_drift
+    label: Glei-Horiuchi linear with secular year drift (closed-form OLS)
+    formula_file: formulas/glei_horiuchi_year_drift.py
+    reference_pdf: reference/glei_horiuchi2007.pdf
+    n_law_constants: 0
+    n_other_constants: 1       # year_center
+    n_local_params: 3          # A, B, C
+    measured: {rmse: 0.2492, r2: 0.0511}   # mean per-cluster
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         3
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on log_sex_ratio (dimensionless log ratio)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes an age dependence of the log male-to-female adult mortality ratio"
+  - "includes a calendar-year secular-drift term that shifts the sex-mortality ratio over time"
+  - "predicted log_sex_ratio is non-increasing with adult age over ages 30-95 at fixed calendar year, reflecting age-convergence of excess male mortality"
+
+best_baseline: 0.2492     # glei_horiuchi_year_drift, mean per-cluster rmse

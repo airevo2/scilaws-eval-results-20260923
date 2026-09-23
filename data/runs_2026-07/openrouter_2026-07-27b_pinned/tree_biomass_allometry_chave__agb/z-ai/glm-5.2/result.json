@@ -1,0 +1,26 @@
+{
+  "task": "tree_biomass_allometry_chave__agb",
+  "model": "z-ai/glm-5.2",
+  "type": "typeI",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "chave_2014",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "chave_2014_eq5",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

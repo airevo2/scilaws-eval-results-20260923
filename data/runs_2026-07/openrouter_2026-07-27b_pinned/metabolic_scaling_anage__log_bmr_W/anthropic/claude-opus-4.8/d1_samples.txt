@@ -1,0 +1,55 @@
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's law: BMR = 3.389 W * (M_kg)^0.75, with M_kg = M_g/1000
+    # log10(B) = log10(3.389) + 0.75 * log10(M_g/1000)
+    log_bmr = np.log10(3.389) + 0.75 * (np.log10(M_g) - 3.0)
+    return log_bmr
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Kleiber's law: BMR (W) = 3.39 * (M_kg)^0.75, with M in grams
+    # log10(B) = log10(3.39) + 0.75 * log10(M_g / 1000)
+    M = X[:, 0]
+    log_M = np.log10(M)
+    return np.log10(3.39) + 0.75 * (log_M - 3.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's law: BMR = 70 kcal/day * M_kg^0.75
+    # 70 kcal/day = 70 * 4184 J / 86400 s = 3.39 W
+    coef_W = 3.39      # normalization constant in watts (at 1 kg)
+    exponent = 0.75    # Kleiber scaling exponent
+    M_kg = M_g / 1000.0
+    B = coef_W * np.power(M_kg, exponent)
+    return np.log10(B)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]  # body mass in grams
+    # Kleiber's law: BMR ~ 70 kcal/day * M_kg^0.75
+    # 70 kcal/day = 3.39 W  =>  B(W) = 3.39 * (M/1000)^0.75
+    log_M_kg = np.log10(M / 1000.0)
+    return np.log10(3.39) + 0.75 * log_M_kg
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M_g = X[:, 0]
+    # Kleiber's law: B [W] = 3.39 * (M_kg)^0.75, with M_kg = M_g / 1000
+    M_kg = M_g / 1000.0
+    B = 3.39 * np.power(M_kg, 0.75)
+    return np.log10(B)

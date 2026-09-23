@@ -1,0 +1,147 @@
+task_id: sne_ia_distance_modulus_pantheonplus__mu
+domain: astronomy / observational_cosmology
+license: CC-BY-4.0
+
+# Type I — each SN Ia row is independent; no cluster structure.
+# The CPL formula maps one scalar (redshift z) to one scalar (distance modulus mu)
+# with globally fitted cosmological parameters (no per-object refit).
+type: typeI
+has_group_id: false
+
+context: >-
+  Type Ia supernovae are stellar explosions used as standardizable candles in observational cosmology to map the expansion history of the Universe.
+
+target:
+  name: mu
+  symbol: "μ"
+  unit: mag
+  description: Standardised Type Ia supernova distance modulus — the quantity 5·log₁₀(d_L/10 pc), where d_L is the luminosity distance. Corrected for light-curve shape, colour, and selection bias via the BBC/Tripp method.
+  range: [28.99, 46.19]
+
+inputs:
+  - name: z_hd
+    symbol: z
+    unit: ""
+    description: Hubble-diagram CMB-frame redshift of the host galaxy.
+    range: [0.00122, 2.26137]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv     # SNe Ia with z <= 0.4 (low-to-moderate redshift)
+  test:  data/test.csv      # SNe Ia with z > 0.4  (intermediate and high-z OOD)
+
+n_train: 1392
+n_test: 308
+
+# Note (audit-only): The task is built exclusively on the cosmological
+# distance-redshift relation mu(z). The apparent magnitude m_b is intentionally
+# excluded from the released CSV: releasing m_b alongside mu would make the
+# Tripp formula (mu ≈ m_b + alpha*x1 - beta*c - M - bias_corr) a tautological
+# near-identity (R²≈1, data_spec §9.4). The brout_2022 Tripp baseline is
+# therefore not shipped. The single baseline is the CPL/FLRW linder_2003
+# formula, which maps z → mu via the cosmological luminosity distance.
+
+# FM C12 (priors-leakage) fix — 2026-05-26
+# Per AUDIT_CHECKLIST.md §C12 (v0.6) and audit/PRIORS_LEAKAGE_AUDIT_2026-05-26.md.
+#
+# Pre-fix: LEAKAGE — four leaking priors:
+#   H0_riess2022=73.04 ↔ linder_2003.py LAW_CONSTANTS["H0"]=73.04
+#   Omega_m_pantheonplus=0.334 ↔ linder_2003.py LAW_CONSTANTS["Om"]=0.334
+#   w0_LCDM=-1.0 ↔ linder_2003.py LAW_CONSTANTS["w0"]=-1.0
+#   c_light=299792.458 ↔ linder_2003.py OTHER_CONSTANTS["c_km_s"]=299792.458
+#
+# Classification:
+#   H0_riess2022=73.04: EMPIRICAL_FIT — paper-specific cosmological fit result
+#     (SH0ES Cepheid ladder, Riess 2022). Not a universal physical constant;
+#     directly represents one side of the "Hubble tension" controversy. REMOVE.
+#   Omega_m_pantheonplus=0.334: EMPIRICAL_FIT — paper-specific FlatΛCDM posterior
+#     from Pantheon+ SNe Ia only (Brout 2022 Table 3). Dataset-specific fit result.
+#     REMOVE.
+#   w0_LCDM=-1.0: EMPIRICAL_FIT — the ΛCDM cosmological-constant value, BUT it is
+#     used literally as the LAW_CONSTANT["w0"] for this task's single baseline.
+#     Having w0=-1.0 as a candidate tells the LLM the exact EOS parameter to use.
+#     REMOVE.
+#   c_light=299792.458: BUILDING_BLOCK — CGPM exact SI definition of the speed of
+#     light (exact since 1983; BIPM SI Brochure 9th ed.). A universal physical
+#     constant, not an empirical fit result. Strategy A: RETAIN as candidate;
+#     improve description to make BUILDING_BLOCK nature explicit.
+#
+# Replacement candidates added:
+#   H0_Planck2018=67.4 km/s/Mpc — CMB-inferred Hubble constant (Planck Collaboration
+#   2018, Table 2, TT+TE+EE+lowE+lensing). The "other side" of the Hubble tension —
+#   a physically real H0 value from independent method, distinct from Riess 2022.
+#   This tests whether SR recovers the H0 dependence without giving away the
+#   LAW_CONSTANT answer.
+#
+# Existing distractors alpha_tripp_brout=0.148 and MB_riess2022=-19.253 match no
+# LAW/OTHER constant in linder_2003.py — CLEAN, retained.
+#
+# Post-fix: CLEAN — verified no prior value matches any LAW_CONSTANTS or
+# OTHER_CONSTANTS value in linder_2003.py.
+
+priors:
+  - name: c_light_km_s
+    value: 299792.458
+    unit: km/s
+    description: Speed of light — CGPM exact SI definition (exact since 17th CGPM 1983; BIPM SI Brochure 9th ed.). A universal physical constant that enters the comoving distance integral as c/H0 [Mpc]. This is a BUILDING_BLOCK physical standard, not an empirical cosmological fit result.
+    source: BIPM SI Brochure 9th ed. (2019); used as OTHER_CONSTANTS["c_km_s"] in linder_2003.py (Eq. 5, Linder 2003).
+    _role: candidate
+  - name: alpha_tripp_brout
+    value: 0.148
+    unit: ""
+    description: Light-curve stretch coefficient in the Tripp/BBC standardisation formula applied to Pantheon+ (not used in the CPL/FLRW Linder 2003 distance-modulus formula released here).
+    source: Brout et al. 2022, ApJ 938:110, Table 2 (BS21 scatter model), PDF p. 12.
+    _role: distractor
+  - name: MB_riess2022
+    value: -19.253
+    unit: mag
+    description: Fiducial SN Ia absolute magnitude from the SH0ES distance ladder (Riess 2022). Not used in the pure cosmological CPL distance-modulus formula released here (the Tripp standardisation is absorbed into the observed mu values).
+    source: Riess et al. 2022, ApJ 934:7, Eq. 3 and Table 4, PDF p. 10.
+    _role: distractor
+
+references:
+  - id: linder_2003
+    label: Linder 2003 — flat-universe CPL distance modulus mu(z) = 5*log10(dL[Mpc]) + 25 (Riess/SH0ES H0=73.04)
+    formula_file: formulas/linder_2003.py
+    reference_pdf: reference/linder_2003.pdf
+    n_law_constants: 4       # H0=73.04, Om=0.334, w0=-1, wa=0
+    n_other_constants: 1     # c_km_s
+    n_local_params: 0
+    measured:
+      rmse: 0.1528
+      r2: 0.9679
+
+# === Audit re-work, 2026-05-29 (claude-opus) ===
+# Removed the linder_2003_planck reference entry. It was a PHANTOM baseline: present
+# in metadata only — never registered in formulas/__init__.py (_STEMS had only
+# linder_2003), absent from reference_metrics.json, and its measured block was
+# null/null (the harness never evaluated it). It was a "MISSING_ALT" added to dodge
+# the single-baseline flag. Unlike a fabricated baseline its parameters are real, but
+# (a) it is the SAME CPL/FLRW functional form as linder_2003, differing only in
+# (H0, Om) = (67.4, 0.315) vs (73.04, 0.334) — a same-form variant that the smbh F8
+# dedup precedent treats as padding; and (b) its Om=0.315 cites Aghanim 2020 (Planck
+# 2018), whose PDF is not in reference/ (not on-disk verifiable). Per the design note
+# above ("the single baseline is the CPL linder_2003") the task ships single-baseline.
+# Archived to .dropped_baselines/. See VERDICT.md.
+
+caps:
+  max_law_constants: 4
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+reference_baseline_id: linder_2003   # sole baseline; the metric anchor
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "computes luminosity distance from the line-of-sight light-travel integral over the inverse cosmic expansion rate"
+  - "includes a dark-energy contribution to the expansion history with CPL equation-of-state evolution"
+  - "includes cosmological redshift dimming through the (1+z) luminosity-distance factor"
+  - "includes matter-density dilution scaling as (1+z)^3 in the expansion history"
+  - "predicted distance modulus tends to negative infinity as redshift approaches zero from above"
+
+best_baseline: 0.152819    # linder_2003 — rmse; regenerated after de-dup (no within-file duplicate rows / no leak)

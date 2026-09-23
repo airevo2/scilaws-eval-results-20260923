@@ -1,0 +1,168 @@
+import numpy as np
+
+def predict(X):
+    # Taylor et al. (2011) color-based stellar mass estimator (SDSS/GAMA):
+    #   log10(M*/Msun) = 1.15 + 0.70*(g - i) - 0.4*M_i
+    # where M_i is the absolute i-band AB magnitude (rest-frame proxy),
+    # calibrated for a Chabrier/Kroupa-like IMF.
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+
+    M_i = i - DM                      # absolute i-band magnitude
+    gi = g - i                        # optical color
+
+    log_M_star = 1.15 + 0.70 * gi - 0.4 * M_i
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    u  = X[:, 0]
+    g  = X[:, 1]
+    r  = X[:, 2]
+    i  = X[:, 3]
+    z  = X[:, 4]
+    DM = X[:, 6]
+
+    # Absolute r-band magnitude
+    M_r = r - DM
+
+    # Solar absolute magnitude in SDSS r (AB)
+    M_sun_r = 4.65
+
+    # r-band luminosity in solar units
+    log_L_r = -0.4 * (M_r - M_sun_r)
+
+    # Bell et al. (2003) color-based stellar M/L relation (r-band, using g-r)
+    #   log10(M/L_r) = a_r + b_r * (g - r)
+    a_r, b_r = -0.306, 1.097
+    log_ML_r = a_r + b_r * (g - r)
+
+    # Bell (2003) M/L is tied to a "diet Salpeter" IMF;
+    # convert to Kroupa IMF (MPA-JHU) by subtracting ~0.15 dex
+    kroupa_offset = -0.15
+
+    log_M_star = log_L_r + log_ML_r + kroupa_offset
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimate log10(M_star/M_sun) using a color-based stellar mass-to-light
+    ratio (Bell et al. 2003), applied in the SDSS r-band, with a small
+    offset to convert to a Kroupa-like IMF (as used by MPA-JHU).
+
+        log10(M/L_r) = a_r + b_r*(g - r)         (Bell+2003, Table 7)
+        log10(L_r/Lsun) = -0.4*(M_r - Msun_r)
+        log10(M*) = log10(L_r) + log10(M/L_r) + dIMF
+    """
+    # Photometry
+    g = X[:, 1]
+    r = X[:, 2]
+    DM = X[:, 6]
+
+    # Color
+    gr = g - r
+
+    # Absolute r-band magnitude
+    M_r = r - DM
+
+    # Solar absolute magnitude in SDSS r (AB)
+    Msun_r = 4.64
+
+    # log luminosity in solar units
+    log_L_r = -0.4 * (M_r - Msun_r)
+
+    # Bell et al. (2003) mass-to-light coefficients for (g-r), r-band
+    a_r = -0.306
+    b_r = 1.097
+    log_ML_r = a_r + b_r * gr
+
+    # IMF offset: Bell "diet Salpeter" -> Kroupa (~ -0.15 dex)
+    dIMF = -0.15
+
+    log_M_star = log_L_r + log_ML_r + dIMF
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimate log10(M_star) [Msun] from SDSS photometry using the
+    Bell et al. (2003) color-based stellar mass-to-light ratio relation.
+
+    log10(M/L_r) = a_r + b_r * (g - r)   (Bell et al. 2003, Table 7)
+    with a small offset to a Kroupa IMF.
+    """
+    u  = X[:, 0]
+    g  = X[:, 1]
+    r  = X[:, 2]
+    i  = X[:, 3]
+    z  = X[:, 4]
+    DM = X[:, 6]
+
+    # Bell et al. (2003) coefficients for the r-band M/L using (g - r) color
+    a_r = -0.306
+    b_r =  1.097
+
+    # AB solar absolute magnitude in the SDSS r band
+    Msun_r = 4.64
+
+    # Offset from Bell's "diet Salpeter" IMF to a Kroupa IMF (~ -0.1 dex)
+    imf_offset = -0.10
+
+    # Color
+    gr = g - r
+
+    # log10 of stellar mass-to-light ratio in r band
+    log_ML_r = a_r + b_r * gr
+
+    # Absolute r-band magnitude and luminosity (in solar units)
+    M_r = r - DM
+    log_L_r = -0.4 * (M_r - Msun_r)
+
+    # Log stellar mass
+    log_M_star = log_ML_r + log_L_r + imf_offset
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # SDSS AB model magnitudes and distance modulus
+    u  = X[:, 0]
+    g  = X[:, 1]
+    r  = X[:, 2]
+    i  = X[:, 3]
+    z  = X[:, 4]
+    DM = X[:, 6]
+
+    # Absolute i-band magnitude (ignoring small k-correction)
+    M_i = i - DM
+
+    # Solar absolute magnitude in SDSS i band (AB)
+    M_sun_i = 4.58
+
+    # i-band luminosity in solar units
+    log_L_i = 0.4 * (M_sun_i - M_i)
+
+    # Bell et al. (2003) color–M/L relation (i band, g-r color)
+    #   log10(M/L_i) = a_i + b_i * (g - r)
+    a_i, b_i = -0.152, 0.518
+    log_ML_i = a_i + b_i * (g - r)
+
+    # Convert Bell "diet-Salpeter" zero point to a Kroupa IMF (~ -0.15 dex)
+    kroupa_offset = -0.15
+
+    log_M_star = log_L_i + log_ML_i + kroupa_offset
+    return log_M_star

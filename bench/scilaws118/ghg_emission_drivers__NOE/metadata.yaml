@@ -1,0 +1,139 @@
+task_id: ghg_emission_drivers__NOE
+domain: environmental_science / climate_economics
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  This task concerns national annual nitrous oxide emissions across countries and years, studied within climate and environmental policy science. Nitrous oxide is a greenhouse gas emitted chiefly from agricultural soils, livestock, and industry.
+
+target:
+  name: NOE
+  symbol: "I_N2O"
+  unit: kg N2O
+  description: National annual N2O emissions from all sectors excluding land-use change and forestry, measured in kilograms of N2O per country per year
+  range: [11392.0, 2173932900.0]
+
+inputs:
+  - name: GDP
+    symbol: "A"
+    unit: USD per capita (constant 2015 USD (World Bank WDI base year))
+    description: Gross domestic product per capita in constant 2015 US dollars
+    range: [166.71, 112418.0]
+  - name: TP
+    symbol: "P"
+    unit: persons
+    description: Total national population
+    range: [52597.0, 1379860000.0]
+  - name: AP
+    symbol: "AP"
+    unit: "%"
+    description: Share of population aged 15 to 64 years (working-age or active population)
+    range: [45.77, 85.25]
+  - name: DP
+    symbol: "DP"
+    unit: persons per km2
+    description: Population density as number of inhabitants per square kilometre of land area
+    range: [1.35, 6944.1]
+  - name: UR
+    symbol: "UR"
+    unit: "%"
+    description: Percentage of the total population living in urban areas
+    range: [5.27, 100.0]
+  - name: AT
+    symbol: "AT"
+    unit: "degrees C"
+    description: Annual mean surface air temperature averaged over the national territory
+    range: [-4.97, 29.78]
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block added for schema symmetry with GOLD.
+priors: []
+
+data_files:
+  train: data/train.csv   # GDP <= 20000 USD/cap (lower/middle-income regime)
+  test:  data/test.csv    # GDP > 20000 USD/cap (high-income OOD extrapolation)
+# Note: this task uses a $20,000 GDP hard threshold for train/test split. Sister task EC uses a 75th-percentile split instead — see audit/triages/ghg_emission_drivers__EC_REAUDIT_2026-05-25.md for the discussion.
+
+n_train: 3555
+n_test: 838
+
+references:
+  - id: vazquez_2022_bms
+    label: "Vazquez 2022 BMS nonlinear expression for log(NOE)"
+    formula_file: formulas/vazquez_2022_bms.py
+    reference_pdf: reference/vazquez_2022.pdf
+    n_law_constants: 4
+    n_other_constants: 2   # LOG_FLOOR + AT_K_OFFSET (added 2026-05-25)
+    n_local_params: 0
+    measured:
+      smape: 1.456827
+      r2: -0.006502
+    # 2026-05-25 unit-only fix (relay-A gen 9 wave 82): AT was used in
+    # Celsius but paper Nomenclature (PDF p. 2) defines AT in Kelvin.
+    # Added AT_K_OFFSET=273.15 and Celsius→Kelvin in predict(). No algebra
+    # change. r² moved from -67.8 (catastrophic) to -0.006 (near-naive).
+    # BMS remains a distractor for NOE — STIRPAT is still best.
+    # See audit/triages/vazquez_2022_bms_NOE_PDF_AUDIT_2026-05-25.md
+  - id: vazquez_2022_stirpat
+    label: "Vazquez 2022 modified STIRPAT log-linear formula for log(NOE)"
+    formula_file: formulas/vazquez_2022_stirpat.py
+    reference_pdf: reference/vazquez_2022.pdf
+    n_law_constants: 7
+    n_other_constants: 1
+    n_local_params: 0
+    measured:
+      smape: 0.587733
+      r2: 0.793058
+auditor_notes:
+  neg_r2_disclosure:
+    severity: ACCEPTABLE_PER_E6_MIXED_BANK
+    baselines_affected:
+      - id: vazquez_2022_bms
+        pooled_r2: -0.006502
+        pooled_smape: 1.456827
+    best_baseline_id: vazquez_2022_stirpat
+    best_baseline_smape: 0.587733
+    best_baseline_r2: 0.793058
+    summary: >-
+      One baseline (vazquez_2022_bms) yields a near-naive negative pooled R²=-0.007 on the
+      high-GDP OOD test split. It is a verified-published (Vazquez 2022 Table 3, NOE column)
+      but weak Bayesian-symbolic-regression expression. The bank satisfies §9.6 via
+      vazquez_2022_stirpat (R²=0.793, sMAPE=0.588). Metric is sMAPE (NOE spans ~5 orders of
+      magnitude). §9.14 (feature-OOD legitimately negative) applies.
+    citation: "AUDIT_CHECKLIST.md §E6 (mixed-bank partial-negative-R²) + data_spec §9.14"
+  york_2003_removed:
+    date: 2026-05-29
+    by: "逐条审核 / 逐条11 (claude-opus, effort=max)"
+    reason: >-
+      york_2003 dropped to .dropped_baselines/. It was a CROSS-TARGET GRAFT — York 2003's
+      1996 CO2 Model-3 coefficients (Table 1) applied to the N2O target (FM C9) — plus a C11
+      centered-intercept-on-raw-inputs error. Its in-distribution adequacy (train R²=0.41) was
+      an accident of the two errors partially cancelling; with the mathematically-correct
+      uncentered intercept (+0.899) it collapses to sMAPE=2.0 / R²≈-1e9. Its docstring also
+      made a factually-incorrect C11 claim ("both produce sMAPE≈2.0"). In the score it floored
+      at 0.0 (no ladder value). Bank is now STIRPAT (anchor) + BMS, both verified-published
+      from Vazquez 2022 on the actual N2O target.
+
+caps:
+  max_law_constants: 7
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: smape
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include an emissions-intensity dampening effect of higher active or working-age population share"
+  - "include an emissions-intensity dampening effect of higher population density"
+  - "include an emissions-intensity dampening effect of higher urbanisation"
+  - "include an emissions-intensity dampening effect of warmer average temperature"
+  - "include sublinear growth of national N2O emissions with per-capita GDP or economic activity"
+  - "include sublinear growth of national N2O emissions with total population"
+  - "predicted national N2O emissions stay non-negative"
+
+best_baseline: 0.587733    # vazquez_2022_stirpat — smape (lower is better); regenerated 2026-05-30

@@ -1,0 +1,213 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual N2O emissions (kg N2O) excluding LULUCF using a
+    standard STIRPAT / Environmental Kuznets Curve (EKC) log-linear specification.
+    
+    Model:
+        ln(I_N2O) = b0 + b1*ln(P) + b2*ln(A) + b3*[ln(A)]^2
+                    + b4*AP + b5*ln(DP) + b6*UR + b7*AT + b8*AT^2
+        I_N2O = exp(ln(I_N2O))
+    
+    Inputs (columns of X):
+        0: A  - GDP per capita (constant 2015 USD)
+        1: P  - Total population (persons)
+        2: AP - Active population share (%)
+        3: DP - Population density (persons per km2)
+        4: UR - Urbanization rate (%)
+        5: AT - Annual mean temperature (°C)
+    """
+    A  = X[:, 0]
+    P  = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+
+    # Canonical fitted coefficients (illustrative literature-consistent values)
+    b0 = -8.0      # intercept
+    b1 = 1.0       # population elasticity
+    b2 = 0.6       # affluence elasticity
+    b3 = -0.04     # EKC quadratic term (turning point at high income)
+    b4 = 0.02      # active population share
+    b5 = 0.1       # population density elasticity
+    b6 = 0.015     # urbanization rate
+    b7 = 0.05      # linear temperature effect
+    b8 = -0.002    # quadratic temperature effect
+
+    ln_A  = np.log(A)
+    ln_P  = np.log(P)
+    ln_DP = np.log(DP)
+
+    ln_I = (b0
+            + b1 * ln_P
+            + b2 * ln_A
+            + b3 * ln_A**2
+            + b4 * AP
+            + b5 * ln_DP
+            + b6 * UR
+            + b7 * AT
+            + b8 * AT**2)
+
+    I_N2O = np.exp(ln_I)
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology)
+    reduced-form model for national annual N2O emissions excluding LULUCF.
+    
+    Canonical multiplicative (log-linear) specification:
+        I = a * A^b1 * P^b2 * AP^b3 * DP^b4 * UR^b5 * T_K^b6
+    
+    where T_K is surface air temperature in Kelvin (AT_C + 273.15).
+    """
+    A  = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P  = X[:, 1]   # Total population
+    AP = X[:, 2]   # Working-age population share (%)
+    DP = X[:, 3]   # Population density (persons / km^2)
+    UR = X[:, 4]   # Urbanization rate (%)
+    AT = X[:, 5]   # Annual mean surface air temperature (°C)
+
+    # --- STIRPAT coefficients (typical magnitudes from the N2O / GHG literature) ---
+    # Intercept (log scale)
+    beta0 = -16.0
+    # Elasticities
+    b1 = 0.80   # affluence (GDP per capita)
+    b2 = 1.00   # population scale
+    b3 = 1.20   # working-age share
+    b4 = -0.15  # population density (agglomeration / efficiency effect)
+    b5 = 0.50   # urbanization rate
+    b6 = 0.40   # temperature (Kelvin)
+
+    # Compute in log-space for numerical stability
+    log_I = (beta0
+             + b1 * np.log(A)
+             + b2 * np.log(P)
+             + b3 * np.log(AP)
+             + b4 * np.log(DP)
+             + b5 * np.log(UR)
+             + b6 * np.log(AT + 273.15))
+
+    return np.exp(log_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) model
+    # I = a * P^b * A^c * AP^d * DP^e * UR^f * exp(g * AT)
+    
+    a = np.exp(-9.5)
+    b = 1.0      # Population elasticity
+    c = 0.8      # Affluence elasticity
+    d = 0.5      # Active population elasticity
+    e = -0.2     # Population density elasticity
+    f = 0.3      # Urbanization elasticity
+    g = 0.05     # Temperature sensitivity
+    
+    I_N2O = a * np.power(P, b) * np.power(A, c) * np.power(AP, d) * \
+            np.power(DP, e) * np.power(UR, f) * np.exp(g * AT)
+            
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard STIRPAT with EKC specification for national N2O emissions
+    (excluding land-use change and forestry).
+    
+    ln(I_N2O) = b0 + b1*ln(GDP) + b2*(ln(GDP))^2 + b3*ln(Pop) 
+                + b4*ActivePop + b5*ln(PopDensity) + b6*Urban + b7*Temp
+    """
+    # Unpack inputs
+    A = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P = X[:, 1]   # Total population
+    AP = X[:, 2]  # Active population share (%)
+    DP = X[:, 3]  # Population density (persons/km2)
+    UR = X[:, 4]  # Urbanization rate (%)
+    AT = X[:, 5]  # Annual mean temperature (°C)
+
+    # Typical coefficients from environmental economics literature on N2O
+    b0 = 1.0       # intercept
+    b1 = 0.50      # affluence elasticity (ln GDP)
+    b2 = -0.02     # EKC quadratic term
+    b3 = 0.80      # population elasticity
+    b4 = 0.02      # active population share effect
+    b5 = -0.10     # population density effect (efficiency / scale)
+    b6 = 0.01      # urbanization effect
+    b7 = 0.03      # temperature effect (soil/energy emissions)
+
+    # Log-linear predictor
+    ln_I = (b0
+            + b1 * np.log(A)
+            + b2 * (np.log(A) ** 2)
+            + b3 * np.log(P)
+            + b4 * AP
+            + b5 * np.log(DP)
+            + b6 * UR
+            + b7 * AT)
+
+    # Convert back to kg N2O
+    I_N2O = np.exp(ln_I)
+    return I_N2O
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual N2O emissions (kg N2O per country per year)
+    using a multiplicative STIRPAT-type closed-form model.
+    
+    I_N2O = alpha * GDP^beta_gdp * Pop^beta_pop * AP^beta_ap * DP^beta_dp
+            * UR^beta_ur * exp(beta_at * AT)
+    """
+    # Fitted coefficients (illustrative values consistent with STIRPAT literature)
+    alpha = 1.0e-6
+    beta_gdp = 0.65
+    beta_pop = 1.0
+    beta_ap = 0.25
+    beta_dp = 0.15
+    beta_ur = 0.40
+    beta_at = 0.03
+
+    X = np.asarray(X, dtype=float)
+    if X.ndim == 1:
+        X = X.reshape(1, -1)
+
+    gdp = X[:, 0]
+    pop = X[:, 1]
+    ap = X[:, 2]
+    dp = X[:, 3]
+    ur = X[:, 4]
+    at = X[:, 5]
+
+    # Evaluate in log-space for numerical stability
+    log_I = (np.log(alpha)
+             + beta_gdp * np.log(gdp)
+             + beta_pop * np.log(pop)
+             + beta_ap * np.log(ap)
+             + beta_dp * np.log(dp)
+             + beta_ur * np.log(ur)
+             + beta_at * at)
+
+    I = np.exp(log_I)
+    return I

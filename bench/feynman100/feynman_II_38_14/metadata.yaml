@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Shear modulus"
+  symbol: "mu_S"
+  unit: ""
+  description: "Shear modulus"
+inputs:
+  - name: "Young modulus"
+    symbol: "Y"
+    unit: ""
+    description: "Young modulus"
+  - name: "Dimensionless"
+    symbol: "sigma"
+    unit: ""
+    description: "Dimensionless"

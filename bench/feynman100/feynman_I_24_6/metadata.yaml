@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Mass"
+    symbol: "m"
+    unit: ""
+    description: "Mass"
+  - name: "Frequency"
+    symbol: "omega"
+    unit: ""
+    description: "Frequency"
+  - name: "Frequency"
+    symbol: "omega_0"
+    unit: ""
+    description: "Frequency"
+  - name: "Length"
+    symbol: "x"
+    unit: ""
+    description: "Length"

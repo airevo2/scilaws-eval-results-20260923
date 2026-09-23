@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Frequency"
+  symbol: "omega"
+  unit: ""
+  description: "Frequency"
+inputs:
+  - name: "Magnetic moment"
+    symbol: "mom"
+    unit: ""
+    description: "Magnetic moment"
+  - name: "Magnetic field"
+    symbol: "B"
+    unit: ""
+    description: "Magnetic field"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"

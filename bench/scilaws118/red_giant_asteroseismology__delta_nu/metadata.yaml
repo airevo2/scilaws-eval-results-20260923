@@ -1,0 +1,189 @@
+task_id: red_giant_asteroseismology__delta_nu
+domain: astronomy / asteroseismology
+license: "VizieR-CDS academic (free for scientific use with citation); numeric tabular facts per Feist 1991; AUDIT_CHECKLIST v0.4 D5 compliant"
+
+# Type I — each row is an independent Kepler red giant; no cluster structure.
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  Red giant stars exhibit solar-like oscillations driven by near-surface convection, studied in the field of asteroseismology.
+
+target:
+  name: delta_nu
+  symbol: Δν
+  unit: uHz
+  description: Large frequency separation between consecutive radial-order p-mode oscillations in a red-giant power spectrum, measured by autocorrelating the power spectrum (Yu+2018 §3.2).
+  range: [0.747, 19.294]
+
+inputs:
+  - name: nu_max
+    symbol: ν_max
+    unit: uHz
+    description: Frequency of maximum oscillation power, measured directly from the Gaussian fit to the power-spectrum envelope (Yu+2018 §3.1). Independent of delta_nu.
+    range: [3.97, 273.17]
+
+  - name: Teff
+    symbol: T_eff
+    unit: K
+    description: Effective surface temperature from the Kepler Q1-17 DR25 stellar properties catalog, based on photometry and spectroscopy. Independent of seismology.
+    range: [3225.0, 6356.0]
+
+  - name: FeH
+    symbol: "[Fe/H]"
+    unit: dex
+    description: Iron-to-hydrogen abundance ratio relative to solar, from spectroscopic measurements in the Kepler Q1-17 DR25 stellar properties catalog. Independent of seismology.
+    range: [-2.51, 1.01]
+
+  - name: phase
+    symbol: phase
+    unit: ""
+    description: Evolutionary-phase label (integer-coded). Class 0 denotes an unclassified evolutionary stage, class 1 denotes a hydrogen-shell-burning red-giant-branch (RGB) star, class 2 denotes a helium-burning (red-clump / secondary-clump, HeB) star. Phase is derived from mixed-mode dipole period spacings (Elsworth+2017 / Vrard+2016) and is INDEPENDENT of the global delta_nu power-spectrum measurement.
+    range: [0, 2]
+
+# FM E2 sister-divergence note (2026-05-26, wave-3 subagent L finding, wave-4 subagent M coordination):
+#   Sister task red_giant_asteroseismology__nu_max (batch02) originally used a
+#   different OOD axis (phase / evolutionary stage classification). That split was
+#   identified by FM G1 as decoupled from the baseline's USED_INPUTS, and the
+#   sister is being redesigned (wave-4 2026-05-26) to use delta_nu as its OOD axis
+#   — mirroring this task's nu_max-axis approach. After the sister fix lands, both
+#   tasks will follow the "range-out at P80 on the prediction's main-input axis"
+#   pattern for sister consistency.
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv  # nu_max < 92.868 μHz (lower-frequency, more evolved RGB+HeB bulk)
+  test:  data/test.csv   # nu_max >= 92.868 μHz (higher-frequency, less-evolved RGB-subgiant transition)
+
+n_train: 12875
+n_test: 3219
+
+# Auditor notes:
+#
+# 1. A3-tautology defense.  The Yu+2018 raw catalog contains M_NoCor, R_NoCor,
+#    log_g_cgs derived from the seismic scaling-relation inversions (Yu+2018
+#    Eqs. 4-6); these would algebraically reconstruct Δν via the forward
+#    scaling Δν ∝ M^{1/2} R^{-3/2} (Eq. 3) to sub-percent accuracy.  They are
+#    intentionally DROPPED from the released input schema.  The retained
+#    inputs {nu_max, Teff, FeH, phase} are all independent observables of
+#    Δν: nu_max from the power-spectrum envelope, Teff and FeH from
+#    Mathur+2017 photometry/spectroscopy, phase from Elsworth+2017 mixed-mode
+#    period spacings.  See data/report.md and data_raw/README.md for full
+#    rationale.
+#
+# 2. OOD axis.  The P80(nu_max) range-out split tests extrapolation from the
+#    densely sampled low-nu_max RGB+HeB bulk into the higher-nu_max regime
+#    approaching the long-cadence Kepler Nyquist boundary (Δν ≈ 19.2 μHz at
+#    nu_max ≈ 275 μHz; Yu+2018 §3.7, PDF p. 10-11).
+#
+# 3. License framework.  The catalog is distributed by CDS Strasbourg under
+#    the explicit VizieR-CDS "free of usage in a scientific context with
+#    citation" terms.  The 2018 ApJS source paper (pre-2021-10-11) carries
+#    AAS-copyright on prose but the numeric tabular factual data carry no
+#    creativity copyright (Feist v. Rural Telephone, US Supreme Court 1991);
+#    AUDIT_CHECKLIST v0.4 D5 explicitly recognises this case.
+
+# FM C12 (priors-leakage) fix — 2026-05-26
+# A_yu2018=0.267 and beta_yu2018=0.764 were the named precedent for this FM
+# (see proposed_FMs/2026-05-26_priors_leakage_GM.md §2). Both are purely
+# empirical MCMC fit coefficients from Yu+2018 §3.6 — no upstream physical
+# anchor. Removed (strategy B).
+#
+# FM C12/H1 re-leak fix — 2026-05-29 (per-task 逐条审核)
+# beta_theoretical=0.75 was KEPT in the 2026-05-26 pass as a "theoretical, not
+# empirical" candidate — VALID AT THE TIME, because the only scored baseline then
+# was yu_2018 (LAW beta=0.764 ≠ 0.75). But wave-16 (2026-05-27) added brown_1991
+# with LAW_CONSTANTS alpha=0.75 — the SAME physical quantity (the theoretical
+# ν_max power-law exponent 3/4). The prior beta_theoretical=0.75 then named, to
+# the digit, an active baseline's LAW constant → a reintroduced C12/H1 leak
+# (it hands the SR system brown_1991's exponent). Per H1 (delete, don't replace):
+# beta_theoretical REMOVED. The 3 remaining solar-reference priors only overlap
+# OTHER_CONSTANTS of the active baselines (allowed by design), not any LAW.
+priors:
+  - name: delta_nu_sun
+    value: 135.1
+    unit: uHz
+    description: Solar large-frequency-separation reference adopted in the seismic scaling relation (Yu+2018 Eq. 3). A solar reference constant, not a coefficient in the Δν–ν_max power-law formula fitted to the red-giant population.
+    source: Yu et al. 2018, Eq. 3, PDF p. 5
+    _role: distractor
+  - name: nu_max_sun
+    value: 3090.0
+    unit: uHz
+    description: Solar reference frequency of maximum oscillation power (Yu+2018 Eq. 2). Solar anchor value, not a coefficient in the power-law Δν fit.
+    source: Yu et al. 2018, Eq. 2, PDF p. 5
+    _role: distractor
+  - name: Teff_sun
+    value: 5777.0
+    unit: K
+    description: Solar effective temperature used as the reference in the ν_max scaling relation (Yu+2018 Eq. 2). Standard solar value; not a coefficient in the Δν–ν_max power-law formula.
+    source: Yu et al. 2018, §3.1, PDF p. 5
+    _role: distractor
+
+# Reference-baseline bank
+# Wave-16 (2026-05-27): brown_1991 added to bring runnable baseline count
+# to 2 (yu_2018 + brown_1991). KjB95 remains as reference-only.
+references:
+  - id: yu_2018
+    label: Yu et al. 2018 — Δν = A · ν_max^β with A = 0.267 μHz, β = 0.764 (MCMC fit; Yu+2018 §3.6, Fig. 7a caption, PDF p. 10)
+    formula_file: formulas/yu_2018.py
+    reference_pdf: reference/Yu2018.pdf
+    n_law_constants: 2    # A and beta
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.5436
+      r2: 0.9640
+      mae: 0.4165
+      smape: 0.0360
+  - id: brown_1991
+    label: >-
+      Brown et al. 1991 — theoretical asymptotic Δν ∝ ν_max^{3/4} T_eff^{3/8} M^{-1/4}
+      combining Δν ∝ ρ^{1/2} (PDF p. 1) and ν_max ∝ g·T_eff^{-1/2} (PDF p. 2);
+      M^{-1/4} absorbed into prefactor with M_RG = 1.2 M_⊙ (Yu+2018 §3.4 population mean).
+    formula_file: formulas/brown_1991.py
+    reference_pdf: reference/Brown1991.pdf
+    n_law_constants: 2    # alpha=3/4, beta=3/8 (theoretical exponents)
+    n_other_constants: 4  # solar references + canonical RG mass
+    n_local_params: 0
+    measured:
+      rmse: 0.6947
+      r2: 0.9412
+      mae: 0.5364
+      smape: 0.0467
+  - id: kjeldsen_bedding_1995
+    label: "Kjeldsen & Bedding 1995 — Δν₀ = 134.9 × (M/M☉)^(1/2) × (R/R☉)^(-3/2) (Eq. 9, §4.1, PDF p. 7)"
+    formula_file: formulas/kjeldsen_bedding_1995.py
+    reference_pdf: reference/KjeldsenBedding1995.pdf
+    bib: reference/kjeldsen_1995.bib
+    n_law_constants: 1    # delta_nu_0_solar = 134.9 μHz
+    n_other_constants: 0
+    n_local_params: 0
+    executable: false     # M_solar, R_solar columns withheld (A3 tautology prevention); raises IndexError on released CSV
+    measured:
+      test_rmse: null
+      test_r2: null
+      n_finite: 0
+      status: "non-executable on released columns — M_solar and R_solar withheld from CSV"
+
+caps:
+  max_law_constants: 2
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+reference_baseline_id: yu_2018
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes the square-root mean-density scaling of the large frequency separation"
+  - "predicted Δν stays strictly positive for every physical red-giant input"
+  - "predicted Δν increases monotonically with ν_max when the other inputs are fixed"
+  - "predicted Δν is well-defined for all valid inputs, including positive ν_max and Teff, FeH in dex, and phase codes 0, 1, and 2"
+
+best_baseline: 0.543631    # yu_2018 — rmse (lower is better); regenerated 2026-05-30

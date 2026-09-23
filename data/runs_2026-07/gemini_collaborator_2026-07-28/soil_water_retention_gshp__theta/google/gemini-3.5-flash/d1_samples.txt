@@ -1,0 +1,105 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract matric suction h (lab_head_m) in meters
+    h = np.maximum(X[:, 0], 0.0)
+
+    # Standard van Genuchten (1980) parameters for a representative loam soil
+    theta_r = 0.078  # Residual water content
+    theta_s = 0.430  # Saturated water content
+    alpha = 3.6  # Inverse of air-entry suction (1/m)
+    n = 1.56  # Pore-size distribution index
+    m = 1.0 - 1.0 / n
+
+    # van Genuchten retention curve formula
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h) ** n) ** m
+
+    return theta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = lab_head_m (h) [m] - Matric suction (positive)
+    h = np.asarray(X[:, 0], dtype=float)
+
+    # Standard/representative van Genuchten parameters for a loam soil
+    theta_r = 0.078  # Residual volumetric water content
+    theta_s = 0.430  # Saturated volumetric water content
+    alpha = 3.6  # alpha parameter [1/m] (equivalent to 0.036 1/cm)
+    n = 1.56  # pore-size distribution parameter
+    m = 1.0 - 1.0 / n
+
+    # van Genuchten (1980) formula
+    # Using np.power to handle element-wise exponentiation safely
+    spec_sharpness = np.power(alpha * h, n)
+    theta = theta_r + (theta_s - theta_r) / np.power(1.0 + spec_sharpness, m)
+
+    return theta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract matric suction h (in meters)
+    h = X[:, 0]
+
+    # van Genuchten parameters for a typical loam soil (Carsel and Parrish, 1988)
+    theta_r = 0.078  # Residual water content [m^3/m^3]
+    theta_s = 0.430  # Saturated water content [m^3/m^3]
+    alpha = 3.6  # Alpha parameter [1/m] (equivalent to 0.036 1/cm)
+    n = 1.56  # n parameter (dimensionless)
+    m = 1.0 - 1.0 / n  # m parameter (dimensionless)
+
+    # Standard van Genuchten closed-form relationship
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h) ** n) ** m
+
+    return theta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract matric suction h [m]
+    h = X[:, 0]
+
+    # Standard van Genuchten parameters for a representative (loam) soil
+    theta_r = 0.078  # Residual volumetric water content [m^3/m^3]
+    theta_s = 0.430  # Saturated volumetric water content [m^3/m^3]
+    alpha = 3.6  # Inverse of air-entry pressure [1/m]
+    n = 1.56  # Pore-size distribution parameter
+    m = 1.0 - 1.0 / n
+
+    # van Genuchten formula
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h) ** n) ** m
+
+    return theta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract matric suction h (lab_head_m) in meters
+    h = X[:, 0]
+
+    # van Genuchten (1980) model parameters for a representative loam soil
+    # (Reference: Carsel and Parrish, 1988)
+    theta_r = 0.078  # Residual water content [m^3/m^3]
+    theta_s = 0.430  # Saturated water content [m^3/m^3]
+    alpha = 3.6  # van Genuchten parameter alpha [1/m]
+    n = 1.56  # van Genuchten parameter n [-]
+    m = 1.0 - 1.0 / n  # van Genuchten parameter m [-]
+
+    # Compute volumetric water content (theta) using the closed-form equation
+    theta = theta_r + (theta_s - theta_r) / (1.0 + (alpha * h) ** n) ** m
+
+    return theta

@@ -1,0 +1,314 @@
+import numpy as np
+
+def predict(X):
+    """
+    log10(PGA) [log10(cm/s^2)], RotD50 horizontal PGA.
+    Canonical form: Bindi et al. (2011) ITA10 GMPE for Italy.
+
+        log10(Y) = e1 + FD(R,M) + FM(M) + FS + FSOF
+
+    with
+        FD = [c1 + c2*(M-Mref)] * log10( sqrt(Rjb^2 + h^2) )
+             - c3 * sqrt(Rjb^2 + h^2)
+        FM = b1*(M-Mh) + b2*(M-Mh)^2            for M <= Mh
+           = b3*(M-Mh)                          for M >  Mh   (b3 = 0)
+        FS = site term (EC8 classes)
+        FSOF = style-of-faulting term
+    """
+    X = np.asarray(X, dtype=float)
+
+    Mw  = X[:, 0]
+    R   = X[:, 1]
+    # X[:, 2] hypocentral depth not used explicitly (pseudo-depth h fitted)
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+    E_N = X[:, 8]
+    E_R = X[:, 9]
+    E_SS = X[:, 10]
+
+    # --- Coefficients for PGA (cm/s^2), Bindi et al. (2011) ---
+    e1  = 3.6720
+    c1  = -1.9400
+    c2  = 0.4130
+    c3  = 0.000134
+    h   = 10.322
+    b1  = -0.2620
+    b2  = -0.0707
+    b3  = 0.0
+
+    # Site terms (EC8)
+    sA, sB, sC, sD, sE = 0.0, 0.1620, 0.2400, 0.1050, 0.5700
+    # Style-of-faulting terms
+    fN, fR, fSS = -0.0503, 0.1050, 0.0
+
+    Mref = 5.0
+    Mh   = 6.75
+
+    Rh = np.sqrt(R**2 + h**2)
+
+    # Distance function
+    FD = (c1 + c2 * (Mw - Mref)) * np.log10(Rh) - c3 * Rh
+
+    # Magnitude function
+    FM = np.where(Mw <= Mh,
+                  b1 * (Mw - Mh) + b2 * (Mw - Mh)**2,
+                  b3 * (Mw - Mh))
+
+    # Site function
+    FS = sA * C_A + sB * C_B + sC * C_C + sD * C_D + sE * C_E
+
+    # Style-of-faulting function
+    FSOF = fN * E_N + fR * E_R + fSS * E_SS
+
+    return e1 + FD + FM + FS + FSOF
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    log10(PGA) [log10(cm/s^2)], RotD50, based on the Bindi et al. (2011)
+    ITA10 ground-motion prediction equation form (Joyner-Boore distance),
+    using the site EC8 classes and style-of-faulting terms.
+
+        log10(Y) = e1 + FD(R,M) + FM(M) + FS + FSOF
+    """
+    Mw    = X[:, 0]
+    Rjb   = X[:, 1]
+    h     = X[:, 2]
+    C_A   = X[:, 3]
+    C_B   = X[:, 4]
+    C_C   = X[:, 5]
+    C_D   = X[:, 6]
+    C_E   = X[:, 7]
+    E_N   = X[:, 8]
+    E_R   = X[:, 9]
+    E_SS  = X[:, 10]
+
+    # Reference constants
+    Mref = 5.0
+    Mh   = 6.75
+    Rref = 1.0
+
+    # Coefficients (PGA, cm/s^2)
+    e1 = 3.672
+    c1 = -1.940
+    c2 = 0.413
+    c3 = 1.34e-4
+    b1 = -0.262
+    b2 = -0.0707
+
+    # Site terms (A is reference)
+    sA = 0.000
+    sB = 0.162
+    sC = 0.240
+    sD = 0.105
+    sE = 0.570
+
+    # Style-of-faulting terms
+    fN  = -0.0503
+    fR  =  0.1050
+    fSS = -0.0544
+
+    # Effective distance including pseudo-depth
+    R = np.sqrt(Rjb**2 + h**2)
+
+    # Distance function
+    FD = (c1 + c2 * (Mw - Mref)) * np.log10(R / Rref) - c3 * (R - Rref)
+
+    # Magnitude function
+    FM = np.where(Mw <= Mh,
+                  b1 * (Mw - Mh) + b2 * (Mw - Mh)**2,
+                  b1 * (Mw - Mh))
+
+    # Site function
+    FS = sA * C_A + sB * C_B + sC * C_C + sD * C_D + sE * C_E
+
+    # Style-of-faulting function
+    FSOF = fN * E_N + fR * E_R + fSS * E_SS
+
+    return e1 + FD + FM + FS + FSOF
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Bindi et al. (2011) ITA10 ground-motion prediction equation
+    # log10(PGA) with PGA in cm/s^2
+    Mw    = X[:, 0]
+    R     = X[:, 1]
+    h     = X[:, 2]      # hypocentral depth used as pseudo-depth term
+    C_A   = X[:, 3]
+    C_B   = X[:, 4]
+    C_C   = X[:, 5]
+    C_D   = X[:, 6]
+    C_E   = X[:, 7]
+    E_N   = X[:, 8]      # normal
+    E_R   = X[:, 9]      # reverse / thrust
+    E_SS  = X[:, 10]     # strike-slip
+
+    # reference values
+    Mref = 5.0
+    Mh   = 6.75
+    Rref = 1.0
+
+    # coefficients (PGA)
+    e1 = 3.672
+    c1 = -1.940
+    c2 = 0.413
+    c3 = 1.341e-4
+    b1 = -0.262
+    b2 = -0.0707
+    b3 = 0.0
+
+    # site coefficients
+    sA, sB, sC, sD, sE = 0.0, 0.162, 0.240, 0.105, 0.570
+    # style-of-faulting coefficients
+    fN, fR, fSS = -0.0503, 0.105, -0.0544
+
+    # distance function
+    Rdist = np.sqrt(R**2 + h**2)
+    Fd = (c1 + c2 * (Mw - Mref)) * np.log10(Rdist / Rref) \
+         - c3 * (Rdist - Rref)
+
+    # magnitude function
+    Fm = np.where(Mw <= Mh,
+                  b1 * (Mw - Mh) + b2 * (Mw - Mh)**2,
+                  b3 * (Mw - Mh))
+
+    # site amplification
+    Fs = sA * C_A + sB * C_B + sC * C_C + sD * C_D + sE * C_E
+
+    # style of faulting
+    Fsof = fN * E_N + fR * E_R + fSS * E_SS
+
+    return e1 + Fd + Fm + Fs + Fsof
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Bindi et al. (2011) ITA10 GMPE for PGA [cm/s^2], horizontal component
+    Mw    = X[:, 0]
+    R     = X[:, 1]
+    # X[:, 2] hypocentral depth not used directly (pseudo-depth h is a fitted term)
+    C_A, C_B, C_C, C_D, C_E = X[:, 3], X[:, 4], X[:, 5], X[:, 6], X[:, 7]
+    E_N, E_R, E_SS          = X[:, 8], X[:, 9], X[:, 10]
+
+    # reference values
+    Mref = 5.0
+    Mh   = 6.75
+    Rref = 1.0
+
+    # fitted coefficients (PGA)
+    e1 = 3.672
+    c1 = -1.940
+    c2 = 0.413
+    h  = 10.322
+    c3 = 1.34e-4
+    b1 = -0.262
+    b2 = -0.0707
+    b3 = 0.0
+
+    sA, sB, sC, sD, sE = 0.000, 0.162, 0.240, 0.105, 0.570
+    fN, fR, fSS        = -0.0503, 0.105, -0.0544
+
+    # distance function
+    Rterm = np.sqrt(R**2 + h**2)
+    Fd = (c1 + c2 * (Mw - Mref)) * np.log10(Rterm / Rref) - c3 * (Rterm - Rref)
+
+    # magnitude function
+    Fm = np.where(Mw <= Mh,
+                  b1 * (Mw - Mref) + b2 * (Mw - Mref)**2,
+                  b3 * (Mw - Mh))
+
+    # site function
+    Fs = sA * C_A + sB * C_B + sC * C_C + sD * C_D + sE * C_E
+
+    # style-of-faulting
+    Fsof = fN * E_N + fR * E_R + fSS * E_SS
+
+    return e1 + Fd + Fm + Fs + Fsof
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Bindi et al. (2011) style ground-motion prediction equation
+    for RotD50 PGA in cm/s^2, returned as log10(PGA).
+
+        log10(Y) = e1 + Fd(R,M) + Fm(M) + Fs + Fsof
+    """
+    X = np.asarray(X, dtype=float)
+
+    Mw    = X[:, 0]
+    R     = X[:, 1]
+    h     = X[:, 2]
+    C_A   = X[:, 3]
+    C_B   = X[:, 4]
+    C_C   = X[:, 5]
+    C_D   = X[:, 6]
+    C_E   = X[:, 7]
+    E_N   = X[:, 8]
+    E_R   = X[:, 9]
+    E_SS  = X[:, 10]
+
+    # Reference values
+    Mref = 5.0
+    Mh   = 6.75
+    Rref = 1.0
+
+    # Distance-scaling coefficients (PGA)
+    c1 = -1.940
+    c2 =  0.413
+    c3 =  1.34e-4
+
+    # Magnitude-scaling coefficients (PGA)
+    b1 = -0.262
+    b2 = -0.0707
+    b3 =  0.0
+
+    # Site coefficients (EC8 classes; A is reference)
+    sA = 0.0
+    sB = 0.162
+    sC = 0.240
+    sD = 0.105
+    sE = 0.570
+
+    # Style-of-faulting coefficients
+    fN  = -0.0503
+    fR  =  0.1050
+    fSS = -0.0544
+
+    # Constant
+    e1 = 3.672
+
+    # Effective distance including depth term
+    Rdist = np.sqrt(R**2 + h**2)
+
+    # Distance function
+    Fd = (c1 + c2 * (Mw - Mref)) * np.log10(Rdist / Rref) - c3 * (Rdist - Rref)
+
+    # Magnitude function (bilinear in magnitude)
+    Fm = np.where(
+        Mw <= Mh,
+        b1 * (Mw - Mh) + b2 * (Mw - Mh)**2,
+        b3 * (Mw - Mh),
+    )
+
+    # Site amplification
+    Fs = sA * C_A + sB * C_B + sC * C_C + sD * C_D + sE * C_E
+
+    # Style-of-faulting
+    Fsof = fN * E_N + fR * E_R + fSS * E_SS
+
+    return e1 + Fd + Fm + Fs + Fsof

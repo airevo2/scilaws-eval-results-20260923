@@ -1,0 +1,212 @@
+import numpy as np
+
+def predict(X):
+    """
+    Compute the gravitational mass of the post-merger accretion disk,
+    M_disk [M_sun], using the Krüger & Foucart (2020) fitting formula.
+    
+    Inputs: X is a 2-D array with columns as described:
+        X[:,0] = M1   (lighter NS mass, M_sun)
+        X[:,1] = M2   (heavier NS mass, M_sun)
+        X[:,2] = C1   (compactness of lighter NS)
+        X[:,3] = C2   (compactness of heavier NS)
+        X[:,4] = q    (mass ratio M1/M2)
+        X[:,5] = Lambda_tilde (not used in this formula)
+    Returns:
+        M_disk : 1-D array of disk mass in solar masses.
+    """
+    # Extract relevant quantities
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    q  = X[:, 4]
+    C2 = X[:, 3]
+    
+    M_tot = M1 + M2
+    
+    # Coefficients from Krüger & Foucart (2020), Phys. Rev. D 101, 103002
+    alpha = 0.0477
+    beta  = 0.169
+    gamma = -0.098
+    delta = -0.0472
+    
+    M_disk = M_tot * (alpha * q + beta * C2 + gamma * q * C2 + delta)
+    return M_disk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the post-merger disk mass M_disk [M_sun] using the fitting formula
+    from Dietrich et al. (2020), Science, 370, 1450 (based on numerical relativity simulations).
+    The formula uses the threshold mass for prompt collapse M_thr and the total binary mass M_tot.
+    """
+    # Unpack inputs
+    M1 = X[:, 0]        # lighter NS mass
+    M2 = X[:, 1]        # heavier NS mass
+    C1 = X[:, 2]        # compactness of lighter NS
+    C2 = X[:, 3]        # compactness of heavier NS
+    q = X[:, 4]         # mass ratio M1/M2
+    Lambda_tilde = X[:, 5]  # binary tidal deformability
+
+    # Total binary mass
+    M_tot = M1 + M2
+
+    # Fitting coefficients for the threshold mass (Dietrich et al. 2020)
+    a = 0.980
+    b = -0.096
+    c = 0.0  # often neglected
+    d = -0.029
+    e = 0.0  # often neglected
+    f = 0.0
+    g = -0.020
+
+    # Mass ratio term
+    eta = q / (1.0 + q)**2  # symmetric mass ratio
+
+    # Threshold mass for prompt collapse
+    M_thr = (a * (C1 + C2) + b * (eta + 1.0/6.0) + c * (M1 + M2)
+             + d * (C1**2 + C2**2) + e * (C1 * C2) + f * (C1 * C2 * (C1 + C2))
+             + g * (C1 * eta + C2 * eta)) * M_tot
+
+    # Disk mass fitting coefficients (Dietrich et al. 2020)
+    k1 = -0.135
+    k2 = 0.116
+    k3 = 0.078
+    k4 = -0.081
+    k5 = 0.049
+    k6 = 0.0
+    k7 = 0.0
+    k8 = -0.045
+
+    # Logarithm of disk mass
+    log_Mdisk = (k1 * (M_tot / M_thr)
+                 + k2 * (C1 + C2)
+                 + k3 * (M_tot / M_thr)**2
+                 + k4 * (C1 + C2)**2
+                 + k5 * (M_tot / M_thr) * (C1 + C2)
+                 + k6 * eta
+                 + k7 * C1 * C2
+                 + k8 * (C1 + C2) * eta)
+
+    M_disk = np.exp(log_Mdisk)
+
+    return M_disk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the post-merger disk mass M_disk (in solar masses) using the canonical
+    fit from Shibata et al. (2017, PRD 96, 123012).
+
+    Inputs: X is a 2-D numpy array with columns:
+        X[:,0] = M1 (M_sun)
+        X[:,1] = M2 (M_sun)
+        X[:,2] = C1
+        X[:,3] = C2
+        X[:,4] = q ( = M1/M2, already supplied)
+        X[:,5] = Lambda_tilde
+    """
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    C1 = X[:, 2]
+    C2 = X[:, 3]
+    q   = X[:, 4]   # M1/M2, so already the correct mass ratio
+
+    # total gravitational mass
+    M_total = M1 + M2
+
+    # maximum compactness of the two stars
+    C_max = np.maximum(C1, C2)
+
+    # Shibata et al. (2017) closed-form disk mass (gravitational)
+    # M_disk = 0.01 * (M_total/2.7)^5 * ((1+q)^2/q) * (1 - 2*C_max)
+    # All masses in solar units.
+    M_disk = 0.01 * (M_total / 2.7)**5 * ((1.0 + q)**2 / q) * (1.0 - 2.0 * C_max)
+
+    return M_disk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the post-merger accretion disk mass M_disk [M_sun] using the
+    standard fitting formula from Radice et al. (2018, ApJ 869, L35).
+
+    Inputs:
+        X : 2D numpy array with columns:
+            X[:,0] = M1          [M_sun]
+            X[:,1] = M2          [M_sun]
+            X[:,2] = C1          (dimensionless)
+            X[:,3] = C2          (dimensionless)
+            X[:,4] = q            (mass ratio M1/M2, 0 < q <= 1)
+            X[:,5] = Lambda_tilde (dimensionless)
+    Returns:
+        1D numpy array of M_disk [M_sun].
+    """
+    # Extract the mass ratio and tidal deformability
+    q = X[:, 4]
+    Lambda_tilde = X[:, 5]
+
+    # Inverse mass ratio (M2/M1 = 1/q)
+    inv_q = 1.0 / q
+    Lam_scaled = Lambda_tilde / 1000.0
+
+    # Coefficients from Radice et al. (2018), Table 2
+    a = -3.03
+    b =  2.74
+    c = -1.12
+    d = -0.59
+    e =  0.19
+    f = -0.03
+
+    # Log10 of disk mass
+    log10_Mdisk = (a
+                   + b * inv_q
+                   + c * Lam_scaled
+                   + d * inv_q**2
+                   + e * inv_q * Lam_scaled
+                   + f * Lam_scaled**2)
+
+    # Disk mass in solar masses
+    Mdisk = np.power(10.0, log10_Mdisk)
+    return Mdisk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the post-merger accretion disk mass M_disk [M_sun] using the 
+    commonly cited fitting formula from Radice et al. (2018), as quoted in 
+    Dietrich et al. (2020).
+
+    Input X columns:
+        X[:, 0] = M1 [M_sun]
+        X[:, 1] = M2 [M_sun]
+        X[:, 2] = C1 (unused)
+        X[:, 3] = C2 (unused)
+        X[:, 4] = q
+        X[:, 5] = Lambda_tilde
+    """
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    q = X[:, 4]
+    Lambda_tilde = X[:, 5]
+
+    M_total = M1 + M2
+
+    # Radice+2018 / Dietrich+2020 fit for the disk mass
+    M_disk = M_total * np.maximum(
+        0.04 * (Lambda_tilde / 400.0)**0.7 * (q / 0.9)**(-3.0) - 0.02,
+        0.0
+    )
+
+    return M_disk

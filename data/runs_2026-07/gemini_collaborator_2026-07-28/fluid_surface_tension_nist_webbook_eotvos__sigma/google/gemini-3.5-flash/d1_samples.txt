@@ -1,0 +1,142 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = T [K]
+    # X[:, 1] = rho_liq [kg/m³]
+    # X[:, 2] = T_c [K]
+    # X[:, 3] = M_mol [kg/mol]
+
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Molar volume V_m in m³/mol
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant in SI units: J / (K * mol^(2/3))
+    k = 2.12e-7
+
+    # Eötvös equation for liquid surface tension σ [N/m]
+    sigma = k * (T_c - T) / (V_m ** (2.0 / 3.0))
+
+    # Surface tension must be non-negative
+    sigma = np.maximum(sigma, 0.0)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = T [K]
+    # X[:, 1] = rho_liq [kg/m³]
+    # X[:, 2] = T_c [K]
+    # X[:, 3] = M_mol [kg/mol]
+
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Compute molar volume V_m in m³/mol
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant in SI units (J / (K * mol^(2/3)))
+    # The historical value is 2.12 erg/(K * mol^(2/3)), which converts to 2.12e-7 J/(K * mol^(2/3))
+    k = 2.12e-7
+
+    # Eötvös rule for surface tension (sigma) in N/m
+    # We use (T_c - T) as the temperature difference.
+    sigma = k * (T_c - T) / (V_m ** (2.0 / 3.0))
+
+    # Ensure no negative values
+    sigma = np.maximum(sigma, 0.0)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Calculate molar volume V_m in m^3/mol
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant in SI units: 2.12e-7 J / (K * mol^(2/3))
+    k = 2.12e-7
+
+    # Temperature difference (with 6 K offset, typical for Eötvös equation)
+    # Ensure it remains non-negative
+    dT = np.maximum(T_c - T - 6.0, 0.0)
+
+    # Compute surface tension sigma in N/m
+    sigma = k * dT / (V_m ** (2.0 / 3.0))
+
+    return sigma
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = T [K]
+    # X[:, 1] = rho_liq [kg/m³]
+    # X[:, 2] = T_c [K]
+    # X[:, 3] = M_mol [kg/mol]
+
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Molar volume V_m in m^3/mol
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant in SI units: J / (K * mol^(2/3))
+    k = 2.12e-7
+
+    # Eötvös equation with the standard 6 K temperature offset
+    dt = T_c - T - 6.0
+    dt = np.maximum(dt, 0.0)
+
+    # Surface tension sigma in N/m
+    sigma = k * dt / (V_m ** (2.0 / 3.0))
+
+    return sigma
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    T = X[:, 0]  # Temperature [K]
+    rho_liq = X[:, 1]  # Liquid density [kg/m³]
+    T_c = X[:, 2]  # Critical temperature [K]
+    M_mol = X[:, 3]  # Molar mass [kg/mol]
+
+    # Compute molar volume V_m [m³/mol]
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant in SI units: J / (K * mol^(2/3))
+    k = 2.1e-7
+
+    # Eötvös equation for surface tension sigma [N/m]
+    sigma = k * (T_c - T) / (V_m ** (2 / 3))
+
+    return sigma

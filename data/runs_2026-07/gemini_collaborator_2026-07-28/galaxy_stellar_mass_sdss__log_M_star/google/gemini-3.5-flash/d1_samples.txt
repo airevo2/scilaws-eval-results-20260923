@@ -1,0 +1,162 @@
+import numpy as np
+
+
+def predict(X):
+    """Estimates the log10 of the stellar mass (log_M_star) using the empirical
+
+    relation from Taylor et al. (2011) calibrated for SDSS photometry,
+    with a small offset to convert from Chabrier to Kroupa IMF.
+
+    Inputs:
+    - X[:, 1]: g (mag)
+    - X[:, 2]: r (mag)
+    - X[:, 3]: i (mag)
+    - X[:, 5]: redshift (z)
+    - X[:, 6]: DM (mag)
+    """
+    g = X[:, 1]
+    r = X[:, 2]
+    i = X[:, 3]
+    z = X[:, 5]
+    DM = X[:, 6]
+
+    # Approximate k-corrections for low-redshift SDSS galaxies
+    k_g = 2.2 * z
+    k_r = 1.2 * z
+    k_i = 0.8 * z
+
+    # Derive rest-frame color and absolute magnitude
+    color_rest = (g - k_g) - (r - k_r)
+    M_i_rest = (i - k_i) - DM
+
+    # Taylor et al. (2011) relation: log_M = 1.15 + 0.70 * (g - r) - 0.4 * M_i
+    # We add 0.04 dex to convert from Chabrier IMF to Kroupa IMF.
+    log_M_star = 1.19 + 0.70 * color_rest - 0.4 * M_i_rest
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimates the log10 of the stellar mass (in solar masses) of galaxies
+    using the empirical relation from Taylor et al. (2011), which is a standard 
+    closed-form approximation for SDSS-like photometry under a Chabrier/Kroupa IMF.
+    
+    Inputs:
+    X[:, 1] = g (apparent magnitude)
+    X[:, 3] = i (apparent magnitude)
+    X[:, 6] = DM (distance modulus, μ)
+    """
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+    
+    # Calculate absolute i-band magnitude
+    M_i = i - DM
+    
+    # Observed g - i color as proxy for rest-frame color
+    g_minus_i = g - i
+    
+    # Taylor et al. (2011) scaling relation:
+    # log10(M*/M_sun) = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+    log_M_star = 1.15 + 0.70 * g_minus_i - 0.4 * M_i
+    
+    return log_M_star
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Estimates the log10 of the stellar mass (log_M_star) in solar masses
+
+    using the empirical relation from Taylor et al. (2011), which is
+    highly optimized for SDSS photometry and matches Bruzual & Charlot (2003)
+    stellar population synthesis models (as used in the MPA-JHU pipeline).
+
+    Formula:
+        log10(M_star) = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+    where M_i is the absolute i-band magnitude: M_i = i - DM.
+    """
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+
+    # Calculate absolute i-band magnitude
+    M_i = i - DM
+
+    # Calculate observer-frame g - i color
+    g_i = g - i
+
+    # Apply the Taylor et al. (2011) scaling relation
+    log_M_star = 1.15 + 0.70 * g_i - 0.4 * M_i
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Estimates the log10 of the stellar mass (log_M_star) using the empirical
+
+    relation from Taylor et al. (2011), which is highly consistent with
+    SDSS MPA-JHU Bayesian spectral fitting results.
+
+    Inputs:
+    - X[:, 1]: g-band apparent magnitude
+    - X[:, 3]: i-band apparent magnitude
+    - X[:, 6]: Distance Modulus (DM)
+    """
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+
+    # Calculate absolute i-band magnitude
+    M_i = i - DM
+
+    # Taylor et al. (2011) relation: log10(M*/M_sun) = 1.15 + 0.70*(g - i) - 0.4*M_i
+    log_M_star = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimates the log10 of the galaxy stellar mass (log_M_star) in solar masses
+    using the empirical relation from Taylor et al. (2011), which is the standard
+    closed-form relationship for SDSS-like photometry, adjusted from a Chabrier 
+    to a Kroupa IMF (+0.04 dex).
+
+    Inputs:
+    X[:, 0] = u
+    X[:, 1] = g
+    X[:, 2] = r
+    X[:, 3] = i
+    X[:, 4] = z_mag
+    X[:, 5] = redshift
+    X[:, 6] = DM (Distance Modulus)
+    """
+    g = X[:, 1]
+    i = X[:, 3]
+    DM = X[:, 6]
+    
+    # Rest-frame i-band absolute magnitude (without k-correction)
+    M_i = i - DM
+    
+    # g - i color
+    g_i = g - i
+    
+    # Taylor et al. (2011) relation: log10(M*/M_sun) = 1.15 + 0.70 * (g - i) - 0.4 * M_i
+    # Adjusted by +0.04 dex to convert from Chabrier IMF to Kroupa IMF
+    log_M_star = 1.19 + 0.70 * g_i - 0.4 * M_i
+    
+    return log_M_star

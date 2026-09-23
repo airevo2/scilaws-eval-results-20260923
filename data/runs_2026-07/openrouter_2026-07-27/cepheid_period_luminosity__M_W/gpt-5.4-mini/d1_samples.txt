@@ -1,0 +1,80 @@
+import numpy as np
+
+def predict(X):
+    logP = X[:, 0]
+    feh = X[:, 1]
+    
+    # Canonical linear PLZ form for an absolute Wesenheit magnitude:
+    # M_W = a + b*(log P) + c*[Fe/H]
+    # For Gaia Wesenheit relations, a commonly used reddening-free form is:
+    # W = G - 1.90*(G_BP - G_RP)
+    # with an absolute calibration of the form below.
+    a = -1.0
+    b = -2.7
+    c = 0.15
+    
+    return a + b * logP + c * feh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    
+    # Commonly used linear period-luminosity-metallicity form for Wesenheit magnitudes
+    # M_W = a + b * logP + c * [Fe/H]
+    a = -1.0
+    b = -2.7
+    c = 0.2
+    
+    return a + b * log_P + c * feh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    logP = X[:, 0]
+    feh = X[:, 1]
+    
+    # Standard linear period-luminosity-metallicity form for a Gaia Wesenheit magnitude
+    # M_W = a * logP + b * [Fe/H] + c
+    a = -2.7
+    b = 0.15
+    c = -0.8
+    
+    return a * logP + b * feh + c
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    
+    # Canonical linear Wesenheit period-luminosity-metallicity relation
+    # M_W = a + b * logP + c * [Fe/H]
+    a = -1.0
+    b = -2.7
+    c = 0.2
+    
+    return a + b * log_P + c * feh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    
+    # Standard linear period-luminosity-metallicity form for Gaia Wesenheit magnitude
+    # M_W = a + b * logP + c * [Fe/H]
+    a = -1.0
+    b = -2.7
+    c = 0.15
+    
+    return a + b * log_P + c * feh

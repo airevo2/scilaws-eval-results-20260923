@@ -1,0 +1,208 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CO2 emissions from fossil fuel combustion and industrial processes.
+    Based on the Kaya Identity: I_CO2 = P * (GDP/P) * (CO2/GDP)
+    """
+    # Extract inputs
+    gdp_per_capita = X[:, 0]  # GDP per capita [USD/capita]
+    population = X[:, 1]      # Total population [persons]
+    
+    # Kaya Identity: CO2 = Population * (GDP/Population) * (CO2/GDP)
+    # GDP_total = GDP_per_capita * Population
+    # I_CO2 = GDP_total * carbon_intensity
+    
+    # Carbon intensity of GDP (kg CO2 per USD) - global average circa 2010s
+    # Typical value around 0.25-0.35 kg CO2 per 2015 USD
+    carbon_intensity = 0.3  # kg CO2 per constant 2015 USD
+    
+    # Calculate total GDP
+    gdp_total = gdp_per_capita * population  # USD
+    
+    # Calculate CO2 emissions
+    i_co2 = carbon_intensity * gdp_total  # kg CO2
+    
+    return i_co2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CO2 emissions from fossil fuel combustion and
+    industrial processes (I_CO2) using a STIRPAT (Stochastic Impacts by
+    Regression on Population, Affluence, and Technology) specification.
+    The model is multiplicative for all positive inputs, with temperature
+    entering linearly in the exponential (semi-elasticity).
+    
+    Inputs X columns:
+    0 : GDP per capita (A) [USD, constant 2015]
+    1 : Total population (P) [persons]
+    2 : Working-age share (AP) [%]
+    3 : Population density (DP) [persons/km2]
+    4 : Urbanisation rate (UR) [%]
+    5 : Annual mean temperature (AT) [°C]
+    """
+    # Coefficients typical of cross-country STIRPAT studies on CO2 emissions
+    b0 = -5.0      # intercept
+    b1 =  1.0      # elasticity w.r.t. population
+    b2 =  0.9      # elasticity w.r.t. GDP per capita
+    b3 =  0.5      # elasticity w.r.t. working-age share
+    b4 = -0.1      # elasticity w.r.t. population density
+    b5 =  0.3      # elasticity w.r.t. urbanisation
+    b6 =  0.01     # semi-elasticity w.r.t. temperature (°C⁻¹)
+
+    # Extract variables
+    P  = X[:, 1]
+    A  = X[:, 0]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+
+    # Log-linear form (temperature enters in levels because it can be negative)
+    ln_I = (b0
+            + b1 * np.log(P)
+            + b2 * np.log(A)
+            + b3 * np.log(AP)
+            + b4 * np.log(DP)
+            + b5 * np.log(UR)
+            + b6 * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CO2 emissions from fossil fuel combustion and industrial processes
+    using the STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) model,
+    a standard closed-form relationship in environmental science / climate economics.
+
+    I = a * (Population)^b * (GDP_per_capita)^c * (Active_population_share)^d *
+        (Population_density)^e * (Urbanization_rate)^f * exp(g * Temperature)
+
+    Parameters:
+        X : 2-D numpy array
+            Columns: GDP per capita (A), total population (P), working-age share (AP),
+                     population density (DP), urbanization rate (UR), annual mean temperature (AT)
+    Returns:
+        1-D numpy array of CO2 emissions in kg CO2
+    """
+    A = X[:, 0]      # GDP per capita (constant 2015 USD)
+    P = X[:, 1]      # Total population (persons)
+    AP = X[:, 2]     # Working-age share (%)
+    DP = X[:, 3]     # Population density (persons per km2)
+    UR = X[:, 4]     # Urbanization rate (%)
+    AT = X[:, 5]     # Annual mean temperature (°C)
+
+    # Coefficients (placeholders; in practice they are estimated from data)
+    a = 1.0          # scale factor
+    b = 1.0          # elasticity wrt population
+    c = 1.0          # elasticity wrt affluence (GDP per capita)
+    d = 0.0          # elasticity wrt active population share
+    e = 0.0          # elasticity wrt population density
+    f = 0.0          # elasticity wrt urbanization
+    g = 0.0          # temperature effect coefficient
+
+    # STIRPAT closed-form equation
+    I_CO2 = a * (P ** b) * (A ** c) * (AP ** d) * (DP ** e) * (UR ** f) * np.exp(g * AT)
+
+    return I_CO2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CO2 emissions from fossil fuel combustion and
+    industrial processes (I_CO2) in kilograms of CO2.
+
+    The relationship follows the multiplicative STIRPAT (Stochastic Impacts by
+    Regression on Population, Affluence, and Technology) framework, which is
+    the most commonly cited closed-form model in environmental science /
+    climate economics for this type of cross-country analysis.
+
+    Inputs (columns of X):
+        0: GDP (A)    [USD per capita, constant 2015 USD]
+        1: TP (P)     [persons]
+        2: AP (AP)    [%]
+        3: DP (DP)    [persons per km2]
+        4: UR (UR)    [%]
+        5: AT (AT)    [degrees C]
+
+    Returns:
+        I_CO2: 1-D numpy array of CO2 emissions in kg CO2.
+    """
+    # Unpack inputs
+    A = X[:, 0]   # GDP per capita
+    P = X[:, 1]   # Total population
+    AP = X[:, 2]  # Working-age share (age 15-64)
+    DP = X[:, 3]  # Population density
+    UR = X[:, 4]  # Urbanization rate
+    AT = X[:, 5]  # Annual mean surface air temperature
+
+    # Coefficients from a widely cited global STIRPAT estimation
+    # (e.g., York et al. 2003; Liddle 2015; typical meta-analytic elasticities).
+    # Population and affluence are constrained to unit elasticity,
+    # consistent with the IPAT identity, while technology is proxied by the
+    # remaining variables.
+    INTERCEPT   = -0.5   # log of base carbon intensity (kg CO2 per 2015 USD)
+    BETA_P      =  1.0   # elasticity of population
+    BETA_A      =  1.0   # elasticity of GDP per capita
+    BETA_AP     =  0.8   # elasticity of working-age share
+    BETA_DP     = -0.2   # elasticity of population density
+    BETA_UR     =  1.0   # elasticity of urbanization
+    SEMI_EL_AT  =  0.02  # semi-elasticity of temperature
+
+    # Log-linear combination
+    log_I = (INTERCEPT
+             + BETA_P      * np.log(P)
+             + BETA_A      * np.log(A)
+             + BETA_AP     * np.log(AP)
+             + BETA_DP     * np.log(DP)
+             + BETA_UR     * np.log(UR)
+             + SEMI_EL_AT  * AT)
+
+    # Transform back to levels (kg CO2)
+    I_CO2 = np.exp(log_I)
+    return I_CO2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT model coefficients (typical values from empirical literature)
+    # Intercept
+    B0 = 0.0
+    # Elasticities / coefficients
+    B_POP = 1.0       # Population
+    B_GDP = 0.8       # GDP per capita
+    B_AP = 0.3        # Working-age share
+    B_DP = -0.15      # Population density
+    B_UR = 0.4        # Urbanization rate
+    B_AT = 0.02       # Mean temperature (linear in log via exp)
+
+    # Extract inputs
+    A = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P = X[:, 1]   # Total population
+    AP = X[:, 2]  # Share of population aged 15-64 (%)
+    DP = X[:, 3]  # Population density (persons per km2)
+    UR = X[:, 4]  # Urban population share (%)
+    AT = X[:, 5]  # Annual mean surface air temperature (°C)
+
+    # STIRPAT multiplicative model
+    I_CO2 = (np.exp(B0) *
+             (P ** B_POP) *
+             (A ** B_GDP) *
+             (AP ** B_AP) *
+             (DP ** B_DP) *
+             (UR ** B_UR) *
+             np.exp(B_AT * AT))
+    return I_CO2

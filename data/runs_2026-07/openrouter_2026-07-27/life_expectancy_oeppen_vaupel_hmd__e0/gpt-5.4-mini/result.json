@@ -1,0 +1,17 @@
+{
+  "task": "life_expectancy_oeppen_vaupel_hmd__e0",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "oeppen_vaupel_2002",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

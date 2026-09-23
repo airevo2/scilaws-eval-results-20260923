@@ -1,0 +1,119 @@
+task_id: ttauri_accretion__L_acc
+domain: astronomy / stellar_astrophysics
+license: CC-BY-4.0
+
+# Type I — each YSO is an independent row; all baselines use globally-fitted
+# slope+intercept constants; no per-cluster parameters.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no column listing, no constants.
+context: >-
+  T Tauri stars are young pre-main-sequence stars accreting gas from their protoplanetary disks, studied in stellar astrophysics.
+
+target:
+  name: logL_acc
+  symbol: log(L_acc/L_sun)
+  unit: log10(L_sun)
+  description: Log base-10 accretion luminosity of a pre-main-sequence T Tauri star, derived from UV-excess slab modelling of the Balmer continuum excess.
+  range: [-5.3, 0.62]
+
+inputs:
+  - name: logL_star
+    symbol: log(L_star/L_sun)
+    unit: log10(L_sun)
+    description: Log base-10 stellar bolometric luminosity, derived from flux-calibrated X-shooter spectra and BT-Settl SED integration.
+    range: [-2.5229, 0.71]
+  - name: M_star_B98
+    symbol: M_star
+    unit: M_sun
+    description: Stellar mass derived from pre-main-sequence evolutionary tracks using the HR-diagram position.
+    range: [0.03, 2.08]
+  - name: R_star
+    symbol: R_star
+    unit: R_sun
+    description: Stellar radius derived from stellar luminosity and effective temperature via the Stefan-Boltzmann relation.
+    range: [0.17, 3.2]
+  - name: Teff_K
+    symbol: T_eff
+    unit: K
+    description: Stellar effective temperature determined from spectral template matching against a library of class III (non-accreting) young stellar spectra.
+    range: [2600, 5110]
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block added for schema symmetry with GOLD.
+priors: []
+
+# Dataset — Type I two-file layout. CROSS-REGION OOD split (2026-05-29):
+#   train = Chamaeleon I  (Manara 2017, A&A 604 A127; data_raw/manara2017_chai_accretion.csv)
+#   test  = Lupus         (Alcalá 2017, A&A 600 A20;  data_raw/alcala2017_lupus_accretion.csv)
+# Both regions observed with VLT/X-shooter and reduced with the SAME Alcalá-2017
+# accretion-tracer calibrations + Baraffe PMS tracks, so the split isolates
+# region/age variation (Manara 2017: Cha I shows a steeper L_acc-M_star slope
+# than Lupus), NOT instrument/method systematics. Manara 2017 has no VizieR
+# release; its Tables 1 & 2 were transcribed by data_raw/parse_manara_chai.py
+# (multimodal PDF read; Cha I logL_acc-logL_star slope = 1.76 vs published 1.9,
+# confirming transcription). See data_raw/README.md §expansion.
+data_files:
+  train: data/train.csv     # Chamaeleon I (Manara 2017) — 90 YSOs
+  test:  data/test.csv      # Lupus (Alcalá 2017) — 79 YSOs (cross-region OOD)
+
+# NaN-M_star drop (auxiliary input, consumed by no baseline): Cha I (parsed) has
+# none; Lupus has 2 (Sz102, Sz133) -> dropped from test. Coded in prep_data
+# main() step 4; CSVs reproduce byte-stable. Baselines use logL_star only.
+n_train: 90
+n_test:  79
+
+# Reference baselines — the two Manara+2017 Chamaeleon I (TRAIN-region) fits,
+# applied OUT-OF-REGION to the Lupus test set. The Alcalá+2017 Lupus fits
+# (alcala_2017_a/b) were calibrated ON the Lupus sample == the TEST set, so they
+# are fit-on-test (their Lupus R² is in-sample and unbeatable by any system not
+# given Lupus); archived in .dropped_baselines/ (see VERDICT 2026-05-29).
+references:
+  - id: manara_2017
+    label: "Manara+2017 Eq. (3) — single power-law, linmix Bayesian fit (Chamaeleon I; train-region)"
+    formula_file: formulas/manara_2017.py
+    reference_pdf: reference/manara_2017.pdf
+    n_law_constants:   2
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.8015
+      r2: 0.4929
+  - id: manara_2017_bpl
+    label: "Manara+2017 Eq. (2) — broken power-law, break at log L_star=-0.34 (Chamaeleon I; train-region)"
+    formula_file: formulas/manara_2017_bpl.py
+    reference_pdf: reference/manara_2017.pdf
+    n_law_constants:   5
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.7821
+      r2: 0.5172
+
+# Auditor note (2026-05-29 cross-region rebuild): both baselines are the
+# Chamaeleon I (TRAIN-region) calibrations of Manara+2017, evaluated OOD on the
+# Lupus test set. They are now POSITIVE R² (0.49 / 0.52) and both beat naive
+# (test naive RMSE 1.143) — the relation transfers across regions, with residual
+# scatter from the genuine region/age difference (Manara 2017: Cha I's L_acc-
+# M_star slope ~1.9 is steeper than Lupus's ~1.3). The anchor manara_2017_bpl
+# (broken power-law) handles the high-luminosity flattening best. A free OLS on
+# the pooled relation reaches R²~0.6, so SR has clear headroom over the anchor.
+
+caps:
+  max_law_constants:        5
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "expresses the accretion luminosity as a power-law function of stellar bolometric luminosity (a linear relation between log accretion luminosity and log stellar luminosity) with positive slope, so that accretion luminosity increases with stellar bolometric luminosity"
+  - "includes a change in the log-log slope (a broken or segmented power-law) so that the accretion-luminosity-stellar-luminosity scaling is steeper at low stellar luminosity and flatter at high stellar luminosity"
+  - "drives accretion luminosity toward zero (log accretion luminosity decreasing without bound) as stellar bolometric luminosity vanishes, since a star with negligible luminosity offers negligible gravitational potential energy to release"
+
+best_baseline: 0.782062    # manara_2017_bpl — rmse (lower is better); regenerated 2026-05-30

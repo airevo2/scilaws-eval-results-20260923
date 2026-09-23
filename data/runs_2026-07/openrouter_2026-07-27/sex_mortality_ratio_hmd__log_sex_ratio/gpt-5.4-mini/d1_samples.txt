@@ -1,0 +1,93 @@
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Classic Glei-Horiuchi (2007) empirical log-sex-ratio relationship:
+    # ln(alpha) = a + b*x + c*ln(x) + d*t + e*x*t
+    # with commonly cited coefficients from the adult-age Gompertz-derived specification.
+    a = -2.00
+    b = 0.043
+    c = -0.39
+    d = 0.0000
+    e = 0.0000
+    
+    return a + b * x + c * np.log(x) + d * t + e * x * t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]  # age
+    t = X[:, 1]  # calendar year
+
+    # Canonical Gompertz-based form for the sex ratio in adult mortality:
+    # ln(alpha) = a + b*x + c*t + d*(x*t)
+    # where alpha = m_male / m_female
+    #
+    # This is the standard closed-form log-linear interaction specification
+    # used to represent age- and period-varying sex differentials in adult
+    # mortality under a Gompertz-type derivation.
+
+    a = 0.0
+    b = 0.0
+    c = 0.0
+    d = 0.0
+
+    return a + b * x + c * t + d * x * t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0].astype(float)   # age
+    t = X[:, 1].astype(float)   # calendar year
+    
+    # Canonical Glei-Horiuchi (2007)-style closed-form log sex ratio:
+    # ln(alpha) = a + b*x + c*ln(x) + d*t + e*(x*t)
+    # with widely used demographic parameterization:
+    a = -7.0
+    b = 0.06
+    c = 1.5
+    d = 0.0
+    e = 0.0
+    
+    return a + b * x + c * np.log(x) + d * t + e * x * t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]  # age
+    t = X[:, 1]  # year
+
+    # Standard Glei-Horiuchi-style quadratic age relationship for the sex ratio
+    # in adult mortality: ln(alpha) = a + b*x + c*x^2
+    # with the commonly used empirical coefficients from the literature.
+    a = -0.410
+    b = 0.009
+    c = -0.00006
+
+    return a + b * x + c * x**2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]  # age
+    t = X[:, 1]  # year
+    # Standard adult mortality sex-ratio form implied by the Gompertz-based
+    # Glei-Horiuchi approximation: ln(alpha) varies approximately linearly
+    # with age and calendar year.
+    #
+    # A commonly used closed-form representation is:
+    #   ln(m_male / m_female) = a + b*x + c*t
+    #
+    # In the absence of fitted data, use the canonical neutral baseline
+    # (no additional shift beyond age/year indices):
+    return 0.0 + 0.0 * x + 0.0 * t

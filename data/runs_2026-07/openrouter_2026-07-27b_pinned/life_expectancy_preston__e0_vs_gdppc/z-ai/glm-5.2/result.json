@@ -1,0 +1,35 @@
+{
+  "task": "life_expectancy_preston__e0_vs_gdppc",
+  "model": "z-ai/glm-5.2",
+  "type": "typeI",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "preston_1975_logistic",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "preston_1975_logistic_kappa",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "preston_1975_loglinear",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

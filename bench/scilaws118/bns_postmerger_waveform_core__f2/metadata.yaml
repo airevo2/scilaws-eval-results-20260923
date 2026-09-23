@@ -1,0 +1,134 @@
+task_id: bns_postmerger_waveform_core__f2
+domain: astronomy / gravitational-wave-astrophysics
+license: CC-BY-4.0
+
+# Type I — each NR simulation row is independent; no cluster structure.
+type: typeI
+has_group_id: false
+
+context: >-
+  After two neutron stars merge, the remnant oscillates and radiates gravitational waves at kilohertz frequencies, a phenomenon studied in relativistic astrophysics.
+
+target:
+  name: f2
+  symbol: f₂
+  unit: kHz
+  description: Dominant post-merger gravitational-wave spectral peak frequency of the BNS remnant, extracted from high-resolution NR simulations.
+  range: [1.77, 3.74]
+
+inputs:
+  - name: mass
+    symbol: M
+    unit: M_sun
+    description: Total gravitational mass of the binary system, m1 + m2.
+    range: [2.40, 3.41]
+  - name: q
+    symbol: q
+    unit: ""
+    description: Binary mass ratio m2/m1 with primary mass m1 >= m2, so q lies in (0, 1].
+    range: [0.48, 1.00]
+  - name: kap2t
+    symbol: κ₂ᵀ
+    unit: ""
+    description: Combined tidal coupling constant of the binary, an EOS-sensitive aggregate of component tidal deformabilities weighted by masses.
+    range: [68.00, 1132.00]
+  - name: lamT
+    symbol: Λ̃
+    unit: ""
+    description: Combined (mass-weighted) tidal deformability of the binary system.
+    range: [364.00, 6256.00]
+  - name: m1
+    symbol: m₁
+    unit: M_sun
+    description: Gravitational mass of the primary (heavier) neutron star.
+    range: [1.20, 1.95]
+  - name: m2
+    symbol: m₂
+    unit: M_sun
+    description: Gravitational mass of the secondary (lighter) neutron star.
+    range: [0.94, 1.71]
+  - name: M_chirp
+    symbol: ℳ
+    unit: M_sun
+    description: Chirp mass of the binary, (m1 * m2)^(3/5) / (m1 + m2)^(1/5).
+    range: [1.04, 1.48]
+
+data_files:
+  train: data/train.csv  # q >= 0.80 (near-equal-mass binaries)
+  test:  data/test.csv   # q < 0.80  (asymmetric binaries; OOD on mass ratio)
+
+n_train: 102
+n_test:  41
+
+# Train/test split: feature-axis OOD on mass ratio q (threshold q=0.80).
+# Tests extrapolation from near-equal-mass binaries into the asymmetric regime
+# where mass-ratio corrections are largest and least well-constrained.
+
+references:
+  - id: gonzalez_2023
+    label: Gonzalez 2023 — factorized quasi-universal f2 fit, Eq.(23)-(24), Table 2
+    formula_file: formulas/gonzalez_2023.py
+    reference_pdf: reference/gonzalez_2023.pdf
+    n_law_constants:   10  # a0, aM_1, aT_1, bT_1, aT_2, bT_2, aT_3, bT_3, aT_4, bT_4
+    n_other_constants:  1  # GM_SUN_C3
+    n_local_params:     0
+    measured:
+      rmse: 0.1652
+      r2:   0.8987
+  - id: vretinaris_2020
+    label: Vretinaris 2020 — tidal-deformability fit, Eq.(33)
+    formula_file: formulas/vretinaris_2020.py
+    reference_pdf: reference/vretinaris_2020.pdf
+    n_law_constants:   3  # b0, b1, b2
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.1990
+      r2:   0.8529
+
+# FM G1-borderline note (2026-05-26, wave-3 subagent K finding;
+#   corrected 2026-05-29 逐条审核 — the input list below was stale/wrong):
+#   Split axis: q (mass ratio).
+#   USED_INPUTS of baseline gonzalez_2023: [mass, m1, m2, kap2t].
+#   q ∉ USED_INPUTS literally, but q = m2/m1 (monotone bijection in {m1, m2},
+#   both of which ARE in USED_INPUTS).
+#   The OOD signal IS anchored through the m1/m2 → q transform.
+#   Borderline, no redesign needed; documented for transparency per FM G1 v0.7.
+priors:
+  - name: GM_sun_c3
+    value: 4.925490947e-6
+    unit: s
+    description: IAU/CODATA derived constant G*M_sun/c^3 — the geometric-units solar mass in seconds; exact value follows from the IAU 2012 nominal solar mass parameter GM_sun = 1.32712440018e20 m^3/s^2 and the exact CODATA speed of light c = 299792458 m/s. This is NOT a fit coefficient; it is a universal conversion constant fixed by IAU+CODATA, independent of any NR simulation dataset.
+    source: IAU 2012 Division I Working Group (TDB-compatible GM_sun); CODATA 2018 c; value cited in gonzalez_2023 unit conversion from dimensionless M*f2 to kHz.
+    _role: candidate
+  - name: f2_typical_equal_mass
+    value: 2.5
+    unit: kHz
+    description: Typical post-merger peak frequency for equal-mass BNS with total mass ~2.7 M_sun and moderate EOS.
+    source: Gonzalez 2023 and Vretinaris 2020 — central region of Fig. 2/Fig. 8.
+    _role: distractor
+  - name: nuclear_saturation_density
+    value: 2.3e14
+    unit: g/cm^3
+    description: Nuclear saturation density rho_0 — density at which neutron star matter reaches equilibrium.
+    source: Standard nuclear-physics value; appears in EOS discussions in Vretinaris 2020.
+    _role: distractor
+
+caps:
+  max_law_constants:       10
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes the EOS-sensitive tidal deformability effect, with larger deformability or tidal coupling lowering f2"
+  - "includes the effect of the binary mass scale on the post-merger peak frequency"
+  - "predicted f2 is strictly positive"
+
+best_baseline: 0.165207    # gonzalez_2023 — rmse (lower is better); regenerated 2026-05-30

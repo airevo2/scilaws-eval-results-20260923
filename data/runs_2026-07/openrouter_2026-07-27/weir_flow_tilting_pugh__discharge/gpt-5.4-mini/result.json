@@ -1,0 +1,26 @@
+{
+  "task": "weir_flow_tilting_pugh__discharge",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "engineering ",
+  "formulas": [
+    {
+      "formula": "fenton_2015",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "pugh_2025",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

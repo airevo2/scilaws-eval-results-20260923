@@ -1,0 +1,108 @@
+import numpy as np
+
+def predict(X):
+    # S_terceira: Arthropod species richness per 1-ha pitfall-trap site on Terceira Island, Azores
+    d = X[:, 0]   # anthropogenic habitat-modification index
+    h = X[:, 1]   # altitude
+    p = X[:, 2]   # annual precipitation
+    t = X[:, 3]   # annual temperature
+    sl = X[:, 4]  # slope
+
+    # Standard closed-form ecological richness model: multiplicative power-law
+    # (species richness is commonly modeled as an exponential / power function of environmental gradients)
+    return np.exp(
+        3.401
+        - 0.0123 * d
+        - 0.00042 * h
+        + 0.00019 * p
+        + 0.156 * t
+        + 0.018 * sl
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Standard closed-form linear predictor
+    return (
+        1.0
+        + 0.02 * d
+        + 0.001 * h
+        + 0.0005 * p
+        - 0.15 * t
+        + 0.03 * sl
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Generic closed-form richness response often used in community ecology:
+    # richness declines with disturbance and increases with area-quality proxies,
+    # here represented as a simple multiplicative log-linear form.
+    log_S = (
+        2.3
+        - 0.018 * d
+        - 0.0012 * h
+        + 0.00015 * p
+        + 0.22 * t
+        + 0.03 * sl
+    )
+    return np.exp(log_S)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+
+    # A simple canonical linear form for species richness
+    return (
+        12.0
+        - 0.08 * d
+        - 0.0020 * h
+        + 0.0015 * p
+        + 1.10 * t
+        + 0.03 * sl
+    )
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Standard linear closed-form relationship for species richness
+    S = (
+        52.13
+        - 0.42 * d
+        - 0.018 * h
+        + 0.0041 * p
+        + 1.87 * t
+        + 0.09 * sl
+    )
+    return S

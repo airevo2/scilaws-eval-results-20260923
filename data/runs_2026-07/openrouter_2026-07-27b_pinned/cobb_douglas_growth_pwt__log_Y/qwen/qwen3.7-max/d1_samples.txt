@@ -1,0 +1,83 @@
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+    alpha = 1.0 / 3.0
+    ln_A = 5.9
+    return ln_A + alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+    
+    # Standard Cobb-Douglas production function augmented with human capital
+    # Y = A * K^alpha * (h * L)^(1 - alpha)
+    # ln(Y/L) = ln(A) + alpha * ln(K/L) + (1 - alpha) * ln(h)
+    
+    alpha = 1.0 / 3.0  # Standard capital share of income
+    ln_A = 6.1         # Empirical intercept (log TFP) to align PWT 11.0 2017 USD units
+    
+    log_y = ln_A + alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)
+    return log_y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+    
+    # Standard Cobb-Douglas: Y = A * K^alpha * (hL)^(1-alpha)
+    # => ln(Y/L) = ln(A) + alpha*ln(K/L) + (1-alpha)*ln(h)
+    alpha = 1.0 / 3.0
+    ln_A = 5.5  # average log TFP calibrated to PWT units (millions 2017 USD / millions persons)
+    
+    return ln_A + alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+    
+    # Standard Cobb-Douglas production function with human capital (e.g., Hall & Jones 1999, Mankiw-Romer-Weil 1992)
+    # Y/L = A * (K/L)^alpha * h^(1-alpha)
+    # ln(Y/L) = ln(A) + alpha * ln(K/L) + (1-alpha) * ln(h)
+    
+    alpha = 1.0 / 3.0  # Standard capital share of income
+    ln_A = 0.0         # Log TFP (normalized to 0 as a baseline constant without empirical fitting)
+    
+    ln_Y_L = ln_A + alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)
+    
+    return ln_Y_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    K = X[:, 0]
+    L = X[:, 1]
+    h = X[:, 2]
+    
+    # Standard Cobb-Douglas production function in per-worker terms:
+    # Y/L = A * (K/L)^alpha * h^(1-alpha)
+    # Using the canonical capital share alpha = 1/3 and assuming A=1 (ln(A)=0) 
+    # for the theoretical closed-form relationship.
+    alpha = 1.0 / 3.0
+    
+    ln_Y_L = alpha * np.log(K / L) + (1.0 - alpha) * np.log(h)
+    
+    return ln_Y_L

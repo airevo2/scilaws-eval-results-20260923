@@ -1,0 +1,47 @@
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    exponent = 2.0  # Bill James' Pythagorean expectation
+    return R**exponent / (R**exponent + RA**exponent)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    # Bill James Pythagorean expectation with exponent 2
+    return R**2 / (R**2 + RA**2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    exponent = 2.0  # Pythagorean expectation exponent (Bill James)
+    return R**exponent / (R**exponent + RA**exponent)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    exponent = 2.0  # Bill James Pythagorean expectation
+    return R**exponent / (R**exponent + RA**exponent)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    exp = 2.0  # Pythagorean exponent (Bill James canonical value)
+    return R**exp / (R**exp + RA**exp)

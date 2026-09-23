@@ -1,0 +1,139 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) of a 
+    pre-main-sequence T Tauri star using the empirical relationship with 
+    stellar bolometric luminosity (log(L_star/L_sun)) from Alcalá et al. (2017).
+    
+    Inputs:
+    - X[:, 0] = logL_star (log10(L_star/L_sun))
+    - X[:, 1] = M_star_B98 (M_sun)
+    - X[:, 2] = R_star (R_sun)
+    - X[:, 3] = Teff_K (K)
+    
+    Outputs:
+    - logL_acc (log10(L_acc/L_sun))
+    """
+    logL_star = X[:, 0]
+    
+    # Empirical relation from Alcalá et al. (2017) for T Tauri stars in Lupus
+    # log(L_acc/L_sun) = 1.13 * log(L_star/L_sun) - 1.57
+    logL_acc = 1.13 * logL_star - 1.57
+    
+    return logL_acc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) of a
+    pre-main-sequence T Tauri star using the standard empirical relationship
+    with stellar bolometric luminosity.
+
+    Parameters:
+    X : np.ndarray
+        2-D array of shape (N, 4) where:
+        - X[:, 0] = logL_star (log10(L_star/L_sun))
+        - X[:, 1] = M_star_B98 (M_sun)
+        - X[:, 2] = R_star (R_sun)
+        - X[:, 3] = Teff_K (K)
+
+    Returns:
+    np.ndarray
+        1-D array of log10(L_acc/L_sun)
+    """
+    # Extract log(L_star/L_sun)
+    logL_star = X[:, 0]
+
+    # Empirical relation from X-shooter surveys of T Tauri stars (e.g., Alcalá et al. 2017)
+    # log(L_acc/L_sun) = a * log(L_star/L_sun) + b
+    a = 1.13
+    b = -1.43
+
+    logL_acc = a * logL_star + b
+
+    return logL_acc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) of a
+
+    pre-main-sequence T Tauri star using the standard empirical scaling
+    relation with stellar bolometric luminosity (Alcalá et al. 2017).
+
+    Inputs:
+    - X[:, 0] = logL_star (log10(L_star/L_sun))
+    - X[:, 1] = M_star_B98 (M_sun)
+    - X[:, 2] = R_star (R_sun)
+    - X[:, 3] = Teff_K (K)
+    """
+    logL_star = X[:, 0]
+
+    # Empirical relationship from Alcalá et al. (2017) for T Tauri stars
+    # derived using X-shooter spectra and BT-Settl SED templates:
+    # log(L_acc/L_sun) = 1.12 * log(L_star/L_sun) - 1.52
+    logL_acc = 1.12 * logL_star - 1.52
+
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) of a 
+    pre-main-sequence T Tauri star using the empirical relationship with 
+    stellar bolometric luminosity (log(L_star/L_sun)) derived from X-shooter surveys.
+    
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = logL_star (log10(L_star/L_sun))
+        - X[:, 1] = M_star_B98 (M_sun)
+        - X[:, 2] = R_star (R_sun)
+        - X[:, 3] = Teff_K (K)
+        
+    Returns:
+    - 1-D numpy array of log10(L_acc/L_sun)
+    """
+    logL_star = X[:, 0]
+    
+    # Using the canonical empirical relation from Alcalá et al. (2017) 
+    # for T Tauri stars observed with X-shooter:
+    # log(L_acc/L_sun) = 1.13 * log(L_star/L_sun) - 1.57
+    logL_acc = 1.13 * logL_star - 1.57
+    
+    return logL_acc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) of a
+
+    pre-main-sequence T Tauri star using the empirical relationship from
+    Alcalá et al. (2017) derived from X-shooter spectra.
+
+    Inputs:
+    - X[:, 0] = logL_star (log10(L_star/L_sun))
+    - X[:, 1] = M_star (M_sun)
+    - X[:, 2] = R_star (R_sun)
+    - X[:, 3] = Teff_K (K)
+    """
+    logL_star = X[:, 0]
+
+    # Empirical relationship from Alcalá et al. (2017) for T Tauri stars:
+    # log(L_acc / L_sun) = 1.13 * log(L_star / L_sun) - 1.58
+    logL_acc = 1.13 * logL_star - 1.58
+
+    return logL_acc

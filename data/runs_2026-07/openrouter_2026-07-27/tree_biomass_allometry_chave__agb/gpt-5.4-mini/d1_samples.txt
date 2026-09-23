@@ -1,0 +1,59 @@
+import numpy as np
+
+def predict(X):
+    rho = X[:, 0]   # wood density (g/cm^3)
+    D = X[:, 1]     # diameter at breast height (cm)
+    H = X[:, 2]     # total tree height (m)
+    
+    # Chave et al. (2014) moist forest allometric equation for individual-tree AGB (kg)
+    return 0.0673 * (rho * (D ** 2) * H) ** 0.976
+
+=====
+
+import numpy as np
+
+def predict(X):
+    rho = X[:, 0]   # wood density, g/cm^3
+    D = X[:, 1]     # diameter at breast height, cm
+    H = X[:, 2]     # total height, m
+
+    # Chave et al. (2014) pantropical allometric equation for moist forests
+    agb = 0.0673 * (rho * (D ** 2) * H) ** 0.976
+    return agb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    rho = X[:, 0]  # wood density [g/cm^3]
+    D = X[:, 1]    # diameter at breast height [cm]
+    H = X[:, 2]    # total height [m]
+    
+    # Chave et al. (2014) pan-tropical allometric equation for moist/dry forests:
+    # AGB (kg) = 0.0673 * (rho * D^2 * H)^0.976
+    return 0.0673 * (rho * (D ** 2) * H) ** 0.976
+
+=====
+
+import numpy as np
+
+def predict(X):
+    rho = X[:, 0]   # wood density (g/cm^3)
+    D = X[:, 1]     # diameter at breast height (cm)
+    H = X[:, 2]     # tree height (m)
+    
+    # Chave et al. (2014) moist/tropical allometric equation for individual tree AGB (kg)
+    return 0.0673 * (rho * (D ** 2) * H) ** 0.976
+
+=====
+
+import numpy as np
+
+def predict(X):
+    rho = X[:, 0]   # wood density (g/cm^3)
+    D = X[:, 1]     # diameter at breast height (cm)
+    H = X[:, 2]     # tree height (m)
+    
+    # Chave et al. (2014) moist tropical forest allometry
+    return 0.0673 * (rho * (D ** 2) * H) ** 0.976

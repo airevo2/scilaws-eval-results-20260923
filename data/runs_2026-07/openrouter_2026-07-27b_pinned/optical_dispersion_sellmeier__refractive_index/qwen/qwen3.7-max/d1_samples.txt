@@ -1,0 +1,120 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the real part of the refractive index n using the standard 
+    3-term Sellmeier equation. 
+    
+    Note: The specific material name was omitted in the prompt. The coefficients 
+    below correspond to Fused Silica (SiO2) as a canonical default for the 
+    near-UV to mid-IR range [0.4, 4.0] um. If a different specific crystal 
+    from Bond (1965) was intended, its specific Sellmeier coefficients should 
+    replace the ones below.
+    """
+    lam = X[:, 0]
+    
+    # Sellmeier coefficients (Fused Silica - Malitson 1965 as canonical fallback)
+    B1, C1 = 0.6961663, 0.0684043**2
+    B2, C2 = 0.4079426, 0.1162414**2
+    B3, C3 = 0.8974794, 9.896161**2
+    
+    # Sellmeier equation: n^2 = 1 + sum(B_i * lambda^2 / (lambda^2 - C_i))
+    n_sq = 1.0 + (B1 * lam**2) / (lam**2 - C1) + \
+                 (B2 * lam**2) / (lam**2 - C2) + \
+                 (B3 * lam**2) / (lam**2 - C3)
+                 
+    return np.sqrt(n_sq)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the real part of the refractive index (n) using the standard 
+    3-term Sellmeier equation. Coefficients provided are for Sapphire (Al2O3, 
+    ordinary ray) as a canonical single-crystal example from the era of 
+    Bond (1965) and related precision goniometer measurements.
+    """
+    lam = X[:, 0]  # Vacuum wavelength in micrometers
+    
+    # Sellmeier coefficients (B_i, C_i)
+    # n^2(lambda) = 1 + sum(B_i * lambda^2 / (lambda^2 - C_i))
+    B1, C1 = 1.4313493, 0.0052799
+    B2, C2 = 0.65054713, 0.014238
+    B3, C3 = 5.3414021, 325.017
+    
+    lam_sq = lam**2
+    n_sq = 1.0 + (B1 * lam_sq) / (lam_sq - C1) + \
+                 (B2 * lam_sq) / (lam_sq - C2) + \
+                 (B3 * lam_sq) / (lam_sq - C3)
+                 
+    return np.sqrt(n_sq)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the real part of the refractive index (n) as a function of 
+    vacuum wavelength using the standard 3-term Sellmeier equation.
+    
+    The coefficients below correspond to the widely cited Sellmeier fit 
+    for Silicon (Li 1980), which is based on precision minimum-deviation 
+    goniometer measurements on single-crystal prisms (e.g., Bond 1965).
+    """
+    lam = X[:, 0]  # Wavelength in micrometers
+    
+    # Sellmeier coefficients
+    B1 = 10.6684293
+    C1 = 0.301516485**2  # ~0.090912
+    
+    B2 = 0.003043475
+    C2 = 1.13475115**2   # ~1.287490
+    
+    B3 = 1.54133408
+    C3 = 1104.0**2       # 1218816.0
+    
+    # 3-term Sellmeier equation
+    n_sq = 1.0 + (B1 * lam**2) / (lam**2 - C1) \
+               + (B2 * lam**2) / (lam**2 - C2) \
+               + (B3 * lam**2) / (lam**2 - C3)
+               
+    return np.sqrt(n_sq)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]
+    
+    # Standard 3-term Sellmeier equation for refractive index
+    # Coefficients are represented as named constants since the specific 
+    # crystal material (e.g., Si, Ge, GaAs from Bond 1965) is implicit.
+    B1, C1 = 1.0, 0.01
+    B2, C2 = 1.0, 0.1
+    B3, C3 = 1.0, 10.0
+    
+    n_sq = 1.0 + (B1 * lam**2) / (lam**2 - C1) + \
+                 (B2 * lam**2) / (lam**2 - C2) + \
+                 (B3 * lam**2) / (lam**2 - C3)
+                 
+    return np.sqrt(n_sq)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]
+    lam2 = lam ** 2
+    # Modified Sellmeier equation for LiNbO3 (ordinary), Bond 1965
+    # n^2 = A + B / (lambda^2 - C^2) - D * lambda^2
+    A = 4.9130
+    B = 0.1173
+    C = 0.212
+    D = 0.0278
+    n2 = A + B / (lam2 - C**2) - D * lam2
+    return np.sqrt(n2)

@@ -1,0 +1,35 @@
+{
+  "task": "neo_size_frequency_distribution__N_cum_H",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "constant_count",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "dohnanyi_exponential_sfd",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "free_exponential_sfd",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    }
+  ]
+}

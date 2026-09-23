@@ -1,0 +1,35 @@
+{
+  "task": "traffic_flow_density_ngsim__q_flow",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeI",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "daganzo_1995_ctm_triangular",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "greenshields_1935_parabolic",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "underwood_1961_exponential",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

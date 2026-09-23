@@ -1,0 +1,84 @@
+import numpy as np
+
+def predict(X):
+    # Mincer earnings equation (standard closed-form)
+    # ln(Y) = beta0 + beta1 * schooling + beta2 * experience + beta3 * experience^2
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    beta0 = 6.0     # intercept (log baseline wage)
+    beta1 = 0.10    # return to a year of schooling (~10%)
+    beta2 = 0.05    # return to experience (linear term)
+    beta3 = -0.0008 # concavity of experience profile
+    
+    log_wage = beta0 + beta1 * s + beta2 * x + beta3 * x**2
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mincer earnings equation (standard closed-form)
+    # ln Y = beta0 + rho * schooling + beta1 * experience + beta2 * experience^2
+    s = X[:, 0]
+    x = X[:, 1]
+
+    beta0 = 6.0     # intercept (log baseline wage)
+    rho   = 0.10    # return to a year of schooling (~10%)
+    beta1 = 0.05    # linear experience coefficient
+    beta2 = -0.0008 # quadratic experience coefficient (concave profile)
+
+    return beta0 + rho * s + beta1 * x + beta2 * x**2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mincer earnings equation (standard closed-form)
+    # ln(Y) = beta0 + beta1*schooling + beta2*experience + beta3*experience^2
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    beta0 = 6.20   # intercept (ln USD)
+    beta1 = 0.10   # return to a year of schooling (~10%)
+    beta2 = 0.05   # linear experience term
+    beta3 = -0.0008  # concave experience (diminishing returns)
+    
+    log_wage = beta0 + beta1 * s + beta2 * x + beta3 * x**2
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mincer earnings equation (standard closed-form)
+    # ln Y = beta0 + rho * s + beta1 * x + beta2 * x^2
+    s = X[:, 0]
+    x = X[:, 1]
+
+    beta0 = 5.30    # intercept (log base wage)
+    rho   = 0.10    # returns to schooling (~10% per year)
+    beta1 = 0.030   # linear experience term
+    beta2 = -0.0005 # quadratic experience term (concavity)
+
+    return beta0 + rho * s + beta1 * x + beta2 * x**2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mincer earnings equation (standard closed-form)
+    # ln Y = b0 + b1 * s + b2 * x + b3 * x^2
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    b0 = 5.5      # intercept (log baseline wage)
+    b1 = 0.10     # returns to a year of schooling (~10%)
+    b2 = 0.05     # linear experience term
+    b3 = -0.0008  # concave experience (diminishing returns)
+    
+    return b0 + b1 * s + b2 * x + b3 * x**2

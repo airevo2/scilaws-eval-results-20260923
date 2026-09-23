@@ -1,0 +1,110 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict prey eaten (Na) from prey density (N) using the Holling Type II
+    functional response (disc equation).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = prey density (N)
+
+    Returns
+    -------
+    Na : np.ndarray, shape (n_samples,)
+        Number of prey eaten during the trial.
+    """
+    # Coefficients (attack rate and handling time)
+    a = 0.1   # attack rate
+    Th = 0.05 # handling time (in units of trial duration)
+
+    N = X[:, 0]
+    Na = (a * N) / (1.0 + a * Th * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the number of prey eaten (N_a) using Holling's Type II functional response
+    (disc equation) with total trial time T = 1.
+    
+    Parameters:
+    X : 2-D numpy array, X[:, 0] = prey density (N)
+    
+    Returns:
+    1-D array of predicted prey eaten.
+    """
+    N = X[:, 0]
+    # Attack rate (per prey per unit time) and handling time (time units per prey)
+    ATTACK_RATE = 1.0      # a
+    HANDLING_TIME = 0.1    # h
+    # Holling's disc equation: N_a = (a * N) / (1 + a * h * N)
+    return (ATTACK_RATE * N) / (1.0 + ATTACK_RATE * HANDLING_TIME * N)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the number of prey eaten (N_a) from initial prey density (N)
+    using the Holling type II functional response (disc equation).
+    """
+    N = X[:, 0]
+    # Fitted coefficients (typical values; in practice derived from data)
+    a = 1.0   # attack rate (per prey per unit time)
+    h = 0.1   # handling time (time per prey)
+    return (a * N) / (1.0 + a * h * N)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts prey eaten (N_a) from initial prey density (N) using the
+    Holling Type II functional response (disc equation).
+    
+    Parameters:
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = prey_density (N) -- initial number of prey offered.
+    
+    Returns:
+    N_a : np.ndarray, shape (n_samples,)
+        Number of prey consumed during the trial.
+    """
+    N = X[:, 0]
+    # Holling Type II functional response parameters (canonical form)
+    a = 1.0    # attack rate (area/time or proportion)
+    h = 0.1    # handling time per prey item
+    N_a = (a * N) / (1.0 + a * h * N)
+    return N_a
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict prey eaten (Holling Type II functional response).
+    
+    Parameters:
+    X : 2D numpy array; X[:, 0] = prey density (N)
+    
+    Returns:
+    1D array of prey eaten (N_a)
+    """
+    N = X[:, 0]
+    
+    # Fitted coefficients (example values common in literature)
+    a = 0.1   # attack rate (per prey per unit time)
+    h = 0.1   # handling time (time units per prey)
+    # Total foraging time T is implicitly set to 1, giving:
+    # N_a = a * N / (1 + a * h * N)
+    
+    N_a = a * N / (1.0 + a * h * N)
+    return N_a

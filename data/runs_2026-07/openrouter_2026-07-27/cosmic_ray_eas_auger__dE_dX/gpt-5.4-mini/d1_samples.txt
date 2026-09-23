@@ -1,0 +1,124 @@
+import numpy as np
+
+def predict(X):
+    """
+    Gaisser-Hillas shower profile for the energy deposit per unit slant depth.
+
+    Parameters
+    ----------
+    X : numpy.ndarray
+        Shape (n, 1) with X[:, 0] = slant depth [g/cm^2].
+
+    Returns
+    -------
+    numpy.ndarray
+        dE/dX profile values (arbitrary normalization if parameters are unknown).
+    """
+    x = np.asarray(X)[:, 0]
+
+    # Canonical Gaisser-Hillas form:
+    # dE/dX = (dE/dX)_max * ((X - X0)/(Xmax - X0))^((Xmax - X0)/lambda)
+    #         * exp((Xmax - X)/lambda)
+    #
+    # Since no event-specific fit parameters are provided, we return the
+    # standard functional form with unit normalization and nominal shape
+    # parameters. This is the commonly cited closed-form parameterization.
+    X0 = 0.0
+    Xmax = 700.0
+    lam = 70.0
+    norm = 1.0
+
+    y = np.zeros_like(x, dtype=float)
+    valid = x > X0
+    t = (x[valid] - X0) / (Xmax - X0)
+    y[valid] = norm * np.power(t, (Xmax - X0) / lam) * np.exp((Xmax - x[valid]) / lam)
+    return y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = np.asarray(X)[:, 0]
+    # Most common canonical shower-profile form: Gaisser-Hillas-like parameterization
+    # for the longitudinal energy deposit profile.
+    N0 = 1.0
+    X0 = 0.0
+    Xmax = 750.0
+    lam = 70.0
+
+    u = (x - X0) / (Xmax - X0)
+    # Avoid invalid values outside the physical domain
+    y = np.zeros_like(x, dtype=float)
+    mask = u > 0
+    y[mask] = N0 * (u[mask] ** ((Xmax - X0) / lam)) * np.exp((Xmax - x[mask]) / lam)
+    return y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = np.asarray(X)[:, 0]
+    # Standard Gaisser-Hillas functional form for the longitudinal energy deposit profile
+    # Parameters are left as placeholders because no event-specific fit coefficients are provided.
+    # Common canonical form:
+    # dE/dX = Nmax * ((x - X0) / (Xmax - X0))**((Xmax - X0)/lambda) * exp((Xmax - x)/lambda)
+    X0 = 0.0
+    Xmax = 750.0
+    lam = 70.0
+    Nmax = 1.0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        y = Nmax * ((x - X0) / (Xmax - X0)) ** ((Xmax - X0) / lam) * np.exp((Xmax - x) / lam)
+    return y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = np.asarray(X)[:, 0]
+    # Standard shower-profile parameterization: Gaisser-Hillas
+    # dE/dX as a function of slant depth X.
+    # Parameters are not data-derived here, so this returns the canonical closed form
+    # with symbolic-style defaults left as a general expression shape.
+    X0 = 0.0
+    Xmax = 700.0
+    lambda_ = 70.0
+    Nmax = 1.0
+
+    # Avoid singular behavior at X <= X0 by enforcing the physical domain.
+    z = np.maximum(x - X0, 1e-12)
+    a = (Xmax - X0) / lambda_
+    return Nmax * np.power(z / (Xmax - X0), a) * np.exp((Xmax - x) / lambda_)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    x = X[:, 0]
+
+    # Standard Gaisser-Hillas profile for the longitudinal energy deposit profile
+    # (commonly used closed-form representation of dE/dX vs. slant depth)
+    #
+    # dE/dX = (dE/dX)_max * [ (X - X0) / (Xmax - X0) ]^((Xmax - X0)/lambda)
+    #          * exp((Xmax - X)/lambda)
+    #
+    # Since the true fit parameters are event-dependent and not provided here,
+    # this function returns the canonical functional form with symbolic-like
+    # placeholder parameter values set to unity-scale defaults.
+    X0 = 0.0
+    Xmax = 1.0
+    lam = 1.0
+    dEdX_max = 1.0
+
+    profile = np.zeros_like(x, dtype=float)
+    mask = x > X0
+    profile[mask] = (
+        dEdX_max
+        * ((x[mask] - X0) / (Xmax - X0)) ** ((Xmax - X0) / lam)
+        * np.exp((Xmax - x[mask]) / lam)
+    )
+    return profile

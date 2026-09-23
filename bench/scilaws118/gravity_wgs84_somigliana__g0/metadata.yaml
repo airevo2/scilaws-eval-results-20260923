@@ -1,0 +1,117 @@
+task_id: gravity_wgs84_somigliana__g0
+domain: earth_science / geodesy
+license: Public Domain
+
+# Type I — each gravity station is an independent row; no cluster structure.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no column listing, no constants.
+context: >-
+  In geodesy, normal gravity is the theoretical surface gravitational acceleration referenced to the WGS84 ellipsoid, a standard mathematical model of the Earth's figure.
+
+target:
+  name: g0
+  symbol: "γ"
+  unit: m/s^2
+  description: Normal gravity at the WGS84 reference ellipsoid surface — observed gravity reduced to sea level via free-air correction.
+  range: [9.785, 9.840]
+
+inputs:
+  - name: latitude
+    symbol: "φ"
+    unit: degrees
+    description: Geodetic latitude of the gravity station, positive north.
+    range: [20.0, 80.0]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv   # stations with latitude < 60 N (mid-latitude regime)
+  test:  data/test.csv    # stations with latitude >= 60 N (sub-arctic OOD)
+
+n_train: 10635
+n_test:  4337
+
+# OOD split note (audit-only): latitude cutoff at 60.0 degrees N separates
+# the well-sampled mid-latitude US continental / Hawaii stations (train) from
+# the high-latitude Alaska sub-arctic / arctic stations (test). The test
+# regime exercises the high-sin^2(phi) end of the Somigliana formula, which
+# the reference baseline covers by construction but SR systems may not recover
+# without adequate training coverage of the polar gradient.
+
+# FM C12 fix 2026-05-26: removed gamma_e=9.7803253359 (leaked to nima_2000.py::LAW_CONSTANTS['gamma_e']),
+# k_gravity=0.00193185265241 (leaked to nima_2000.py::LAW_CONSTANTS['k']), and
+# e2_eccentricity=0.00669437999014 (leaked to nima_2000.py::LAW_CONSTANTS['e2']).
+# All three are WGS84 derived tabulated constants (Table 3.3-3.4, NIMA TR8350.2 PDF p. 40)
+# and are exactly the formula's LAW_CONSTANTS; no simpler upstream physical constant
+# (CODATA/BIPM) maps to any of the three. Strategy B (remove) per FM C12 §6.2.
+# Added new candidates from the WGS84 defining-parameter level (upstream of the leaked values).
+# Candidate prior constants — the `priors` prompt slot.
+# Distractors are additional WGS84 constants that appear in the same tables
+# but are NOT consumed by Eq. (4-1).
+priors:
+  - name: g_standard
+    value: 9.80665
+    unit: m/s^2
+    description: Standard acceleration of gravity (conventional standard adopted by BIPM/CGPM). Represents the average global sea-level gravity; numerically distinct from gamma_e (equatorial normal gravity 9.7803... m/s^2) and gamma_p (polar normal gravity 9.8322... m/s^2). Not consumed by the Somigliana formula directly.
+    source: BIPM / CGPM Resolution (1901); NIST Reference on Constants, CODATA 2018 (physics.nist.gov/cuu/Constants/); numerical value defined exactly as 9.80665 m/s^2.
+    _role: candidate
+  - name: omega_earth_WGS84
+    value: 7.292115e-5
+    unit: rad/s
+    description: Angular velocity of the Earth's rotation, one of the four WGS84 defining parameters. Used to derive gamma_e, k, and the Somigliana constants from first principles, but does not appear explicitly in the closed Somigliana Eq. (4-1) form.
+    source: NIMA TR8350.2, Table 3.1 "WGS 84 Defining Parameters", PDF p. 34 (value 7.292115 × 10^-5 rad/s).
+    _role: candidate
+  - name: a_WGS84
+    value: 6378137.0
+    unit: m
+    description: Semi-major axis of the WGS84 reference ellipsoid — the equatorial radius. One of the four WGS84 defining parameters; does not appear explicitly in the closed Somigliana Eq. (4-1) but is used to derive e2 and gamma_e.
+    source: NIMA TR8350.2, Table 3.1 "WGS 84 Defining Parameters", PDF p. 34.
+    _role: candidate
+  - name: gamma_p
+    value: 9.8321849378
+    unit: m/s^2
+    description: Theoretical normal gravity at the WGS84 poles on the ellipsoid surface. Not directly in Eq. (4-1); used to derive k = b*gamma_p/(a*gamma_e) - 1.
+    source: NIMA TR8350.2, Table 3.4, PDF p. 40. Not in the closed Somigliana Eq. (4-1).
+    _role: distractor
+  - name: m_somigliana
+    value: 0.00344978650684
+    unit: dimensionless
+    description: WGS84 constant m = omega^2 * a^2 * b / GM, appearing in geodetic derivations. Not in the closed Somigliana Eq. (4-1).
+    source: NIMA TR8350.2, Table 3.4, PDF p. 40. Not in the closed Somigliana Eq. (4-1).
+    _role: distractor
+
+# Reference-baseline bank
+references:
+  - id: nima_2000
+    label: NIMA TR8350.2 (2000) — WGS84 Somigliana normal-gravity formula (Eq. 4-1)
+    formula_file: formulas/nima_2000.py
+    reference_pdf: reference/nima_2000.pdf
+    n_law_constants:   3    # gamma_e, k, e2
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.000473
+      r2: 0.9718
+
+caps:
+  max_law_constants:        3
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes the latitude-dependent gravitational effect of Earth’s oblate ellipsoidal shape"
+  - "includes the reduction of effective gravity by Earth’s rotation"
+  - "predicted g0 remains positive for all valid latitudes"
+  - "predicted g0 is symmetric for northern and southern latitudes of equal magnitude"
+  - "predicted g0 increases monotonically with absolute latitude from the equator to the poles"
+  - "predicted g0 is smooth over valid geodetic latitudes"
+
+best_baseline: 0.000472647    # nima_2000 — rmse; regenerated after de-dup (no within-file duplicate rows / no leak)

@@ -1,0 +1,26 @@
+{
+  "task": "materials_project_elastic_birch_murnaghan__K_VRH",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "anderson_nafe_1965",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "cohen_1985",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

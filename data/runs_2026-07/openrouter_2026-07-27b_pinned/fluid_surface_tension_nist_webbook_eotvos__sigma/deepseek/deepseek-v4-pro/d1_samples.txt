@@ -1,0 +1,147 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts liquid surface tension along the saturation curve using the Eötvös rule:
+    sigma * V_m^(2/3) = k_E * (T_c - T)
+    where V_m = M_mol / rho_liq is the molar volume.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 4)
+        X[:, 0] : T_K [K]       - Temperature
+        X[:, 1] : rho_liq [kg/m³] - Liquid density
+        X[:, 2] : T_c [K]        - Critical temperature
+        X[:, 3] : M_mol [kg/mol] - Molar mass
+    
+    Returns
+    -------
+    sigma : np.ndarray, shape (n_samples,)
+        Surface tension [N/m]
+    """
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+    
+    # Eötvös constant (approximate universal value in SI units: J/(K mol^(2/3)))
+    k_E = 2.1e-7
+    
+    # Molar volume [m³/mol]
+    V_m = M_mol / rho_liq
+    
+    # Eötvös rule: sigma = k_E * (T_c - T) / V_m^(2/3)
+    sigma = k_E * (T_c - T) / (V_m ** (2.0 / 3.0))
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict liquid surface tension sigma [N/m] using the Eötvös law:
+        sigma * V_m^(2/3) = k * (T_c - T)
+    where V_m = M_mol / rho_liq is the molar volume.
+    The constant k is taken as 2.12e-7 J/(K mol^(2/3)), a typical value
+    for non-associated liquids.
+    """
+    T = X[:, 0]                # Temperature [K]
+    rho_liq = X[:, 1]          # Liquid density [kg/m^3]
+    T_c = X[:, 2]              # Critical temperature [K]
+    M_mol = X[:, 3]            # Molar mass [kg/mol]
+
+    k = 2.12e-7                # Eötvös constant [J/(K mol^(2/3))]
+    V_m = M_mol / rho_liq      # Molar volume [m^3/mol]
+    sigma = k * (T_c - T) / (V_m ** (2.0 / 3.0))
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict liquid surface tension (sigma) in N/m along the saturation curve
+    using the Eötvös equation.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 4)
+        Columns: T_K, rho_liq, T_c, M_mol
+
+    Returns
+    -------
+    sigma : np.ndarray, shape (n,)
+        Surface tension in N/m.
+    """
+    T = X[:, 0]          # K
+    rho_liq = X[:, 1]    # kg/m³
+    T_c = X[:, 2]        # K
+    M_mol = X[:, 3]      # kg/mol
+
+    # Molar volume [m³/mol]
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant (J/(K·mol^(2/3)))
+    k = 2.12e-7
+
+    sigma = k * (T_c - T) / (V_m ** (2.0 / 3.0))
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict surface tension sigma [N/m] using the Eötvös law:
+        sigma = k * (T_c - T) / V_m^(2/3)
+    where V_m = M_mol / rho_liq is the molar volume in m³/mol,
+    and k is the Eötvös constant.
+    """
+    # Unpack inputs
+    T = X[:, 0]          # Temperature in K
+    rho_liq = X[:, 1]    # Liquid density in kg/m³
+    T_c = X[:, 2]        # Critical temperature in K
+    M_mol = X[:, 3]      # Molar mass in kg/mol
+
+    # Eötvös constant in J/(K·mol^(2/3))
+    K_EOTVOS = 2.1e-7
+
+    # Molar volume in m³/mol
+    V_m = M_mol / rho_liq
+
+    # Surface tension in N/m
+    sigma = K_EOTVOS * (T_c - T) / (V_m ** (2.0 / 3.0))
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict liquid surface tension sigma [N/m] along the saturation curve
+    using the Eötvös formula, valid for T <= 0.85 * T_c.
+
+    sigma = k * (T_c - T) / V_m^(2/3)
+
+    where V_m = M_mol / rho_liq is the molar volume [m^3/mol],
+    and k is the Eötvös constant ≈ 2.12e-7 J/(K mol^(2/3)).
+    """
+    T = X[:, 0]          # Temperature [K]
+    rho_liq = X[:, 1]    # Liquid density [kg/m^3]
+    T_c = X[:, 2]        # Critical temperature [K]
+    M = X[:, 3]          # Molar mass [kg/mol]
+
+    # Molar volume [m^3/mol]
+    V_m = M / rho_liq
+
+    # Eötvös constant [J/(K mol^(2/3))]
+    k_eotvos = 2.12e-7
+
+    # Surface tension [N/m]
+    sigma = k_eotvos * (T_c - T) / (V_m ** (2.0 / 3.0))
+    return sigma

@@ -1,0 +1,62 @@
+import numpy as np
+
+def predict(X):
+    k = np.asarray(X)[:, 0].astype(float)
+
+    # Common empirical capacity-fade form:
+    # Q(k) = Q0 - a * k^b
+    Q0 = 1.0
+    a = 0.0
+    b = 1.0
+
+    return Q0 - a * np.power(k, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = np.asarray(X)[:, 0].astype(float)
+    # Common empirical capacity-fade form: capacity decreases approximately with sqrt(cycle count)
+    # Q(k) = Q0 - a * sqrt(k - 1)
+    Q0 = 1.0
+    a = 0.0
+    Q = Q0 - a * np.sqrt(np.maximum(k - 1.0, 0.0))
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = np.asarray(X)[:, 0].astype(float)
+    # Empirical capacity fade: linear-in-cycle form
+    # Q(k) = Q0 - a * k
+    Q0 = 1.0
+    a = 0.0
+    return Q0 - a * k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0].astype(float)
+    # Common empirical cycle-capacity fade form: linear decline with cycle count
+    # Q(k) = Q0 - a * k
+    Q0 = 1.0
+    a = 0.0
+    return Q0 - a * k
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0].astype(float)
+    # Common empirical form for capacity fade with cycle number:
+    # Q(k) = Q0 - a * k^b
+    Q0 = 1.0
+    a = 0.0
+    b = 1.0
+    return Q0 - a * np.power(k, b)

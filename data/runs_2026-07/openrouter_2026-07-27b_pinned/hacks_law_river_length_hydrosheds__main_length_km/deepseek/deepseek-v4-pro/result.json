@@ -1,0 +1,26 @@
+{
+  "task": "hacks_law_river_length_hydrosheds__main_length_km",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "dodds_rothman_2000",
+      "d1_hits": 2,
+      "d1_rate": 0.4,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "hack_1957",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

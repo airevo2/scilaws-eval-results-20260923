@@ -1,0 +1,51 @@
+import numpy as np
+
+def predict(X):
+    # Standard mass-luminosity relation: L/L_sun = (M/M_sun)^alpha
+    # Canonical exponent alpha ~ 3.5 for main-sequence stars
+    log_M = X[:, 0]
+    alpha = 3.5
+    log_L = alpha * log_M
+    return log_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mass-luminosity relation: L/Lsun ~ (M/Msun)^alpha, alpha ~ 3.5
+    # log L = alpha * log M
+    log_M = X[:, 0]
+    alpha = 3.5
+    return alpha * log_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mass-luminosity relation: L/Lsun ~ (M/Msun)^3.5
+    # log10(L/Lsun) = 3.5 * log10(M/Msun)
+    log_M = X[:, 0]
+    return 3.5 * log_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard mass-luminosity relation: L/Lsun = M/Msun ^ 3.5
+    # log L = 3.5 * log M
+    log_M = X[:, 0]
+    return 3.5 * log_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mass-luminosity relation: L/Lsun ~ (M/Msun)^alpha, alpha ~ 3.5
+    log_M = X[:, 0]
+    alpha = 3.5
+    log_L = alpha * log_M
+    return log_L

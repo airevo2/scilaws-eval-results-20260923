@@ -1,0 +1,83 @@
+import numpy as np
+
+def predict(X):
+    # Holling Type II functional response (disk equation)
+    N = X[:, 0]
+    a = 0.5   # attack rate
+    h = 0.2   # handling time
+    T = 1.0   # total experimental trial time
+    
+    Na = (a * T * N) / (1.0 + a * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Holling's Type II functional response (disc equation)
+    a = 0.5  # attack rate (instantaneous rate of discovery)
+    h = 0.1  # handling time per prey
+    T = 1.0  # total experimental trial time (normalized)
+    
+    Na = (a * N * T) / (1.0 + a * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Holling's Type II functional response (disc equation)
+    a = 0.5  # attack rate (instantaneous rate of discovery)
+    h = 0.1  # handling time per prey
+    T = 1.0  # total time available for predation (trial duration)
+    
+    Na = (a * N * T) / (1.0 + a * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Fitted coefficients (example values for a standard Holling Type II functional response)
+    a = 0.5  # attack rate (per unit time)
+    h = 0.1  # handling time (per prey)
+    T = 1.0  # total experimental time duration
+    
+    # Holling's disc equation (Type II functional response)
+    Na = (a * N * T) / (1.0 + a * h * N)
+    
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the number of prey eaten (N_a) using Holling's Type II 
+    functional response (the disc equation).
+    
+    N_a = (a * N * T) / (1 + a * h * N)
+    
+    where:
+    N   = initial prey density (X[:, 0])
+    a   = attack rate (instantaneous rate of discovery)
+    h   = handling time per prey
+    T   = total experimental time
+    """
+    N = X[:, 0]
+    
+    # Fitted coefficients (example constants)
+    a = 0.5   # attack rate
+    h = 0.1   # handling time
+    T = 1.0   # total time available for predation
+    
+    Na = (a * N * T) / (1.0 + a * h * N)
+    
+    return Na

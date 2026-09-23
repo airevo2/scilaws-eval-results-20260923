@@ -1,0 +1,131 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract DBH (cm) from the first column of the input array
+    D = X[:, 0]
+
+    # Using the canonical Feldpausch et al. (2011) pantropical Weibull H-D model:
+    # H = a * (1 - exp(-b * D^c))
+    # where:
+    # a (asymptotic maximum height) = 55.4
+    # b = 0.059
+    # c = 0.744
+    a = 55.4
+    b = 0.059
+    c = 0.744
+
+    H = a * (1.0 - np.exp(-b * (D**c)))
+    return H
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts total tree height (H, in meters) from diameter at breast height (D, in cm)
+
+    using the canonical pantropical Weibull height-diameter model (Feldpausch et al., 2012).
+
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] represents DBH in cm.
+
+    Returns:
+    np.ndarray
+        1-D array of predicted tree heights in meters.
+    """
+    D = X[:, 0]
+
+    # Feldpausch et al. (2012) pantropical Weibull parameters
+    a = 58.18  # Asymptotic maximum height (m)
+    b = 0.0601  # Scaling parameter
+    c = 0.8237  # Shape parameter
+
+    H = a * (1.0 - np.exp(-b * (D**c)))
+    return H
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts total tree height (H, in meters) from DBH (D, in cm)
+
+    using the pantropical Weibull height-diameter model from Feldpausch et al. (2011).
+
+    Parameters:
+    X : ndarray of shape (N, M)
+        X[:, 0] contains the DBH in cm (D >= 5 cm).
+
+    Returns:
+    H : ndarray of shape (N,)
+        Predicted tree height in meters.
+    """
+    # Extract DBH (D) in cm
+    D = X[:, 0]
+
+    # Pantropical Weibull parameters from Feldpausch et al. (2011)
+    a = 58.11  # Asymptotic maximum height (m)
+    b = 0.0435  # Scale parameter
+    c = 0.9316  # Shape parameter
+
+    # Weibull H-D relationship
+    H = a * (1.0 - np.exp(-b * (D**c)))
+
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts total tree height (H) in meters from diameter at breast height (D) in cm
+    using the pantropical Weibull height-diameter model from Feldpausch et al. (2011).
+    
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is DBH_cm (D) [cm]
+    
+    Returns:
+    - 1-D numpy array of height_m (H) [m]
+    """
+    D = X[:, 0]
+    
+    # Pantropical Weibull parameters from Feldpausch et al. (2011)
+    a = 55.39   # Asymptotic maximum height (m)
+    b = 0.0515  # Scale parameter
+    c = 0.7313  # Shape parameter
+    
+    H = a * (1.0 - np.exp(-b * (D ** c)))
+    return H
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts total tree height (H, in meters) from DBH (D, in cm)
+
+    using the canonical pantropical Weibull height-diameter relationship
+    from Feldpausch et al. (2012).
+
+    Parameters:
+    - X: 2D numpy array where X[:, 0] represents DBH in cm.
+
+    Returns:
+    - 1D numpy array of predicted tree heights in meters.
+    """
+    D = X[:, 0]
+
+    # Pantropical Weibull parameters from Feldpausch et al. (2012)
+    a = 51.52  # Asymptotic maximum height (m)
+    b = 0.0463  # Scaling parameter
+    c = 0.812  # Shape parameter
+
+    H = a * (1.0 - np.exp(-b * (D**c)))
+
+    return H

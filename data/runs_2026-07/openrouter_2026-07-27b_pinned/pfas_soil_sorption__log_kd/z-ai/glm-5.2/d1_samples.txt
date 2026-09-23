@@ -1,0 +1,189 @@
+def predict(X):
+    import numpy as np
+
+    # Unpack inputs
+    MW      = X[:, 0]
+    pKa1    = X[:, 1]
+    C_num   = X[:, 2]
+    F_num   = X[:, 3]
+    F_pct   = X[:, 4]
+    log_S   = X[:, 5]
+    log_Kow = X[:, 6]
+    pH      = X[:, 7]
+    CEC     = X[:, 8]
+    Sand    = X[:, 9]
+    Silt    = X[:, 10]
+    Clay    = X[:, 11]
+    Corg    = X[:, 12]
+    foc     = X[:, 13]
+
+    # --- Speciation (Henderson–Hasselbalch for acidic PFAS) ---
+    # HA  <=>  H+ + A- ;  f_neutral = fraction protonated
+    f_neutral = 1.0 / (1.0 + 10.0**(pH - pKa1))
+    f_anionic = 1.0 - f_neutral
+
+    # --- Organic-carbon partition coefficient (Koc) ---
+    # Neutral PFAS: strong hydrophobic partitioning, tracks log Kow
+    log_Koc_neutral = 0.85 * log_Kow + 0.20
+
+    # Anionic PFAS: weaker sorption, driven by perfluoroalkyl chain length
+    # (~0.5 log units per CF2 group) with residual hydrophobicity term
+    log_Koc_anionic = 0.50 * C_num + 0.15 * log_Kow - 1.20
+
+    # Effective Koc accounting for speciation
+    Koc_eff = f_neutral * 10.0**log_Koc_neutral + f_anionic * 10.0**log_Koc_anionic
+    log_Koc_eff = np.log10(Koc_eff)
+
+    # --- Kd = Koc * foc  (organic-carbon partitioning model) ---
+    log_Kd = log_Koc_eff + np.log10(foc)
+
+    # --- Electrostatic / surface-charge contributions ---
+    # Cation bridging and clay-edge sorption enhance anionic PFAS retention
+    log_Kd += 0.003 * CEC * f_anionic + 0.008 * Clay * f_anionic
+
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(Kd) for PFAS in soil using a standard two-site mechanistic model.
+    
+    The model partitions total sorption into:
+      1) Hydrophobic partitioning of the neutral species to organic carbon
+         (Kd_hydro = f_neutral * foc * Koc), where Koc is estimated from log Kow
+         and perfluoroalkyl chain length.
+      2) Electrostatic sorption of the anionic species to positively charged
+         soil surfaces, parameterized by CEC and clay content
+         (Kd_elec = f_ionic * (a*CEC + b*Clay)).
+    
+    Speciation is calculated for an acid (HA <-> H+ + A-) using the Henderson–
+    Hasselbalch relation with the supplied pKa1.
+    """
+    # Unpack input columns
+    MW, pKa1, C_num, F_num, F_pct, log_S, log_Kow, pH, CEC, Sand, Silt, Clay, Corg, foc = X.T
+
+    # Fraction of neutral (protonated) species for an acid
+    # f_neutral = 1 / (1 + 10^(pH - pKa1))
+    diff = pH - pKa1
+    # Stable computation to avoid overflow
+    f_neutral = 1.0 / (1.0 + np.power(10.0, diff))
+    f_ionic = 1.0 - f_neutral
+
+    # Hydrophobic contribution: organic-carbon normalized partition coefficient
+    # log Koc = a * log Kow + b * C_num + c   (typical LFER form for PFAS)
+    log_Koc = 0.60 * log_Kow + 0.10 * C_num - 0.50
+    Koc = np.power(10.0, log_Koc)
+    Kd_hydro = f_neutral * foc * Koc
+
+    # Electrostatic contribution for the anionic form
+    # Proportional to cation exchange capacity (proxy for reactive surfaces)
+    # and clay content (proxy for anion exchange / edge sites)
+    Kd_elec = f_ionic * (0.05 * CEC + 0.10 * Clay)
+
+    # Total distribution coefficient (L/kg)
+    Kd = Kd_hydro + Kd_elec
+
+    # Return log10(Kd), guarding against zero
+    log_Kd = np.log10(Kd + 1.0e-12)
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    # PFAS organic-carbon partitioning model:
+    # Kd = Koc * foc, with the commonly cited PFAS QSPR
+    # log10(Koc) = 0.49 * log10(Kow) + 0.44
+    log_Koc = 0.49 * log_Kow + 0.44
+    log_Kd = log_Koc + np.log10(np.maximum(foc, 1.0e-30))
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form PFAS sorption model.
+    
+    Based on the organic-carbon partitioning model (Kd = Koc * foc)
+    with a PFAS-specific LFER for Koc, a linear pH/ionization correction,
+    and an electrostatic sorption term for mineral surfaces.
+    """
+    # Extract relevant columns
+    pKa1   = X[:, 1]   # acid dissociation constant
+    log_Kow = X[:, 6]  # octanol-water partition coefficient
+    pH     = X[:, 7]   # soil solution pH
+    CEC    = X[:, 8]   # cation exchange capacity
+    Clay   = X[:, 11]  # clay mass fraction (%)
+    foc    = X[:, 13]  # fraction of organic carbon (dimensionless)
+
+    # PFAS-specific LFER for organic-carbon partition coefficient
+    # (commonly cited slope ~0.3, intercept ~1.2)
+    log_Koc = 0.31 * log_Kow + 1.2
+
+    # Organic carbon partitioning: log Kd = log Koc + log(foc)
+    log_kd = log_Koc + np.log10(foc)
+
+    # Linear ionization correction: anionic PFAS sorb less as pH rises above pKa
+    # (empirical linearization of the speciation effect)
+    log_kd -= 0.1 * (pH - pKa1)
+
+    # Electrostatic sorption to positively charged mineral sites
+    # (CEC and clay content as proxies for sorption capacity)
+    log_kd += 0.01 * CEC + 0.02 * Clay
+
+    return log_kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(Kd) for PFAS sorption to soil using the standard
+    organic-carbon partitioning model with speciation-dependent Koc.
+
+    Model:
+        Kd = foc * (Koc_neutral * f_neutral + Koc_ionic * f_ionic)
+        log10(Kd) = log10(foc) + log10(Koc_eff)
+
+    where:
+        log10(Koc_neutral) = 0.5 * C_num - 0.5   (commonly cited PFAS LFER)
+        log10(Koc_ionic)   = log10(Koc_neutral) - 1.0
+        f_neutral = 1 / (1 + 10^(pH - pKa1))
+        f_ionic   = 1 - f_neutral
+    """
+    # Extract relevant columns
+    pKa1   = X[:, 1]
+    C_num  = X[:, 2]
+    pH     = X[:, 7]
+    foc    = X[:, 13]
+
+    # Neutral-species Koc from perfluoroalkyl chain length (LFER)
+    log_Koc_neutral = 0.5 * C_num - 0.5
+
+    # Ionic species sorbs ~1 log unit less than the neutral form
+    delta = 1.0
+    log_Koc_ionic = log_Koc_neutral - delta
+
+    # Monoprotic acid speciation fractions
+    ratio = 10.0 ** (pH - pKa1)
+    f_neutral = 1.0 / (1.0 + ratio)
+    f_ionic   = ratio / (1.0 + ratio)
+
+    # Effective Koc as weighted geometric mean of species-specific Koc
+    Koc_eff = 10.0**log_Koc_neutral * f_neutral + 10.0**log_Koc_ionic * f_ionic
+    log_Koc_eff = np.log10(Koc_eff)
+
+    # Solid-liquid distribution coefficient
+    log_kd = log_Koc_eff + np.log10(foc)
+
+    return log_kd

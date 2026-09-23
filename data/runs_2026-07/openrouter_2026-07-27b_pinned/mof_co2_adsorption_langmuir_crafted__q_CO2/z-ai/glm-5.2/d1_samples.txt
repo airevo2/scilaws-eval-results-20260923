@@ -1,0 +1,100 @@
+import numpy as np
+
+def predict(X):
+    """
+    Langmuir isotherm for CO2 adsorption in MOFs.
+    
+    q = q_max * (K * P) / (1 + K * P)
+    
+    where:
+        q_max [mmol/g] — saturation adsorption capacity
+        K    [1/bar]  — Langmuir affinity constant
+        P    [bar]    — equilibrium partial pressure
+    """
+    P = X[:, 0]
+    
+    # Representative fitted coefficients for CO2/MOF (GCMC, DDEC, UFF)
+    q_max = 3.0   # mmol/g
+    K = 1.0       # 1/bar
+    
+    q = q_max * (K * P) / (1.0 + K * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    # Langmuir isotherm parameters (typical values for MOFs)
+    q_max = 5.0  # maximum adsorption capacity [mmol/g]
+    b = 0.5      # Langmuir affinity constant [1/bar]
+    
+    # Langmuir equation: q = q_max * (b * P) / (1 + b * P)
+    q = q_max * (b * P) / (1.0 + b * P)
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the equilibrium CO2 adsorbed amount per gram of MOF (q) 
+    using the Langmuir isotherm model.
+    
+    q = q_max * b * P / (1 + b * P)
+    
+    Inputs:
+    X[:, 0] = P_bar (P) [bar] — CO2 equilibrium partial pressure.
+    
+    Returns:
+    q [mmol/g] — 1-D array of predicted equilibrium CO2 adsorbed amount.
+    """
+    P = X[:, 0]
+    
+    # Typical fitted coefficients for a generic MOF 
+    # (GCMC, DDEC charge, UFF force field)
+    q_max = 5.0  # mmol/g, saturation capacity
+    b = 1.5      # 1/bar, Langmuir affinity constant
+    
+    q = (q_max * b * P) / (1.0 + b * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the equilibrium CO2 adsorbed amount per gram of MOF using the Langmuir isotherm,
+    the most canonical closed-form relationship for gas adsorption in microporous materials.
+    
+    q = q_max * (b * P) / (1 + b * P)
+    """
+    P = X[:, 0]
+    
+    # Typical representative coefficients for CO2 in MOFs (DDEC/UFF)
+    q_max = 4.0  # Maximum adsorption capacity [mmol/g]
+    b = 1.0      # Langmuir affinity constant [1/bar]
+    
+    q = q_max * (b * P) / (1.0 + b * P)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    # Langmuir isotherm parameters (chosen as typical representative values for MOFs)
+    q_max = 5.0  # Maximum adsorption capacity [mmol/g]
+    K = 2.0      # Langmuir affinity constant [1/bar]
+    
+    # Langmuir closed-form relationship: q = (q_max * K * P) / (1 + K * P)
+    q = (q_max * K * P) / (1.0 + K * P)
+    
+    return q

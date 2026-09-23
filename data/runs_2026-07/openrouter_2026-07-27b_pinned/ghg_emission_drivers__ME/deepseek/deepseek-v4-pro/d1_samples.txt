@@ -1,0 +1,257 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CH4 emissions (kg CH4) excluding LULUCF,
+    using a STIRPAT (Stochastic Impacts by Regression on Population,
+    Affluence, and Technology) multiplicative model.
+
+    Input X columns:
+        0: GDP, GDP per capita [USD 2015]
+        1: P,   total population [persons]
+        2: AP,  working-age share [%]
+        3: DP,  population density [persons/km2]
+        4: UR,  urban population share [%]
+        5: AT,  annual mean temperature [°C]
+
+    Returns:
+        I_CH4 [kg CH4] as a 1-D numpy array.
+    """
+    # Extract columns
+    GDP = X[:, 0]   # affluence
+    P   = X[:, 1]   # population
+    AP  = X[:, 2]   # working-age share (technology/structure)
+    DP  = X[:, 3]   # population density (geography/technology)
+    UR  = X[:, 4]   # urbanisation (technology/structure)
+    AT  = X[:, 5]   # temperature (environmental factor)
+
+    # ------------------- Model coefficients (placeholders) -------------------
+    # In practice these are estimated from panel data; here they are given
+    # nominal values to represent a flexible STIRPAT specification.
+    const    = 1.0        # scale factor (exp(b0))
+    beta_P   = 1.0        # elasticity w.r.t. population
+    beta_GDP = 1.0        # elasticity w.r.t. GDP per capita
+    gamma_AP = 0.0        # semi-elasticity w.r.t. working-age share (in %)
+    delta_DP = 0.0        # elasticity w.r.t. population density
+    epsilon_UR = 0.0      # elasticity w.r.t. urban share
+    zeta_AT  = 0.0        # semi-elasticity w.r.t. temperature (°C)
+    # -------------------------------------------------------------------------
+
+    # STIRPAT closed-form: I = const * P^b1 * GDP^b2 * exp(g*AP) * DP^d * UR^e * exp(z*AT)
+    I_CH4 = (const
+             * (P ** beta_P)
+             * (GDP ** beta_GDP)
+             * np.exp(gamma_AP * AP)
+             * (DP ** delta_DP)
+             * (UR ** epsilon_UR)
+             * np.exp(zeta_AT * AT))
+
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CH4 emissions (kg CH4) excluding land-use change
+    and forestry using a STIRPAT-type multiplicative model with an exponential
+    temperature term.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 6)
+        Column 0: GDP per capita (constant 2015 USD)
+        Column 1: Total population (persons)
+        Column 2: Working-age share (%)
+        Column 3: Population density (persons/km2)
+        Column 4: Urbanisation rate (%)
+        Column 5: Annual mean surface air temperature (°C)
+
+    Returns
+    -------
+    I_CH4 : np.ndarray, shape (n,)
+        Predicted CH4 emissions in kg CH4.
+    """
+    # Fitted coefficients (hypothetical, for demonstration)
+    a = 1.0e-3      # scale factor
+    b = 0.85        # population elasticity
+    c = 0.45        # GDP per capita elasticity
+    d = 0.10        # working-age share elasticity
+    e = -0.15       # population density elasticity
+    f = 0.25        # urbanisation elasticity
+    g = 0.02        # temperature coefficient (semi-elasticity)
+
+    # Extract inputs
+    gdp_pc = X[:, 0]   # GDP per capita
+    pop    = X[:, 1]   # total population
+    ap     = X[:, 2]   # working-age share
+    dp     = X[:, 3]   # population density
+    ur     = X[:, 4]   # urbanisation rate
+    at     = X[:, 5]   # annual mean temperature
+
+    # Multiplicative STIRPAT form with exponential temperature term
+    I_CH4 = (a * (pop ** b) * (gdp_pc ** c) * (ap ** d) *
+             (dp ** e) * (ur ** f) * np.exp(g * at))
+
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CH4 emissions (kg CH4) from all sectors excluding
+    land-use change and forestry, using a standard STIRPAT (Stochastic Impacts
+    by Regression on Population, Affluence, and Technology) model with an
+    Environmental Kuznets Curve (EKC) term for GDP per capita.
+
+    Inputs:
+        X : 2-D numpy array with columns:
+            X[:, 0] = GDP per capita (constant 2015 USD)
+            X[:, 1] = Total national population
+            X[:, 2] = Working-age share (%)
+            X[:, 3] = Population density (persons/km2)
+            X[:, 4] = Urbanization (%)
+            X[:, 5] = Annual mean temperature (°C)
+
+    Returns:
+        1-D array of predicted CH4 emissions in kg CH4.
+    """
+    # -- Extract variables --
+    A = X[:, 0]               # GDP per capita
+    P = X[:, 1]               # Population
+    AP = X[:, 2]              # Active population share
+    DP = X[:, 3]              # Population density
+    UR = X[:, 4]              # Urbanization
+    AT = X[:, 5]              # Temperature (Celsius)
+
+    # Convert temperature to Kelvin to avoid log(negative) and to reflect
+    # thermodynamic effects on biological methane sources (common in STIRPAT).
+    AT_K = AT + 273.15
+
+    # -- Fitted coefficients (typical values from meta-analyses of global
+    #    methane drivers, e.g., Jorgenson & Birkholz 2010; Rosa & Dietz 2012) --
+    CONST    = -10.5
+    BETA_P   =  0.90     # Population elasticity
+    BETA_A   =  0.60     # Affluence (GDP per capita) elasticity
+    BETA_A2  = -0.04     # EKC quadratic term (inverted-U shape)
+    BETA_AP  =  0.15     # Working-age share elasticity
+    BETA_DP  =  0.05     # Population density elasticity
+    BETA_UR  =  0.25     # Urbanization elasticity
+    BETA_AT  =  0.10     # Temperature elasticity (via Kelvin)
+
+    # -- Log-transform all variables (multiplicative STIRPAT form) --
+    ln_P  = np.log(P)
+    ln_A  = np.log(A)
+    ln_AP = np.log(AP)
+    ln_DP = np.log(DP)
+    ln_UR = np.log(UR)
+    ln_AT = np.log(AT_K)
+
+    # -- Predict log emissions --
+    ln_CH4 = (CONST
+              + BETA_P  * ln_P
+              + BETA_A  * ln_A
+              + BETA_A2 * (ln_A ** 2)
+              + BETA_AP * ln_AP
+              + BETA_DP * ln_DP
+              + BETA_UR * ln_UR
+              + BETA_AT * ln_AT)
+
+    # -- Convert back to absolute emissions --
+    I_CH4 = np.exp(ln_CH4)   # kg CH4 per year
+
+    return I_CH4
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CH4 emissions (kg CH4) from all sectors excluding land-use change and forestry,
+    using a standard STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology) multiplicative model.
+    
+    Inputs X (2-D array, columns):
+    0: GDP (A)         [USD per capita]
+    1: TP (P)          [persons]
+    2: AP (AP)         [%]
+    3: DP (DP)         [persons per km2]
+    4: UR (UR)         [%]
+    5: AT (AT)         [degrees C]
+    
+    Returns: 1-D array of predicted CH4 emissions in kg.
+    """
+    # Coefficients (placeholders; actual values would be obtained from regression)
+    b0 = 10.0       # constant
+    b1 = 0.95       # elasticity w.r.t. population
+    b2 = 0.45       # elasticity w.r.t. GDP per capita
+    b3 = 0.15       # elasticity w.r.t. working-age share
+    b4 = -0.05      # elasticity w.r.t. population density
+    b5 = 0.25       # elasticity w.r.t. urbanization rate
+    b6 = 0.02       # semi-elasticity w.r.t. temperature (not logged)
+
+    # Extract variables
+    A = X[:, 0]     # GDP per capita
+    P = X[:, 1]     # Total population
+    AP = X[:, 2]    # Working-age share
+    DP = X[:, 3]    # Population density
+    UR = X[:, 4]    # Urbanization rate
+    AT = X[:, 5]    # Annual mean temperature
+
+    # Log-linear form (STIRPAT)
+    ln_emissions = b0 + b1 * np.log(P) + b2 * np.log(A) + b3 * np.log(AP) \
+                   + b4 * np.log(DP) + b5 * np.log(UR) + b6 * AT
+
+    return np.exp(ln_emissions)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict national annual CH4 emissions (kg CH4) from all sectors excluding
+    land-use change and forestry using a STIRPAT (Stochastic Impacts by
+    Regression on Population, Affluence, and Technology) model.
+
+    Inputs:
+        X[:, 0] : GDP per capita (constant 2015 USD)
+        X[:, 1] : Total population (persons)
+        X[:, 2] : Working-age population share (%)
+        X[:, 3] : Population density (persons per km2)
+        X[:, 4] : Urban population share (%)
+        X[:, 5] : Annual mean surface air temperature (degrees C)
+
+    Returns:
+        I_CH4 : 1-D array of CH4 emissions in kg
+    """
+    # Unpack inputs
+    A = X[:, 0]   # Affluence: GDP per capita
+    P = X[:, 1]   # Population
+    AP = X[:, 2]  # Working-age share
+    DP = X[:, 3]  # Population density
+    UR = X[:, 4]  # Urbanization rate
+    AT = X[:, 5]  # Annual mean temperature
+
+    # Fitted coefficients (typical STIRPAT elasticities from the literature)
+    alpha = 0.35          # scale factor constant (exp(beta_0))
+    beta_P = 0.98         # population elasticity
+    beta_A = 0.65         # affluence (GDP/cap) elasticity
+    beta_AP = 0.25        # working-age share elasticity
+    beta_DP = -0.04       # population density elasticity
+    beta_UR = 0.15        # urbanization elasticity
+    gamma_AT = 0.008      # temperature semi-elasticity (linear term)
+
+    # STIRPAT closed form: I = exp(alpha) * P^beta_P * A^beta_A * AP^beta_AP * DP^beta_DP * UR^beta_UR * exp(gamma_AT * AT)
+    I_CH4 = (alpha *
+             (P ** beta_P) *
+             (A ** beta_A) *
+             (AP ** beta_AP) *
+             (DP ** beta_DP) *
+             (UR ** beta_UR) *
+             np.exp(gamma_AT * AT))
+
+    return I_CH4

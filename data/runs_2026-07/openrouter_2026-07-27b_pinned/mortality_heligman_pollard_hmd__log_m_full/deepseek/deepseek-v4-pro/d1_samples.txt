@@ -1,0 +1,244 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln M(x,t) using the Lee-Carter mortality model,
+    with approximate parameters for total sex US population.
+    Reference: Lee, R.D. and Carter, L.R. (1992) "Modeling and Forecasting U.S. Mortality".
+    """
+    age = X[:, 0].astype(int)
+    year = X[:, 1]
+
+    # Knot ages for interpolation
+    knot_ages = np.array([0, 1, 5, 10, 15, 20, 25, 35, 45, 55, 65, 75, 85, 95])
+
+    # Target log mortality for year 2000 (k_t = -7) at knot ages
+    target_log_m_2000 = np.log(np.array([
+        0.007,    # age 0
+        0.0003,   # age 1
+        0.00015,  # age 5
+        0.00015,  # age 10
+        0.0008,   # age 15
+        0.001,    # age 20
+        0.0012,   # age 25
+        0.002,    # age 35
+        0.005,    # age 45
+        0.012,    # age 55
+        0.03,     # age 65
+        0.08,     # age 75
+        0.18,     # age 85
+        0.3       # age 95
+    ]))
+
+    # b_x values at knot ages (age-specific sensitivity to k_t)
+    b_knots = np.array([
+        0.020,   # age 0
+        0.018,   # age 1
+        0.015,   # age 5
+        0.015,   # age 10
+        0.020,   # age 15
+        0.018,   # age 20
+        0.018,   # age 25
+        0.015,   # age 35
+        0.012,   # age 45
+        0.010,   # age 55
+        0.008,   # age 65
+        0.007,   # age 75
+        0.006,   # age 85
+        0.005    # age 95
+    ])
+
+    # Compute a_x at knots: a_x = target_log_m_2000 + 7 * b_x
+    # (since k_t for year 2000 is set to -7)
+    a_knots = target_log_m_2000 + 7.0 * b_knots
+
+    # Interpolate a_x and b_x to all integer ages 0..95
+    all_ages = np.arange(96)
+    a_x = np.interp(all_ages, knot_ages, a_knots)
+    b_x = np.interp(all_ages, knot_ages, b_knots)
+
+    # Time-varying mortality index (linear decline with drift -0.35 per year)
+    k_t = -0.35 * (year - 1980.0)
+
+    # Lee-Carter model: ln m(x,t) = a_x + b_x * k_t
+    log_m = a_x[age] + b_x[age] * k_t
+
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract age and year
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Reference year for time trend
+    t0 = 2000.0
+    
+    # Gompertz-Makeham baseline with age and time components
+    # ln M(x,t) = a + b*x + c*exp(d*x) + e*(t - t0) + f*(t - t0)^2 + g*x*(t - t0)
+    # This is the standard Lee-Carter type extension of the Gompertz model
+    # for central death rates over full age range
+    
+    a = -8.5       # intercept / Makeham constant
+    b = 0.085      # linear age slope (senescence)
+    c = 1.2e-5     # Gompertz exponential coefficient
+    d = 0.095      # Gompertz exponential rate
+    e = -0.012     # linear time trend (mortality improvement)
+    f = -0.00008   # quadratic time trend (acceleration of improvement)
+    g = -0.0006    # age-time interaction (differential improvement by age)
+    
+    # Compute log mortality
+    log_m_full = a + b * x + c * np.exp(d * x) + e * (t - t0) + f * (t - t0)**2 + g * x * (t - t0)
+    
+    return log_m_full
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict ln M(x,t) using the Lee-Carter model with a linear time trend,
+    calibrated to approximate the US total population mortality surface.
+    """
+    age = X[:, 0].astype(np.float64)
+    year = X[:, 1].astype(np.float64)
+
+    # Knots for a_x and b_x (ages)
+    knots = np.array([0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95])
+
+    # a_x: average log mortality schedule (typical values from Lee-Carter for US 1900-1989)
+    a_vals = np.array([
+        -4.071,  # age 0
+        -5.194,  # 1
+        -6.942,  # 5
+        -7.423,  # 10
+        -6.978,  # 15
+        -6.567,  # 20
+        -6.282,  # 25
+        -5.934,  # 30
+        -5.507,  # 35
+        -5.000,  # 40
+        -4.455,  # 45
+        -3.883,  # 50
+        -3.308,  # 55
+        -2.754,  # 60
+        -2.237,  # 65
+        -1.758,  # 70
+        -1.312,  # 75
+        -0.900,  # 80
+        -0.530,  # 85
+        -0.300,  # 90
+        -0.100   # 95
+    ])
+
+    # b_x: age-specific sensitivity to mortality change
+    b_vals = np.array([
+        0.028,   # 0
+        0.023,   # 1
+        0.016,   # 5
+        0.014,   # 10
+        0.014,   # 15
+        0.013,   # 20
+        0.012,   # 25
+        0.011,   # 30
+        0.010,   # 35
+        0.009,   # 40
+        0.008,   # 45
+        0.007,   # 50
+        0.006,   # 55
+        0.005,   # 60
+        0.004,   # 65
+        0.003,   # 70
+        0.002,   # 75
+        0.001,   # 80
+        0.0005,  # 85
+        0.0003,  # 90
+        0.0001   # 95
+    ])
+
+    # Interpolate a_x and b_x for given ages
+    a_x = np.interp(age, knots, a_vals, left=a_vals[0], right=a_vals[-1])
+    b_x = np.interp(age, knots, b_vals, left=b_vals[0], right=b_vals[-1])
+
+    # Time index k_t: linear decline as observed in the historical period
+    k_t = 20.0 - 0.45 * (year - 1900.0)
+
+    # Lee-Carter log mortality
+    log_m = a_x + b_x * k_t
+    return log_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Lee-Carter model: ln m(x,t) = a_x + b_x * k_t
+    age = X[:, 0].astype(int)
+    year = X[:, 1]
+
+    # a_x: average log central death rate for ages 0..95 (U.S. total sex pattern)
+    a = np.array([
+        -3.90, -6.90, -7.40, -7.70, -7.90, -8.10, -8.20, -8.30, -8.40, -8.40,
+        -8.50, -8.50, -8.50, -8.40, -8.20, -7.90, -7.60, -7.30, -7.00, -6.80,
+        -6.70, -6.70, -6.70, -6.70, -6.80, -6.80, -6.90, -6.90, -7.00, -7.00,
+        -7.10, -7.10, -7.20, -7.20, -7.30, -7.30, -7.40, -7.40, -7.50, -7.50,
+        -7.60, -7.60, -7.70, -7.70, -7.80, -7.80, -7.90, -7.90, -8.00, -8.00,
+        -8.00, -8.00, -8.00, -8.00, -8.00, -7.90, -7.90, -7.80, -7.70, -7.60,
+        -7.50, -7.40, -7.20, -7.10, -6.90, -6.70, -6.50, -6.30, -6.10, -5.90,
+        -5.70, -5.50, -5.30, -5.10, -4.90, -4.70, -4.50, -4.30, -4.10, -3.90,
+        -3.70, -3.50, -3.30, -3.10, -2.90, -2.70, -2.50, -2.30, -2.10, -1.90,
+        -1.70, -1.50, -1.30, -1.10, -0.90, -0.70
+    ])
+
+    # b_x: age-specific response to time trend (k_t)
+    b = np.array([
+        0.020, 0.015, 0.012, 0.010, 0.008, 0.007, 0.006, 0.005, 0.005, 0.005,
+        0.005, 0.005, 0.005, 0.005, 0.006, 0.007, 0.008, 0.009, 0.010, 0.011,
+        0.012, 0.012, 0.012, 0.013, 0.013, 0.014, 0.014, 0.014, 0.015, 0.015,
+        0.015, 0.016, 0.016, 0.016, 0.017, 0.017, 0.017, 0.017, 0.018, 0.018,
+        0.018, 0.018, 0.019, 0.019, 0.019, 0.019, 0.020, 0.020, 0.020, 0.020,
+        0.020, 0.021, 0.021, 0.021, 0.021, 0.022, 0.022, 0.022, 0.023, 0.023,
+        0.023, 0.024, 0.024, 0.024, 0.025, 0.025, 0.025, 0.026, 0.026, 0.026,
+        0.027, 0.027, 0.027, 0.028, 0.028, 0.028, 0.029, 0.029, 0.029, 0.030,
+        0.030, 0.030, 0.031, 0.031, 0.031, 0.032, 0.032, 0.032, 0.033, 0.033,
+        0.033, 0.034, 0.034, 0.034, 0.035, 0.035
+    ])
+
+    # k_t: time-varying mortality index, linearly declining over time
+    k_t = -0.5 * (year - 1900)
+
+    return a[age] + b[age] * k_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    age = X[:, 0]
+    year = X[:, 1]
+    
+    # Reference year for baseline parameters
+    t0 = 1900.0
+    
+    # Siler model parameters with time-varying levels
+    # Infant/child mortality component
+    a1 = 0.015 * np.exp(-0.01 * (year - t0))
+    b1 = 1.5
+    
+    # Background mortality (age-independent)
+    a2 = 0.0005 * np.exp(-0.02 * (year - t0))
+    
+    # Senescent mortality component
+    a3 = 0.00015 * np.exp(-0.01 * (year - t0))
+    b3 = 0.085
+    
+    # Central death rate from the Siler competing-hazards model
+    m = a1 * np.exp(-b1 * age) + a2 + a3 * np.exp(b3 * age)
+    
+    # Natural log of the central death rate
+    log_m = np.log(m)
+    return log_m

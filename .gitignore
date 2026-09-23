@@ -1,0 +1,6 @@
+runs/
+mem_runs.zip
+__pycache__/
+*.pyc
+.env
+analysis/out/

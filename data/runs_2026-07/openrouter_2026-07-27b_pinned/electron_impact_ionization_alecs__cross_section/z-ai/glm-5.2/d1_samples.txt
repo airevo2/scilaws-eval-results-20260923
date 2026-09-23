@@ -1,0 +1,144 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the total electron-impact single-ionization cross-section using the Lotz formula.
+    sigma(E) = sum_i [ a * q_i * ln(E / I_i) / (E * I_i) ] for E > I_i
+    where a ~ 4.5e-14 cm^2 eV^2 = 450 * 1e-16 cm^2 eV^2.
+    
+    Using generic parameters for a representative target (e.g., Argon-like outer shell).
+    """
+    E = X[:, 0]
+    
+    # Lotz formula parameters
+    a = 450.0  # Coefficient in units of 1e-16 cm^2 * eV^2
+    I = 15.76  # Ionization potential in eV (e.g., Argon)
+    q = 8      # Number of equivalent electrons in the subshell
+    
+    sigma = np.zeros_like(E)
+    mask = E > I
+    sigma[mask] = a * q * np.log(E[mask] / I) / (E[mask] * I)
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the total electron-impact single-ionization cross-section using the Lotz formula.
+    sigma(E) = sum_i [ a_i * q_i * ln(E / I_i) / (E * I_i) ] for E > I_i, else 0
+    
+    Since the specific target atom/molecule is not provided, a generic single-shell 
+    approximation is used with typical constants.
+    """
+    E = X[:, 0]
+    
+    # Generic single-shell parameters (e.g., for a light atom like Carbon or Nitrogen)
+    I = 15.0      # Ionization potential in eV
+    q = 4.0       # Number of equivalent electrons in the shell
+    a = 450.0     # Lotz constant in units of 1e-16 cm^2 * eV^2 
+                  # (a_i is typically 4.5e-14 cm^2 eV^2, scaled to 1e-16 cm^2)
+    
+    sigma = np.zeros_like(E)
+    mask = E > I
+    sigma[mask] = a * q * np.log(E[mask] / I) / (E[mask] * I)
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Lotz formula for total electron-impact single-ionization cross-section.
+    
+    sigma(E) = sum_i [ a * q_i / (E * I_i) ] * ln(E / I_i)   for E > I_i
+    
+    The standard Lotz constant a = 4.5e-14 cm^2 eV^2 = 450 (1e-16 cm^2 eV^2).
+    A representative single-shell atom (e.g., hydrogenic) is used here with
+    I = 13.6 eV and q = 1.
+    """
+    E = X[:, 0]
+    a = 450.0          # 1e-16 cm^2 eV^2
+    I = 13.6           # eV
+    q = 1.0
+    
+    sigma = np.zeros_like(E)
+    mask = E > I
+    sigma[mask] = a * q * np.log(E[mask] / I) / (E[mask] * I)
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Lotz formula for total electron-impact single-ionization cross-section.
+    
+    σ(E) = Σ_i  a_i * q_i * ln(E / I_i) / (E * I_i)   for E > I_i
+    
+    where a_i = 4.5e-14 cm² eV² (Lotz semi-empirical constant),
+    I_i is the i-th subshell binding energy, and q_i is the number of
+    equivalent electrons in that subshell.
+    
+    Returns σ in units of 1e-16 cm².
+    """
+    E = X[:, 0].astype(float)
+    
+    # Lotz semi-empirical constant (cm² eV²)
+    a_lotz = 4.5e-14
+    
+    # Subshell parameters: (binding_energy_eV, electron_count)
+    # Representative outer-shell values for a typical atom/molecule
+    shells = [
+        (15.76, 8),   # e.g., Ar 3p shell
+    ]
+    
+    sigma_cm2 = np.zeros_like(E)
+    for I_i, q_i in shells:
+        mask = E > I_i
+        sigma_cm2[mask] += (a_lotz * q_i / (I_i * E[mask])) * np.log(E[mask] / I_i)
+    
+    # Convert cm² → 1e-16 cm²
+    return sigma_cm2 / 1e-16
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+    
+    # Lotz formula for total electron-impact single-ionization cross-section:
+    # sigma(E) = sum_i [ a_i * q_i * ln(E / E_i) / (E * E_i) ] for E > E_i
+    # where:
+    # a_i ~ 4.5e-14 cm^2 eV^2 (empirical constant)
+    # q_i is the number of equivalent electrons in the i-th subshell
+    # E_i is the binding energy of the i-th subshell in eV
+    # E is the incident electron energy in eV
+    
+    # Convert a_i from cm^2 to 1e-16 cm^2:
+    # 4.5e-14 cm^2 = 450 * 1e-16 cm^2
+    A_CONST = 450.0
+    
+    # Using Argon (Ar) subshell parameters [q_i, E_i(eV)] as a representative target
+    shells = np.array([
+        [6, 15.76],   # 3p
+        [2, 29.24],   # 3s
+        [6, 248.5],   # 2p
+        [2, 326.3],   # 2s
+        [2, 3205.9]   # 1s
+    ])
+    
+    sigma = np.zeros_like(E, dtype=float)
+    
+    for q, Ei in shells:
+        mask = E > Ei
+        if np.any(mask):
+            sigma[mask] += A_CONST * q * np.log(E[mask] / Ei) / (E[mask] * Ei)
+            
+    return sigma

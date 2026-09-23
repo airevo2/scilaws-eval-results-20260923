@@ -1,0 +1,126 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict P(LL) using hyperbolic discounting with a logistic choice rule.
+    
+    Model:
+        SV = V / (1 + k * t)                          # Mazur (1987) hyperbolic discounting
+        P(LL) = 1 / (1 + exp(-β * ln(SV_LL / SV_SS))) # Logistic (softmax) on log SV ratio
+    
+    Using the log-ratio form makes the model invariant to currency scale.
+    """
+    log_amount_ratio = X[:, 0]  # ln(V_LL / V_SS)
+    t_SS = X[:, 1]              # smaller-sooner delay [days]
+    t_LL = X[:, 2]              # larger-later delay [days]
+
+    # Canonical parameters
+    k = 0.01      # hyperbolic discount rate (per day)
+    beta = 2.5    # choice sensitivity (inverse temperature)
+
+    # Log subjective-value ratio under hyperbolic discounting:
+    #   ln(SV_LL / SV_SS) = ln(V_LL/V_SS) - ln((1 + k*t_LL) / (1 + k*t_SS))
+    log_sv_ratio = log_amount_ratio - np.log((1.0 + k * t_LL) / (1.0 + k * t_SS))
+
+    # Logistic choice probability
+    p_ll = 1.0 / (1.0 + np.exp(-beta * log_sv_ratio))
+
+    return p_ll
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_amount_ratio = X[:, 0]  # ln(V_LL / V_SS)
+    t_SS = X[:, 1]              # smaller-sooner delay (days)
+    t_LL = X[:, 2]              # larger-later delay (days)
+
+    # Canonical hyperbolic discounting parameters
+    k = 0.005    # discount rate per day
+    beta = 3.0   # logistic choice sensitivity (inverse temperature)
+
+    # Hyperbolic subjective value: SV = V / (1 + k * t)
+    # Scale-invariant logistic choice on log subjective values:
+    #   P(LL) = sigmoid( beta * [ ln(SV_LL) - ln(SV_SS) ] )
+    #         = sigmoid( beta * [ ln(V_LL/V_SS) - ln((1+k*t_LL)/(1+k*t_SS)) ] )
+    delay_term = np.log((1.0 + k * t_LL) / (1.0 + k * t_SS))
+    logit = beta * (log_amount_ratio - delay_term)
+
+    p_ll = 1.0 / (1.0 + np.exp(-logit))
+    return p_ll
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract relevant inputs
+    t_SS = X[:, 1]  # Smaller-sooner delay
+    t_LL = X[:, 2]  # Larger-later delay
+    V_SS = X[:, 4]  # Smaller-sooner value
+    V_LL = X[:, 5]  # Larger-later value
+    
+    # Standard hyperbolic discounting parameters (representative constants)
+    k = 0.05        # Discount rate
+    beta = 0.1      # Inverse temperature (choice sensitivity)
+    
+    # Calculate Subjective Values (SV) using Mazur's hyperbolic discounting function
+    SV_SS = V_SS / (1.0 + k * t_SS)
+    SV_LL = V_LL / (1.0 + k * t_LL)
+    
+    # Calculate probability of choosing Larger-Later using the logistic (softmax) choice rule
+    # Clipping the exponent to prevent numerical overflow
+    exponent = np.clip(-beta * (SV_LL - SV_SS), -500, 500)
+    P_LL = 1.0 / (1.0 + np.exp(exponent))
+    
+    return P_LL
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract relevant inputs
+    t_SS = X[:, 1]  # Smaller-sooner delay
+    t_LL = X[:, 2]  # Larger-later delay
+    V_SS = X[:, 4]  # Smaller-sooner value
+    V_LL = X[:, 5]  # Larger-later value
+    
+    # Standard hyperbolic discounting parameters (Mazur, 1987)
+    k = 0.01        # Discount rate per day
+    beta = 1.0      # Choice sensitivity (inverse temperature)
+    
+    # Compute subjective values
+    SV_SS = V_SS / (1.0 + k * t_SS)
+    SV_LL = V_LL / (1.0 + k * t_LL)
+    
+    # Logistic choice rule with clipping to prevent overflow
+    diff = beta * (SV_LL - SV_SS)
+    p_ll = 1.0 / (1.0 + np.exp(-np.clip(diff, -500, 500)))
+    
+    return p_ll
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract relevant inputs
+    t_SS = X[:, 1]  # Smaller-sooner delay
+    t_LL = X[:, 2]  # Larger-later delay
+    V_SS = X[:, 4]  # Smaller-sooner value
+    V_LL = X[:, 5]  # Larger-later value
+    
+    # Canonical hyperbolic discounting parameters
+    k = 0.01    # Discount rate (per day)
+    beta = 1.0  # Choice sensitivity (inverse temperature)
+    
+    # Subjective values via hyperbolic discounting (Mazur, 1987)
+    SV_SS = V_SS / (1.0 + k * t_SS)
+    SV_LL = V_LL / (1.0 + k * t_LL)
+    
+    # Probability of choosing Larger-Later via logistic choice function
+    p_ll = 1.0 / (1.0 + np.exp(-beta * (SV_LL - SV_SS)))
+    
+    return p_ll

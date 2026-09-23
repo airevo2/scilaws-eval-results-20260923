@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    # Budyko curve: Fu (1981) / Choudhury-Yang form
+    # E/P = 1 + φ - (1 + φ^w)^(1/w), with a commonly used default w = 2
+    phi = X[:, 0]
+    w = 2.0
+    ep = 1.0 + phi - np.power(1.0 + np.power(phi, w), 1.0 / w)
+    return np.clip(ep, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean annual actual evapotranspiration ratio (E/P)
+    using the classic Budyko-Choudhury-Porporato closed-form relationship.
+
+    Inputs
+    ------
+    X : ndarray, shape (n, 9)
+        Column 0: pet_over_p (phi) = PET / P
+
+    Returns
+    -------
+    ndarray, shape (n,)
+        Predicted E/P values bounded approximately between 0 and 1.
+    """
+    phi = np.asarray(X)[:, 0]
+    
+    # Commonly cited Budyko form (Choudhury, 1999; Porporato et al., 2004)
+    # E/P = phi / (1 + phi - (1 + phi^omega)^(1/omega))
+    omega = 2.6
+    
+    ep_ratio = phi / (1.0 + phi - np.power(1.0 + np.power(phi, omega), 1.0 / omega))
+    
+    return ep_ratio
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Budyko / Fu (1981) equation for long-term mean annual evapotranspiration ratio
+    # E/P = 1 + phi - [1 + phi^omega]^(1/omega)
+    # where phi = PET/P and omega is a catchment/climate parameter.
+    #
+    # With no calibration data provided, use a commonly adopted representative
+    # value for omega. Typical literature values are ~1.5–3; 2.6 is often used.
+    omega = 2.6
+
+    phi = np.asarray(X)[:, 0]
+    ep_ratio = 1.0 + phi - np.power(1.0 + np.power(phi, omega), 1.0 / omega)
+
+    # Keep within physical bounds
+    return np.clip(ep_ratio, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean annual actual evapotranspiration / precipitation (E/P)
+    using the classical Budyko Fu equation form.
+
+    Inputs:
+        X[:, 0] = pet_over_p (phi) = PET / P
+    """
+    phi = X[:, 0]
+    omega = 2.6  # commonly used Budyko/Fu shape parameter for catchment-scale studies
+    ep_ratio = 1.0 + phi - (1.0 + phi**omega)**(1.0 / omega)
+    return np.clip(ep_ratio, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Long-term mean annual actual evapotranspiration ratio (E/P) using the
+    classic Fu (also known as Budyko-Fu) formulation.
+
+    Inputs
+    ------
+    X : (n, 9) numpy array
+        Column 0: pet_over_p (phi) = PET / P
+
+    Returns
+    -------
+    et_over_p : (n,) numpy array
+        E/P bounded approximately within [0, 1]
+    """
+    phi = np.asarray(X)[:, 0]
+
+    # Common canonical Fu equation:
+    # E/P = 1 + phi - (1 + phi^w)^(1/w)
+    # where w is the catchment-specific shape parameter.
+    # In the standard closed-form, w is often treated as a fitted constant;
+    # a widely used representative value for natural catchments is ~2.6.
+    w = 2.6
+
+    et_over_p = 1.0 + phi - np.power(1.0 + np.power(phi, w), 1.0 / w)
+
+    return np.clip(et_over_p, 0.0, 1.0)

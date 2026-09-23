@@ -1,0 +1,66 @@
+import numpy as np
+
+def predict(X):
+    # Holling Type II functional response (disc equation)
+    # Na = a*T*N / (1 + a*T*h*N)
+    N = X[:, 0]
+    a = 1.0      # attack rate
+    T = 1.0      # total time
+    h = 0.01     # handling time
+    Na = (a * T * N) / (1.0 + a * T * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Holling Type II functional response (disc equation)
+    # Na = a * T * N / (1 + a * T * h * N)
+    N = X[:, 0]
+    a = 1.0      # attack rate
+    T = 1.0      # total time
+    h = 0.01     # handling time
+    Na = (a * T * N) / (1.0 + a * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Holling Type II functional response (disc equation)
+    # Na = a*T*N / (1 + a*T*h*N)
+    N = X[:, 0]
+    a = 1.0      # attack rate
+    T = 1.0      # total time
+    h = 0.01     # handling time
+    Na = (a * T * N) / (1.0 + a * T * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Holling Type II functional response (disc equation)
+    # Na = (a * N) / (1 + a * h * N)
+    N = X[:, 0]
+    a = 1.0    # attack rate (fitted coefficient)
+    h = 0.01   # handling time (fitted coefficient)
+    Na = (a * N) / (1.0 + a * h * N)
+    return Na
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Holling Type II functional response (disc equation)
+    # Na = a*T*N / (1 + a*T*h*N)
+    N = X[:, 0]
+    a = 1.0      # attack (search) rate
+    T = 1.0      # total time available
+    h = 0.01     # handling time per prey
+    Na = (a * T * N) / (1.0 + a * T * h * N)
+    return Na

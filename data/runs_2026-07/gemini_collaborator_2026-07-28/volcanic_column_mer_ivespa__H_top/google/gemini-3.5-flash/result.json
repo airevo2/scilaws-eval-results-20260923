@@ -1,0 +1,35 @@
+{
+  "task": "volcanic_column_mer_ivespa__H_top",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "aubry_powerlaw_trainfit",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "linear_mer",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "mtt_plume_quarter_power",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts FVC (L) from age (years) and height (cm) using the
+    NHANES III / Hankinson 1999 reference equation for white males aged 8-19.
+    This is one of the most commonly cited closed-form prediction equations
+    for forced vital capacity in children and adolescents.
+    """
+    age = X[:, 0]          # fractional years
+    height_cm = X[:, 1]    # centimetres
+    
+    # Hankinson et al. (1999) coefficients for white males 8-19 years
+    intercept = -0.2584
+    coef_age = 0.02015
+    coef_age_sq = 0.000132
+    coef_height_sq = 0.000125
+    
+    fvc = intercept + coef_age * age + coef_age_sq * age**2 + coef_height_sq * height_cm**2
+    return fvc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict forced vital capacity (FVC) in litres from age and height
+    using the standard linear model for the 'lungcap' reference dataset.
+    
+    Parameters
+    ----------
+    X : np.ndarray (n_samples, 2)
+        X[:, 0] -> age (years)
+        X[:, 1] -> height (cm)
+    
+    Returns
+    -------
+    np.ndarray (n_samples,)
+        Predicted FVC (L).
+    """
+    # Coefficients from the canonical linear fit (FVC ~ age + height)
+    intercept = -6.886
+    coef_age = 0.0294
+    coef_height = 0.0619
+    
+    return intercept + coef_age * X[:, 0] + coef_height * X[:, 1]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Forced Vital Capacity (FVC) in litres using the ECCS (1993)
+    reference equation for males aged 6–18 years.
+    
+    Inputs:
+        X : 2-D numpy array with columns:
+            X[:, 0] = age (years)
+            X[:, 1] = height (cm)
+    
+    Returns:
+        fvc : 1-D numpy array of predicted FVC (L)
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    # ECCS 1993 equation for boys: FVC = 4.41 * height(m) - 0.022 * age - 2.67
+    # height in cm -> height in m = height_cm / 100
+    fvc = 0.0441 * height_cm - 0.022 * age - 2.67
+    return fvc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Forced Vital Capacity (FVC) in litres using the Wang et al. (1993)
+    reference equation for white boys aged 8–19 years.
+    
+    Inputs:
+        X : 2-D numpy array of shape (n, 2)
+            X[:, 0] = age in years
+            X[:, 1] = height in centimetres
+    Returns:
+        1-D numpy array of predicted FVC (L)
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+    
+    # Wang et al. 1993 equation for FVC in white boys
+    fvc = -5.48 + 0.068 * height_cm + 0.086 * age
+    return fvc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict forced vital capacity (FVC) in litres from age and height.
+    Uses the NHANES III-based linear regression for male children/adolescents 
+    (widely cited in textbooks and statistical datasets).
+    """
+    age = X[:, 0]       # age in years
+    height = X[:, 1]    # height in cm
+    return 0.048 * height - 0.018 * age - 2.96

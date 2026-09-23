@@ -1,0 +1,162 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Canonical Poisson GLM log-link function for species richness count data
+    beta_0 = 1.5
+    beta_d = -0.02
+    beta_h = -0.001
+    beta_p = 0.0002
+    beta_t = 0.1
+    beta_sl = 0.05
+    
+    log_S = beta_0 + beta_d * d + beta_h * h + beta_p * p + beta_t * t + beta_sl * sl
+    S = np.exp(log_S)
+    
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts arthropod species richness (S) per 1-ha pitfall-trap site on Terceira Island, Azores.
+    Uses a standard Poisson Generalized Linear Model (GLM) with a log-link function, 
+    which is the canonical closed-form relationship for species count data.
+    """
+    # Extract input variables
+    d = X[:, 0]   # Anthropogenic habitat-modification index
+    h = X[:, 1]   # Altitude above sea level [m]
+    p = X[:, 2]   # Mean annual precipitation [mm/yr]
+    t = X[:, 3]   # Mean annual temperature [degC]
+    sl = X[:, 4]  # Terrain slope [degrees]
+    
+    # Fitted coefficients (representative typical values for Azorean arthropod ecology)
+    b0 = 2.5      # Intercept
+    b1 = -0.025   # Negative effect of habitat disturbance
+    b2 = -0.0004  # Slight negative effect of high altitude (cooling)
+    b3 = -0.0002  # Slight negative effect of excessive precipitation
+    b4 = 0.15     # Positive effect of temperature
+    b5 = 0.02     # Positive effect of slope (microhabitat heterogeneity)
+    
+    # Log-linear predictor
+    log_S = b0 + b1 * d + b2 * h + b3 * p + b4 * t + b5 * sl
+    
+    # Return expected species richness
+    S = np.exp(log_S)
+    
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Standard log-linear (Poisson GLM) relationship for species richness count data.
+    # In community ecology, species richness is canonically modeled using a log-link 
+    # to ensure positive integer predictions, incorporating habitat disturbance (negative effect), 
+    # and species-energy relationships (temperature, precipitation).
+    intercept = 1.8
+    beta_d = -0.015   # Anthropogenic disturbance generally reduces native arthropod richness
+    beta_h = -0.0002  # Altitude
+    beta_p = 0.0001   # Precipitation (energy-water balance)
+    beta_t = 0.12     # Temperature (energy-water balance)
+    beta_sl = -0.005  # Slope
+    
+    log_S = intercept + beta_d * d + beta_h * h + beta_p * p + beta_t * t + beta_sl * sl
+    S = np.exp(log_S)
+    
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard log-linear (Poisson GLM) closed-form relationship for
+    arthropod species richness (S) per 1-ha pitfall-trap site on
+    Terceira Island, Azores.
+
+    S = exp(b0 + b1*D + b2*H + b3*P + b4*T + b5*Sl)
+
+    where:
+      D  = anthropogenic habitat-modification index
+      H  = altitude (m)
+      P  = mean annual precipitation (mm/yr)
+      T  = mean annual temperature (degC)
+      Sl = terrain slope (degrees)
+    """
+    # Fitted coefficients (canonical Poisson GLM with log link)
+    b0 = 1.5      # intercept
+    b1 = -0.02    # disturbance effect
+    b2 = 0.0008   # altitude effect
+    b3 = 0.0003   # precipitation effect
+    b4 = 0.08     # temperature effect
+    b5 = -0.015   # slope effect
+
+    # Linear predictor
+    eta = (b0
+           + b1 * X[:, 0]
+           + b2 * X[:, 1]
+           + b3 * X[:, 2]
+           + b4 * X[:, 3]
+           + b5 * X[:, 4])
+
+    # Predicted species richness
+    S = np.exp(eta)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts arthropod species richness (S) using a standard log-linear 
+    (Poisson regression) closed-form relationship, which is the canonical 
+    model for count data like species richness.
+    
+    Includes quadratic terms for disturbance (d) and altitude (h) to account 
+    for the Intermediate Disturbance Hypothesis and the mid-domain effect 
+    (mid-elevation peak in species richness), respectively.
+    """
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+    
+    # Named constants for the fitted coefficients
+    beta_0 = 1.5       # Intercept
+    beta_d1 = 0.02     # Linear effect of disturbance
+    beta_d2 = -0.0002  # Quadratic effect of disturbance (IDH)
+    beta_h1 = 0.002    # Linear effect of altitude
+    beta_h2 = -0.0000015 # Quadratic effect of altitude (mid-domain effect)
+    beta_p = 0.0001    # Effect of precipitation
+    beta_t = 0.05      # Effect of temperature
+    beta_sl = 0.01     # Effect of slope
+    
+    # Log-link function to ensure strictly positive richness
+    log_S = (beta_0 + 
+             beta_d1 * d + beta_d2 * d**2 + 
+             beta_h1 * h + beta_h2 * h**2 + 
+             beta_p * p + 
+             beta_t * t + 
+             beta_sl * sl)
+             
+    S = np.exp(log_S)
+    
+    return S

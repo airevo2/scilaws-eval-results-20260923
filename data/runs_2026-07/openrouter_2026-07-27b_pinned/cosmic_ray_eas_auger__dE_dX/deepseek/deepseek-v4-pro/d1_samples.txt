@@ -1,0 +1,158 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gaisser-Hillas parameterization of the longitudinal energy deposit
+    profile dE/dX [PeV/(g/cm^2)] as a function of slant atmospheric depth X [g/cm^2].
+    This is the most commonly cited closed-form relationship for shower profiles.
+    Coefficients are set to typical values for a ~1 EeV proton shower.
+    """
+    # Typical Gaisser-Hillas parameters
+    X_max = 750.0   # depth of shower maximum [g/cm^2]
+    X_0   = 0.0     # first interaction depth [g/cm^2]
+    lam   = 70.0    # shower length scale [g/cm^2]
+    N_max = 10.0    # maximum energy deposit [PeV/(g/cm^2)]
+
+    # Extract the X column from the 2-D input array
+    X_col = X[:, 0]
+
+    # Guard against X <= X_0 (negative base for non-integer exponent)
+    X_safe = np.maximum(X_col, X_0 + 1e-6)
+
+    # Gaisser-Hillas formula
+    dE_dX = (N_max
+             * ((X_safe - X_0) / (X_max - X_0)) ** ((X_max - X_0) / lam)
+             * np.exp((X_max - X_safe) / lam))
+
+    return dE_dX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gaisser-Hillas parameterization of the longitudinal energy deposit profile
+    dE/dX [PeV/(g/cm^2)] as a function of slant depth X [g/cm^2].
+    This is the most commonly cited closed-form relationship for the raw fluorescence
+    telescope measurement (after Cherenkov inversion) in the fitting window
+    [Xmax-300, Xmax+200] g/cm^2.
+    """
+    # Typical Gaisser-Hillas parameters for a UHECR shower
+    X0 = -100.0      # g/cm^2
+    Xmax = 750.0     # g/cm^2
+    L = 80.0         # g/cm^2
+    dEdX_max = 10.0  # PeV/(g/cm^2)
+
+    x = X[:, 0]  # Slant atmospheric depth
+    # Profile is positive definite for X > X0 (satisfied in the fitting window)
+    profile = np.where(
+        x > X0,
+        dEdX_max * ((x - X0) / (Xmax - X0)) ** ((Xmax - X0) / L) * np.exp((Xmax - x) / L),
+        0.0
+    )
+    return profile
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gaisser-Hillas (Greisen) longitudinal profile for calorimetric
+    energy deposit per unit slant depth, as used in fluorescence telescope
+    analyses (e.g., Aab 2019, JCAP 2019:018).  The function returns the
+    expected dE/dX in PeV/(g/cm^2) given the atmospheric depth X in g/cm^2.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1)
+        Column 0 = slant atmospheric depth X [g/cm^2].
+    
+    Returns
+    -------
+    dE_dX : np.ndarray, shape (n,)
+        Energy deposit per unit depth [PeV/(g/cm^2)].
+    """
+    # Slant depth values
+    x = X[:, 0].astype(np.float64)
+    
+    # Fitted coefficients (typical values; may be replaced by actual fits)
+    XMAX   = 750.0   # depth of shower maximum [g/cm^2]
+    LAMBDA = 60.0    # shape parameter [g/cm^2]
+    NMAX   = 10.0    # energy deposit at shower maximum [PeV/(g/cm^2)]
+    
+    # Gaisser-Hillas function with X0 = 0 (standard fixed parameter in Auger)
+    # dE/dX = NMAX * (x/XMAX)^(XMAX/LAMBDA) * exp((XMAX - x)/LAMBDA)
+    ratio = np.maximum(x / XMAX, 1e-12)  # guard against non-positive values
+    dE_dX = NMAX * (ratio ** (XMAX / LAMBDA)) * np.exp((XMAX - x) / LAMBDA)
+    
+    return dE_dX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gaisser-Hillas function for the energy deposit profile
+    dE/dX [PeV/(g/cm^2)] as a function of slant depth X [g/cm^2].
+    Uses typical parameters for a ~10 EeV proton shower.
+    """
+    # Extract the slant depth column (2-D array with shape (n,1))
+    x = X[:, 0].astype(np.float64)
+    
+    # Gaisser-Hillas parameters (typical values)
+    XMAX = 750.0       # g/cm^2, depth of shower maximum
+    LAMBDA = 70.0      # g/cm^2, longitudinal shape parameter
+    X0 = 0.0           # g/cm^2, first interaction depth (classic form)
+    DEDX_MAX = 100.0   # PeV/(g/cm^2), energy deposit at maximum
+
+    # Avoid numerical issues for x <= X0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        ratio = (x - X0) / (XMAX - X0)
+        ratio = np.maximum(ratio, 0.0)
+        exponent = (XMAX - X0) / LAMBDA
+        dedx = DEDX_MAX * (ratio ** exponent) * np.exp((XMAX - x) / LAMBDA)
+    
+    # Ensure positive definite
+    dedx = np.maximum(dedx, 0.0)
+    return dedx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gaisser-Hillas longitudinal profile for dE/dX.
+    
+    Parameters
+    ----------
+    X : 2-D numpy array of shape (n, 1)
+        X[:, 0] = slant atmospheric depth in g/cm^2.
+    
+    Returns
+    -------
+    dE_dX : 1-D numpy array of length n
+        Energy deposit per unit slant depth [PeV/(g/cm^2)].
+    """
+    # Extract the slant depth column
+    depth = X[:, 0].astype(np.float64)
+    
+    # Gaisser-Hillas parameters (typical values for a UHECR shower)
+    XMAX = 750.0       # depth of shower maximum [g/cm^2]
+    X0 = 0.0           # depth of first interaction [g/cm^2]
+    LAMBDA = 70.0      # shower attenuation length [g/cm^2]
+    DEDX_MAX = 1.0     # maximum energy deposit [PeV/(g/cm^2)]
+    
+    # Compute the Gaisser-Hillas profile safely
+    ratio = (depth - X0) / (XMAX - X0)
+    # Ensure non-negative ratio to avoid invalid power
+    ratio = np.maximum(ratio, 0.0)
+    exponent = (XMAX - X0) / LAMBDA
+    
+    with np.errstate(over='ignore', invalid='ignore'):
+        dE_dX = DEDX_MAX * (ratio ** exponent) * np.exp((XMAX - depth) / LAMBDA)
+    
+    return dE_dX

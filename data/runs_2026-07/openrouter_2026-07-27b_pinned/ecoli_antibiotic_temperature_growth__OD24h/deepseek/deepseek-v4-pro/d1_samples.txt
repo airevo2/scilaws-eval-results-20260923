@@ -1,0 +1,160 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600 after 24h (OD24h) from incubation temperature T (°C)
+    using the Ratkowsky square-root model for growth rate, scaled to optical density.
+    """
+    T = X[:, 0]
+    # Cardinal temperatures for E. coli BW25113 in LB (typical values)
+    T_min = 8.0      # °C, below which growth is zero
+    T_max = 46.0     # °C, above which growth is zero (inactivation)
+    # Ratkowsky parameters (typical for E. coli)
+    b = 0.04         # (°C^-1 h^-0.5)
+    c = 0.2          # (°C^-1)
+    # Scaling factor to convert growth rate (h^-1) to OD600
+    A = 0.8          # OD600 per h^-1 (approximately)
+
+    # Growth rate (h^-1) according to Ratkowsky et al.
+    # sqrt(mu) = b * (T - T_min) * (1 - exp(c * (T - T_max)))
+    # mu = 0 outside [T_min, T_max]
+    inside = (T > T_min) & (T < T_max)
+    sqrt_mu = np.zeros_like(T)
+    sqrt_mu[inside] = b * (T[inside] - T_min) * (1.0 - np.exp(c * (T[inside] - T_max)))
+    mu = sqrt_mu ** 2
+
+    # Optical density after 24 h approximated as proportional to growth rate
+    OD = A * mu
+    # Ensure non-negative (numerical safety)
+    OD = np.maximum(OD, 0.0)
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600 after 24h for E. coli BW25113 in LB broth at temperature T
+    under a fixed sub-lethal antibiotic background.
+    
+    Uses the Ratkowsky extended square-root model (J. Appl. Bacteriol. 1983),
+    a standard closed-form relationship for bacterial growth rate vs temperature,
+    here applied to endpoint optical density.
+    
+    Model: sqrt(OD) = b * (T - T_min) * (1 - exp(c * (T - T_max)))
+           for T in [T_min, T_max]; OD = 0 otherwise.
+    
+    Parameters chosen to reflect typical cardinal temperatures and asymmetry
+    of E. coli growth under mild antibiotic stress.
+    """
+    T = X[:, 0]  # temperature in degC
+
+    # Cardinal temperatures (degC) and shape constants
+    T_min = 8.0    # Minimum growth temperature
+    T_max = 46.0   # Maximum growth temperature
+    b = 0.04       # Slope constant (sqrt(OD)/degC)
+    c = 0.22       # High-temperature decline shape factor
+
+    # Initialize output
+    OD = np.zeros_like(T)
+
+    # Apply model within the viable temperature range
+    mask = (T >= T_min) & (T <= T_max)
+    T_valid = T[mask]
+
+    sqrt_OD = b * (T_valid - T_min) * (1.0 - np.exp(c * (T_valid - T_max)))
+    OD[mask] = sqrt_OD ** 2
+
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts OD600 after 24h (OD24h) as a function of temperature T (degC)
+    using the Rosso cardinal temperature model with inflection (CTMI).
+    """
+    T = X[:, 0]
+    # Cardinal parameters for E. coli BW25113 in LB broth
+    T_min = 8.0      # Minimum temperature for growth (degC)
+    T_opt = 37.0     # Optimal temperature (degC)
+    T_max = 46.0     # Maximum temperature for growth (degC)
+    OD_max = 1.0     # Maximum optical density at T_opt (dimensionless)
+
+    # Rosso model: mu(T) / mu_opt = (T - T_max) * (T - T_min)^2 /
+    # [ (T_opt - T_min) * ((T_opt - T_min)*(T - T_opt) - (T_opt - T_max)*(T_opt + T_min - 2*T)) ]
+    num = (T - T_max) * (T - T_min)**2
+    denom = (T_opt - T_min) * (
+        (T_opt - T_min) * (T - T_opt) - (T_opt - T_max) * (T_opt + T_min - 2 * T)
+    )
+
+    # Zero outside the growth range (T <= T_min or T >= T_max)
+    OD = np.where((T > T_min) & (T < T_max), OD_max * num / denom, 0.0)
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract temperature in Celsius
+    T = X[:, 0]
+    
+    # Cardinal temperatures for E. coli (approx.)
+    T_min = 10.0      # °C, minimum growth temperature
+    T_max = 46.0      # °C, maximum growth temperature
+    
+    # Ratkowsky square-root model parameters (fitted for sub-lethal antibiotic background)
+    b = 0.02          # °C⁻¹ h⁻⁰·⁵
+    c = 0.2           # °C⁻¹
+    
+    # Logistic growth parameters
+    OD0 = 0.05        # initial OD600
+    OD_max = 1.0      # stationary phase OD600
+    t = 24.0          # incubation time in hours
+    
+    # Compute specific growth rate μ(T) using the Ratkowsky model
+    # μ = [b (T - T_min) (1 - exp(c (T - T_max)))]²  for T_min < T < T_max, else 0
+    T_clipped = np.clip(T, T_min, T_max)
+    # Linear factor
+    term1 = b * (T_clipped - T_min)
+    # Exponential factor
+    term2 = 1.0 - np.exp(c * (T_clipped - T_max))
+    # Square root of μ
+    sqrt_mu = term1 * term2
+    # μ in h⁻¹
+    mu = sqrt_mu ** 2
+    
+    # If temperature is outside [T_min, T_max], growth rate is zero
+    mu = np.where((T > T_min) & (T < T_max), mu, 0.0)
+    
+    # Logistic growth: OD after 24 h
+    # OD(t) = OD_max / (1 + (OD_max/OD0 - 1) * exp(-μ t))
+    ratio = OD_max / OD0 - 1.0
+    OD = OD_max / (1.0 + ratio * np.exp(-mu * t))
+    
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600 after 24h for E. coli BW25113 in LB broth under fixed sub-lethal
+    antibiotic background as a function of temperature T (degC).
+    The standard relationship is a Gaussian thermal performance curve.
+    """
+    T = X[:, 0]
+    # Fitted parameters (typical values for E. coli)
+    OD_max = 1.0      # maximum OD at optimal temperature
+    T_opt = 37.0      # optimal temperature (degC)
+    sigma = 8.0       # width of the thermal niche (degC)
+
+    OD = OD_max * np.exp(-0.5 * ((T - T_opt) / sigma) ** 2)
+    # Ensure non-negative (though Gaussian is always positive, clip for safety)
+    OD = np.clip(OD, 0.0, None)
+    return OD

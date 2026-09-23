@@ -1,0 +1,150 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is wavelength in nm
+    wavelength_nm = X[:, 0]
+
+    # Physical constants
+    h = 6.62607015e-34  # Planck constant (J s)
+    c = 299792458.0  # Speed of light (m/s)
+    k_B = 1.380649e-23  # Boltzmann constant (J/K)
+    T = 5778.0  # Canonical solar effective temperature (K)
+
+    # Convert wavelength from nm to m
+    wavelength_m = wavelength_nm * 1e-9
+
+    # First and second radiation constants
+    c1 = 2.0 * h * c**2
+    c2 = (h * c) / k_B
+
+    # Calculate Planck spectral radiance in W m^-2 m^-1 sr^-1
+    exponent = c2 / (wavelength_m * T)
+    # Clip exponent to avoid numerical overflow in np.exp
+    exponent = np.clip(exponent, None, 700.0)
+    B_lambda = c1 / (wavelength_m**5 * (np.exp(exponent) - 1.0))
+
+    # Convert to W m^-2 nm^-1 sr^-1 (multiply by 1e-9)
+    L = B_lambda * 1e-9
+
+    return L
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs: X[:, 0] is wavelength in nm
+    wavelength_nm = X[:, 0]
+
+    # Standard physical constants
+    h = 6.62607015e-34  # Planck constant (J s)
+    c = 2.99792458e8  # Speed of light (m/s)
+    k_B = 1.380649e-23  # Boltzmann constant (J/K)
+
+    # Solar effective temperature (K)
+    T = 5778.0
+
+    # Convert wavelength from nm to m
+    lambda_m = wavelength_nm * 1e-9
+
+    # Planck's law for spectral radiance: B_λ(T) in W m⁻² m⁻¹ sr⁻¹
+    numerator = 2 * h * c**2
+    exponent = (h * c) / (lambda_m * k_B * T)
+    radiance_m = numerator / (lambda_m**5 * (np.exp(exponent) - 1))
+
+    # Convert spectral radiance from W m⁻² m⁻¹ sr⁻¹ to W m⁻² nm⁻¹ sr⁻¹
+    radiance_nm = radiance_m * 1e-9
+
+    return radiance_nm
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is wavelength in nm
+    wavelength_nm = X[:, 0]
+
+    # Physical constants
+    h = 6.62607015e-34  # Planck constant (J s)
+    c = 2.99792458e8  # Speed of light (m/s)
+    kB = 1.380649e-23  # Boltzmann constant (J/K)
+    T = 5778.0  # Nominal solar effective temperature (K)
+
+    # Convert wavelength from nm to m
+    lambda_m = wavelength_nm * 1e-9
+
+    # Planck's law for spectral radiance in W m⁻² m⁻¹ sr⁻¹
+    numerator = 2 * h * c**2
+    exponent = (h * c) / (lambda_m * kB * T)
+    radiance_m = numerator / (lambda_m**5 * (np.exp(exponent) - 1))
+
+    # Convert spectral radiance to W m⁻² nm⁻¹ sr⁻¹
+    radiance_nm = radiance_m * 1e-9
+
+    return radiance_nm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] is wavelength in nm
+    wavelength_nm = X[:, 0]
+    
+    # Fundamental physical constants
+    h = 6.62607015e-34  # Planck constant (J s)
+    c = 2.99792458e8    # Speed of light (m/s)
+    k_B = 1.380649e-23  # Boltzmann constant (J/K)
+    
+    # Nominal solar effective temperature (K)
+    T = 5778.0 
+    
+    # Convert wavelength to meters for SI standard calculations
+    wavelength_m = wavelength_nm * 1e-9
+    
+    # First and second radiation constants
+    c1 = 2.0 * h * c**2
+    c2 = (h * c) / k_B
+    
+    # Planck spectral radiance in W m^-2 m^-1 sr^-1
+    planck_m = c1 / (wavelength_m**5 * (np.exp(c2 / (wavelength_m * T)) - 1.0))
+    
+    # Convert from per-meter to per-nanometer (1 m = 1e9 nm)
+    planck_nm = planck_m * 1e-9
+    
+    return planck_nm
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the wavelength in nm
+    wavelength_nm = X[:, 0]
+
+    # Constants
+    h = 6.62607015e-34  # Planck constant (J s)
+    c = 299792458  # Speed of light (m/s)
+    kB = 1.380649e-23  # Boltzmann constant (J/K)
+    T = 5778.0  # Canonical solar effective temperature (K)
+
+    # Convert wavelength from nm to m
+    wavelength_m = wavelength_nm * 1e-9
+
+    # Radiation constants
+    c1 = 2.0 * h * c**2
+    c2 = (h * c) / kB
+
+    # Planck's law for spectral radiance in W m⁻² m⁻¹ sr⁻¹
+    exponent = c2 / (wavelength_m * T)
+    radiance_m = c1 / (wavelength_m**5 * (np.exp(exponent) - 1.0))
+
+    # Convert from W m⁻² m⁻¹ sr⁻¹ to W m⁻² nm⁻¹ sr⁻¹ (multiply by 1e-9)
+    radiance_nm = radiance_m * 1e-9
+
+    return radiance_nm

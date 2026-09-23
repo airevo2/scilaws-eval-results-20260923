@@ -1,0 +1,123 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts period life expectancy at birth (e0) as a function of calendar year
+
+    using a logistic (sigmoidal) model that represents the historical
+    demographic transition from pre-industrial to modern eras.
+
+    Parameters:
+    X : ndarray of shape (N, M)
+        X[:, 0] contains the calendar year (t) [years]
+
+    Returns:
+    ndarray of shape (N,)
+        Predicted period life expectancy at birth (e0) [years]
+    """
+    t = X[:, 0]
+
+    # Parameters representing the canonical demographic transition of e0
+    # based on long-run historical data (e.g., Sweden 1751-2024)
+    e_min = 32.0  # Baseline pre-industrial life expectancy
+    e_max = 85.0  # Modern upper asymptotic life expectancy
+    t0 = 1925.0  # Inflection point (midpoint of the rapid transition)
+    k = 0.022  # Rate of transition parameter
+
+    # Logistic growth model
+    e0 = e_min + (e_max - e_min) / (1.0 + np.exp(-k * (t - t0)))
+
+    return e0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the period life expectancy at birth (e0) for a given calendar year
+
+    using a canonical logistic model representing the historical demographic
+    transition of mortality.
+
+    Parameters:
+    X : ndarray of shape (n_samples, n_features)
+        X[:, 0] corresponds to the calendar year (t).
+
+    Returns:
+    ndarray of shape (n_samples,)
+        Predicted period life expectancy at birth (e0) in years.
+    """
+    t = X[:, 0]
+
+    # Canonical logistic parameters representing the transition from pre-industrial
+    # to modern life expectancy (modeled closely on long-run HMD data like Sweden)
+    L = 37.5  # Lower asymptote (pre-industrial life expectancy)
+    U = 84.5  # Upper asymptote (modern life expectancy)
+    k = 0.026  # Rate of epidemiological transition
+    t0 = 1940  # Inflection point (year of maximum rate of increase)
+
+    e0 = L + (U - L) / (1.0 + np.exp(-k * (t - t0)))
+    return e0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract the calendar year from the first column of X
+    t = X[:, 0]
+
+    # Standard logistic model parameters representing the demographic transition of
+    # period life expectancy at birth (e0) from the pre-industrial to modern era.
+    L = 36.5  # Lower asymptote (historical baseline e0)
+    U = 84.5  # Upper asymptote (approximate modern level)
+    k = 0.024  # Rate of transition
+    t0 = 1920.0  # Midpoint of the demographic transition
+
+    # Logistic growth model
+    e0 = L + (U - L) / (1.0 + np.exp(-k * (t - t0)))
+
+    return e0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract the calendar year from the first column of the input array
+    t = X[:, 0]
+
+    # Standard logistic model parameters for the historical demographic transition of e0.
+    # These parameters represent the lower asymptote (pre-transition), upper asymptote,
+    # the midpoint year of the transition, and the logistic growth rate.
+    e0_min = 35.0  # Lower asymptote of life expectancy (years)
+    e0_max = 85.0  # Upper asymptote of life expectancy (years)
+    k = 0.022  # Rate of transition
+    t0 = 1930.0  # Midpoint year of the transition
+
+    # Logistic closed-form model
+    e0 = e0_min + (e0_max - e0_min) / (1.0 + np.exp(-k * (t - t0)))
+
+    return e0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] represents the calendar year (t)
+    year = X[:, 0]
+
+    # Logistic model parameters representing the historical transition of period
+    # life expectancy at birth (e0) based on long-term HMD data (e.g., Sweden since 1751).
+    L = 36.2  # Lower baseline (pre-industrial life expectancy)
+    U = 83.5  # Upper level (approximate modern life expectancy)
+    k = 0.028  # Rate of transition
+    t0 = 1912.0  # Midpoint year of the modern mortality transition
+
+    e0 = L + (U - L) / (1.0 + np.exp(-k * (year - t0)))
+    return e0

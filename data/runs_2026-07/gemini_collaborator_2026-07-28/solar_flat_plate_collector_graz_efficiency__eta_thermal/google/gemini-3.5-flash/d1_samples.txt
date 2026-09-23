@@ -1,0 +1,177 @@
+import numpy as np
+
+
+def predict(X):
+    """Computes the gross-area thermal efficiency of the collector array
+
+    using the standard quadratic Hottel-Whillier-Bliss (HWB) formulation.
+
+    Inputs:
+    - X[:, 0]: G (Global plane-of-array irradiance) [W m^-2]
+    - X[:, 1]: T_in (Collector inlet fluid temperature) [deg C]
+    - X[:, 2]: T_amb (Ambient air temperature) [deg C]
+    - X[:, 3]: WS (Wind speed) [m s^-1] (distractor, ignored)
+    """
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # Temperature difference between inlet fluid and ambient air
+    dT = T_in - T_amb
+
+    # Standard HWB parameters for a gross-area collector array
+    # Chosen to map the typical input ranges to the observed eta range of 0.45 - 0.58
+    eta_0 = 0.62  # Gross-area zero-loss efficiency
+    a1 = 1.20  # First-order heat loss coefficient [W m^-2 K^-1]
+    a2 = 0.008  # Second-order heat loss coefficient [W m^-2 K^-2]
+
+    # Quadratic HWB efficiency equation
+    eta = eta_0 - a1 * (dT / G) - a2 * (dT**2 / G)
+
+    return np.clip(eta, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Computes the gross-area thermal efficiency (eta) of a solar thermal collector
+
+    array using the standard Hottel-Whillier-Bliss (HWB) formulation.
+
+    Parameters:
+    X : np.ndarray, shape (N, 4)
+        - X[:, 0] = G (Plane-of-array irradiance, W/m^2)
+        - X[:, 1] = T_in (Inlet fluid temperature, °C)
+        - X[:, 2] = T_amb (Ambient temperature, °C)
+        - X[:, 3] = Wind speed (m/s) [Distractor]
+
+    Returns:
+    np.ndarray, shape (N,)
+        Predicted collector thermal efficiency (dimensionless)
+    """
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # Temperature difference between collector inlet and ambient air
+    dT = T_in - T_amb
+
+    # Canonical HWB coefficients for a typical glazed flat-plate collector array
+    # (adjusted for gross-area basis)
+    eta_0 = 0.71  # Optical efficiency (intercept)
+    a1 = 3.5  # First-order heat loss coefficient (W / m^2 K)
+    a2 = 0.015  # Second-order heat loss coefficient (W / m^2 K^2)
+
+    # HWB quadratic efficiency equation
+    eta = eta_0 - a1 * (dT / G) - a2 * (dT**2 / G)
+
+    return eta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract relevant features
+    G = X[:, 0]  # Global plane-of-array irradiance [W m^-2]
+    T_in = X[:, 1]  # Collector inlet temperature [deg C]
+    T_amb = X[:, 2]  # Ambient temperature [deg C]
+
+    # Temperature difference between inlet and ambient
+    dT = T_in - T_amb
+
+    # Hottel-Whillier-Bliss (HWB) solar collector efficiency parameters
+    # Values calibrated for gross-area efficiency of typical high-performance collectors
+    eta_0 = 0.62  # Optical efficiency (zero-loss efficiency)
+    a1 = 1.20  # First-order heat loss coefficient [W m^-2 K^-1]
+    a2 = 0.008  # Second-order heat loss coefficient [W m^-2 K^-2]
+
+    # Standard quadratic HWB efficiency equation:
+    # eta = eta_0 - a1 * (dT / G) - a2 * (dT^2 / G)
+    eta = eta_0 - a1 * (dT / G) - a2 * (dT**2 / G)
+
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the gross-area thermal efficiency (eta_thermal) of a solar collector array
+    using the quadratic Hottel-Whillier-Bliss (HWB) formulation (equivalent to ISO 9806).
+    
+    Inputs:
+    - X[:, 0]: G (Global plane-of-array irradiance) [W m^-2]
+    - X[:, 1]: T_in (Collector inlet fluid temperature) [deg C]
+    - X[:, 2]: T_amb (Ambient air temperature) [deg C]
+    - X[:, 3]: WS (Wind speed) [m s^-1] (Distractor, ignored in core HWB)
+    
+    Returns:
+    - eta: 1-D numpy array of collector thermal efficiency, dimensionless in (0,1).
+    """
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    
+    # Temperature difference between inlet and ambient
+    delta_T = T_in - T_amb
+    
+    # Standard representative parameters for a high-quality flat-plate collector array (gross area)
+    # eta_0: Zero-loss (optical) efficiency
+    # a1: First-order heat loss coefficient [W m^-2 K^-1]
+    # a2: Second-order heat loss coefficient [W m^-2 K^-2]
+    eta_0 = 0.715
+    a1 = 2.85
+    a2 = 0.011
+    
+    # HWB efficiency equation
+    eta = eta_0 - a1 * (delta_T / G) - a2 * (delta_T**2 / G)
+    
+    # Ensure physical boundaries (efficiency is typically bounded, though not strictly required for output)
+    return np.clip(eta, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Calculates the gross-area thermal efficiency of the solar collector array
+
+    using the standard quadratic Hottel-Whillier-Bliss (HWB) formulation.
+
+    Parameters:
+    X : np.ndarray
+        2D array where:
+        - X[:, 0] = G (Global plane-of-array irradiance, W/m^2)
+        - X[:, 1] = T_in (Collector inlet fluid temperature, °C)
+        - X[:, 2] = T_amb (Ambient air temperature, °C)
+        - X[:, 3] = WS (Wind speed, m/s) [Distractor]
+
+    Returns:
+    np.ndarray
+        1D array of thermal efficiency (eta_thermal) values.
+    """
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # Temperature difference between inlet fluid and ambient air
+    dT = T_in - T_amb
+
+    # Standard HWB parameters calibrated for gross-area efficiency
+    # eta_0: Optical efficiency (gross area)
+    # a1: First-order heat loss coefficient (W / (m^2 K))
+    # a2: Second-order heat loss coefficient (W / (m^2 K^2))
+    eta_0 = 0.615
+    a1 = 1.35
+    a2 = 0.0045
+
+    # Efficiency calculation: eta = eta_0 - a1 * (dT / G) - a2 * (dT^2 / G)
+    eta_thermal = eta_0 - a1 * (dT / G) - a2 * (dT**2 / G)
+
+    return eta_thermal

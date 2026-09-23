@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the real part of the refractive index n using the Sellmeier equation,
+    the most commonly cited closed-form relationship for the dispersion of 
+    transparent optical crystals.
+    """
+    lam = X[:, 0]  # Wavelength in micrometers
+    
+    # Sellmeier coefficients (named constants)
+    # These are placeholders and should be replaced with the specific 
+    # material's fitted coefficients (e.g., from Bond 1965).
+    B1, B2, B3 = 1.0, 1.0, 1.0
+    C1, C2, C3 = 1.0, 1.0, 1.0
+    
+    # Sellmeier equation: n^2(lambda) = 1 + sum( B_i * lambda^2 / (lambda^2 - C_i) )
+    n2 = 1.0 + (B1 * lam**2) / (lam**2 - C1) + \
+                 (B2 * lam**2) / (lam**2 - C2) + \
+                 (B3 * lam**2) / (lam**2 - C3)
+                 
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the real part of the refractive index n as a function of 
+    vacuum wavelength using the Sellmeier equation (the most commonly 
+    cited canonical form for optical dispersion over UV to mid-IR).
+    Coefficients used here are the standard N-BK7 Schott Sellmeier 
+    coefficients as a representative canonical example.
+    """
+    wavelength_um = X[:, 0]
+    
+    # Sellmeier coefficients (N-BK7)
+    B1, B2, B3 = 1.03961212, 0.231792344, 1.01046945
+    C1, C2, C3 = 0.00600069867, 0.0200179144, 103.560653
+    
+    lam2 = wavelength_um**2
+    
+    n2 = 1.0 + (B1 * lam2 / (lam2 - C1)) + \
+                (B2 * lam2 / (lam2 - C2)) + \
+                (B3 * lam2 / (lam2 - C3))
+                
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the real part of the refractive index n at a given vacuum wavelength
+    using the standard 3-term Sellmeier equation.
+    
+    Inputs:
+    X : 2-D numpy array
+        X[:, 0] = wavelength in micrometers (um)
+        
+    Returns:
+    1-D numpy array of refractive index n
+    """
+    lam = X[:, 0]
+    lam2 = lam ** 2
+    
+    # Standard Sellmeier coefficients (using fused silica / SiO2 as a canonical example)
+    B = np.array([0.6961663, 0.4079426, 0.8974794])
+    C = np.array([4.67914826e-3, 1.35120631e-2, 97.9340025])
+    
+    n2 = 1.0
+    for i in range(3):
+        n2 += (B[i] * lam2) / (lam2 - C[i])
+        
+    n = np.sqrt(n2)
+    return n
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the real part of the refractive index n using the Sellmeier equation,
+    the most commonly cited canonical dispersion relationship for transparent optical 
+    materials measured via the minimum-deviation goniometer method (Bond 1965).
+    """
+    lam = X[:, 0]
+    
+    # Generic Sellmeier coefficients (2-term form, representative of a typical crystal/glass)
+    B1 = 0.6961663
+    B2 = 0.4079426
+    C1 = 0.00467914826  # um^2
+    C2 = 0.0135120631   # um^2
+    
+    lam2 = lam**2
+    
+    n_squared = 1.0 + (B1 * lam2) / (lam2 - C1) + (B2 * lam2) / (lam2 - C2)
+    
+    return np.sqrt(n_squared)

@@ -1,0 +1,137 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length using Hack's law.
+
+    Hack's law (Hack, 1957) relates the length of the longest channel (L)
+    to total drainage area (A) by the power law:
+
+        L = C * A^h
+
+    Commonly cited values for metric units (L in km, A in km^2) are C ≈ 1.4,
+    h ≈ 0.6. This form is widely used as a baseline closed-form relationship
+    in hydrology and geomorphology, independent of the other inputs.
+    """
+    A = X[:, 0]  # upland_area_skm (km^2)
+    C = 1.4      # Hack coefficient (km^(1-2h))
+    h = 0.6      # Hack exponent
+    L = C * np.power(A, h)
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length L [km] using Hack's law and correction factors.
+    
+    Hack's law: L = c * A^h
+    where L is main channel length, A is drainage area, c and h are empirical constants.
+    Typical values: h ≈ 0.6, c ≈ 1.4 (for km^2 units).
+    
+    Additional terms account for local catchment area, segment length, 
+    endorheic condition, and Strahler order.
+    """
+    A = X[:, 0]       # upland_area_skm [km^2]
+    A_c = X[:, 1]     # catch_area_skm [km^2]
+    L_s = X[:, 2]     # segment_length_km [km]
+    e = X[:, 3]       # endorheic (0 or 1)
+    omega = X[:, 4]   # strahler_order
+    
+    # Hack's law constants (global average values for km^2 units)
+    c = 1.4
+    h = 0.6
+    
+    # Base main-stem length from Hack's law
+    L_hack = c * (A ** h)
+    
+    # Correction for local catchment influence
+    # Larger local area slightly increases main-stem length estimate
+    A_c_factor = 1.0 + 0.5 * (A_c / A)
+    
+    # Endorheic basins typically have shorter main channels 
+    # relative to drainage area (interior drainage truncation)
+    endo_factor = 1.0 - 0.3 * e
+    
+    # Strahler order modulation: higher-order streams represent 
+    # proportionally longer main channels
+    omega_ref = 4.0
+    strahler_factor = (omega / omega_ref) ** 0.4
+    
+    # Combine all factors
+    L = L_hack * A_c_factor * endo_factor * strahler_factor
+    
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts main-stem river length L [km] using Hack's law: L = k * A^h.
+    
+    Inputs:
+        X : 2-D numpy array
+            X[:, 0] = upland_area_skm (A) [km^2]
+            Other columns are ignored in the most canonical form.
+    
+    Returns:
+        L : 1-D array of predicted main-stem lengths [km].
+    """
+    # Hack's law constants (most commonly cited for lengths in km and areas in km^2)
+    k = 1.4
+    h = 0.6
+    A = X[:, 0]  # total upstream drainage area
+    L = k * A**h
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length (km) using Horton's law of stream lengths.
+    
+    The standard closed-form relationship for the main-stem length L (km)
+    from the terminal segment length L_s (km) and Strahler order omega is:
+        L = L_s * (R_L - R_L^(1 - omega)) / (R_L - 1)
+    where R_L is the stream length ratio, commonly taken as 2.0.
+    This formula gives the total length along the longest flow path, summing
+    one stream of each order from 1 (headwater) to omega (outlet).
+    """
+    # Extract inputs
+    L_s = X[:, 2]          # segment_length_km (terminal outlet segment)
+    omega = X[:, 4]        # strahler_order
+    
+    # Stream length ratio (Horton's law) – typical value
+    R_L = 2.0
+    
+    # Closed-form main-stem length
+    L = L_s * (R_L - R_L**(1 - omega)) / (R_L - 1)
+    
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict main-stem river length L (km) using Hack's law scaling
+    anchored to the terminal segment.
+
+    L = L_s * (A / A_c)^h
+
+    where A = upland_area_skm, A_c = catch_area_skm,
+    L_s = segment_length_km, and h = 0.6 (Hack exponent).
+    """
+    A = X[:, 0]      # total upstream drainage area [km^2]
+    A_c = X[:, 1]    # local catchment area of outlet segment [km^2]
+    L_s = X[:, 2]    # length of terminal outlet segment [km]
+    h = 0.6          # Hack's exponent
+    L = L_s * (A / A_c) ** h
+    return L

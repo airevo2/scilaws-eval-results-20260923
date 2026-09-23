@@ -1,0 +1,172 @@
+import numpy as np
+
+def predict(X):
+    """
+    Eötvös-type closed-form estimate of liquid surface tension along saturation.
+
+    σ = K * (V_m)^(2/3) * (T_c - T)
+
+    where V_m = M_mol / rho_liq.
+
+    A common canonical choice for the proportionality constant is the
+    Guggenheim/Eötvös constant, here taken as a typical literature value.
+    """
+    X = np.asarray(X, dtype=float)
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    V_m = M_mol / rho_liq  # molar volume [m^3/mol]
+
+    K = 2.1e-7  # N / (m * K * (m^3/mol)^(2/3))  (typical Eötvös constant)
+    sigma = K * np.power(V_m, 2.0 / 3.0) * (T_c - T)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Estimate liquid surface tension along the saturation curve using the
+    Eötvös / Guggenheim-type closed-form correlation.
+
+    Inputs:
+        X[:, 0] = T_K     : temperature [K]
+        X[:, 1] = rho_liq : liquid density [kg/m^3]
+        X[:, 2] = T_c     : critical temperature [K]
+        X[:, 3] = M_mol   : molar mass [kg/mol]
+
+    Output:
+        sigma [N/m]
+    """
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Molar volume of saturated liquid [m^3/mol]
+    V_m = M_mol / rho_liq
+
+    # Common canonical Eötvös/Guggenheim form:
+    # sigma * V_m^(2/3) = k * (T_c - T)
+    # with the Parachor/Guggenheim exponent correction often written as:
+    # sigma = K * (1 - T/T_c)^(11/9) / V_m^(2/3)
+    #
+    # Here K is taken in its classical empirical form:
+    K = 2.1e-7  # N·m^(1/3)/mol^(2/3), approximate universal Eötvös constant
+
+    sigma = K * (1.0 - T / T_c) ** (11.0 / 9.0) / (V_m ** (2.0 / 3.0))
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Eötvös-type correlation for saturated liquid surface tension:
+        sigma = k * (V_m)^(2/3) * (T_c - T)
+
+    with V_m = M_mol / rho_liq.
+
+    Returns
+    -------
+    sigma : ndarray, shape (n_samples,)
+        Surface tension in N/m.
+    """
+    X = np.asarray(X, dtype=float)
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Molar volume (m^3/mol)
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant (commonly reported order of magnitude; canonical simple form)
+    k = 2.1e-7  # N / (m^(1/3) K)
+
+    sigma = k * np.power(V_m, 2.0 / 3.0) * (T_c - T)
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Surface tension of a saturated liquid via the Eötvös / Guggenheim-Katayama form.
+
+    σ = K * (T_c - T)^(11/9) / V_m^(2/3)
+
+    where V_m = M_mol / rho_liq.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 4)
+        Columns:
+        0: T_K       [K]
+        1: rho_liq   [kg/m^3]
+        2: T_c       [K]
+        3: M_mol     [kg/mol]
+
+    Returns
+    -------
+    sigma : np.ndarray, shape (n_samples,)
+        Surface tension [N/m]
+    """
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Molar volume [m^3/mol]
+    V_m = M_mol / rho_liq
+
+    # Guggenheim-Katayama/Eötvös-type closed form
+    K = 2.1e-7  # canonical magnitude; substance-independent prefactor in SI units
+    sigma = K * np.power(np.maximum(T_c - T, 0.0), 11.0 / 9.0) / np.power(V_m, 2.0 / 3.0)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Eötvös/Ramsay-Shields-style closed-form estimate for liquid surface tension
+    along the saturation curve, using molar volume from liquid density.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n, 4)
+        Columns:
+        X[:, 0] = T_K      [K]
+        X[:, 1] = rho_liq  [kg/m^3]
+        X[:, 2] = T_c      [K]
+        X[:, 3] = M_mol    [kg/mol]
+
+    Returns
+    -------
+    sigma : ndarray, shape (n,)
+        Surface tension [N/m]
+    """
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    # Molar volume of saturated liquid [m^3/mol]
+    V_m = M_mol / rho_liq
+
+    # Eötvös constant: sigma * V_m^(2/3) = k * (T_c - T)
+    # Common canonical form with a fixed proportionality constant.
+    k = 2.1e-7  # [N·m^(1/3)/(mol^(2/3)·K)] in SI-consistent usage
+
+    sigma = k * (T_c - T) / np.power(V_m, 2.0 / 3.0)
+
+    return sigma

@@ -1,0 +1,134 @@
+task_id: v1_orientation_tuning_stringer__neuron_response
+domain: biology / neuroscience
+license: CC-BY-NC-4.0
+
+# Type II — cluster = neuron. Each neuron has its own preferred orientation,
+# tuning width, and amplitude. The formula form (von Mises) is the same across
+# all neurons; the per-neuron parameters A, k, phi, C are fit-at-runtime.
+type: typeII
+has_group_id: true
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# batch02 standard cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emit for forward-compat.
+
+context: >-
+  Neurons in the primary visual cortex (V1) are selective for the orientation
+  of visual stimuli: each neuron responds most strongly to gratings presented
+  at its preferred orientation and less strongly to other orientations. This
+  tuning relationship is commonly described by a von Mises function or related
+  bell-shaped curves, which capture the preferred orientation, the sharpness
+  of tuning, and the baseline response. The shape of the tuning curve is
+  qualitatively the same across V1 neurons, but the preferred orientation,
+  tuning width, and peak amplitude vary substantially from neuron to neuron.
+  Modern large-scale calcium imaging allows hundreds to thousands of neurons
+  to be recorded simultaneously, revealing a rich diversity of tuning properties
+  within a single animal.
+
+target:
+  name: neuron_response
+  symbol: R(theta)
+  unit: au
+  description: Mean deconvolved calcium fluorescence (arbitrary units, Suite2p pipeline) for one V1 neuron at one stimulus orientation bin. Averaged over approximately 238 stimulus presentations within the bin.
+  range: [0.0, 588.0]
+
+inputs:
+  - name: orientation_deg
+    symbol: theta
+    unit: deg
+    description: Center of 10-degree stimulus orientation bin, folded to [0, 180) degrees. Static sinusoidal gratings are orientation-defined (0 deg and 180 deg are identical).
+    range: [5.0, 175.0]
+
+# Dataset — three-file v2 Type II layout, cluster-disjoint + interleaved split.
+# Cluster split: neurons randomly assigned 80% train / 20% test (seed 42).
+# Within test clusters: interleaved bin assignment (even-index bins → test_fit,
+# odd-index bins → test_test). Interleaved ensures the preferred-orientation bin
+# is represented in both fit and test halves for all neurons (FM-T-P-axis).
+data_files:
+  train:     data/train.csv       # 11612 neurons, all 18 orientation bins
+  test_fit:  data/test_fit.csv    # 2903 neurons, 9 even-index bins (orientations 5,25,...,165 deg)
+  test_test: data/test_test.csv   # 2903 neurons, 9 odd-index bins (orientations 15,35,...,175 deg)
+n_train: 209016
+n_test_fit: 26127
+n_test_test: 26127
+n_clusters_train: 11612
+n_clusters_test: 2903
+n_rows_per_cluster_min: 18
+n_rows_per_cluster_median: 18
+n_rows_per_cluster_max: 18
+
+# Priors — grounded candidate constants for the orientation-tuning von Mises form.
+# All values traceable to reference PDFs.
+priors:
+  - name: k_typical_v1
+    value: 2.0
+    unit: dimensionless
+    description: Typical von Mises concentration parameter for a moderately tuned V1 neuron. Corresponds to a half-width at half-height of ~28 degrees via Swindale (1998) Eq. 6a.
+    source: Swindale (1998) PDF p. 3, §3.3 — used as starting value in Eq. 6a validity examples; Wu & Van Hooser (2025) simulation parameters (PDF p. 5, §3 Results).
+    _role: candidate
+  - name: k_narrow_v1
+    value: 5.0
+    unit: dimensionless
+    description: Concentration parameter for a sharply tuned V1 neuron (~18 degree half-width). Upper bound of typical biological range.
+    source: Swindale (1998) PDF p. 3, Table 1 — fitted k values for cat V1 neurons.
+    _role: distractor
+  - name: sigma_typical_deg
+    value: 30.0
+    unit: deg
+    description: Typical tuning-curve half-width at half-height for a V1 neuron (~20-40 degrees is common). Applies to the wrapped Gaussian form; not directly comparable to k.
+    source: Swindale (1998) PDF p. 3, §3.2 — sigma used as initial estimate for wrapped Gaussian fitting.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: wu_2025
+    label: Wu & Van Hooser 2025 — extended von Mises with baseline C (Eq. 14 + C)
+    formula_file: formulas/wu_2025.py
+    reference_pdf: reference/wu_2025.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4       # C, A, k, phi
+    measured: {rmse: 3.1013, r2: 0.8966}
+  - id: swindale_1998_von_mises
+    label: Swindale 1998 — basic von Mises (Eq. 6, no baseline C)
+    formula_file: formulas/swindale_1998_von_mises.py
+    reference_pdf: reference/swindale_1998.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3       # A, k, phi
+    measured: {rmse: 3.2260, r2: 0.8881}
+  - id: swindale_1998_wrapped_gaussian
+    label: Swindale 1998 — wrapped Gaussian (Eq. 5)
+    formula_file: formulas/swindale_1998_wrapped_gaussian.py
+    reference_pdf: reference/swindale_1998.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3       # A, sigma, phi
+    measured: {rmse: 3.2125, r2: 0.8890}
+  - id: swindale_1998_flat_topped
+    label: Swindale 1998 — flat-topped von Mises (Eq. 7)
+    formula_file: formulas/swindale_1998_flat_topped.py
+    reference_pdf: reference/swindale_1998.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4       # A, k, varphi, nu
+    measured: {rmse: 3.1089, r2: 0.8961}
+  - id: swindale_1998_skewed
+    label: Swindale 1998 — skewed von Mises (Eq. 8, best fit in Swindale)
+    formula_file: formulas/swindale_1998_skewed.py
+    reference_pdf: reference/swindale_1998.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4       # A, k, varphi, nu
+    measured: {rmse: 3.4652, r2: 0.8709}
+
+# === v2 anti-dump caps (from reference_metrics.json derived_caps) ===
+caps:
+  max_law_constants:        0
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 3.1013

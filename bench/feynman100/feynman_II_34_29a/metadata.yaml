@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Magnetic moment"
+  symbol: "mom"
+  unit: ""
+  description: "Magnetic moment"
+inputs:
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"
+  - name: "Mass"
+    symbol: "m"
+    unit: ""
+    description: "Mass"

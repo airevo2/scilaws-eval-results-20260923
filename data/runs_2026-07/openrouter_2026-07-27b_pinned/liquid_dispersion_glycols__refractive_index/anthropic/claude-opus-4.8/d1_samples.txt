@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]  # wavelength in micrometres
+    T = X[:, 1]    # temperature in degC
+
+    # Cauchy dispersion for ethylene glycol at reference temperature (~20 C)
+    # n(lambda) = A + B/lambda^2 + C/lambda^4
+    A = 1.4306
+    B = 0.00460
+    C = 0.00020
+
+    n_ref = A + B / lam**2 + C / lam**4
+
+    # Thermo-optic correction: dn/dT ~ -2.6e-4 per degC, referenced to 20 C
+    dn_dT = -2.6e-4
+    T_ref = 20.0
+
+    n = n_ref + dn_dT * (T - T_ref)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]
+    T = X[:, 1]
+
+    # Cauchy dispersion for ethylene glycol (n vs wavelength in um)
+    # n = A + B/lam^2 + C/lam^4
+    A = 1.4306
+    B = 0.00460
+    C = 0.00020
+
+    n = A + B / lam**2 + C / lam**4
+
+    # Thermo-optic correction (dn/dT ~ -2.6e-4 per degC), reference 20 C
+    dn_dT = -2.6e-4
+    T_ref = 20.0
+    n = n + dn_dT * (T - T_ref)
+
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]  # wavelength in micrometres
+    T = X[:, 1]    # temperature in Celsius
+
+    # Cauchy-type dispersion for ethylene glycol with linear thermal correction
+    # n(lambda, T) = A + B/lambda^2 + C/lambda^4 + dn/dT * (T - T_ref)
+
+    A = 1.4306
+    B = 0.00446   # um^2
+    C = 0.00013   # um^4
+    dndT = -0.00026  # per degC (typical for organic liquids)
+    T_ref = 20.0
+
+    n = A + B / lam**2 + C / lam**4 + dndT * (T - T_ref)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]
+    T = X[:, 1]
+
+    # Cauchy-type dispersion with linear thermo-optic correction
+    # n(lam,T) = A + B/lam^2 + C/lam^4 - dn/dT * (T - T_ref)
+    A = 1.4306
+    B = 0.00460
+    C = 0.00020
+    dndT = 2.6e-4      # per degree C
+    T_ref = 20.0
+
+    n = A + B / lam**2 + C / lam**4 - dndT * (T - T_ref)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    lam = X[:, 0]  # wavelength in micrometres
+    T = X[:, 1]    # temperature in Celsius
+
+    # Cauchy-type dispersion for ethylene glycol with linear thermal correction.
+    # n(lambda) = A + B/lambda^2 + C/lambda^4
+    # Reference n at ~20 C, then apply dn/dT correction.
+    A = 1.4306
+    B = 0.00306
+    C = 0.00006
+
+    n_ref = A + B / lam**2 + C / lam**4
+
+    # Thermo-optic coefficient for ethylene glycol (~ -2.6e-4 per degC)
+    dndT = -2.6e-4
+    T_ref = 20.0
+
+    n = n_ref + dndT * (T - T_ref)
+    return n

@@ -1,0 +1,187 @@
+import numpy as np
+
+def predict(X):
+    # Standard OLS coefficients from empirical gravity literature (e.g., Head & Mayer, 2014)
+    # The intercept is calibrated for GDP and trade flow both scaled in thousands of USD.
+    beta_0 = -14.0
+    beta_gdp_o = 0.95
+    beta_gdp_d = 0.85
+    beta_dist = -1.10
+    beta_contig = 0.55
+    beta_comlang = 0.45
+    beta_colony = 0.90
+    beta_fta = 0.45
+    
+    # Gravity equation: ln X_ij = beta_0 + beta_1*ln Y_i + beta_2*ln Y_j + beta_3*ln d_ij + dummy_effects
+    log_tradeflow = (
+        beta_0 +
+        beta_gdp_o * X[:, 0] +
+        beta_gdp_d * X[:, 1] +
+        beta_dist * X[:, 2] +
+        beta_contig * X[:, 3] +
+        beta_comlang * X[:, 4] +
+        beta_colony * X[:, 5] +
+        beta_fta * X[:, 6]
+    )
+    
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log of bilateral trade flow (in thousands of current USD)
+
+    using a standard gravity model of international trade.
+
+    Inputs:
+    - X[:, 0]: log_gdp_o (ln Y_i) - Log origin GDP
+    - X[:, 1]: log_gdp_d (ln Y_n) - Log destination GDP
+    - X[:, 2]: log_dist (ln d_ij) - Log distance
+    - X[:, 3]: contig (c_ij) - Sharing a land border
+    - X[:, 4]: comlang_off (l_ij) - Sharing an official language
+    - X[:, 5]: col_dep_ever (k_ij) - Ever in a colonial relationship
+    - X[:, 6]: fta_wto (r_ij) - Covered by a regional trade agreement
+    """
+    # Canonical coefficients derived from standard gravity literature (e.g., Head & Mayer, 2014)
+    beta_0 = -20.0  # Constant intercept adjusting for units (GDP in USD, trade in thousands USD)
+    beta_gdp_o = 0.95
+    beta_gdp_d = 0.85
+    beta_dist = -1.05
+    beta_contig = 0.55
+    beta_comlang = 0.45
+    beta_colony = 0.85
+    beta_fta = 0.35
+
+    log_tradeflow = (
+        beta_0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang * X[:, 4]
+        + beta_colony * X[:, 5]
+        + beta_fta * X[:, 6]
+    )
+
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log of bilateral trade flow (in thousands of current USD)
+
+    using a standard gravity model of international trade.
+
+    Inputs:
+    X[:, 0] = log_gdp_o (ln Y_i)
+    X[:, 1] = log_gdp_d (ln Y_n)
+    X[:, 2] = log_dist (ln d_ij)
+    X[:, 3] = contig (c_ij)
+    X[:, 4] = comlang_off (l_ij)
+    X[:, 5] = col_dep_ever (k_ij)
+    X[:, 6] = fta_wto (r_ij)
+    """
+    # Canonical coefficients from empirical gravity literature (e.g., Head & Mayer, 2014)
+    # Adjusted intercept to account for trade in thousands USD and GDP in USD.
+    beta_0 = -31.50
+    beta_gdp_o = 0.95
+    beta_gdp_d = 0.85
+    beta_dist = -1.10
+    beta_contig = 0.60
+    beta_comlang = 0.50
+    beta_colony = 0.80
+    beta_fta = 0.45
+
+    log_tradeflow = (
+        beta_0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang * X[:, 4]
+        + beta_colony * X[:, 5]
+        + beta_fta * X[:, 6]
+    )
+
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Standard OLS gravity model coefficients (e.g., Head & Mayer, 2014)
+    # Adjusted for GDP in USD and Trade Flow in thousands of USD
+    beta_0 = -30.5  # Constant
+    beta_gdp_o = 0.98  # Origin GDP elasticity
+    beta_gdp_d = 0.84  # Destination GDP elasticity
+    beta_dist = -1.13  # Distance elasticity
+    beta_contig = 0.89  # Shared border effect
+    beta_comlang = 0.38  # Common official language effect
+    beta_col = 1.01  # Colonial relationship effect
+    beta_fta = 0.57  # FTA / WTO member effect
+
+    log_tradeflow = (
+        beta_0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang * X[:, 4]
+        + beta_col * X[:, 5]
+        + beta_fta * X[:, 6]
+    )
+
+    return log_tradeflow
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log of bilateral trade flows using a standard gravity model.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = log_gdp_o (ln Y_i)
+        - X[:, 1] = log_gdp_d (ln Y_n)
+        - X[:, 2] = log_dist (ln d_{ij})
+        - X[:, 3] = contig (c_{ij})
+        - X[:, 4] = comlang_off (l_{ij})
+        - X[:, 5] = col_dep_ever (k_{ij})
+        - X[:, 6] = fta_wto (r_{ij})
+
+    Returns:
+    - 1-D numpy array of predicted log_tradeflow (ln X_{ij}) in thousands of current USD.
+    """
+    # Baseline coefficients from consensus empirical gravity literature (e.g., Head & Mayer, 2014)
+    # Intercept adjusted for the target units (thousands of current USD)
+    beta_0 = -27.5
+    beta_gdp_o = 0.98
+    beta_gdp_d = 0.84
+    beta_dist = -1.10
+    beta_contig = 0.50
+    beta_comlang = 0.50
+    beta_colony = 1.00
+    beta_fta = 0.50
+
+    log_tradeflow = (
+        beta_0
+        + beta_gdp_o * X[:, 0]
+        + beta_gdp_d * X[:, 1]
+        + beta_dist * X[:, 2]
+        + beta_contig * X[:, 3]
+        + beta_comlang * X[:, 4]
+        + beta_colony * X[:, 5]
+        + beta_fta * X[:, 6]
+    )
+
+    return log_tradeflow

@@ -1,0 +1,164 @@
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+
+    # Au-197(n,gamma) inclusive capture cross section [barn]
+    # Standard closed-form: 1/v thermal background + single-level Breit-Wigner (SLBW) resonance
+    #
+    # sigma(E) = A / sqrt(E)  +  B / (sqrt(E) * ((E - E_r)^2 + (Gamma/2)^2))
+    #
+    # The first term is the 1/v background (bound level + distant resonances).
+    # The second term is the SLBW capture cross section for the dominant 4.906 eV resonance,
+    # where the 1/sqrt(E) factor arises from pi*lambdabar^2 ~ 1/E and Gamma_n ~ sqrt(E) for s-wave.
+
+    # Thermal reference point
+    E_0     = 0.0253       # thermal energy [eV] (2200 m/s neutrons)
+    sigma_0 = 98.65        # thermal (n,gamma) cross section [barn]
+
+    # 4.906 eV resonance parameters
+    E_r     = 4.906        # resonance energy [eV]
+    Gamma   = 0.14         # total width [eV]
+    sigma_r = 33000.0      # peak capture cross section at resonance [barn]
+
+    # Precompute (Gamma/2)^2
+    g2 = (Gamma / 2.0) ** 2
+
+    # Breit-Wigner strength parameter B
+    # Defined so that sigma_BW(E_r) = sigma_r:
+    #   sigma_BW(E) = B / (sqrt(E) * ((E - E_r)^2 + g2))
+    B = sigma_r * np.sqrt(E_r) * g2
+
+    # 1/v background strength A
+    # The measured thermal cross section sigma_0 includes the resonance tail,
+    # so A is obtained by subtracting the BW contribution at E_0:
+    #   sigma_0 = (A + B / ((E_0 - E_r)^2 + g2)) / sqrt(E_0)
+    A = sigma_0 * np.sqrt(E_0) - B / ((E_0 - E_r) ** 2 + g2)
+
+    # Total capture cross section [barn]
+    sigma = (A + B / ((E - E_r) ** 2 + g2)) / np.sqrt(E)
+
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+
+    # Au-197(n,gamma) standard parameters
+    sigma_0 = 98.65       # thermal capture cross section [barn] at E_0
+    E_0 = 0.0253          # thermal neutron energy [eV]
+    E_r = 4.906           # first resonance energy [eV]
+    g = 5.0 / 8.0         # spin statistical factor (2J+1)/((2I+1)(2s+1)), J=2, I=3/2, s=1/2
+    Gn_r = 0.150          # neutron width at E_r [eV]
+    Gg = 0.464            # radiative capture width [eV]
+    G = Gn_r + Gg         # total width [eV]
+
+    # pi * hbar^2 / (2 * m_n) in [barn * eV]
+    C = 6.5102e5
+
+    # 1/v thermal capture component
+    sigma_1v = sigma_0 * np.sqrt(E_0 / E)
+
+    # Single-level Breit-Wigner resonance (s-wave, energy-dependent neutron width)
+    Gn = Gn_r * np.sqrt(E / E_r)
+    sigma_BW = (C / E) * g * Gn * Gg / ((E - E_r)**2 + (G / 2.0)**2)
+
+    return np.log10(sigma_1v + sigma_BW)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+
+    # Au-197(n,gamma) single-level Breit-Wigner + 1/v background
+    # Standard resonance parameters (Mughabghab, Atlas of Neutron Resonances)
+
+    E_0 = 0.0253          # thermal reference energy [eV]
+    sigma_0 = 98.65       # thermal capture cross section [b]
+    E_r = 4.906           # first resonance energy [eV]
+    g = 0.625             # spin statistical factor (2J+1)/((2I+1)(2s+1)), J=2, I=3/2
+    Gamma_n0 = 0.005345   # reduced neutron width [eV^{1/2}]  (Gamma_n = Gamma_n0 * sqrt(E))
+    Gamma_g = 0.110       # radiative (capture) width [eV]
+
+    # K = ((A+1)/A)^2 * pi * hbar^2 / (2 * m_n)  for A = 197
+    K = 657595.0          # [barn * eV]
+
+    sqrt_E = np.sqrt(E)
+
+    # Energy-dependent neutron width (s-wave) and total width
+    Gamma_n = Gamma_n0 * sqrt_E
+    Gamma = Gamma_n + Gamma_g
+
+    # Breit-Wigner resonance capture cross section
+    bw_num = g * K * Gamma_n0 * Gamma_g
+    sigma_BW = bw_num / (sqrt_E * ((E - E_r)**2 + (Gamma / 2.0)**2))
+
+    # 1/v background coefficient: ensure total sigma(E_0) = sigma_0
+    sqrt_E0 = np.sqrt(E_0)
+    Gamma_E0 = Gamma_n0 * sqrt_E0 + Gamma_g
+    bw_E0 = bw_num / (sqrt_E0 * ((E_0 - E_r)**2 + (Gamma_E0 / 2.0)**2))
+    A_1v = (sigma_0 - bw_E0) * sqrt_E0
+
+    # Total capture cross section
+    sigma = A_1v / sqrt_E + sigma_BW
+
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+
+    # Physical constant: pi * hbar^2 / (2 * m_n)  [eV * barn]
+    A = 6.510e5
+
+    # Au-197  4.9 eV resonance parameters
+    E_r = 4.906          # resonance energy [eV]
+    g = 5.0 / 8.0        # spin statistical factor  g_J = (2J+1)/((2I+1)(2s+1))
+                         #   J=2, I(Au-197)=3/2, s(n)=1/2
+    Gamma_n = 0.0160     # neutron width at E_r [eV]
+    Gamma_gamma = 0.127  # radiative capture width [eV]
+
+    # Energy-dependent neutron width for s-wave (l = 0)
+    Gamma_n_E = Gamma_n * np.sqrt(E / E_r)
+    Gamma_E = Gamma_n_E + Gamma_gamma
+
+    # Single-level Breit-Wigner (n,gamma) cross section [barns]
+    sigma = (A * g / E) * (Gamma_n_E * Gamma_gamma) / (
+        (E - E_r) ** 2 + (Gamma_E / 2.0) ** 2
+    )
+
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+    
+    # Au-197(n,gamma) standard parameters
+    sigma_th = 98.65      # Thermal cross section at E_th (barns)
+    E_th = 0.0253         # Thermal energy (eV)
+    E_r = 4.906           # Resonance energy (eV)
+    sigma_peak = 33000.0  # Peak resonance cross section (barns)
+    Gamma = 0.141         # Total resonance width (eV)
+    
+    # 1/v thermal background
+    sigma_1v = sigma_th * np.sqrt(E_th / E)
+    
+    # Single-level Breit-Wigner resonance
+    # The sqrt(E_r / E) factor accounts for the 1/v dependence of the neutron width 
+    # and the 1/E dependence of the cross section (lambda^2)
+    sigma_bw = sigma_peak * np.sqrt(E_r / E) * ((Gamma / 2.0)**2) / ((E - E_r)**2 + (Gamma / 2.0)**2)
+    
+    sigma = sigma_1v + sigma_bw
+    
+    return np.log10(sigma)

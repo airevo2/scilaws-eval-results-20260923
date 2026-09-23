@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    logL_star = X[:, 0]
+    # Canonical empirical accretion–stellar luminosity relation for
+    # classical T Tauri stars (e.g., Alcalá et al. 2017, A&A, 600, A20;
+    # Manara et al. 2016, A&A, 595, A100):
+    #   log(L_acc/L_sun) = a + b * log(L_star/L_sun)
+    a = -1.22
+    b = 1.05
+    return a + b * logL_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) 
+    using the standard empirical relationship with stellar bolometric luminosity.
+    
+    This relation is derived from UV-excess slab modeling of the Balmer 
+    continuum (e.g., Alcalá et al. 2014, 2017; Manara et al. 2017).
+    """
+    # Empirical fit coefficients for log(L_acc) vs log(L_star)
+    # Typical values from large X-shooter surveys of star-forming regions
+    slope = 1.34
+    intercept = -0.81
+    
+    logL_star = X[:, 0]
+    
+    # Calculate log(L_acc/L_sun)
+    logL_acc = slope * logL_star + intercept
+    
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(L_acc/L_sun) for classical T Tauri stars using the
+    canonical empirical correlation between accretion luminosity and
+    stellar bolometric luminosity.
+
+    The most widely cited closed-form relation in the literature is:
+        log10(L_acc / L_sun) = alpha * log10(L_star / L_sun) + beta
+    with alpha ~ 1 and beta ~ -1 (i.e. L_acc ≈ 0.1 L_star), as found
+    across numerous UV-excess / slab-model studies (Gullbring et al. 1998;
+    Hartmann et al. 1998; Calvet et al. 2004; Alcalá et al. 2014, 2017;
+    Manara et al. 2017).
+    """
+    logL_star = X[:, 0]
+
+    # Canonical linear relation in log-space
+    alpha = 1.0
+    beta  = -1.0
+
+    logL_acc = alpha * logL_star + beta
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    logL_star = X[:, 0]
+    M_star    = X[:, 1]
+    R_star    = X[:, 2]
+    Teff      = X[:, 3]
+
+    # Standard empirical relation from X-Shooter UV-excess surveys
+    # (e.g. Alcalá et al. 2014, A&A 561, A2; Manara et al. 2017, A&A 604, A127)
+    # log(L_acc/L_sun) = a * log(L_star/L_sun) + b
+    a = 0.95
+    b = -0.70
+
+    logL_acc = a * logL_star + b
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the log base-10 accretion luminosity (log(L_acc/L_sun)) for 
+    pre-main-sequence T Tauri stars. 
+    
+    Based on the canonical empirical relationship derived from X-shooter 
+    UV-excess slab modelling surveys (e.g., Alcalá et al. 2017, A&A, 597, A32).
+    While stellar mass, radius, and Teff are standard catalog parameters 
+    (often derived using Baraffe 1998 tracks), the primary closed-form 
+    correlation for L_acc is with the stellar bolometric luminosity L_star.
+    """
+    # Canonical fitted coefficients for the log(L_acc) - log(L_star) relation
+    alpha = 1.31
+    beta = -1.05
+    
+    logL_star = X[:, 0]
+    
+    # Standard closed-form empirical relationship
+    logL_acc = alpha * logL_star + beta
+    
+    return logL_acc

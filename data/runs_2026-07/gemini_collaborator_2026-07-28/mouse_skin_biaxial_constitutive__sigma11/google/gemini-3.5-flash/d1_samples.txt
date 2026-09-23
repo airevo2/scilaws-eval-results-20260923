@@ -1,0 +1,173 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract principal stretch ratios
+    l1 = X[:, 0]
+    l2 = X[:, 1]
+
+    # Compute Green-Lagrange strains
+    E11 = 0.5 * (l1**2 - 1.0)
+    E22 = 0.5 * (l2**2 - 1.0)
+
+    # Standard Fung-type orthotropic constitutive model parameters for mouse skin
+    # c is the stress scaling parameter (in MPa)
+    # A1, A2, A3 are dimensionless anisotropic stiffness parameters
+    c = 0.015
+    A1 = 4.5
+    A2 = 3.2
+    A3 = 1.5
+
+    # Exponent of the Fung strain energy function
+    Q = A1 * E11**2 + A2 * E22**2 + 2.0 * A3 * E11 * E22
+
+    # First principal Cauchy stress (sigma11) under plane stress assumption
+    sigma11 = l1**2 * c * (A1 * E11 + A3 * E22) * np.exp(Q)
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract principal stretches
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    # Compute Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+
+    # Fung-type orthotropic constitutive parameters for mouse skin (typical values)
+    # c is the stress scaling parameter in MPa
+    c = 0.025
+    A1 = 3.2  # Lateral stiffness parameter
+    A2 = 4.8  # Cranial-caudal stiffness parameter
+    A3 = 0.75  # Shear/cross-coupling parameter
+
+    # Quadratic form in the exponent of the Fung strain energy function
+    Q = A1 * E11**2 + A2 * E22**2 + 2.0 * A3 * E11 * E22
+
+    # Compute the first principal Cauchy stress (sigma11)
+    # Using relation: sigma11 = lambda11^2 * (dW / dE11)
+    sigma11 = (lambda11**2) * c * (A1 * E11 + A3 * E22) * np.exp(Q)
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the Cauchy stress sigma11 [MPa] for mouse skin under biaxial loading
+
+    using an orthotropic Fung-type strain energy function.
+
+    Parameters:
+    X : ndarray of shape (N, 2)
+        X[:, 0] = lambda11 (lateral stretch)
+        X[:, 1] = lambda22 (cranial-caudal stretch)
+
+    Returns:
+    sigma11 : ndarray of shape (N,)
+        Cauchy stress in the first principal direction [MPa]
+    """
+    lam1 = X[:, 0]
+    lam2 = X[:, 1]
+
+    # Compute Green-Lagrange strains
+    E11 = 0.5 * (lam1**2 - 1.0)
+    E22 = 0.5 * (lam2**2 - 1.0)
+
+    # Fung-type strain energy density parameters for mouse skin
+    # W = 0.5 * c * (exp(Q) - 1)
+    # Q = a1 * E11^2 + a2 * E22^2 + 2 * a3 * E11 * E22
+    c = 0.025  # Scaling parameter (MPa)
+    a1 = 4.5  # Stiffness parameter in lateral direction
+    a2 = 3.5  # Stiffness parameter in cranial-caudal direction
+    a3 = 1.2  # Shear/coupling parameter
+
+    # Exponent Q
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Cauchy stress: sigma11 = lam1^2 * dW/dE11
+    # dW/dE11 = c * (a1 * E11 + a3 * E22) * exp(Q)
+    sigma11 = lam1**2 * c * (a1 * E11 + a3 * E22) * np.exp(Q)
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract principal stretch ratios
+    l1 = X[:, 0]
+    l2 = X[:, 1]
+
+    # Compute Green-Lagrange strains
+    E11 = 0.5 * (l1**2 - 1.0)
+    E22 = 0.5 * (l2**2 - 1.0)
+
+    # Fung-type orthotropic strain energy density parameters for mouse skin
+    # c (scaling parameter) in MPa, A1, A2, A3 are dimensionless anisotropy coefficients
+    c = 0.025
+    A1 = 1.85
+    A2 = 1.45
+    A3 = 0.55
+
+    # Quadratic strain term
+    Q = A1 * E11**2 + A2 * E22**2 + 2.0 * A3 * E11 * E22
+
+    # 2nd Piola-Kirchhoff stress: S11 = dW/dE11
+    S11 = c * (A1 * E11 + A3 * E22) * np.exp(Q)
+
+    # Cauchy stress: sigma11 = lambda11^2 * S11
+    sigma11 = (l1**2) * S11
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the Cauchy stress sigma11 [MPa] in a mouse-skin specimen
+
+    under biaxial loading using the standard orthotropic Fung-elasticity model.
+
+    Parameters:
+    - X: 2-D numpy array of shape (N, 2)
+         X[:, 0] = lambda11 (stretch in the first/lateral direction)
+         X[:, 1] = lambda22 (stretch in the second/cranial-caudal direction)
+
+    Returns:
+    - 1-D numpy array of shape (N,) containing the predicted sigma11 [MPa].
+    """
+    # Extract principal stretches
+    l1 = X[:, 0]
+    l2 = X[:, 1]
+
+    # Compute Green-Lagrange strains
+    E1 = 0.5 * (l1**2 - 1.0)
+    E2 = 0.5 * (l2**2 - 1.0)
+
+    # Representative material parameters for mouse skin (Fung model)
+    c = 0.045  # Stress scaling parameter [MPa]
+    a1 = 9.2  # Anisotropic stiffness parameter in lateral direction
+    a2 = 7.1  # Anisotropic stiffness parameter in cranial-caudal direction
+    a3 = 3.5  # Interaction parameter
+
+    # Exponent Q in the Fung strain energy function
+    Q = a1 * E1**2 + a2 * E2**2 + 2.0 * a3 * E1 * E2
+
+    # 2nd Piola-Kirchhoff stress: S11 = dW/dE1 = c * (a1 * E1 + a3 * E2) * exp(Q)
+    # Cauchy stress: sigma11 = l1^2 * S11 (assuming incompressibility)
+    sigma11 = (l1**2) * c * (a1 * E1 + a3 * E2) * np.exp(Q)
+
+    return sigma11

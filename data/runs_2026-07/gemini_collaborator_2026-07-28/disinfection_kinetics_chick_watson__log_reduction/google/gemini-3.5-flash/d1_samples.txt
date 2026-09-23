@@ -1,0 +1,127 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 microbial reduction (LRV) using the Chick-Watson model.
+
+    Parameters:
+    X : ndarray of shape (n_samples, 1)
+        X[:, 0] = CT (mg/L*min), the disinfection dose.
+
+    Returns:
+    ndarray of shape (n_samples,)
+        Predicted log-reduction value (LRV).
+    """
+    CT = X[:, 0]
+
+    # Typical Chick-Watson inactivation rate constant (k) in log10 scale.
+    # A value of 0.05 is representative of standard chlorine disinfection
+    # (e.g., achieving ~3-log reduction of Giardia at a CT of 60 mg/L*min).
+    k = 0.05
+
+    # Chick-Watson kinetic relationship: LRV = k * CT
+    lrv = k * CT
+
+    # LRV is physically bounded to be non-negative
+    return np.maximum(0.0, lrv)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the Log Reduction Value (LRV) using the Chick-Watson kinetic model.
+
+    Parameters:
+    X : ndarray of shape (n_samples, 1)
+        X[:, 0] = CT (mg/L*min) - Disinfection dose
+
+    Returns:
+    ndarray of shape (n_samples,)
+        Predicted log10 microbial reduction (LRV)
+    """
+    # Extract CT (Disinfection dose)
+    CT = X[:, 0]
+
+    # Chick-Watson model in log10 form: LRV = k * CT
+    # k is the base-10 inactivation rate constant (L / mg*min).
+    # We use a representative value of k = 0.058, which is typical for
+    # free chlorine inactivation of Giardia lamblia at 15 °C and pH 7.
+    k = 0.058
+
+    # Calculate LRV (ensuring it is non-negative)
+    LRV = k * CT
+
+    return np.maximum(0.0, LRV)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract CT (Disinfection dose in mg/L*min)
+    CT = X[:, 0]
+
+    # Chick-Watson kinetic model: LRV = k * CT
+    # k is the specific lethality coefficient (base 10).
+    # A representative value of k = 0.03 L/(mg*min) is used,
+    # which is typical for free chlorine inactivation of Giardia lamblia.
+    k = 0.03
+
+    # Calculate Log Reduction Value (LRV)
+    lrv = k * CT
+
+    # LRV must be non-negative
+    return np.maximum(0.0, lrv)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is CT (mg/L * min)
+    CT = X[:, 0]
+
+    # Chick-Watson kinetic model: LRV = k * CT
+    # k is the specific lethality / inactivation rate constant (L / (mg * min)).
+    # We use a representative value of k = 0.05, typical for disinfection kinetics
+    # (e.g., Giardia inactivation by free chlorine under moderate conditions).
+    k = 0.05
+
+    lrv = k * CT
+
+    # LRV is always non-negative
+    return np.maximum(0.0, lrv)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log-reduction value (LRV) using the Chick-Watson kinetic model.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] represents the CT factor (mg/L * min).
+
+    Returns:
+    np.ndarray
+        1-D array of predicted log-reductions (LRV).
+    """
+    # CT is the primary predictor
+    CT = X[:, 0]
+
+    # k is the Chick-Watson inactivation rate constant (log10 base).
+    # A representative value of 0.05 is chosen (typical for pathogens like Giardia
+    # under moderate free chlorine disinfection conditions).
+    k = 0.05
+
+    # Chick-Watson model: LRV = k * CT
+    lrv = k * CT
+
+    # Ensure LRV is non-negative
+    return np.maximum(0.0, lrv)

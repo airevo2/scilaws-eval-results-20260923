@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log reduction value (LRV) from CT using the Chick-Watson model.
+    LRV = k * CT, where k = 1/CT_1log.
+    CT_1log is the CT required for 1-log inactivation (a typical value for Giardia
+    cysts with free chlorine at 5°C, pH 7 is ~50 mg·min/L).
+    """
+    CT_1log = 50.0  # mg*min/L
+    return X[:, 0] / CT_1log
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log reduction value (LRV) from CT using the Chick-Watson model.
+
+    The standard first-order Chick-Watson disinfection model:
+        log10(N0/N) = k * C * t = k * CT
+    where:
+        N0 = initial microbial count
+        N  = surviving microbial count
+        C  = disinfectant residual concentration (mg/L)
+        t  = contact time (min)
+        CT = C * t (mg/L * min)
+        k  = disinfection rate constant (L/mg/min)
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = CT values in mg/L*min.
+
+    Returns
+    -------
+    lrv : np.ndarray, shape (n_samples,)
+        Predicted log reduction values.
+    """
+    # Disinfection rate constant (organism- and disinfectant-specific).
+    # A placeholder value of 1.0 is used here; in practice this would be
+    # calibrated to experimental data.
+    k = 1.0  # L/(mg*min)
+
+    CT = X[:, 0]
+    lrv = k * CT
+    return lrv
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 microbial reduction (LRV) using the Chick-Watson law:
+    LRV = k * CT, where CT is the disinfection dose (mg/L * min).
+    k is an empirical inactivation rate constant.
+    For demonstration, a generic placeholder value of 1.0 is used.
+    """
+    CT = X[:, 0]
+    k = 1.0  # placeholder constant (e.g., (L/(mg*min)) for a given microbe/disinfectant)
+    return k * CT
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 microbial reduction (LRV) from CT using the Chick-Watson model.
+    
+    LRV = k * CT
+    
+    where:
+        CT  : product of disinfectant residual concentration (mg/L) and contact time (min)
+        k   : inactivation rate constant (L/(mg·min)) in log10 base.
+    
+    The constant k is set here to a representative value (e.g., 0.1) for illustration;
+    in practice it depends on the microorganism, disinfectant, temperature and pH.
+    """
+    k = 0.1  # inactivation rate constant (log10 reduction per mg/L·min)
+    CT = X[:, 0]
+    return k * CT
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10 microbial reduction (LRV) from CT dose using the
+    standard Chick-Watson disinfection model (first-order, n=1).
+
+    LRV = k * CT
+
+    where k is the inactivation rate constant (L/(mg*min)). The value
+    used here is a typical order-of-magnitude placeholder for chlorine
+    disinfection of common indicator organisms.
+    """
+    # inactivation rate constant (L/(mg*min))
+    k = 0.1
+    
+    CT = X[:, 0]
+    lrv = k * CT
+    return lrv

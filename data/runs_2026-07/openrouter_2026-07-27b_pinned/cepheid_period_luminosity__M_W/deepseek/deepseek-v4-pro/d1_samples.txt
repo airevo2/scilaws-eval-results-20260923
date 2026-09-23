@@ -1,0 +1,128 @@
+import numpy as np
+
+def predict(X):
+    logP = X[:, 0]
+    feh = X[:, 1]
+    # Coefficients from Groenewegen (2018), A&A 619, A8:
+    # Absolute Gaia Wesenheit magnitude M_W = alpha + beta*(log P - 1) + gamma*[Fe/H]
+    alpha = -3.306
+    beta  = -3.346
+    gamma =  0.188
+    M_W = alpha + beta * (logP - 1.0) + gamma * feh
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absolute Gaia Wesenheit magnitude M_W from log P and [Fe/H].
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 2)
+        X[:, 0] : log_P, base-10 logarithm of the fundamental-mode period (days)
+        X[:, 1] : feh, [Fe/H] photospheric iron abundance (dex)
+    
+    Returns
+    -------
+    M_W : ndarray, shape (n_samples,)
+        Absolute Wesenheit magnitude (mag)
+    
+    Notes
+    -----
+    The relation follows the Gaia DR2 calibration for classical Cepheids
+    (Ripepi et al. 2019, A&A 625, A14) using the Wesenheit index
+    W = G - 1.90*(G_BP - G_RP):
+        M_W = -3.24 - 2.78*(log P - 1) + 0.12*[Fe/H]
+    """
+    log_P = X[:, 0]
+    feh   = X[:, 1]
+    M_W = -3.24 - 2.78 * (log_P - 1.0) + 0.12 * feh
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absolute Gaia Wesenheit magnitude M_W from log P and [Fe/H].
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 2)
+        X[:, 0] = log P (base-10 log of fundamental-mode period in days)
+        X[:, 1] = [Fe/H] (photospheric iron abundance in dex)
+    
+    Returns
+    -------
+    M_W : ndarray, shape (n_samples,)
+        Absolute Gaia Wesenheit magnitude (mag).
+    
+    Reference
+    ---------
+    Groenewegen (2018, A&A 619, A8)
+    """
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    # Coefficients from Groenewegen 2018 for W = G - 1.90*(BP-RP)
+    M_W = -5.90 - 3.32 * (log_P - 1.0) - 0.21 * feh
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absolute Gaia Wesenheit magnitude M_W from log P and [Fe/H].
+    
+    Uses the standard period-luminosity-metallicity relation for fundamental-mode
+    classical Cepheids calibrated with Gaia parallaxes.
+    Reference: Ripepi et al. (2021, A&A 647, A51) and similar works.
+    """
+    log_P = X[:, 0]          # base-10 log of period (days)
+    feh = X[:, 1]            # [Fe/H] (dex)
+    
+    # Canonical PLZ coefficients (centered on log P = 1.0)
+    alpha = -5.99   # zero-point at log P = 1.0, [Fe/H] = 0.0
+    beta  = -3.31   # slope in log P
+    gamma = -0.30   # metallicity slope
+    
+    log_P0 = 1.0
+    
+    M_W = alpha + beta * (log_P - log_P0) + gamma * feh
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absolute Gaia Wesenheit magnitude M_W from log P and [Fe/H].
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 2)
+        X[:,0] = log_P   : base-10 log of fundamental-mode period (days)
+        X[:,1] = feh     : iron abundance [Fe/H] (dex)
+
+    Returns
+    -------
+    M_W : np.ndarray, shape (n_samples,)
+        Predicted absolute Wesenheit magnitude.
+    """
+    log_P = X[:, 0]
+    feh = X[:, 1]
+
+    # Canonical PLZ relation from Ripepi et al. (2019), A&A 625, A14
+    # M_W = a + b * (log_P - 1.0) + c * [Fe/H]
+    a = -2.73   # zero point at log P = 1.0
+    b = -2.85   # slope in mag/dex
+    c = -0.20   # metallicity coefficient in mag/dex
+
+    M_W = a + b * (log_P - 1.0) + c * feh
+    return M_W

@@ -1,0 +1,162 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log(L_acc / L_sun) from stellar parameters using the
+    canonical correlation between accretion luminosity and bolometric
+    luminosity in classical T Tauri stars (Gullbring et al. 1998,
+    A&A 330, 257).
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Shape (N, 4) with columns:
+        X[:,0] : logL_star   [log10(L_sun)]
+        X[:,1] : M_star_B98  [M_sun]
+        X[:,2] : R_star      [R_sun]
+        X[:,3] : Teff_K      [K]
+
+    Returns
+    -------
+    logL_acc : np.ndarray
+        Shape (N,) predicted log(L_acc / L_sun) in log10(L_sun).
+    """
+    # Gullbring et al. (1998) relation: log L_acc = 1.08 log L_star - 1.87
+    logL_star = X[:, 0]
+    logL_acc = 1.08 * logL_star - 1.87
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the log10 accretion luminosity (log L_acc / L_sun) from stellar
+    parameters using the standard empirical/physical scaling relation for
+    pre-main-sequence T Tauri stars.
+
+    Parameters
+    ----------
+    X : 2-D numpy array
+        Columns:
+        X[:, 0] = logL_star : log10(L_star / L_sun)
+        X[:, 1] = M_star_B98 : M_star [M_sun]
+        X[:, 2] = R_star      : R_star [R_sun]
+        X[:, 3] = Teff_K      : T_eff [K]
+
+    Returns
+    -------
+    logL_acc : 1-D numpy array
+        log10(L_acc / L_sun)
+    """
+    # Extract inputs
+    logL_star = X[:, 0]
+    M_star    = X[:, 1]
+    R_star    = X[:, 2]
+    Teff      = X[:, 3]  # (included for compatibility with typical multi-variable fits)
+
+    # Named constants for the standard closed-form relation.
+    # Form: log L_acc = A + B * logL_star + C * log10(M_star) + D * log10(R_star) + E * log10(Teff)
+    #
+    # The core of the relation comes from the definition of accretion luminosity
+    #   L_acc = G * M_star * M_dot / R_star,
+    # combined with the widely observed power-law correlation between mass accretion
+    # rate and stellar bolometric luminosity: M_dot ∝ L_star^B_acc.
+    #
+    # Typical literature values (e.g., Gullbring et al. 1998, Alcalá et al. 2017):
+    #   B (logL_star exponent)      = 1.5
+    #   C (logM_star exponent)      = 1.0   (from L_acc ∝ M_star)
+    #   D (logR_star exponent)      = -1.0  (from L_acc ∝ 1/R_star)
+    #   E (logTeff exponent)        = 0.0   (Teff often not directly used in the simplest form)
+    #
+    # The constant A absorbs the physical constants (G, Msun, Rsun, Lsun, yr)
+    # and the normalisation of the M_dot–L_star relation.
+    # For M_dot/(Msun/yr) = 10^(-8.5) * (L_star/L_sun)^1.5, the physical constant
+    # G*Msun^2/(Rsun*Lsun*yr) ≈ 3.14e7, giving A ≈ log10(3.14e7) - 8.5 ≈ -1.0.
+    A = -1.0
+    B =  1.5
+    C =  1.0
+    D = -1.0
+    E =  0.0
+
+    # Compute logarithms of mass, radius, and effective temperature
+    logM = np.log10(M_star)
+    logR = np.log10(R_star)
+    logT = np.log10(Teff)
+
+    # Standard closed-form prediction
+    logL_acc = A + B * logL_star + C * logM + D * logR + E * logT
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log(L_acc/L_sun) for pre-main-sequence T Tauri stars using the
+    standard closed-form relationship based on the gravitational energy release
+    in magnetospheric accretion:
+
+        L_acc = (G M_star Mdot) / R_star
+
+    combined with the widely observed mass accretion rate scaling:
+        Mdot ∝ M_star^2
+
+    This yields L_acc ∝ M_star^3 / R_star.  Normalised to typical values
+    (Mdot ≈ 10^{-8} M_sun/yr at 1 M_sun) the relation becomes:
+
+        L_acc / L_sun ≈ 0.31 * (M_star / M_sun)^3 / (R_star / R_sun)
+
+    Taking log10 gives the closed form used here.
+
+    Inputs:
+        X[:,0] = logL_star (unused, given for consistency with typical datasets)
+        X[:,1] = M_star_B98 (M_sun)
+        X[:,2] = R_star (R_sun)
+        X[:,3] = Teff_K (unused)
+
+    Returns:
+        1-D array of log10(L_acc / L_sun)
+    """
+    M_star = X[:, 1]   # stellar mass in solar units
+    R_star = X[:, 2]   # stellar radius in solar units
+    # constant from G * M_sun^2 / (R_sun * yr) / L_sun * 1e-8 = 0.314 → log10(0.314) ≈ -0.503
+    log_L_acc = 3.0 * np.log10(M_star) - np.log10(R_star) - 0.503
+    return log_L_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log(L_acc / L_sun) from stellar parameters using the standard
+    Gullbring et al. (1998) relation:  log10(L_acc) = 1.44 * log10(L_star) - 1.18
+    (with both luminosities in solar units).
+    """
+    logL_star = X[:, 0]
+    logL_acc = 1.44 * logL_star - 1.18
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log(L_acc/L_sun) from stellar parameters using the standard 
+    magnetospheric accretion scaling law: L_acc = (G M Mdot) / R, 
+    assuming a typical mass-accretion rate Mdot \propto M^2.
+    This yields the closed form:
+    log(L_acc/L_sun) = log10(0.314) + 3 log10(M/M_sun) - log10(R/R_sun)
+    """
+    M_star = X[:, 1]   # stellar mass in M_sun
+    R_star = X[:, 2]   # stellar radius in R_sun
+    
+    # constant from G * M_sun^2 / (R_sun * L_sun * yr) * 1e-8
+    const = -0.503   # log10(0.314)
+    
+    logL_acc = const + 3.0 * np.log10(M_star) - np.log10(R_star)
+    return logL_acc

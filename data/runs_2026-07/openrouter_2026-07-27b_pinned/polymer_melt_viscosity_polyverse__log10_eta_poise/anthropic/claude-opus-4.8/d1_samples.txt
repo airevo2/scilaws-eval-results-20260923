@@ -1,0 +1,175 @@
+import numpy as np
+
+def predict(X):
+    T   = X[:, 0]          # K
+    lMw = X[:, 1]          # log10(Mw)
+    gd  = X[:, 2]          # shear rate 1/s
+    Tg  = X[:, 3]          # K
+
+    # --- Molecular-weight dependence (entangled melt, 3.4 power law) ---
+    # log10(eta0) ~ 3.4 * log10(Mw) + const
+    mw_term = 3.4 * lMw
+
+    # --- Temperature dependence: WLF referenced to Tg ---
+    # log10(aT) = -C1 (T - Tg) / (C2 + (T - Tg)) ; universal constants
+    C1, C2 = 17.44, 51.6
+    dT = T - Tg
+    log_aT = -C1 * dT / (C2 + dT)
+
+    # Baseline constant (empirical intercept, poise)
+    A = -6.0
+
+    log_eta0 = A + mw_term + log_aT
+
+    # --- Shear-thinning correction (Cross model) ---
+    # eta = eta0 / (1 + (eta0 * gd / tau*)^(1-n))  -> in log space
+    n = 0.4          # power-law index
+    tau_star = 1.0e5 # characteristic stress-like scale (poise * s^-1)
+    eta0 = np.power(10.0, log_eta0)
+    factor = 1.0 + np.power(eta0 * gd / tau_star, 1.0 - n)
+    log_eta = log_eta0 - np.log10(factor)
+
+    return log_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard melt-viscosity model combining:
+    #  (1) WLF temperature shift referenced to Tg,
+    #  (2) the 3.4-power molecular-weight law (reptation/entangled melts),
+    #  (3) a Cross-type shear-thinning correction.
+    #
+    # log10(eta) = log10(eta_Tg) + 3.4*(log10Mw - log10Mc)
+    #              - C1*(T-Tg)/(C2 + (T-Tg))         [WLF]
+    #              - log10(1 + (K*gamma_dot)^(1-n))   [Cross shear thinning]
+
+    T       = X[:, 0]
+    log10Mw = X[:, 1]
+    gamma   = X[:, 2]
+    Tg      = X[:, 3]
+
+    # WLF "universal" constants
+    C1 = 17.44
+    C2 = 51.6
+
+    # Reference viscosity at Tg (~1e13 poise) and critical Mw for entanglement
+    log10_eta_Tg = 13.0
+    log10_Mc     = 4.0        # ~10^4 g/mol critical entanglement molar mass
+    a_Mw         = 3.4        # entangled power-law exponent
+
+    # Cross shear-thinning parameters
+    K   = 1.0e-2             # characteristic time-like constant (s)
+    n   = 0.4               # power-law index
+
+    # WLF temperature factor
+    dT  = T - Tg
+    wlf = -C1 * dT / (C2 + dT)
+
+    # Molecular-weight contribution (3.4 power law)
+    mw_term = a_Mw * (log10Mw - log10_Mc)
+
+    # Shear-thinning contribution (Newtonian limit when gamma = 0)
+    shear = np.log10(1.0 + (K * np.maximum(gamma, 0.0)) ** (1.0 - n))
+
+    log10_eta = log10_eta_Tg + mw_term + wlf - shear
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T     = X[:, 0]          # K
+    logMw = X[:, 1]          # log10(g/mol)
+    gdot  = X[:, 2]          # s^-1
+    Tg    = X[:, 3]          # K
+
+    # --- Molecular-weight dependence (Fox-Flory / 3.4 power law) ---
+    # log10(eta0) grows as 3.4*log10(Mw) in the entangled regime
+    A34 = 3.4
+    base_intercept = -13.0   # empirical prefactor (poise)
+    logeta_Mw = base_intercept + A34 * logMw
+
+    # --- Temperature dependence (WLF, referenced to Tg) ---
+    C1 = 17.44               # universal WLF constant
+    C2 = 51.6                # universal WLF constant (K)
+    dT = T - Tg
+    log_aT = -C1 * dT / (C2 + dT)
+
+    # zero-shear viscosity (log10)
+    logeta0 = logeta_Mw + log_aT
+
+    # --- Shear-thinning (Cross model) ---
+    n = 0.4                  # power-law index
+    K = 1.0e-2               # consistency time constant (s)
+    eta0 = np.power(10.0, logeta0)
+    shear_factor = 1.0 / (1.0 + np.power(K * gdot, 1.0 - n))
+    eta = eta0 * shear_factor
+
+    return np.log10(eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T      = X[:, 0]          # Temperature (K)
+    logMw  = X[:, 1]          # log10(Mw)
+    gdot   = X[:, 2]          # shear rate (1/s)
+    Tg     = X[:, 3]          # glass transition (K)
+
+    # --- Molecular-weight scaling (reptation, entangled melts): eta ~ Mw^3.4 ---
+    a_Mw = 3.4
+    # --- Temperature dependence via universal WLF equation, referenced to Tg ---
+    C1 = 17.44          # universal WLF constant
+    C2 = 51.6           # universal WLF constant (K)
+    dT = T - Tg
+    log_aT = -C1 * dT / (C2 + dT)          # log10(shift factor)
+
+    # Reference intercept (log10 poise at Tg for Mw=1 g/mol baseline), empirical
+    log_eta0 = -3.0
+
+    # Zero-shear (Newtonian-limit) viscosity
+    log_eta = log_eta0 + a_Mw * logMw + log_aT
+
+    # --- Shear-thinning correction (Cross/Carreau power-law tail) ---
+    n = 0.4                 # power-law index (shear-thinning slope ~ n-1)
+    tau = 1.0e-3            # characteristic relaxation time (s)
+    log_eta = log_eta - (1.0 - n) * np.log10(1.0 + (tau * gdot)**2) / 2.0
+
+    return log_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T      = X[:, 0]          # K
+    logMw  = X[:, 1]          # log10(g/mol)
+    gdot   = X[:, 2]          # 1/s
+    Tg     = X[:, 3]          # K
+
+    # --- WLF temperature shift (universal constants, referenced to Tg) ---
+    # log10(a_T) = -C1 (T-Tg) / (C2 + (T-Tg)),  eta(Tg) ~ 1e13 poise
+    C1, C2 = 17.44, 51.6
+    dT = T - Tg
+    log_aT = -C1 * dT / (C2 + dT)
+    log_eta_Tg = 13.0                      # universal melt viscosity at Tg (poise)
+
+    # --- Molecular-weight scaling: eta0 ~ Mw^3.4 above entanglement ---
+    alpha = 3.4
+    logMw_ref = 5.0                        # reference chain length
+    log_Mw_term = alpha * (logMw - logMw_ref)
+
+    # zero-shear (Newtonian) viscosity
+    log_eta0 = log_eta_Tg + log_aT + log_Mw_term
+
+    # --- Shear thinning (Carreau) ---
+    # eta = eta0 [1 + (lam*gdot)^2]^((n-1)/2)
+    lam = 1.0e-2                           # relaxation time (s)
+    n   = 0.4                              # power-law index
+    shear = 0.5 * (n - 1.0) * np.log10(1.0 + (lam * gdot) ** 2)
+
+    return log_eta0 + shear

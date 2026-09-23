@@ -1,0 +1,96 @@
+task_id: mosquito_larvicide_resistance_culex__probit_mortality
+domain: biology / insecticide_resistance
+license: CC-BY-4.0
+
+# Type II — cluster = mosquito population (field site). Each population has its
+# own resistance level reflected in its probit slope and LC50.
+type: typeII
+has_group_id: true
+
+# Background knowledge — science framing only; no task instructions, no constants.
+context: >-
+  Mosquito larvae exposed to insecticides die at rates that depend on both the
+  concentration applied and the resistance level of the population. The classic
+  dose-response relationship describes how the fraction of larvae killed rises
+  from near zero at low concentrations to nearly one at saturating concentrations,
+  following a sigmoidal curve on a log-concentration axis. Different populations
+  of the same species can differ markedly in their sensitivity: resistant
+  populations require orders-of-magnitude higher concentrations to achieve the
+  same mortality as susceptible ones. Abbott's formula is used to correct the
+  observed mortality for spontaneous deaths in untreated controls. The resulting
+  corrected mortality proportion increases monotonically with concentration and
+  is bounded between zero and one.
+
+target:
+  name: corrected_mortality
+  symbol: P
+  unit: ""
+  description: Abbott-corrected mortality proportion of third-instar Culex mosquito larvae after 48-hour exposure to Lysinibacillus sphaericus at the tested concentration; a real replicate-level measured fraction.
+  range: [0.0, 1.0]
+
+inputs:
+  - name: log10_conc_ppb
+    symbol: log₁₀(C)
+    unit: ""
+    description: Base-10 logarithm of Lysinibacillus sphaericus (Ls) concentration in parts per billion (ppb = µg/L).
+    range: [-0.30, 5.10]
+  - name: log_conc_ppb
+    symbol: ln(C)
+    unit: ""
+    description: Natural logarithm of Ls concentration in ppb. Equivalent to log10_conc_ppb × ln(10); provided because alternative baseline formulas use natural-log dose.
+    range: [-0.70, 11.75]
+
+# Dataset — Type II three-file layout. Cluster holdout: every 4th population
+# (lexicographic) is held out entirely from training. Within each test cluster,
+# rows are split by interleaving on log-concentration index (even → test_fit,
+# odd → test_test) to preserve balanced dose-response coverage in both windows.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 1846
+n_test_fit: 289
+n_test_test: 282
+n_clusters_train: 28
+n_clusters_test: 9
+
+# Audit note: 38 LS populations are present in S6; PKR.test (33 rows) is excluded
+# as an internal replicate of PKR; 37 populations form the 28+9 = 37-cluster pool.
+# Extra populations (2W, 24W, B06, BLT) beyond the 33 in Table 1 are real
+# bioassay data from S6 and are included.
+
+references:
+  - id: lopez_2025
+    label: Lopez 2025 — two-parameter probit model P = Phi(alpha + beta*log10(C))
+    formula_file: formulas/lopez_2025.py
+    reference_pdf: reference/lopez_2025.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured: {rmse: 0.1440, r2: 0.8652}
+  - id: ritz_2015_lnormal
+    label: Ritz 2015 — four-parameter log-normal (lnormal) dose-response f = c + (d-c)*Phi(b*(ln(x) - ln(e)))
+    formula_file: formulas/ritz_2015_lnormal.py
+    reference_pdf: reference/ritz_2015_dose_response_R.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4
+    measured: {rmse: 0.2269, r2: 0.6651}
+  - id: ritz_2015_ll4
+    label: Ritz 2015 — four-parameter log-logistic (LL.4) f = c + (d-c)/(1 + exp(b*(ln(x) - ln(e))))
+    formula_file: formulas/ritz_2015_ll4.py
+    reference_pdf: reference/ritz_2015_dose_response_R.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4
+    measured: {rmse: 0.2693, r2: 0.5281}
+
+caps:
+  max_law_constants: 0
+  max_local_params: 4
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+metric: rmse
+best_baseline: 0.1440

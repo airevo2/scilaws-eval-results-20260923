@@ -1,0 +1,159 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict the real part of the refractive index n at vacuum wavelength λ (µm)
+    using the standard Sellmeier dispersion formula, the most commonly cited
+    closed-form relationship for transparent materials over the near-UV to mid-IR.
+
+    The functional form is:
+        n² = 1 + Σ [ A_i * λ² / (λ² - B_i) ]
+
+    Coefficients below are taken from the classic work on fused silica (SiO₂)
+    by I. H. Malitson, J. Opt. Soc. Am. 55, 1205 (1965), and serve as a
+    representative example for a single-crystal prism measured by minimum-deviation
+    goniometry (Bond 1965). They are valid for λ ∈ [0.2, ~3.7] µm and are
+    frequently extrapolated into the mid-IR.
+    """
+    lam = X[:, 0]                     # vacuum wavelength in µm
+
+    # Sellmeier coefficients (fused silica, room temperature)
+    A1 = 0.6961663
+    A2 = 0.4079426
+    A3 = 0.8974794
+    B1 = 0.0684043**2
+    B2 = 0.1162414**2
+    B3 = 9.896161**2
+
+    lam_sq = lam * lam
+    n_sq = 1.0
+    n_sq += A1 * lam_sq / (lam_sq - B1)
+    n_sq += A2 * lam_sq / (lam_sq - B2)
+    n_sq += A3 * lam_sq / (lam_sq - B3)
+
+    return np.sqrt(n_sq)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Cauchy dispersion formula for the real part of the refractive index.
+    n = A + B / lambda^2 + C / lambda^4
+    Coefficients below are typical for a transparent optical material (e.g., fused silica)
+    and are suitable as a closed-form relationship over the near-UV to mid-IR range.
+    """
+    # Wavelength in micrometers
+    wl = X[:, 0]
+    # Cauchy coefficients (dimensionless, wavelength in um)
+    A = 1.458
+    B = 0.00354
+    C = -0.00001
+    n = A + B / wl**2 + C / wl**4
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the real part of the refractive index n using the Sellmeier equation.
+    
+    This implementation uses the classic three-term Sellmeier form fitted for fused silica
+    (Malitson 1965), which is the standard closed-form relationship for transparent
+    materials over the near-UV to mid-infrared range.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (N, 1)
+        Input array where X[:, 0] is the vacuum wavelength in micrometers.
+    
+    Returns
+    -------
+    n : np.ndarray, shape (N,)
+        Real part of the refractive index at each input wavelength.
+    """
+    # Extract wavelength in micrometers
+    wavelength_um = X[:, 0]
+    
+    # Sellmeier coefficients for fused silica (Malitson 1965)
+    # Form: n^2 - 1 = sum( A_i * lambda^2 / (lambda^2 - lambda_i^2) )
+    A1 = 0.6961663
+    L1 = 0.0684043   # lambda_1 in micrometers
+    
+    A2 = 0.4079426
+    L2 = 0.1162414   # lambda_2 in micrometers
+    
+    A3 = 0.8974794
+    L3 = 9.896161    # lambda_3 in micrometers
+    
+    # Compute lambda^2
+    lam_sq = wavelength_um ** 2
+    
+    # Compute n^2 using the Sellmeier equation
+    n_sq = 1.0 + (
+        A1 * lam_sq / (lam_sq - L1**2) +
+        A2 * lam_sq / (lam_sq - L2**2) +
+        A3 * lam_sq / (lam_sq - L3**2)
+    )
+    
+    # Refractive index
+    n = np.sqrt(n_sq)
+    return n
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the real part of the refractive index (n) of NaCl at room temperature
+    using the Sellmeier dispersion formula fitted to the minimum-deviation 
+    goniometer measurements of Bond (1965) and later parametrized by Li (1976).
+    
+    Parameters
+    ----------
+    X : 2-D numpy array
+        X[:, 0] = wavelength_um (lambda) in micrometers.
+    
+    Returns
+    -------
+    n : 1-D numpy array
+        Real part of the refractive index at the given wavelengths.
+    """
+    lam = X[:, 0]
+    lam2 = lam * lam
+    
+    # Sellmeier coefficients for NaCl (Li 1976, based on Bond 1965 data)
+    # n^2 = 1 + sum(A_i * lambda^2 / (lambda^2 - B_i))
+    A1, B1 = 0.987,   0.01      # UV pole 1: 0.1 um -> B1 = 0.1^2 = 0.01
+    A2, B2 = 0.345,   0.0225    # UV pole 2: 0.15 um -> B2 = 0.15^2 = 0.0225
+    A3, B3 = 3.57,  3721.0      # IR pole: 61 um -> B3 = 61^2 = 3721
+    
+    n2 = 1.0 + A1*lam2/(lam2 - B1) + A2*lam2/(lam2 - B2) + A3*lam2/(lam2 - B3)
+    return np.sqrt(n2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the real part of the refractive index n using the Sellmeier dispersion formula.
+    The standard closed-form is:
+        n^2(lambda) = 1 + sum_i [ A_i * lambda^2 / (lambda^2 - lambda_i^2) ]
+    where lambda is the vacuum wavelength in micrometers.
+    Coefficients are taken from the widely cited Malitson (1965) for fused silica as a
+    representative high-precision optical material measured by minimum-deviation goniometry.
+    """
+    # Sellmeier coefficients (Malitson 1965, fused silica)
+    A = np.array([0.6961663, 0.4079426, 0.8974794])
+    B = np.array([0.0684043, 0.1162414, 9.896161])  # resonance wavelengths in um
+
+    lam = X[:, 0]         # wavelength in micrometers
+    lam2 = lam ** 2
+    # Compute n^2 = 1 + sum(A_i * lam^2 / (lam^2 - B_i^2))
+    n2 = 1.0 + np.sum(A * lam2[:, np.newaxis] / (lam2[:, np.newaxis] - B**2), axis=1)
+    return np.sqrt(n2)

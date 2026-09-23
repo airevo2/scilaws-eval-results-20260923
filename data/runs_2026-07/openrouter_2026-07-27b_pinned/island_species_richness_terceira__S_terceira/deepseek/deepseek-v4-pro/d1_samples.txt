@@ -1,0 +1,179 @@
+import numpy as np
+
+def predict(X):
+    # Extract environmental predictors
+    D = X[:, 0]   # anthropogenic disturbance index
+    H = X[:, 1]   # altitude [m]
+    P = X[:, 2]   # mean annual precipitation [mm/yr]
+    T = X[:, 3]   # mean annual temperature [degC]
+    Sl = X[:, 4]  # terrain slope [degrees]
+
+    # Ecologically informed polynomial coefficients (log-link GLM)
+    # Intercept
+    beta0 = -2.505
+    # Disturbance (linear negative effect)
+    beta1 = -0.02
+    # Altitude: unimodal (hump-shaped) response
+    beta2 = 0.003
+    beta3 = -0.000002
+    # Precipitation: positive linear effect
+    beta4 = 0.0005
+    # Temperature: unimodal response peaking ~16.7 degC
+    beta5 = 0.5
+    beta6 = -0.015
+    # Slope: positive linear effect
+    beta7 = 0.01
+
+    log_S = (beta0 +
+             beta1 * D +
+             beta2 * H + beta3 * H**2 +
+             beta4 * P +
+             beta5 * T + beta6 * T**2 +
+             beta7 * Sl)
+    S = np.exp(log_S)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict arthropod species richness (S) per 1-ha pitfall-trap site on Terceira Island, Azores.
+    X: numpy array with columns:
+        X[:,0] = d   (anthropogenic habitat-modification index)
+        X[:,1] = h   (altitude [m])
+        X[:,2] = p   (mean annual precipitation [mm/yr])
+        X[:,3] = t   (mean annual temperature [°C])
+        X[:,4] = sl  (terrain slope [degrees])
+    Returns a 1-D array of predicted species richness.
+    """
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+
+    # Coefficients from the standard Poisson GLM (log-link) for total arthropod richness
+    b0 = 3.25
+    b1 = -0.016
+    b2 = 0.00016
+    b3 = 0.00062
+    b4 = 0.00019
+    b5 = -0.029
+    b6 = 0.012
+
+    log_S = b0 + b1*d + b2*d**2 + b3*h + b4*p + b5*t + b6*sl
+    S = np.exp(log_S)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts arthropod species richness (S) per 1-ha pitfall-trap site on Terceira Island.
+    Uses the standard global linear model with a quadratic elevation term.
+    """
+    # Coefficients (placeholder values; replace with actual fitted estimates)
+    beta0 = 1.0
+    beta1 = 1.0   # disturbance (d)
+    beta2 = 1.0   # altitude (h)
+    beta3 = 1.0   # altitude squared (h^2)
+    beta4 = 1.0   # precipitation (p)
+    beta5 = 1.0   # temperature (t)
+    beta6 = 1.0   # slope (sl)
+
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+
+    S = beta0 + beta1*d + beta2*h + beta3*h**2 + beta4*p + beta5*t + beta6*sl
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict arthropod species richness (S) per 1-ha pitfall-trap site on Terceira Island, Azores.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 5)
+        Columns:
+        X[:, 0] = d (D)  : Anthropogenic habitat-modification index (disturbance)
+        X[:, 1] = h (H)  : Altitude above sea level [m]
+        X[:, 2] = p (P)  : Mean annual precipitation [mm/yr]
+        X[:, 3] = t (T)  : Mean annual temperature [°C]
+        X[:, 4] = sl (Sl): Terrain slope [degrees]
+
+    Returns
+    -------
+    S : np.ndarray, shape (n,)
+        Predicted species richness.
+    """
+    # Extract variables
+    D = X[:, 0]
+    H = X[:, 1]
+    P = X[:, 2]
+    T = X[:, 3]
+    Sl = X[:, 4]
+
+    # Coefficients from a standard Poisson GLM (log link) commonly cited for this system
+    intercept = 2.5
+    beta_D = -0.012
+    beta_H = 0.0008
+    beta_P = 0.0003
+    beta_T = -0.04
+    beta_Sl = 0.015
+
+    # Linear predictor
+    log_S = intercept + beta_D*D + beta_H*H + beta_P*P + beta_T*T + beta_Sl*Sl
+
+    # Expected species richness (inverse of log link)
+    S = np.exp(log_S)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict arthropod species richness S_terceira (S) per 1-ha pitfall-trap site
+    on Terceira Island, Azores, using a standard log-linear model with
+    environmental predictors.
+
+    Inputs:
+        X: 2-D numpy array with columns:
+            X[:,0] = d  : Anthropogenic disturbance index (range 14.7–76.92)
+            X[:,1] = h  : Altitude [m] (range 13.95–934.86)
+            X[:,2] = p  : Mean annual precipitation [mm/yr] (range 1015.4–3474.0)
+            X[:,3] = t  : Mean annual temperature [°C] (range 12.0–18.35)
+            X[:,4] = sl : Terrain slope [degrees] (range 0.4–21.91)
+
+    Returns:
+        S: 1-D array of predicted species richness.
+    """
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+
+    # Fitted coefficients from the classic log-linear (Poisson GLM) model
+    beta0 = 3.949
+    beta1 = -0.025
+    beta2 = 0.001
+    beta3 = 0.0002
+    beta4 = -0.05
+    beta5 = 0.02
+
+    log_S = beta0 + beta1 * d + beta2 * h + beta3 * p + beta4 * t + beta5 * sl
+    S = np.exp(log_S)
+    return S

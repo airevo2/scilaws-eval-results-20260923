@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Current density"
+  symbol: "j"
+  unit: ""
+  description: "Current density"
+inputs:
+  - name: "Volume charge density"
+    symbol: "rho_c_0"
+    unit: ""
+    description: "Volume charge density"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"

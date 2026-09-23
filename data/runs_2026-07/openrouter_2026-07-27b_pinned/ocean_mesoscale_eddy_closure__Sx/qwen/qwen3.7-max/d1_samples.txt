@@ -1,0 +1,164 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the zonal component of the subgrid-scale eddy momentum forcing (S_x)
+    based on the divergence of the parameterized Leonard/Reynolds stress tensor.
+    
+    The stress tensor is modeled using isotropic enstrophy and anisotropic 
+    vorticity-strain interactions:
+    tau_ij = C1 * zeta^2 * delta_ij + C2 * zeta * M_ij
+    where M = [[D, D_tilde], [D_tilde, -D]].
+    
+    Taking the divergence (d/dx tau_xx + d/dy tau_xy) yields the linear 
+    combination of the provided spatial derivatives.
+    """
+    # Fitted coefficients (placeholders for the specific coarse-graining filter/dataset)
+    C1 = 1.0  # Coefficient for the zonal gradient of squared vorticity (isotropic stress)
+    C2 = 1.0  # Coefficient for the zonal gradient of vorticity-shear product
+    C3 = 1.0  # Coefficient for the meridional gradient of vorticity-stretching product
+    
+    # Extract the relevant spatial derivative features
+    d_zeta2_dx = X[:, 5]      # ∂(ζ²)/∂x
+    d_zetaD_dx = X[:, 6]      # ∂(ζD)/∂x
+    d_zetaDtilde_dy = X[:, 7] # ∂(ζD̃)/∂y
+    
+    # Compute the zonal subgrid-scale momentum forcing
+    Sx = C1 * d_zeta2_dx + C2 * d_zetaD_dx + C3 * d_zetaDtilde_dy
+    
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Filter width squared (m^2) - dimensional scaling constant for the subgrid model
+    Delta_sq = 1.0  
+    
+    # Theoretical coefficients derived from the gradient expansion of the 
+    # Leonard/Reynolds stress tensor (e.g., Clark model) for a box/Gaussian filter.
+    # tau_xx ~ (Delta^2 / 48) * (zeta^2 - 2*zeta*D + ...)
+    # tau_xy ~ (Delta^2 / 24) * (zeta * Dtilde)
+    c1 = Delta_sq / 48.0
+    c2 = -Delta_sq / 24.0
+    c3 = Delta_sq / 24.0
+    
+    # Extract the relevant spatial derivatives of the enstrophy and deformation products
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+    
+    # Zonal component of the subgrid-scale eddy momentum forcing (S_x = -d(tau_xx)/dx - d(tau_xy)/dy)
+    # Note: The sign convention here aligns with the divergence of the stress tensor 
+    # contributing to the resolved momentum tendency.
+    Sx = c1 * d_zeta2_dx + c2 * d_zetaD_dx + c3 * d_zetaDtilde_dy
+    
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract the relevant derivative inputs
+    d_zeta2_dx = X[:, 5]       # d(zeta^2)/dx
+    d_zetaD_dx = X[:, 6]       # d(zeta*D)/dx
+    d_zetaDtilde_dy = X[:, 7]  # d(zeta*Dtilde)/dy
+
+    # Gradient model (Clark/tensor-diffusivity) for the Leonard stress:
+    #   L_ij = (Delta^2 / 12) * dk(u_i) * dk(u_j)
+    #
+    # In QG flow (divergence-free, delta=0):
+    #   dx(u) = Dtilde/2,  dy(u) = (D - zeta)/2
+    #   dx(v) = (D + zeta)/2,  dy(v) = -Dtilde/2
+    #
+    # L_xx = (Delta^2/48)[Dtilde^2 + D^2 - 2*zeta*D + zeta^2]
+    # L_xy = (Delta^2/24) zeta Dtilde
+    #
+    # S_x = -dx(L_xx) - dy(L_xy)
+    #     = -(Delta^2/48)[dx(zeta^2) - 2*dx(zeta D) + 2*dy(zeta Dtilde)]
+    #       + (Delta^2/48)[dx(D^2) + dx(Dtilde^2)]   <-- strain-only terms, neglected
+    #
+    # Dropping the pure-strain gradient terms dx(D^2)+dx(Dtilde^2) (subdominant
+    # in the enstrophy-dominated QG regime), and absorbing the model constant
+    # Delta^2/48 into a single coefficient C:
+
+    C = 1.0  # represents Delta^2 / 48 (filter-width dependent)
+
+    Sx = C * (-d_zeta2_dx + 2.0 * d_zetaD_dx - 2.0 * d_zetaDtilde_dy)
+
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the zonal component of the subgrid-scale eddy momentum forcing (S_x),
+    defined as the divergence of the Leonard/Reynolds stress tensor in the zonal direction.
+    
+    Based on the analytical Gaussian filter approximation for the subgrid stress tensor:
+    tau_xx ≈ (Δ²/48) * (ζ² - 2ζD + D² + D̃²)
+    tau_xy ≈ (Δ²/24) * (ζD̃)
+    
+    The zonal divergence is S_x = ∂(tau_xx)/∂x + ∂(tau_xy)/∂y.
+    Ignoring the gradients of the pure deformation terms (D², D̃²) which are typically 
+    subdominant or filtered out in this specific parameterization formulation, we get:
+    S_x ≈ (Δ²/48) * [ ∂(ζ²)/∂x - 2∂(ζD)/∂x + 2∂(ζD̃)/∂y ]
+    """
+    
+    # Extract the relevant spatial derivatives of enstrophy and vorticity-deformation products
+    d_zeta2_dx = X[:, 5]
+    d_zetaD_dx = X[:, 6]
+    d_zetaDtilde_dy = X[:, 7]
+    
+    # Scale factor representing the filter width squared (Δ²/48). 
+    # Since the exact coarse-graining filter width Δ is not provided in the inputs, 
+    # we use a named constant C as a generic scale placeholder.
+    C = 1.0 
+    
+    # Analytical linear coefficients derived from the tensor divergence
+    c1 = 1.0 * C
+    c2 = -2.0 * C
+    c3 = 2.0 * C
+    
+    # Compute the zonal subgrid-scale momentum forcing
+    Sx = c1 * d_zeta2_dx + c2 * d_zetaD_dx + c3 * d_zetaDtilde_dy
+    
+    return Sx
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Inputs from the coarse-grained quasi-geostrophic velocity field:
+    # X[:, 0] = u          : zonal velocity [m/s]
+    # X[:, 1] = v          : meridional velocity [m/s]
+    # X[:, 2] = zeta       : relative vorticity [1/s]
+    # X[:, 3] = D          : shearing deformation rate [1/s]
+    # X[:, 4] = Dtilde     : stretching deformation rate [1/s]
+    d_zeta2_dx    = X[:, 5]  # d(zeta^2)/dx  [1/(s^2 m)]
+    d_zetaD_dx    = X[:, 6]  # d(zeta*D)/dx  [1/(s^2 m)]
+    d_zetaDtilde_dy = X[:, 7]  # d(zeta*Dtilde)/dy [1/(s^2 m)]
+
+    # Gradient (tensor-diffusivity) model for the Leonard stress divergence.
+    #
+    # The Leonard stress tensor from a filter of width Delta is:
+    #   L_ij = (Delta^2 / 12) * sum_k (du_i/dx_k)(du_j/dx_k)
+    #
+    # Expressing velocity gradients via vorticity and deformation:
+    #   du/dx = Dtilde/2,  du/dy = (D - zeta)/2
+    #   dv/dx = (D + zeta)/2,  dv/dy = -Dtilde/2
+    #
+    # The zonal divergence S_x = dL_xx/dx + dL_xy/dy reduces to:
+    #   S_x = (Delta^2/48) * [d(zeta^2)/dx - 2*d(zeta*D)/dx + 2*d(zeta*Dtilde)/dy]
+    #       + (Delta^2/48) * [d(D^2)/dx + d(Dtilde^2)/dx]   (neglected)
+
+    alpha = 1.0  # = Delta^2 / 48  [m^2]; set by the coarse-graining filter width
+
+    S_x = alpha * (d_zeta2_dx - 2.0 * d_zetaD_dx + 2.0 * d_zetaDtilde_dy)
+
+    return S_x

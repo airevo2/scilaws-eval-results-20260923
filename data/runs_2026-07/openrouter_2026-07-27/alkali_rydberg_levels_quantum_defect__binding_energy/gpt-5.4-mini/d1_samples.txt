@@ -1,0 +1,129 @@
+import numpy as np
+
+def predict(X):
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(float)
+
+    # Standard Rydberg formula with quantum defect:
+    # E_bind = R / (n - delta_l)^2
+    # Here delta_l must be supplied/fitted for the particular series.
+    # Since only n and l are provided, we use the canonical hydrogenic form
+    # as the standard closed-form relationship.
+    R_cm1 = 109737.31568539  # Rydberg constant in cm^-1
+
+    return R_cm1 / (n ** 2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Binding energy / term value of a Rydberg level in cm^-1 using the standard
+    Rydberg–Ritz / quantum-defect form:
+
+        E_bind = R / (n - delta_l)^2
+
+    where delta_l is the quantum defect. With only n and l provided, the most
+    standard closed-form representation is the pure hydrogenic limit
+    (delta_l = 0), giving:
+
+        E_bind = R / n^2
+    """
+    X = np.asarray(X, dtype=float)
+    n = X[:, 0]
+    R_cm1 = 109737.31568539  # Rydberg constant in cm^-1
+    return R_cm1 / (n ** 2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Binding energy / term value for a Rydberg level using the standard Rydberg-Ritz form
+    with a quantum defect expansion.
+
+    E_bind = R / (n - delta_l)^2
+
+    For a minimal closed-form prediction using only n and l, we use the leading
+    quantum defect term delta_l, taken as a function of l only.
+    """
+    X = np.asarray(X, dtype=float)
+    n = X[:, 0]
+    l = X[:, 1]
+
+    # Typical asymptotic quantum defects by orbital angular momentum.
+    # These are generic canonical values/limits for many atoms:
+    # s > p > d > f >> g,h... (often near zero for high l).
+    delta = np.zeros_like(n)
+    delta = np.where(l == 0, 1.0, delta)   # s
+    delta = np.where(l == 1, 0.8, delta)   # p
+    delta = np.where(l == 2, 0.01, delta)  # d
+    delta = np.where(l == 3, 0.001, delta) # f
+    delta = np.where(l >= 4, 0.0, delta)   # g, h, ...
+
+    # Rydberg constant in cm^-1 for an infinitely heavy nucleus
+    R_inf = 109737.31568539
+
+    return R_inf / np.square(n - delta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Binding energy (term value / ionization energy) of a Rydberg level in cm^-1
+    using the standard Rydberg formula with a quantum defect expansion.
+
+    Parameters
+    ----------
+    X : ndarray, shape (N, 2)
+        X[:, 0] = n_qm
+        X[:, 1] = l_qm
+
+    Returns
+    -------
+    ndarray, shape (N,)
+        Predicted binding energy in cm^-1.
+    """
+    X = np.asarray(X)
+    n = X[:, 0].astype(float)
+    l = X[:, 1].astype(float)
+
+    # Standard constants / canonical form:
+    # E_bind = R_inf * Z^2 / (n - delta_l)^2
+    # For neutral-atom Rydberg series, Z = 1 and delta_l is the quantum defect.
+    #
+    # With only n and l as inputs, the most standard closed-form approximation is
+    # to use an l-dependent quantum defect model. The simplest commonly cited form
+    # is delta_l ≈ a_l (a fitted constant for each l). Since no atom-specific
+    # data are provided, we use the hydrogenic limit delta_l = 0 as the generic
+    # closed form.
+    R_inf = 109737.31568539  # cm^-1
+
+    delta = np.zeros_like(n)  # hydrogenic limit
+    E_bind = R_inf / (n - delta)**2
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+    n = X[:, 0]
+    l = X[:, 1]
+
+    # Quantum-defect / Rydberg formula:
+    # E_bind = R / (n - δ_l)^2
+    # Here δ_l is treated as a level-dependent constant (one would normally fit it
+    # for a given atom/series). Since no data are provided, we use the canonical form
+    # with a symbolic placeholder-style implementation for the core dependence.
+    #
+    # For a standard hydrogenic closed form, δ_l = 0 and E_bind = R / n^2.
+    Rydberg_cm1 = 109737.31568539  # cm^-1
+
+    delta_l = np.zeros_like(l)  # hydrogenic default
+    return Rydberg_cm1 / (n - delta_l)**2

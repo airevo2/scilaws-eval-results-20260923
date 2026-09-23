@@ -1,0 +1,117 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    h = X[:, 1]
+    p = X[:, 2]
+    t = X[:, 3]
+    sl = X[:, 4]
+
+    # Standard multiple linear regression form for arthropod species richness
+    # along the disturbance gradient (Borges et al., Azores studies).
+    # Species richness declines with anthropogenic disturbance and varies
+    # with altitude, precipitation, temperature and slope.
+    S = (20.0
+         - 0.15 * d
+         + 0.010 * h
+         + 0.001 * p
+         + 0.50 * t
+         + 0.10 * sl)
+
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Species richness modeled as a log-linear (Poisson-type) function of
+    # the environmental predictors on Terceira Island.
+    # S = exp(b0 + b_d*D + b_h*H + b_p*P + b_t*T + b_sl*Sl)
+    d  = X[:, 0]
+    h  = X[:, 1]
+    p  = X[:, 2]
+    t  = X[:, 3]
+    sl = X[:, 4]
+
+    b0   =  2.5000
+    b_d  = -0.0100   # disturbance decreases native-dominated richness
+    b_h  =  0.0008   # mild positive altitude effect
+    b_p  = -0.0001   # slight decline with excess precipitation
+    b_t  =  0.0500   # warmer sites slightly richer
+    b_sl =  0.0100   # steeper (less disturbed) terrain slightly richer
+
+    eta = b0 + b_d*d + b_h*h + b_p*p + b_t*t + b_sl*sl
+    return np.exp(eta)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Species-richness along a disturbance gradient (Terceira Island, Azores).
+    # Standard closed form: linear regression on the habitat-disturbance index
+    # (the dominant predictor for arthropod richness on Terceira),
+    # with weaker contributions from the environmental covariates.
+    d  = X[:, 0]   # disturbance index
+    h  = X[:, 1]   # altitude (m)
+    p  = X[:, 2]   # precipitation (mm/yr)
+    t  = X[:, 3]   # temperature (degC)
+    sl = X[:, 4]   # slope (deg)
+
+    S = (30.0
+         - 0.25 * d
+         + 0.010 * h
+         - 0.001 * p
+         + 0.30 * t
+         + 0.05 * sl)
+
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Species richness as a function of disturbance (unimodal / peaked response)
+    # and environmental gradients. Canonical form: log-linear (Poisson-type) model.
+    d  = X[:, 0]
+    h  = X[:, 1]
+    p  = X[:, 2]
+    t  = X[:, 3]
+    sl = X[:, 4]
+
+    # Intermediate disturbance produces a hump-shaped richness response
+    log_S = (2.0
+             + 0.020 * d
+             - 0.00020 * d**2
+             + 0.0010 * h
+             + 0.00010 * p
+             - 0.030 * t
+             + 0.010 * sl)
+
+    return np.exp(log_S)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Species richness modeled as a log-linear (Poisson-type) function
+    # of the disturbance gradient and environmental predictors.
+    d  = X[:, 0]   # disturbance index
+    h  = X[:, 1]   # altitude (m)
+    p  = X[:, 2]   # precipitation (mm/yr)
+    t  = X[:, 3]   # temperature (degC)
+    sl = X[:, 4]   # slope (degrees)
+
+    # Log-linear model: log(S) = b0 + b1*d + b2*h + b3*p + b4*t + b5*sl
+    b0 =  2.0
+    b1 = -0.010
+    b2 =  0.0005
+    b3 = -0.00005
+    b4 =  0.05
+    b5 =  0.005
+
+    log_S = b0 + b1*d + b2*h + b3*p + b4*t + b5*sl
+    return np.exp(log_S)

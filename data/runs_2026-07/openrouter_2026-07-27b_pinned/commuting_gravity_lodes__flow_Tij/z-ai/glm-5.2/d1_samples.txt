@@ -1,0 +1,91 @@
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    # d_ij = X[:, 2]  # distance is implicitly accounted for via s_ij in the Radiation model
+    s_ij = X[:, 3]
+    
+    # Radiation model (Simini et al., 2012)
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # Here, the total outflow T_i is equal to the total resident workers m_i
+    numerator = m_i * m_i * m_j
+    denominator = (m_i + s_ij) * (m_i + m_j + s_ij)
+    
+    # Prevent division by zero
+    T_ij = np.divide(numerator, denominator, out=np.zeros_like(numerator), where=denominator!=0)
+    
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    # d_ij is not used in the canonical Radiation model
+    s_ij = X[:, 3]
+
+    # Radiation model (Simini et al., 2012)
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # with T_i approximated by the origin's total resident workers m_i
+    T_ij = (m_i * m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+
+    # Ensure non-negative before log transform
+    T_ij = np.maximum(T_ij, 0.0)
+
+    return np.log10(T_ij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    # d_ij = X[:, 2]  # distance is not used in the radiation model
+    s_ij = X[:, 3]
+
+    # Radiation model (Simini et al., 2012)
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # with T_i = m_i (total outbound flow from the origin)
+    T_ij = (m_i**2 * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+
+    # Return log10(T_ij + 1)
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    # d_ij = X[:, 2]  # Distance is implicitly accounted for via intervening opportunities in the Radiation Model
+    s_ij = X[:, 3]
+    
+    # Radiation Model (Simini et al., 2012)
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # where T_i = m_i (total outbound flows)
+    T_ij = (m_i ** 2 * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    
+    # Clip to ensure non-negative before log transformation
+    T_ij = np.maximum(T_ij, 0)
+    
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    s_ij = X[:, 3]
+    
+    # Radiation Model (Simini et al., 2012)
+    # T_ij = m_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    T_ij = m_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    
+    return np.log10(T_ij + 1)

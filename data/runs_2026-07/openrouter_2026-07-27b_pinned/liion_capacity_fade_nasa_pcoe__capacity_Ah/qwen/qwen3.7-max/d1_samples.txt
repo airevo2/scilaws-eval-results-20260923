@@ -1,0 +1,74 @@
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    # Square-root cycle fade model (diffusion-limited SEI growth)
+    # Q(k) = Q_0 - beta * sqrt(k)
+    Q_0 = 2.0       # initial discharge capacity [Ah]
+    beta = 0.046    # fade coefficient [Ah / cycle^0.5]
+    Q = Q_0 - beta * np.sqrt(k)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    # Linear capacity fade model (empirical baseline for Li-ion cells, e.g., NASA B0005)
+    Q0 = 1.858      # Initial discharge capacity [Ah]
+    alpha = 0.0028  # Capacity fade rate [Ah/cycle]
+    
+    Q = Q0 - alpha * k
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    
+    # Named constants for a standard linear capacity fade model 
+    # (typical for Li-ion cells over moderate cycle ranges, e.g., NASA battery dataset)
+    Q0 = 2.04       # Initial discharge capacity (Ah)
+    alpha = 0.0035  # Linear capacity fade rate (Ah/cycle)
+    
+    Q = Q0 - alpha * k
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict discharge capacity Q (Ah) as a function of cycle index k
+    using the canonical power-law capacity-fade model:
+        Q(k) = Q_0 - alpha * k^beta
+    where Q_0 is the nominal (beginning-of-life) capacity,
+    alpha is the degradation rate coefficient, and
+    beta is the power-law exponent (SEI-growth dominated fade ~ 0.5–0.8).
+    """
+    k = X[:, 0].astype(float)
+
+    # Named constants (representative Li-ion 18650 cell)
+    Q_0   = 2.0      # nominal capacity [Ah]
+    alpha = 0.005    # fade rate coefficient [Ah / cycle^beta]
+    beta  = 0.75     # power-law exponent
+
+    Q = Q_0 - alpha * np.power(k, beta)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    # Linear capacity fade model commonly applied to 18650 Li-ion cells (e.g., NASA dataset)
+    Q0 = 2.0       # Nominal initial capacity [Ah]
+    alpha = 0.0035 # Empirical fade rate [Ah/cycle]
+    
+    Q = Q0 - alpha * k
+    return Q

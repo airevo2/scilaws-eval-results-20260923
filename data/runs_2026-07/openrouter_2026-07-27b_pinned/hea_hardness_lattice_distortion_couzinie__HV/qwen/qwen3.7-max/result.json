@@ -1,0 +1,17 @@
+{
+  "task": "hea_hardness_lattice_distortion_couzinie__HV",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeI",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "temesi_2023_hardness_bonding",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

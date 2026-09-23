@@ -1,0 +1,35 @@
+{
+  "task": "proton_em_form_factor__GE_over_GD",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "arrington_2007",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "bradford_2006",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    },
+    {
+      "formula": "hofstadter_1956",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

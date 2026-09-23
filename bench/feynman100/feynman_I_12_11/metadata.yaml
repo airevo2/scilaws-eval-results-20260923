@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Force"
+  symbol: "F"
+  unit: ""
+  description: "Force"
+inputs:
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Electric field"
+    symbol: "Ef"
+    unit: ""
+    description: "Electric field"
+  - name: "Magnetic field"
+    symbol: "B"
+    unit: ""
+    description: "Magnetic field"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Dimensionless"
+    symbol: "theta"
+    unit: ""
+    description: "Dimensionless"

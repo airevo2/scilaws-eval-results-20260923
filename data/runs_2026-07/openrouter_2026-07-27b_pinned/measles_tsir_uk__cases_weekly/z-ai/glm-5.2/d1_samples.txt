@@ -1,0 +1,184 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard TSIR (Time-series Susceptible-Infected-Reconstructed) model for measles.
+    
+    Closed-form relationship:
+        I_t = beta_s * I_{t-1}^alpha * (S_{t-1} / N)
+    
+    where:
+        - S_{t-1} = S0 + z_t   (susceptibles = baseline + reconstructed deviation)
+        - N = 10^{log_pop}
+        - beta_s is a seasonal transmission coefficient (sinusoidal forcing)
+        - alpha is the mixing/infectious-period exponent (~0.97 for measles)
+    
+    Inputs:
+        X[:,0] = I_{t-1}  (previous cases)
+        X[:,1] = s        (biweek index, 1..26)
+        X[:,2] = B        (births; already incorporated into z_t)
+        X[:,3] = log10 N
+        X[:,4] = z_t      (cumulative births - cumulative cases, i.e. susceptible deviation)
+    """
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    # births = X[:, 2]  # not needed directly; z_t already captures cumulative births - cases
+    log_pop = X[:, 3]
+    z = X[:, 4]
+    
+    # Population size
+    N = 10.0 ** log_pop
+    
+    # Baseline susceptibles at start of record (typical ~5% of population)
+    S0 = 0.05 * N
+    S = S0 + z
+    # Guard against non-positive susceptibles
+    S = np.maximum(S, 1.0)
+    
+    # Mixing exponent (typical measles value)
+    alpha = 0.97
+    
+    # Seasonal transmission rate: sinusoidal forcing with peak near biweek 1
+    beta0 = 2.0
+    beta1 = 1.0
+    phase = 0.0
+    beta_s = beta0 * (1.0 + beta1 * np.cos(2.0 * np.pi * (s - phase) / 26.0))
+    beta_s = np.maximum(beta_s, 0.0)
+    
+    # TSIR prediction
+    I_t = beta_s * (I_prev ** alpha) * (S / N)
+    
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    # B = X[:, 2]
+    log_pop = X[:, 3]
+    z_t = X[:, 4]
+    
+    # TSIR model canonical parameters
+    alpha = 0.97  # mixing exponent (often ~1 for measles)
+    
+    # Initial susceptible population S_0, typically estimated as a fraction of total population N
+    # N = 10**log_pop
+    S_0 = 0.05 * (10**log_pop)
+    
+    # Seasonal transmission rate beta_s, commonly parameterized using Fourier/harmonic terms
+    beta_0 = 1.0
+    gamma1 = 0.5
+    gamma2 = 0.5
+    beta_s = beta_0 * np.exp(gamma1 * np.sin(2 * np.pi * s / 26.0) + 
+                             gamma2 * np.cos(2 * np.pi * s / 26.0))
+    
+    # Susceptible individuals at time t
+    S_t = np.maximum(S_0 + z_t, 0)
+    
+    # Expected reported cases I_t
+    I_t = beta_s * (I_prev**alpha) * S_t
+    
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts reported measles case count (I_t) using the canonical TSIR 
+    (Time-series Susceptible-Infected-Reconstructed) model formulation.
+    """
+    # Fitted/named constants for the TSIR model
+    ALPHA = 0.97       # Mixing exponent for I_{t-1}
+    S_BAR = 5000.0     # Average susceptible population (intercept for reconstruction)
+    BETA = np.full(26, 1e-4) # Seasonal transmission rates for biweeks 1..26
+    
+    I_prev = X[:, 0]
+    s = X[:, 1].astype(int) - 1
+    z = X[:, 4]
+    
+    # Reconstruct susceptible population S_{t-1} using the deviation proxy z_t
+    S = z + S_BAR
+    
+    # Expected cases: I_t = beta_s * I_{t-1}^alpha * S_{t-1}
+    I_t = BETA[s] * (I_prev ** ALPHA) * S
+    
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Inputs
+    I_prev = np.maximum(X[:, 0], 0.0)   # I_{t-1}
+    s = X[:, 1]                         # biweek index 1..26
+    B = X[:, 2]                         # births in current biweek
+    log_pop = X[:, 3]                   # log10 population
+    z = X[:, 4]                         # cumulative births - cumulative cases (up to t-1)
+
+    # Standard TSIR parameters (frequency-dependent discrete-time SIR)
+    beta0 = 15.0      # baseline transmission rate (~R0 for measles)
+    amp = 0.5         # seasonal amplitude
+    phi = 0.0         # phase
+    c = 0.05          # initial susceptible fraction of population
+    alpha = 1.0       # mixing exponent (mass action)
+
+    # Population and current susceptible pool
+    N = 10.0**log_pop
+    S = c * N + z + B - I_prev
+    S = np.maximum(S, 0.0)
+
+    # Seasonal transmission rate
+    beta = beta0 * (1.0 + amp * np.cos(2.0 * np.pi * (s - 1) / 26.0 + phi))
+    beta = np.maximum(beta, 0.0)
+
+    # Closed-form TSIR prediction
+    I_t = beta * (S / N) * (I_prev**alpha)
+    return I_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts reported measles case count (I_t) using the canonical 
+    Time-series Susceptible-Infected-Recovered (TSIR) model 
+    (Finkenstädt & Grenfell, 2000).
+    
+    Model: I_t = beta_s * I_{t-1}^alpha * (S_t / N)
+    where S_t = S_bar + z_t
+    """
+    I_prev = X[:, 0]
+    s = X[:, 1].astype(int)
+    # X[:, 2] (births) is used to compute z_t, not directly in the formula
+    log_pop = X[:, 3]
+    z = X[:, 4]
+    
+    # Reconstruct population N
+    N = 10**log_pop
+    
+    # Canonical TSIR parameters (named constants)
+    alpha = 0.97
+    S_bar = 5000.0  # Mean susceptible pool
+    
+    # Seasonal transmission rates (26 biweeks)
+    # (Using a representative sinusoidal-like pattern for illustration)
+    beta_s = np.array([
+        15.0, 18.0, 22.0, 28.0, 35.0, 42.0, 48.0, 52.0, 55.0, 56.0,
+        55.0, 52.0, 48.0, 42.0, 35.0, 28.0, 22.0, 18.0, 15.0, 13.0,
+        12.0, 11.0, 10.5, 10.0, 9.5, 12.0
+    ])
+    
+    # Reconstruct susceptibles S_t
+    S_t = np.maximum(S_bar + z, 0)
+    
+    # Compute expected cases
+    I_t = beta_s[s - 1] * np.power(I_prev, alpha) * (S_t / N)
+    
+    return I_t

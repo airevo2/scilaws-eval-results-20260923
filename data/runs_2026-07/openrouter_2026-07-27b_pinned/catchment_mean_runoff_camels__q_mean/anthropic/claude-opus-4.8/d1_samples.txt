@@ -1,0 +1,82 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]      # p_mean [mm/day]
+    Ep = X[:, 1]     # pet_mean [mm/day]
+
+    # Budyko water balance (Fu / Mezentsev-Choudhury-Yang equation)
+    # Mean actual evapotranspiration:
+    #   E/P = 1 + phi - (1 + phi^w)^(1/w),  phi = Ep/P
+    # Runoff Q = P - E
+    w = 2.6  # commonly cited Fu parameter for catchment-scale data
+
+    phi = Ep / P
+    E = P * (1.0 + phi - (1.0 + phi**w)**(1.0 / w))
+
+    Q = P - E
+    Q = np.clip(Q, 0.0, P)  # bounded below by 0, above by P
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    E_p = X[:, 1]
+    # Budyko (Turc-Pike) water balance:
+    # E/P = 1 / sqrt(1 + (1/phi)^2)  ->  E = P*E_p / sqrt(P^2 + E_p^2)
+    # Q = P - E
+    E = P * E_p / np.sqrt(P**2 + E_p**2)
+    Q = P - E
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    # Budyko (Turc-Pike / Choudhury-Yang n=2) water balance:
+    # E/P = phi / (1 + phi^n)^(1/n), with n=2
+    # Q = P - E
+    phi = Ep / P
+    n = 2.0
+    E = P * phi / np.power(1.0 + np.power(phi, n), 1.0 / n)
+    Q = P - E
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]
+    Ep = X[:, 1]
+    # Budyko (Turc-Pike / Fu-type) actual evaporation; runoff = P - E_a
+    # Turc-Pike form: E_a = P / sqrt(1 + (P/Ep)^2)  -> use standard Budyko
+    phi = Ep / P                      # aridity index
+    # Budyko curve (Turc-Pike, n=2): E_a/P = 1 / sqrt(1 + phi^-2)
+    Ea_over_P = 1.0 / np.sqrt(1.0 + phi**-2)
+    Ea = Ea_over_P * P
+    Q = P - Ea
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]      # p_mean [mm/day]
+    Ep = X[:, 1]     # pet_mean [mm/day]
+
+    # Budyko (Fu 1981) water balance with fitted parameter w
+    # E/P = 1 + phi - (1 + phi^w)^(1/w),  phi = Ep/P
+    # Q = P - E
+    w = 2.6
+    phi = Ep / P
+    E_over_P = 1.0 + phi - np.power(1.0 + np.power(phi, w), 1.0 / w)
+    Q = P * (1.0 - E_over_P)
+    Q = np.maximum(Q, 0.0)
+    return Q

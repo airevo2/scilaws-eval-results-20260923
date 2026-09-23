@@ -1,0 +1,137 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict absorbance A using the Beer-Lambert law: A = (epsilon / M) * c * l.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] = concentration c in g/L
+        X[:, 1] = path length l in cm
+
+    Returns
+    -------
+    A : np.ndarray, shape (n,)
+        Predicted absorbance (dimensionless).
+    """
+    c = X[:, 0]   # mass concentration, g/L
+    l = X[:, 1]   # path length, cm
+
+    # Molar absorptivity of potassium dichromate at 350 nm (L mol^-1 cm^-1)
+    epsilon = 3160.0
+    # Molar mass of potassium dichromate (K2Cr2O7), g/mol
+    M = 294.185
+
+    # Beer-Lambert law: A = epsilon * (c / M) * l
+    A = epsilon * c / M * l
+    return A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absorbance A using the Beer-Lambert law for potassium dichromate.
+    A = a * c * l
+    where:
+      c = mass concentration (g/L)  -> X[:, 0]
+      l = path length (cm)          -> X[:, 1]
+      a = mass absorptivity (L/(g·cm))
+    For K2Cr2O7 at 350 nm, the specific absorbance E(1%, 1cm) = 107.3,
+    which gives a = 10.73 L/(g·cm).
+    """
+    a = 10.73  # mass absorptivity in L/(g*cm)
+    c = X[:, 0]
+    l = X[:, 1]
+    return a * c * l
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absorbance A using the Beer-Lambert law for mass concentration:
+    A = epsilon * c * l
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 2)
+        X[:, 0] = concentration c in g/L
+        X[:, 1] = path length l in cm
+
+    Returns
+    -------
+    A : np.ndarray, shape (n_samples,)
+        Predicted absorbance (dimensionless).
+    """
+    # Mass absorptivity (specific absorption coefficient) in L/(g·cm).
+    # The numerical value depends on wavelength and must be determined
+    # experimentally; a placeholder of 1.0 is used here.
+    EPSILON = 1.0
+
+    c = X[:, 0]
+    l = X[:, 1]
+
+    return EPSILON * c * l
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absorbance A of potassium dichromate solution using Beer-Lambert law.
+    
+    Parameters:
+    X : np.ndarray, shape (n_samples, 2)
+        X[:, 0] = concentration c [g/L]
+        X[:, 1] = path_length l [cm]
+    
+    Returns:
+    A : np.ndarray, shape (n_samples,)
+        Predicted absorbance (blank-subtracted, dimensionless).
+    """
+    # Specific absorptivity (mass absorptivity) of potassium dichromate
+    # at its commonly used analytical wavelength (~350 nm), in L/(g*cm).
+    # Typical value: a = 10.88 L/(g*cm)  (approx. 3200 L/(mol*cm) / 294.18 g/mol)
+    a = 10.88
+    
+    c = X[:, 0]  # concentration in g/L
+    l = X[:, 1]  # path length in cm
+    
+    A = a * c * l
+    return A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absorbance A using the Beer-Lambert law for potassium dichromate.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 2)
+        X[:, 0] = mass concentration c in g/L
+        X[:, 1] = path length l in cm
+
+    Returns
+    -------
+    A : ndarray, shape (n_samples,)
+        Predicted absorbance (blank-subtracted).
+    """
+    # Molar mass of potassium dichromate (K2Cr2O7) in g/mol
+    M = 294.185
+    # Molar absorptivity at 350 nm in L mol^{-1} cm^{-1} (commonly cited value)
+    epsilon = 3160.0
+
+    c_mass = X[:, 0]   # g/L
+    l = X[:, 1]        # cm
+
+    # Beer-Lambert: A = epsilon * (c_mass / M) * l
+    A = epsilon * (c_mass / M) * l
+    return A

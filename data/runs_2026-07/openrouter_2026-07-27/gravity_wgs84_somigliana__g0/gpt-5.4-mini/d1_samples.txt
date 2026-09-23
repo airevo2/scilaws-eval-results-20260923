@@ -1,0 +1,129 @@
+import numpy as np
+
+def predict(X):
+    """
+    WGS84 normal gravity on the ellipsoid surface (Somigliana formula).
+
+    Parameters
+    ----------
+    X : np.ndarray
+        X[:, 0] = geodetic latitude in degrees.
+
+    Returns
+    -------
+    np.ndarray
+        Normal gravity gamma in m/s^2.
+    """
+    phi = np.deg2rad(X[:, 0])
+
+    # WGS84 constants
+    gamma_e = 9.7803253359  # m/s^2, normal gravity at equator
+    k = 0.00193185265241    # Somigliana constant
+    e2 = 0.00669437999013   # first eccentricity squared
+
+    sin_phi = np.sin(phi)
+    sin2 = sin_phi * sin_phi
+
+    gamma = gamma_e * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Normal gravity on the WGS84 reference ellipsoid (Somigliana formula).
+    Input:
+        X[:, 0] = geodetic latitude in degrees
+    Returns:
+        gamma in m/s^2
+    """
+    phi = np.deg2rad(X[:, 0])
+
+    # WGS84 normal gravity constants
+    gamma_e = 9.7803253359  # m/s^2, equatorial normal gravity
+    k = 0.00193185265241    # Somigliana constant
+    e2 = 0.00669437999013   # WGS84 first eccentricity squared
+
+    sin2 = np.sin(phi) ** 2
+    gamma = gamma_e * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Normal gravity on the WGS84 reference ellipsoid (Somigliana formula).
+    Input:
+        X[:, 0] = geodetic latitude in degrees
+    Returns:
+        gamma in m/s^2
+    """
+    phi = np.deg2rad(X[:, 0])
+
+    # WGS84 normal gravity constants
+    gamma_e = 9.7803253359  # equatorial normal gravity [m/s^2]
+    k = 0.00193185265241    # Somigliana constant
+    e2 = 0.00669437999013   # first eccentricity squared of WGS84 ellipsoid
+
+    sinphi = np.sin(phi)
+    sin2 = sinphi * sinphi
+
+    gamma = gamma_e * (1.0 + k * sin2) / np.sqrt(1.0 - e2 * sin2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Normal gravity on the WGS84 reference ellipsoid (Somigliana formula).
+    
+    Parameters
+    ----------
+    X : array_like, shape (n, 1)
+        X[:, 0] = geodetic latitude in degrees
+    
+    Returns
+    -------
+    gamma : ndarray, shape (n,)
+        Normal gravity [m/s^2] at the WGS84 ellipsoid surface
+    """
+    phi = np.deg2rad(X[:, 0])
+
+    # WGS84 constants
+    gamma_e = 9.7803253359  # m/s^2, normal gravity at equator
+    k = 0.00193185265241    # Somigliana constant
+    e2 = 0.00669437999013   # first eccentricity squared
+
+    sinphi = np.sin(phi)
+    gamma = gamma_e * (1.0 + k * sinphi**2) / np.sqrt(1.0 - e2 * sinphi**2)
+    return gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Normal gravity on the WGS84 reference ellipsoid surface (Somigliana formula).
+    Input:
+        X[:, 0] = geodetic latitude in degrees
+    Output:
+        gamma in m/s^2
+    """
+    phi = np.deg2rad(X[:, 0])
+
+    # WGS84 normal gravity constants
+    gamma_e = 9.7803253359   # m/s^2, equator
+    gamma_p = 9.8321849378   # m/s^2, pole
+    k = 0.00193185265241
+
+    sin_phi = np.sin(phi)
+    sin2 = sin_phi * sin_phi
+
+    return gamma_e * (1.0 + k * sin2) / np.sqrt(1.0 - 0.00669437999013 * sin2)

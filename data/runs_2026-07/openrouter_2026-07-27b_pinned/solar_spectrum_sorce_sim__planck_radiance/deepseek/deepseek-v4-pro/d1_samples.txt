@@ -1,0 +1,168 @@
+import numpy as np
+
+def predict(X):
+    """
+    Compute Planck spectral radiance L(λ, T) for the solar disk at 1 AU.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1)
+        X[:, 0] = wavelength_nm (λ) in nm.
+    
+    Returns
+    -------
+    L : np.ndarray, shape (n,)
+        Spectral radiance in W m⁻² nm⁻¹ sr⁻¹.
+    
+    Notes
+    -----
+    The formula uses the solar effective temperature T = 5772 K.
+    The Planck spectral radiance in wavelength units is
+        L(λ, T) = (2 h c^2) / λ^5 * 1 / (exp(h c / (λ k_B T)) - 1)
+    with λ in meters, then converted to per-nm by multiplying by 1e-9.
+    """
+    # Physical constants (SI)
+    h = 6.62607015e-34      # Planck constant, J s
+    c = 2.99792458e8        # speed of light, m/s
+    kB = 1.380649e-23       # Boltzmann constant, J/K
+    T = 5772.0              # solar effective temperature, K
+
+    lambda_nm = X[:, 0]                     # wavelength in nm
+    lambda_m = lambda_nm * 1e-9             # convert to m
+
+    # Planck spectral radiance per unit wavelength (m)
+    L_per_m = (2.0 * h * c**2) / (lambda_m**5)
+    L_per_m /= np.exp(h * c / (lambda_m * kB * T)) - 1.0
+
+    # Convert to per nm
+    L_per_nm = L_per_m * 1e-9
+
+    return L_per_nm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute Planck spectral radiance L(λ, T) [W m⁻² nm⁻¹ sr⁻¹]
+    for a solar effective temperature T = 5772 K.
+
+    Input:
+        X : 2-D numpy array, X[:, 0] = wavelength in nm
+    Output:
+        L : 1-D numpy array of spectral radiance
+    """
+    # Fundamental constants (SI)
+    h = 6.62607015e-34      # Planck constant, J·s
+    c = 2.99792458e8        # speed of light, m/s
+    k_B = 1.380649e-23      # Boltzmann constant, J/K
+    T = 5772                # solar effective temperature, K
+
+    # Wavelength conversion: nm -> m
+    wl_nm = X[:, 0]               # nm
+    wl_m = wl_nm * 1.0e-9         # m
+
+    # Planck law: spectral radiance per unit wavelength (m)
+    B_m = ( (2.0 * h * c**2) / (wl_m**5) ) / ( np.exp( h * c / (wl_m * k_B * T) ) - 1.0 )
+    # B_m is in W m⁻² sr⁻¹ m⁻¹. Convert to per nm: 1 m⁻¹ = 1e-9 nm⁻¹
+    L = B_m * 1.0e-9              # W m⁻² sr⁻¹ nm⁻¹
+
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute Planck spectral radiance L(λ, T) in W m⁻² nm⁻¹ sr⁻¹.
+    
+    Input X is a 2-D array where X[:, 0] = wavelength in nm.
+    Returns a 1-D array of L(λ, T).
+    """
+    wavelength_nm = X[:, 0]
+    
+    # Physical constants
+    h = 6.62607015e-34      # Planck constant (J·s)
+    c = 2.99792458e8        # Speed of light (m/s)
+    k = 1.380649e-23        # Boltzmann constant (J/K)
+    T = 5772.0              # Solar effective temperature (K)
+    
+    # Convert wavelength from nm to m
+    wavelength_m = wavelength_nm * 1e-9
+    
+    # Planck radiance formula: L(λ, T) = (2 h c^2 / λ^5) * 1 / (exp(h c / (λ k T)) - 1)
+    # This gives spectral radiance in W m⁻² m⁻¹ sr⁻¹
+    # Multiply by 1e-9 to convert per m to per nm
+    L_per_m = (2.0 * h * c**2) / (wavelength_m**5) * 1.0 / (np.exp(h * c / (wavelength_m * k * T)) - 1.0)
+    
+    L_per_nm = L_per_m * 1e-9  # W m⁻² nm⁻¹ sr⁻¹
+    
+    return L_per_nm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute the Planck spectral radiance L(λ, T) per unit wavelength [W m⁻² nm⁻¹ sr⁻¹]
+    at the solar effective temperature T ≈ 5772 K.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        2-D array where X[:, 0] is wavelength in nm.
+
+    Returns
+    -------
+    L : np.ndarray
+        1-D array of spectral radiance values.
+    """
+    # Input wavelength in nm
+    lam_nm = X[:, 0]
+
+    # Physical constants (SI)
+    h = 6.62607015e-34      # Planck constant, J·s
+    c = 2.99792458e8        # Speed of light, m/s
+    k_B = 1.380649e-23      # Boltzmann constant, J/K
+    T = 5772.0              # Solar effective temperature, K
+
+    # Wavelength in metres
+    lam_m = lam_nm * 1e-9
+
+    # Planck law: spectral radiance per unit wavelength (m) in W m⁻² m⁻¹ sr⁻¹
+    L_per_m = (2.0 * h * c**2) / (lam_m**5) * 1.0 / (np.exp(h * c / (lam_m * k_B * T)) - 1.0)
+
+    # Convert to per nanometre: 1 m = 1e9 nm → multiply by 1e-9
+    L = L_per_m * 1e-9
+
+    return L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Physical constants (SI)
+    h = 6.62607015e-34      # Planck constant, J s
+    c = 299792458.0        # speed of light, m/s
+    kB = 1.380649e-23      # Boltzmann constant, J/K
+
+    # Solar effective temperature (K) — standard value consistent with SORCE SIM
+    T_sun = 5778.0
+
+    # Extract wavelength in nm from the input array
+    lambda_nm = X[:, 0]
+
+    # Convert to metres
+    lambda_m = lambda_nm * 1e-9
+
+    # Planck spectral radiance per unit wavelength in metres [W m^-2 m^-1 sr^-1]
+    L_per_m = (2.0 * h * c**2 / lambda_m**5) / (np.exp(h * c / (lambda_m * kB * T_sun)) - 1.0)
+
+    # Convert to per nanometre: 1 m = 1e9 nm, so multiply by 1e-9 m/nm
+    L_per_nm = L_per_m * 1e-9
+
+    return L_per_nm

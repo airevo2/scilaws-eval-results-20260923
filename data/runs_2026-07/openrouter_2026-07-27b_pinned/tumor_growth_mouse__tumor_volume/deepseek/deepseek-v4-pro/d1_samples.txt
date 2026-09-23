@@ -1,0 +1,82 @@
+import numpy as np
+
+def predict(X):
+    # Extract time in days
+    t = X[:, 0]
+    
+    # Gompertz model parameters (commonly cited default values for illustration; 
+    # in practice these are fitted to data)
+    V0 = 1.0        # initial tumor volume at t=0 [mm^3]
+    V_inf = 2000.0  # carrying capacity / plateau volume [mm^3]
+    k = 0.2         # growth deceleration rate [1/day]
+    
+    # Standard closed-form solution of the Gompertz ODE:
+    # V(t) = V0 * exp( ln(V_inf / V0) * (1 - exp(-k * t)) )
+    V = V0 * np.exp(np.log(V_inf / V0) * (1.0 - np.exp(-k * t)))
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard exponential growth model: V(t) = V0 * exp(r * t)
+    # V0: initial tumor volume at t=0 (mm^3)
+    # r : growth rate (1/day)
+    V0 = 100.0   # placeholder value (e.g., 100 mm^3)
+    r = 0.1      # placeholder value (e.g., 0.1 day^-1)
+    t = X[:, 0]
+    return V0 * np.exp(r * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard exponential growth model: V(t) = V0 * exp(k * t)
+    # Coefficients are placeholders; they would normally be fitted to data.
+    V0 = 1.0    # initial volume (mm^3)
+    k = 0.1     # growth rate constant (1/day)
+    t = X[:, 0]
+    return V0 * np.exp(k * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict tumor volume using the Gompertz growth model, the most commonly
+    cited ODE-based model for tumor growth. The closed-form solution is:
+      V(t) = V0 * exp( (alpha/beta) * (1 - exp(-beta * t)) )
+    Parameters are chosen as typical values for murine tumors; they can be
+    replaced with fitted constants if data are available.
+    """
+    # Parameters (typical values for a fast-growing murine tumor)
+    V0 = 10.0    # initial volume at t=0 (mm^3)
+    alpha = 0.5  # intrinsic growth rate (1/day)
+    beta = 0.1   # growth deceleration rate (1/day)
+
+    t = X[:, 0]  # time in days
+    V = V0 * np.exp((alpha / beta) * (1.0 - np.exp(-beta * t)))
+    return V
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict tumor volume from time using the standard Gompertz model,
+    the most commonly cited closed-form growth model for solid tumors.
+    V(t) = V0 * exp( (alpha / beta) * (1 - exp(-beta * t)) )
+    """
+    t = X[:, 0]
+
+    # Model parameters (typical values for xenograft tumors; can be refitted)
+    V0 = 1.0      # initial volume at t=0 [mm^3]
+    alpha = 0.2   # intrinsic growth rate [1/day]
+    beta = 0.05   # growth decay rate [1/day]
+
+    V = V0 * np.exp((alpha / beta) * (1.0 - np.exp(-beta * t)))
+    return V

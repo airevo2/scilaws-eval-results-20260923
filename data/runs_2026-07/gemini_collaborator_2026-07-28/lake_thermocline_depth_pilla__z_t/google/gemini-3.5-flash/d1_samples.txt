@@ -1,0 +1,125 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = A_s (Lake surface area in km^2)
+    # X[:, 1] = Z_max (Lake maximum depth in m)
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+
+    # Empirical power-law relationship based on Shuter et al. (1983) and Hanna (1990)
+    # relating thermocline depth to lake surface area (fetch proxy)
+    z_t_est = 3.3 * (A_s**0.225)
+
+    # Apply physical constraint: thermocline depth cannot exceed maximum depth.
+    # We cap it at 90% of Z_max to account for the bottom boundary layer.
+    z_t = np.minimum(z_t_est, 0.9 * Z_max)
+
+    # Round to the nearest 0.5 m to match the uniform interpolation grid of the source dataset.
+    z_t_grid = np.round(z_t * 2.0) / 2.0
+
+    # Ensure thermocline depth is at least 0.5 m
+    return np.maximum(z_t_grid, 0.5)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = A_s (Lake surface area in km^2)
+    # X[:, 1] = Z_max (Lake maximum depth in m)
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+
+    # Hanna (1990) empirical relation: log10(z_t) = 0.336 * log10(Fetch) + 0.613
+    # Assuming Fetch (km) is approximately sqrt(A_s) for typical lake geometries:
+    # z_t = 10^0.613 * (A_s^0.5)^0.336 = 4.102 * A_s^0.168
+    z_t_raw = 4.102 * (A_s**0.168)
+
+    # Apply physical constraints: thermocline depth cannot exceed maximum depth.
+    # We cap it at Z_max - 0.5 m to respect the physical boundary and the 0.5 m grid.
+    z_t = np.minimum(z_t_raw, Z_max - 0.5)
+
+    # Ensure a physical lower bound of 0.5 m
+    z_t = np.maximum(z_t, 0.5)
+
+    # Round to the nearest 0.5 m to match the grid spacing of the target variable
+    z_t = np.round(z_t * 2) / 2
+
+    return z_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the summertime thermocline depth (z_t) in meters.
+
+    Parameters:
+    X : 2-D numpy array
+        X[:, 0] = A_s [km^2] (Lake surface area)
+        X[:, 1] = Z_max [m]  (Lake maximum depth)
+
+    Returns:
+    1-D numpy array of z_t [m] rounded to the nearest 0.5 m grid.
+    """
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+
+    # Shuter et al. (1983) empirical power-law relationship: z_t = 4.34 * A_s^0.224
+    z_t_pred = 4.34 * (A_s**0.224)
+
+    # Physical constraint: Thermocline depth cannot exceed maximum depth.
+    # We apply a boundary condition limiting it to Z_max - 0.5 m.
+    z_t = np.minimum(z_t_pred, Z_max - 0.5)
+
+    # Ensure thermocline depth is at least 0.5 m
+    z_t = np.maximum(z_t, 0.5)
+
+    # Round to the nearest 0.5 m to match the grid of the source dataset
+    z_t = np.round(z_t * 2.0) / 2.0
+
+    return z_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = A_s (lake surface area in km^2)
+    # X[:, 1] = Z_max (lake maximum depth in m)
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+
+    # Canonical empirical power-law relationship (e.g., Hanna 1990)
+    # where thermocline depth scales with the 1/4 power of surface area (fetch-limiting scaling)
+    z_t = 4.15 * (A_s**0.25)
+
+    # Physical constraint: thermocline depth is bounded by the lake's maximum depth
+    # Typically, the thermocline does not exceed ~85% of the maximum depth in stratified lakes
+    z_t = np.minimum(z_t, 0.85 * Z_max)
+
+    return z_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    A_s = X[:, 0]  # Lake surface area in km^2
+    Z_max = X[:, 1]  # Lake maximum depth in m
+
+    # Hanna (1990) standard empirical relationship for thermocline/mixing depth:
+    # z_t = 4.15 * A_s^0.22
+    z_t_pred = 4.15 * (A_s**0.22)
+
+    # Apply physical constraint: thermocline depth must be bounded by the lake's maximum depth.
+    # We cap the thermocline at 90% of the maximum depth to respect the physical boundary.
+    z_t = np.minimum(z_t_pred, 0.9 * Z_max)
+
+    return z_t

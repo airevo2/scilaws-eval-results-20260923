@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Length"
+  symbol: "foc"
+  unit: ""
+  description: "Length"
+inputs:
+  - name: "Length"
+    symbol: "d1"
+    unit: ""
+    description: "Length"
+  - name: "Length"
+    symbol: "d2"
+    unit: ""
+    description: "Length"
+  - name: "Dimensionless"
+    symbol: "n"
+    unit: ""
+    description: "Dimensionless"

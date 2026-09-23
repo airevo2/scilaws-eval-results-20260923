@@ -1,0 +1,134 @@
+task_id: baseflow_recession_nwis__Q_t
+domain: earth_science / hydrology
+license: CC0-1.0
+
+# Type II — cluster = USGS gauge (site_no). Each gauge contributes rows from
+# all of its recession events (2010–2020). Each recession event produces rows
+# (t=0,1,...,L-1; Q_0 = event start discharge; Q_t = discharge at day t).
+# The reference formula (Maillet exponential) has 1 per-cluster LOCAL_FITTABLE
+# parameter (k, the recession time constant in days) that is refit per gauge;
+# the functional form Q_t = Q_0 * exp(-t/k) is universal across all gauges.
+type: typeII
+has_group_id: true
+
+# Setting 1 (real-data discovery). No hidden ground-truth formula; no
+# evaluation/rubric.yaml / invariant_constants block.
+# Absence of rubric.yaml marks this as Setting 1 per release-format v2 §6.
+
+context: >-
+  During a baseflow recession event, a catchment's streamflow drains gradually
+  as groundwater discharges to the stream network. After a storm peak, discharge
+  typically declines in a smooth, nearly exponential curve over days to weeks,
+  following patterns described by Darcy's law for groundwater flow through
+  porous media. The rate of decline depends on the aquifer geometry and
+  hydraulic conductivity: a confined or thick unconfined aquifer drains with
+  a nearly linear storage-discharge relationship (exponential recession,
+  Maillet 1905), while a thin unconfined aquifer drains with an accelerating
+  nonlinear rate (power-law recession, Brutsaert and Nieber 1977). The
+  recession time constant or power-law exponent differs across gauges because
+  each catchment has its own subsurface structure, geology, and drainage area.
+  The initial discharge at the start of the recession anchors the
+  level of the curve; the shape of the decline over time carries information
+  about aquifer properties that cannot be directly observed.
+
+target:
+  name: Q_t
+  symbol: Q(t)
+  unit: ft3/s
+  description: Daily-mean streamflow discharge (USGS parameter 00060) at elapsed time t days after the start of a recession event. Measured directly at the USGS gauge.
+  range: [0.01, 66300.0]
+
+inputs:
+  - name: t
+    symbol: t
+    unit: days
+    description: Elapsed time in days since the start of the recession event (t=0 is the first day of the monotone decreasing run). Integer values 0, 1, 2, ..., up to event length minus 1.
+    range: [0, 77]
+  - name: Q_0
+    symbol: Q_0
+    unit: ft3/s
+    description: Observed discharge at the start of the recession event (t=0). Row-level input that varies across events within a gauge; anchors the initial level of the recession curve. Same units as Q_t.
+    range: [0.06, 66300.0]
+
+# Dataset — three-file v2 Type II layout, cluster (gauge) holdout.
+# 59 HCDN-2009 reference gauges (Lins 2012) with non-empty NWIS discharge
+# records for 2010-01-01..2020-12-31. Gauge 07347000 returned empty NWIS
+# response (no active record) and is excluded.
+# Recession events extracted by Vogel & Kroll (1992) >=5-day strict-monotone-
+# decrease rule. 14740 events total; 128225 rows.
+#
+# Cluster holdout: group_id % 4 == 0 -> test (15 gauges).
+# Within-test split: events sorted by start date within each gauge;
+#   even event local index -> test_fit, odd -> test_test.
+# Both halves span the full Q_0 and t range for each gauge.
+# Train gauges contribute all their recession rows to train.csv.
+#
+# v2 Type II schema rule (data_spec §4.1):
+#   train.csv:     Q_t, t, Q_0              (NO group_id)
+#   test_fit.csv:  Q_t, t, Q_0, group_id   (group_id LAST)
+#   test_test.csv: Q_t, t, Q_0, group_id   (group_id LAST)
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 96765
+n_test_fit: 15613
+n_test_test: 15847
+n_clusters_train: 44
+n_clusters_test: 15
+n_rows_per_cluster_min: 167
+n_rows_per_cluster_median: 1156
+n_rows_per_cluster_max: 1536
+
+# Forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# Value is "error" (default) — cluster-holdout discipline guarantees
+# set(test_fit.group_id) == set(test_test.group_id) with no unseen groups.
+unseen_group_strategy: error
+
+# Candidate prior constants — none grounded in the reference papers.
+# The Maillet formula has no LAW_CONSTANTS (Q_0 and t appear as inputs;
+# k is per-cluster LOCAL_FITTABLE). The BN77 power-law form similarly has
+# no universal numerical constants — a and b are per-gauge fitted values.
+# A priors block with fabricated constants would be an anti-fabrication
+# violation; priors: [] (empty) is the correct and honest entry.
+priors: []
+
+# === Reference baselines ===
+# F=2 after anti-tautology review:
+#   roques_2022            : Maillet (1905) Q_t = Q_0 * exp(-t/k). 1 LOCAL param (k).
+#                            Source: roques_2022.pdf Appendix A Eq. (A2), PDF p. 11.
+#   brutsaert_nieber_1977  : BN77 power-law Q_t = [Q_0^(1-b) + a*(b-1)*t]^(1/(1-b)).
+#                            2 LOCAL params (a, b). BN77 ODE in chor_dias_2014.pdf
+#                            PDF p. 3; integrated analytically for b>1.
+# Anti-tautology: Q_t is raw NWIS gauge measurement, NOT generated by either
+# formula. Neither baseline recovers Q_t exactly — recession events deviate from
+# the ideal exponential/power-law model (evapotranspiration, multi-compartment
+# aquifers, event-to-event variability). R2 is well below 1.0 per cluster.
+references:
+  - id: roques_2022
+    label: "Roques et al. 2022 — Maillet (1905) Q_t = Q_0 * exp(-t/k)"
+    formula_file: formulas/roques_2022.py
+    reference_pdf: reference/roques_2022.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 1
+    measured: {rmse: 699.8001, r2: 0.9531}
+  - id: brutsaert_nieber_1977
+    label: "Brutsaert-Nieber 1977 — Q_t = [Q_0^(1-b) + a*(b-1)*t]^(1/(1-b))"
+    formula_file: formulas/brutsaert_nieber_1977.py
+    reference_pdf: reference/chor_dias_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured: {rmse: 473.6794, r2: 0.9785}
+
+# === v2 anti-dump caps (derived from reference bank) ===
+caps:
+  max_law_constants: 0
+  max_local_params: 2
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+# === Scoring ===
+metric: r2
+best_baseline: 0.9785

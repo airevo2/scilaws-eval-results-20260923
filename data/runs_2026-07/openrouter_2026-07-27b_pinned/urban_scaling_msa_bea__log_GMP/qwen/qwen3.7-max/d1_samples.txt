@@ -1,0 +1,76 @@
+import numpy as np
+
+def predict(X):
+    log_pop = X[:, 0]
+    
+    # Canonical urban scaling law: ln(Y) = alpha + beta * ln(N)
+    # beta ~ 1.11 is the standard superlinear scaling exponent for economic output (GMP/GDP)
+    beta = 1.11
+    
+    # alpha calibrated for US MSAs in chained 2017 million USD 
+    # (implies ~$65k GMP per capita for a 1-million-person MSA)
+    alpha = -4.25
+    
+    return alpha + beta * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_pop = X[:, 0]
+    # Urban scaling law: ln(Y) = alpha + beta * ln(N)
+    # beta ~ 1.13 for superlinear scaling of economic output (Bettencourt et al., 2007)
+    alpha = -4.10
+    beta = 1.13
+    return alpha + beta * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Urban scaling law: ln(Y) = alpha + beta * ln(N)
+    # Based on superlinear scaling of socioeconomic quantities in US MSAs 
+    # (e.g., Bettencourt et al., 2007; beta ~ 1.13 for GDP/GMP)
+    alpha = -4.50
+    beta = 1.13
+    
+    log_pop = X[:, 0]
+    log_gmp = alpha + beta * log_pop
+    
+    return log_gmp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Urban scaling law for Gross Metropolitan Product (GMP)
+    # ln(Y) = alpha + beta * ln(N)
+    # beta ~ 1.13 reflects superlinear scaling (agglomeration economies)
+    # as established in Bettencourt et al. (2007, 2013)
+    alpha = -4.61
+    beta = 1.13
+    
+    log_pop = X[:, 0]
+    log_gmp = alpha + beta * log_pop
+    
+    return log_gmp
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_pop = X[:, 0]
+    
+    # Canonical superlinear scaling relationship for Gross Metropolitan Product (GMP)
+    # Based on urban scaling theory (e.g., Bettencourt et al., 2007)
+    # ln(Y) = ln(Y0) + beta * ln(N)
+    
+    beta = 1.13       # Superlinear scaling exponent for socioeconomic quantities
+    alpha = -3.50     # Intercept calibrated for ln(million USD, chained 2017) and ln(persons)
+    
+    log_gmp = alpha + beta * log_pop
+    return log_gmp

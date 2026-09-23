@@ -1,0 +1,123 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600 for E. coli K-12 BW25113 using the modified Gompertz model.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1)
+        X[:, 0] = time_h (hours since inoculation)
+
+    Returns
+    -------
+    od600 : np.ndarray, shape (n,)
+        Predicted optical density at 600 nm (dimensionless, background-subtracted)
+    """
+    t = X[:, 0]
+
+    # Typical growth parameters for E. coli K-12 BW25113 in a 96-well plate at 37°C
+    A = 0.85         # maximum OD600 (asymptote)
+    mu_max = 0.75    # maximum specific growth rate (1/h)
+    lag = 1.8        # lag phase duration (h)
+
+    # Modified Gompertz equation (Zwietering et al., Appl. Environ. Microbiol. 1990)
+    # y = A * exp{-exp[ (mu_max * e / A) * (lag - t) + 1 ]}
+    inner = (mu_max * np.e / A) * (lag - t) + 1.0
+    # Prevent overflow in exp(inner) for extreme t values
+    inner = np.clip(inner, -100, 100)
+    od600 = A * np.exp(-np.exp(inner))
+    return od600
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract time in hours
+    t = X[:, 0]
+    
+    # Parameters for E. coli K-12 BW25113 in a microplate well
+    # Lower asymptote (background-subtracted)
+    A = 0.0       # OD
+    # Asymptotic increase (max OD - min OD)
+    C = 0.8       # OD
+    # Maximum specific growth rate
+    mu_max = 0.8  # 1/h
+    # Lag time (Zwietering definition)
+    lam = 2.0     # h
+    
+    # Four-parameter logistic model (Zwietering et al., 1990)
+    exponent = (4.0 * mu_max / C) * (lam - t) + 2.0
+    od600 = A + C / (1.0 + np.exp(exponent))
+    
+    return od600
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600 using the modified Gompertz model (Zwietering et al., 1990),
+    a standard closed-form growth curve commonly applied to plate-reader data.
+    Coefficients are fixed at typical values for E. coli K-12 BW25113 in a
+    96-well plate under minimal medium conditions.
+    """
+    # Model parameters (typical for K-12 BW25113 in a plate reader, e.g., M9 glucose)
+    A = 0.82           # maximum OD600 asymptote (dimensionless)
+    mu_max = 0.65      # maximum specific growth rate (1/h)
+    lag = 2.1          # lag duration (h)
+
+    t = X[:, 0]  # time in hours
+    # Modified Gompertz equation
+    inner = (mu_max * np.e / A) * (lag - t) + 1.0
+    od = A * np.exp(-np.exp(inner))
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600(t) for E. coli K-12 BW25113 in a 96-well plate.
+    
+    Uses the widely cited logistic model with lag phase (Zwietering et al. 1990):
+        OD(t) = A / (1 + exp((4 * mu_max / A) * (lag - t) + 2))
+    where:
+        A      = maximum asymptotic OD (background-subtracted)
+        mu_max = maximum specific growth rate (1/h)
+        lag    = lag time (h)
+    
+    The constants below are typical values for this strain under standard conditions.
+    """
+    t = X[:, 0]               # time in hours
+    A = 0.8                   # max OD600
+    mu_max = 0.6              # max growth rate (h^-1)
+    lag = 1.0                 # lag phase duration (h)
+    
+    # closed-form logistic with lag
+    od = A / (1.0 + np.exp((4.0 * mu_max / A) * (lag - t) + 2.0))
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600(t) using the modified Gompertz growth model,
+    a standard closed-form relationship in predictive microbiology.
+    """
+    # Typical parameter values for E. coli K-12 BW25113 in a 96-well plate
+    A = 1.0         # asymptotic maximum optical density
+    mu_max = 0.8    # maximum specific growth rate (h⁻¹)
+    lam = 2.5       # lag time (h)
+
+    t = X[:, 0]
+
+    # Modified Gompertz equation (Zwietering et al., 1990)
+    inner = (mu_max * np.e / A) * (lam - t) + 1.0
+    od = A * np.exp(-np.exp(inner))
+    return od

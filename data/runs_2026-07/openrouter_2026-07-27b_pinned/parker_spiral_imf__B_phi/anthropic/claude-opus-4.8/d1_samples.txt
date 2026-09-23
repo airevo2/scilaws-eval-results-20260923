@@ -1,0 +1,80 @@
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]      # km/s
+    r_AU = X[:, 2]
+
+    # Parker spiral: B_phi = -B_r * (Omega * r) / v_sw
+    Omega = 2.865e-6            # solar rotation angular velocity [rad/s]
+    AU_km = 1.495978707e8       # 1 AU in km
+    B_phi = -B_r * (Omega * r_AU * AU_km) / v_sw
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Parker spiral relation: B_phi = -B_r * (Omega * r / v_sw)
+    B_r = X[:, 0]          # nT
+    v_sw = X[:, 1]         # km/s
+    r_AU = X[:, 2]         # AU
+
+    Omega = 2.865e-6       # solar rotation angular velocity [rad/s]
+    AU_km = 1.495978707e8  # 1 AU in km
+
+    r_km = r_AU * AU_km
+    B_phi = -B_r * (Omega * r_km / v_sw)
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]        # nT
+    v_sw = X[:, 1]       # km/s
+    r_AU = X[:, 2]       # AU
+
+    # Parker spiral: B_phi = -B_r * (Omega * r / v_sw)
+    Omega = 2.865e-6     # solar rotation angular velocity [rad/s]
+    AU_km = 1.495978707e8  # 1 AU in km
+    r_km = r_AU * AU_km
+
+    B_phi = -B_r * (Omega * r_km / v_sw)
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]        # nT
+    v_sw = X[:, 1]       # km/s
+    r_AU = X[:, 2]       # AU
+
+    # Parker spiral: B_phi = -B_r * (Omega * r) / v_sw
+    Omega = 2.865e-6     # solar rotation angular velocity [rad/s] (sidereal ~25.38 d)
+    AU_km = 1.495978707e8  # 1 AU in km
+    r_km = r_AU * AU_km
+
+    B_phi = -B_r * (Omega * r_km) / v_sw
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]      # nT
+    v_sw = X[:, 1]     # km/s
+    r_AU = X[:, 2]     # AU
+
+    # Parker spiral relation: B_phi = -B_r * (Omega * r / v_sw)
+    Omega = 2.7e-6         # solar rotation angular velocity [rad/s]
+    AU_km = 1.496e8        # 1 AU in km
+    r_km = r_AU * AU_km
+
+    B_phi = -B_r * (Omega * r_km / v_sw)
+    return B_phi

@@ -1,0 +1,187 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    I_prev = X[:, 0]
+    s = X[:, 1]
+    log_pop = X[:, 3]
+    z = X[:, 4]
+
+    # Population size N
+    N = 10**log_pop
+
+    # In the TSIR model, susceptible reconstruction is S_t = S_mean + z_t
+    # S_mean (average susceptible fraction) for measles is typically around 3.5% to 5% of the population.
+    S_mean = 0.045 * N
+    S = np.maximum(S_mean + z, 1e-5 * N)
+
+    # Seasonality in transmission (beta_s) modeled as a harmonic function
+    # Measles transmission peaks in school terms (winter/spring) and drops in summer.
+    beta_0 = 22.0
+    beta_1 = 0.15
+    phi = 5.0  # Peak around biweek 5 (late winter)
+    beta = beta_0 * (1.0 + beta_1 * np.cos(2.0 * np.pi * (s - phi) / 26.0))
+
+    # TSIR exponent alpha (typically ~0.97 for measles to account for discretization/clustering)
+    alpha = 0.97
+
+    # Deterministic TSIR relationship: I_t = beta_t * I_{t-1}^alpha * (S_{t-1} / N)
+    I_pred = beta * (I_prev**alpha) * (S / N)
+
+    # Clean up any potential numerical issues (e.g., negative values or NaNs)
+    I_pred = np.nan_to_num(I_pred, nan=0.0, posinf=0.0, neginf=0.0)
+    return np.maximum(I_pred, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    I_prev = X[:, 0]
+    biweek = X[:, 1]
+    births = X[:, 2]
+    log_pop = X[:, 3]
+    z_t = X[:, 4]
+
+    # Calculate population size N
+    N = 10**log_pop
+
+    # Reconstruct susceptibles S_t = S_bar + z_t
+    # In measles TSIR models, the mean susceptible fraction (S_bar/N) is typically around 5% to 6%
+    S_bar = 0.055 * N
+    S = S_bar + z_t
+
+    # Ensure susceptibles remain physically realistic (positive and bounded)
+    S = np.clip(S, 0.01 * N, 0.20 * N)
+
+    # Seasonal transmission rate beta_s
+    # Modeled via a standard parametric harmonic profile
+    # Peak transmission is typically in autumn/winter, lowest in summer
+    beta_0 = 24.5  # Mean biweekly transmission rate
+    beta_1 = 0.15  # Amplitude of seasonality
+    phi = 2.0  # Phase shift (peak around biweek 2, trough around biweek 15)
+    beta = beta_0 * (1.0 + beta_1 * np.cos(2 * np.pi * (biweek - phi) / 26.0))
+
+    # Mixing exponent (alpha < 1 accounts for discretization and spatial clustering)
+    alpha = 0.97
+
+    # TSIR dynamics equation: I_t = beta_t * I_{t-1}^alpha * (S_{t-1} / N)
+    I_t = beta * np.power(I_prev, alpha) * (S / N)
+
+    return I_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    I_prev = X[:, 0]  # I_{t-1}
+    s = X[:, 1]  # biweek (1..26)
+    log_pop = X[:, 3]  # log10(N)
+    z_t = X[:, 4]  # Susceptible deviation proxy
+
+    # Calculate population N
+    N = 10**log_pop
+
+    # Reconstruct Susceptibles S_t
+    # In TSIR, average susceptibility for measles is typically ~3.5% to 5% of the population.
+    # S_t = S_mean + z_t
+    S_mean = 0.045 * N
+    S = S_mean + z_t
+
+    # Ensure S is physically realistic (non-negative and bounded)
+    S = np.clip(S, 0.01 * N, 0.15 * N)
+
+    # TSIR mixing parameter alpha (typically 0.97 for measles to account for discretization/coarseness)
+    alpha = 0.97
+
+    # Seasonal transmission rate beta_s using a classic harmonic model for measles.
+    # Transmission peaks in autumn/winter/spring and drops during school summer holidays (biweeks 14-18)
+    angle = 2 * np.pi * (s - 5) / 26.0
+    beta_s = 32.0 * (1.0 + 0.25 * np.cos(angle))
+
+    # TSIR prediction formula: I_t = beta_s * (I_{t-1}^alpha) * (S_t / N)
+    I_prev_alpha = np.power(np.maximum(I_prev, 0.0), alpha)
+    I_pred = beta_s * I_prev_alpha * (S / N)
+
+    return I_pred
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    I_prev = X[:, 0]
+    biweek = X[:, 1]
+    log_pop = X[:, 3]
+    z = X[:, 4]
+
+    # Calculate population N
+    N = 10**log_pop
+
+    # Average susceptible fraction for measles is typically around 5% to 6% (1 / R0)
+    # S_t = S_mean + z_t
+    S = 0.055 * N + z
+    S = np.clip(S, 0, N)
+
+    # TSIR seasonal transmission rate beta_s
+    # Measles transmission peaks in winter/spring (around biweek 5) and drops in summer
+    phase = 2 * np.pi * (biweek - 5) / 26
+    beta = 24.0 * (1.0 + 0.2 * np.cos(phase))
+
+    # Discretization/mixing exponent alpha is typically ~0.97 for measles
+    alpha = 0.97
+
+    # TSIR standard recurrence relation: I_t = beta_t * I_{t-1}^alpha * (S_t / N)
+    I_t = beta * (I_prev**alpha) * (S / N)
+
+    return I_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    cases_prev = X[:, 0]
+    biweek = X[:, 1]
+    log_pop = X[:, 3]
+    z_t = X[:, 4]
+
+    # Calculate population N from log10 population
+    N = 10**log_pop
+
+    # Reconstruct Susceptibles: S_t = S_mean + z_t
+    # In prevaccination eras, the mean susceptible fraction (S_mean/N) is typically around 3.5% to 5%.
+    # We use 4.0% (0.04) as a canonical representation.
+    S_mean = 0.04 * N
+    S = S_mean + z_t
+
+    # Ensure S remains physically plausible (positive)
+    S = np.maximum(S, 0.01 * N)
+
+    # TSIR Model parameters:
+    # alpha: transmission exponent (slightly less than 1 to account for spatial clustering/discretization)
+    alpha = 0.97
+
+    # Seasonal transmission rate beta_s
+    # Modeled via a standard sinusoidal profile peaking in late winter / early spring (around biweek 5)
+    beta_mean = 28.0
+    beta_amplitude = 0.15
+    peak_biweek = 5.0
+    theta = 2.0 * np.pi * (biweek - peak_biweek) / 26.0
+    beta = beta_mean * (1.0 + beta_amplitude * np.cos(theta))
+
+    # Calculate predicted cases: I_t = beta_s * I_{t-1}^alpha * (S / N)
+    cases_prev_alpha = np.power(np.maximum(cases_prev, 0.0), alpha)
+    I_t = beta * cases_prev_alpha * (S / N)
+
+    return I_t

@@ -1,0 +1,174 @@
+task_id: open_channel_flow_manning_usgs__mean_velocity
+domain: engineering / open-channel hydraulics
+license: MIT
+
+# Type II — cluster = COMID (NHDPlusV2 stream reach). Manning's roughness
+# coefficient n (and the Chezy C, Darcy-Weisbach f) must be fitted per reach.
+type: typeII
+has_group_id: true
+
+context: >-
+  The mean velocity of flow in a natural stream channel depends on the
+  channel geometry, the bed slope, and the roughness of the channel
+  boundary. Smooth, deep channels with steep slopes carry water fast;
+  shallow channels choked with vegetation or irregular rock move water
+  slowly at the same slope. The hydraulic radius — roughly the ratio of
+  cross-sectional area to wetted perimeter — summarises the geometry, and
+  the friction slope gives the energy gradient driving the flow. A single
+  per-reach resistance parameter absorbs the material and vegetative
+  roughness. This parameter is not universal: it varies systematically
+  with stream type, bed material, vegetation density, and channel
+  irregularity, making reach-level calibration necessary.
+
+target:
+  name: V_mps
+  symbol: V
+  unit: m/s
+  description: >-
+    Cross-section mean flow velocity measured by USGS field crews using
+    current meters or ADCP (acoustic Doppler current profiler). Computed
+    as total discharge Q divided by cross-sectional area A (Q/A). This is
+    a direct field measurement, independent of any resistance formula.
+    Converted from ft/s to m/s (x 0.3048).
+  range: [0.003, 30.18]    # full-precision: min=0.003048, max=30.175200
+
+inputs:
+  - name: R_m
+    symbol: R
+    unit: m
+    description: >-
+      Hydraulic depth (approximation of hydraulic radius for wide channels):
+      R_m = A_m2 / W_m, where A_m2 is cross-sectional area in m^2 and W_m
+      is water-surface width in m. Derived from USGS NWIS field measurements
+      of chan_area (ft^2, x 0.09290304) and chan_width (ft, x 0.3048).
+    range: [0.000002, 200.0]  # full-prec min=2.58e-6; capped at 200m in prep_data
+
+  - name: SLOPE
+    symbol: S_f
+    unit: ""
+    description: >-
+      Channel bed slope (dimensionless), serving as friction slope under
+      uniform-flow assumption. Sourced from NHDPlusV2 NHDFlowline_Network
+      per-reach attribute; constant within each COMID cluster.
+    range: [0.000009, 0.873]  # full-prec min=1e-05, max=0.8725
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Train/test boundary is by COMID: entire stream reaches are held out.
+# Within test clusters, rows are split INTERLEAVED on R_m rank (even -> test_fit,
+# odd -> test_test) so both halves span the full flow range — a representative
+# split scored by interpolation. SLOPE cannot be used as within-cluster axis
+# (constant per COMID by construction). Audit 2026-06-02: re-split from a
+# degenerate discharge-Q median (high-flow extrapolation) that drove all
+# baselines to per-cluster R²<0; see VERDICT.md.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 1776675
+n_test_fit: 226552
+n_test_test: 225686
+n_clusters_train: 6686
+n_clusters_test: 1671
+n_rows_per_cluster_min: 5
+n_rows_per_cluster_median: 208
+n_rows_per_cluster_max: 5454
+
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# batch01 standard cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emit for forward-compat.
+
+# Candidate prior constants (added 2026-06-02, H3). The only OTHER constant the
+# bank consumes is the Manning SI unit factor k_n=1.0 (candidate); the rest are
+# plausible open-channel-hydraulics distractors not used by Manning/Chezy. The
+# structural exponents 2/3 and 1/2 are inline (not exposed). LAW ∩ priors = ∅
+# (LAW is empty for both baselines); OTHER ⊆ priors (k_n present).
+priors:
+  - name: manning_k_n_si
+    value: 1.0
+    unit: ""
+    description: Manning dimensional unit-conversion factor in SI (V in m/s, R in m); "the conversion is included in the formula" (Jobson 1988 p. 53).
+    source: Jobson & Froehlich (1988) eq. 7-8, PDF p. 53/61.
+    _role: candidate
+  - name: manning_k_n_us
+    value: 1.486
+    unit: ""
+    description: Manning unit-conversion factor in US customary units (the value for ft/s, ft) — wrong unit system for this SI dataset.
+    source: Jobson & Froehlich (1988), PDF p. 53.
+    _role: distractor
+  - name: gravity
+    value: 9.80665
+    unit: m s-2
+    description: Standard gravitational acceleration — appears in the Darcy-Weisbach and Froude relations, but NOT in Manning or Chezy.
+    source: CODATA 2018 (exact).
+    _role: distractor
+  - name: water_kinematic_viscosity_20C
+    value: 1.004e-6
+    unit: m2 s-1
+    description: Kinematic viscosity of water at 20 °C — enters the Reynolds number, not the resistance (velocity) equations.
+    source: standard hydraulics tables.
+    _role: distractor
+
+# === Reference baselines ===
+# Two structurally distinct resistance formulas from Jobson & Froehlich (1988)
+# Lesson 7 (PDF pp. 59-62), predicting cross-section mean velocity V:
+#   Manning  (eq. 7-8, p. 61): V = (k_n/n)*R^(2/3)*S_f^(1/2)  — exponent 2/3 on R
+#   Chezy    (eq. 7-6, p. 60): V = C*sqrt(R*S_f)               — exponent 1/2 on R
+# The R exponent (2/3 vs 1/2) is the discriminating form difference.
+# measured.rmse = MEAN-PER-CLUSTER RMSE (the Type II harness ranking metric, so
+# the strongest-reference pick here agrees with evaluate.py's mean-pc anchor);
+# measured.r2 = pooled R^2. Audit 2026-06-02: the Darcy-Weisbach baseline
+# (eq. 7-10) was DROPPED as a C7 algebraic duplicate of Chezy — its closed-form
+# fit yields f=8g/A^2 (A=Σhv/Σh²), so predict()=A*sqrt(R*S)=C*sqrt(R*S), giving
+# predictions identical to Chezy. Archived under ../.dropped_baselines/.
+references:
+  - id: jobson_1988
+    label: "Jobson & Froehlich 1988 — Manning's equation (SI) eq. 7-8"
+    formula_file: formulas/jobson_1988.py
+    reference_pdf: reference/jobson_1988.pdf
+    n_law_constants: 0
+    n_other_constants: 1   # k_n = 1.0 (SI Manning unit-conversion factor; OTHER)
+    n_local_params: 1   # n (Manning's roughness coefficient)
+    measured: {rmse: 0.2731031885095589, r2: 0.2504231936775957}   # rmse=mean-pc, r2=pooled
+  - id: jobson_1988_chezy
+    label: "Jobson & Froehlich 1988 — Chezy equation eq. 7-6"
+    formula_file: formulas/jobson_1988_chezy.py
+    reference_pdf: reference/jobson_1988.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 1   # C (Chezy resistance coefficient)
+    measured: {rmse: 0.2673404909946124, r2: 0.14075340584905904}  # rmse=mean-pc, r2=pooled
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants: 0
+  max_local_params: 1
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.2673404909946124   # jobson_1988_chezy — lowest MEAN-PER-CLUSTER rmse (the Type II harness anchor)
+
+# === Auditor notes ===
+auditor_notes: >-
+  Audit 2026-06-02 (逐条审核). This task previously shipped a degenerate
+  within-cluster split (discharge-Q median: low-Q -> test_fit, high-Q ->
+  test_test), forcing high-flow extrapolation from a low-flow fit. Stage-
+  dependent roughness defeats that, so all baselines scored per-cluster R² < 0 —
+  which the old auditor_notes wrongly defended as an "intentional §9.14 OOD
+  probe / §C9-(c) all-fail bank". Per v0.5 §4 / guide §7, an all-negative split
+  where a constant beats every formula is a degenerate split to RE-SPLIT, not a
+  feature. Re-split to an INTERLEAVED within-cluster split on R_m rank
+  (representative, interpolation). Post-fix the bank is healthy: best baseline =
+  Chezy (mean-per-cluster RMSE 0.2673, pooled R² 0.141, per-cluster R² median
+  +0.298, beats the per-cluster naive in ~75-80% of clusters); Manning
+  (mean-per-cluster RMSE 0.2731, pooled R² 0.250, beats naive ~70%). The two
+  forms discriminate weakly (Chezy R^(1/2) edges Manning R^(2/3) on mean-per-
+  cluster; Manning leads on pooled — the data does not strongly prefer either
+  exponent). The Darcy-Weisbach baseline was dropped as a C7 algebraic duplicate
+  of Chezy. Remaining inherent limitation (documented, not a defect): SLOPE is
+  constant within each COMID, so its exponent is exercised only across the train
+  reaches, not within the per-cluster test fit. LAW_CONSTANTS = {} for both
+  baselines is correct (form-discovery: n / C are per-reach LOCAL; the 2/3 and
+  1/2 exponents are structural).

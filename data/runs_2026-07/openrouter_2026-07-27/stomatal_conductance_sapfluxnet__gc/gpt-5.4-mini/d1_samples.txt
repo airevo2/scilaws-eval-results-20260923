@@ -1,0 +1,73 @@
+import numpy as np
+
+def predict(X):
+    D = np.asarray(X)[:, 0]
+    # Generic log-linear canopy conductance proxy form:
+    # Gc = Gc_ref - m * ln(D)
+    # Coefficients are placeholders for the standard closed-form relationship.
+    Gc_ref = 0.0
+    m = 1.0
+    return Gc_ref - m * np.log(D)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = np.asarray(X)[:, 0]
+    
+    # Canonical log-linear VPD sensitivity form:
+    # Gc = Gc_ref - m * ln(D)
+    # Coefficients are set as generic placeholders consistent with the
+    # standard closed-form relationship, but without data-fitting.
+    Gc_ref = 1.0
+    m = 1.0
+    
+    return Gc_ref - m * np.log(D)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Canonical log-linear canopy conductance proxy:
+    # Gc = Gc_ref - m * ln(D)
+    Gc_ref = 1.0
+    m = 1.0
+    return Gc_ref - m * np.log(D)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict canopy conductance proxy Gc_proxy from daytime VPD using a
+    log-linear decline with VPD:
+
+        Gc = Gc_ref - m * ln(D)
+
+    where D is vapour pressure deficit (kPa).
+    """
+    D = np.asarray(X)[:, 0]
+
+    # Canonical log-linear form; coefficients can be set as intercept/slope.
+    # Since no fitted dataset is provided, use a standard parameterization
+    # with generic constants commonly used in this form.
+    Gc_ref = 1.0
+    m = 1.0
+
+    return Gc_ref - m * np.log(D)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Log-linear decline of canopy conductance proxy with VPD:
+    # Gc = Gc_ref - m * ln(D)
+    Gc_ref = 0.0
+    m = 1.0
+    return Gc_ref - m * np.log(D)

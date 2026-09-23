@@ -1,0 +1,196 @@
+import numpy as np
+
+def predict(X):
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+
+    # Constants
+    F = 96485.33212       # C mol^-1
+    R = 8.314462618       # J mol^-1 K^-1
+
+    # Parameters for platinum HOR/HER (Butler–Volmer / reversible hydrogen electrode form)
+    i0_ref = 1.0e-2       # A cm^-2, typical Pt exchange current density (order of magnitude)
+    T_ref = 298.15        # K
+    alpha_a = 0.5
+    alpha_c = 0.5
+
+    # Simple canonical dependence of exchange current on temperature, H2 pressure, and acid concentration
+    # (common phenomenological form: i0 ∝ (P_H2)^m * (c_acid)^n * exp[-Ea/R (1/T - 1/T_ref)])
+    Ea = 0.0              # J mol^-1, left as zero for a standard closed-form BV expression
+    m = 0.5
+    n = 0.0
+
+    i0 = i0_ref * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref)) * (P_H2 ** m) * (c_acid ** n)
+
+    # Butler–Volmer current density (anodic positive, cathodic negative)
+    j = i0 * (np.exp(alpha_a * F * eta / (R * T)) - np.exp(-alpha_c * F * eta / (R * T)))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+
+    # Physical constants
+    R = 8.31446261815324      # J mol^-1 K^-1
+    F = 96485.33212           # C mol^-1
+
+    # Butler–Volmer / reversible hydrogen electrode kinetics for HOR/HER
+    # Standard closed-form: j = j0 * [exp((1-alpha)F eta / RT) - exp(-alpha F eta / RT)]
+    # with a simple phenomenological dependence of j0 on T, H2 pressure, and acid concentration.
+    alpha = 0.5
+
+    # Canonical first-order dependence for H2 electrode kinetics:
+    # j0 ∝ P_H2^0.5 * c_acid^0.5, Arrhenius in T
+    j0_ref = 1.0e-3      # A cm^-2, reference exchange current density
+    T_ref = 298.15       # K
+    Ea = 2.0e4           # J mol^-1, representative activation energy
+
+    j0 = j0_ref * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref)) * np.sqrt(P_H2) * np.sqrt(c_acid / 0.5)
+
+    j = j0 * (np.exp((1.0 - alpha) * F * eta / (R * T)) - np.exp(-alpha * F * eta / (R * T)))
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+
+    # Physical constants
+    R = 8.31446261815324      # J mol^-1 K^-1
+    F = 96485.33212           # C mol^-1
+
+    # Common closed-form Butler-Volmer / Tafel-style expression for HOR/HER on Pt
+    # using concentration dependence through the H2 activity (here approximated by P_H2).
+    #
+    # j = j0(T, c) * [exp((1-alpha)F*eta/RT) - exp(-alpha F*eta/RT)]
+    #
+    # A common canonical choice for Pt is alpha = 0.5.
+    alpha = 0.5
+
+    # Standard exchange-current scaling for hydrogen electrocatalysis:
+    # j0 proportional to sqrt(P_H2) and weakly dependent on acid concentration.
+    # A common textbook form is written with proportionality in activity terms;
+    # here we use the simplest standard closed form.
+    #
+    # Since no data are provided, the absolute prefactor cannot be fitted;
+    # the canonical expression is returned in normalized form with j0 = 1.
+    #
+    # If desired, a user can multiply by an empirical j0 afterward.
+    j0 = np.sqrt(np.maximum(P_H2, 0.0))
+
+    exponent_fwd = (1.0 - alpha) * F * eta / (R * T)
+    exponent_rev = -alpha * F * eta / (R * T)
+
+    j = j0 * (np.exp(exponent_fwd) - np.exp(exponent_rev))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Hydrogen electrocatalysis on Pt: Butler–Volmer / Tafel-form kinetics for HOR/HER
+    with exchange current density treated as a function of temperature, H2 pressure,
+    and acid concentration.
+
+    Inputs:
+        X[:, 0] = eta      [V vs RHE]
+        X[:, 1] = T        [K]
+        X[:, 2] = P_H2     [bar]
+        X[:, 3] = c_acid   [mol dm^-3]
+
+    Returns:
+        j [A cm^-2] positive anodic (HOR), negative cathodic (HER)
+    """
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+
+    # Physical constants
+    F = 96485.33212      # C mol^-1
+    R = 8.314462618      # J mol^-1 K^-1
+
+    # Canonical reversible HOR/HER kinetics on Pt:
+    # j = j0 * [exp((1-alpha)F eta/RT) - exp(-alpha F eta/RT)]
+    #
+    # For a symmetric barrier on Pt, alpha ≈ 0.5 is the most common choice.
+    alpha = 0.5
+
+    # Standard commonly used empirical dependence of exchange current density
+    # for HOR/HER on Pt on reactant/product activities:
+    # j0 ∝ (P_H2)^1/2 * c_H+ * exp(-Ea/RT)
+    #
+    # Since no data are provided, use a commonly cited Arrhenius-type
+    # semi-empirical form with reasonable Pt/HOR-HER scale:
+    # j0_ref ~ 1e-3 A cm^-2 at 298 K, 1 bar H2, 1 M acid
+    # Ea ~ 20 kJ/mol (representative order of magnitude)
+    j0_ref = 1e-3       # A cm^-2
+    Ea = 2.0e4          # J mol^-1
+
+    # Normalize activities to the reference state.
+    # Proton activity in strong acids is often treated approximately as proportional
+    # to concentration for a simple closed-form expression.
+    j0 = j0_ref * np.sqrt(P_H2) * c_acid * np.exp(-Ea / R * (1.0 / T - 1.0 / 298.15))
+
+    # Butler-Volmer current density
+    j = j0 * (np.exp((1.0 - alpha) * F * eta / (R * T)) -
+              np.exp(-alpha * F * eta / (R * T)))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+
+    R = 8.31446261815324  # J mol^-1 K^-1
+    F = 96485.33212       # C mol^-1
+
+    # Common closed-form expression for HOR/HER on Pt:
+    # Butler–Volmer with exchange current density depending on T, PH2, and acid concentration.
+    # Here j is per real Pt area, positive anodic (HOR), negative cathodic (HER).
+    #
+    # j = j0(T, P_H2, c_acid) * [exp(alpha_a F eta / RT) - exp(-alpha_c F eta / RT)]
+    #
+    # A widely used symmetry choice for Pt hydrogen kinetics is alpha_a = alpha_c = 0.5.
+    alpha = 0.5
+
+    # Standard-state exchange current density scaling:
+    # j0 ∝ P_H2^1/2 * a_H+   (for the hydrogen electrode reaction in acid)
+    # with Arrhenius temperature dependence.
+    # Since no data are provided, use the canonical closed-form dependence only.
+    # j0_ref is an arbitrary prefactor; for a pure physics-based form, keep it as 1.
+    j0_ref = 1.0
+
+    # Normalized acid activity approximation in strong acid:
+    # a_H+ ~ c_acid (common engineering approximation)
+    j0 = j0_ref * np.sqrt(np.maximum(P_H2, 0.0)) * np.maximum(c_acid, 0.0) * np.exp(0.0 / T)
+
+    j = j0 * (
+        np.exp(alpha * F * eta / (R * T)) -
+        np.exp(-alpha * F * eta / (R * T))
+    )
+
+    return j

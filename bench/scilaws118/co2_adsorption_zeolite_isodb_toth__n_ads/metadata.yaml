@@ -1,0 +1,95 @@
+task_id: co2_adsorption_zeolite_isodb_toth__n_ads
+domain: materials_science / adsorption
+license: NIST-PD
+
+# Type II -- cluster = (adsorbent, temperature) pair.
+# Each cluster has ~8-94 (P, n_ads) measurement points from one experimental isotherm.
+type: typeII
+has_group_id: true
+
+# Background knowledge -- the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  Microporous solid adsorbents such as zeolites and activated carbons bind CO2
+  molecules at their internal surface sites. As the equilibrium gas pressure rises
+  at fixed temperature, the amount of CO2 adsorbed per unit mass of adsorbent
+  increases from near zero at very low pressure to an asymptotic saturation limit
+  set by the available pore volume and site density. Different materials have
+  different total capacities and different affinities for CO2, so the shape of the
+  adsorption isotherm varies substantially from material to material and shifts
+  with temperature: higher temperature weakens adsorption, reducing both the
+  initial slope and the effective working capacity at any given pressure. On
+  energetically heterogeneous surfaces the isotherm rises more steeply at low
+  pressure and approaches saturation more gradually than on homogeneous surfaces.
+
+target:
+  name: n_ads
+  symbol: "n"
+  unit: mmol/g
+  description: Amount of CO2 adsorbed per gram of adsorbent at equilibrium, measured by volumetric or gravimetric isotherm experiment.
+  range: [0.018, 40.78]
+
+inputs:
+  - name: P_bar
+    symbol: P
+    unit: bar
+    description: Equilibrium CO2 gas pressure in the measurement cell.
+    range: [0.000125, 133.6]
+
+# Dataset -- three-file v2 Type II layout, cluster holdout.
+# Cluster = (adsorbent_name, T_K). Each cluster = one experimental isotherm from ISODB.
+# Cluster holdout: lexicographic sort of (adsorbent_name, T_K); every 5th cluster (indices
+# 4, 9, 14, ...) is test. 10 test / 42 train clusters.
+# Within-cluster split: sort by P_bar ascending; first 60% -> test_fit (low-P fit window),
+# last 40% -> test_test (high-P extrapolation window). Tests Toth/Langmuir saturation-limit
+# structural correctness on unseen materials and temperatures.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 1099
+n_test_fit: 135
+n_test_test: 85
+n_clusters_train: 42
+n_clusters_test: 10
+
+# FM-A1 audit note (orchestrator-only, not shown to SR system):
+# n_ads is the raw ISODB measurement (total_adsorption from isotherm_data -- digitised
+# from experimental figures). It is NOT a computed Toth/Langmuir value. PROVENANCE.md
+# Anti-circularity note confirms: "isotherm_data records RAW (pressure, adsorbed-amount)
+# pairs digitised from the source papers' isotherm figures, NOT fitted parameters of the
+# Toth or any other isotherm model." FM-A1 self-check: PASS.
+
+# Reference-baseline bank
+references:
+  - id: kim_2023
+    label: Kim & Kim 2023 -- Toth 3-parameter isotherm (n_s, K, m per adsorbent/T)
+    formula_file: formulas/kim_2023.py
+    reference_pdf: reference/kim_2023_supplementary.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # n_s, K, m
+    measured:
+      rmse: 0.5315
+      r2: 0.9473
+  - id: swenson_stadie_2019
+    label: Swenson & Stadie 2019 -- Langmuir 2-parameter isotherm (n_s, K per cluster)
+    formula_file: formulas/swenson_stadie_2019.py
+    reference_pdf: reference/swenson_stadie_2019_langmuir_centennial.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # n_s, K
+    measured:
+      rmse: 0.7823
+      r2: 0.8859
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         3
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.5315          # kim_2023 pooled rmse -- 0.5 score anchor

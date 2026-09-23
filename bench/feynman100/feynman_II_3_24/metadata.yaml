@@ -1,0 +1,16 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy flux"
+  symbol: "flux"
+  unit: ""
+  description: "Energy flux"
+inputs:
+  - name: "Power"
+    symbol: "Pwr"
+    unit: ""
+    description: "Power"
+  - name: "Length"
+    symbol: "r"
+    unit: ""
+    description: "Length"

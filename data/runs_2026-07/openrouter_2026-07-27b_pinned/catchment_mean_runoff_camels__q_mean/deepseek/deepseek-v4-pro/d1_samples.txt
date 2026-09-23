@@ -1,0 +1,171 @@
+import numpy as np
+
+def predict(X):
+    # Extract primary inputs
+    P = X[:, 0]   # mean daily precipitation [mm/day]
+    PET = X[:, 1] # mean daily potential evapotranspiration [mm/day]
+
+    # Aridity index
+    phi = PET / P
+
+    # Classic Budyko curve (geometric mean of Schreiber and Oldekop)
+    # E = sqrt(P * (1 - exp(-PET/P)) * PET * tanh(P/PET))
+    # Q = P - E
+    schreiber = 1.0 - np.exp(-phi)
+    oldekop = phi * np.tanh(1.0 / phi)   # because tanh(P/PET) = tanh(1/phi)
+    E_over_P = np.sqrt(schreiber * oldekop)
+
+    # Long-term mean daily runoff [mm/day]
+    Q = P * (1.0 - E_over_P)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean daily runoff Q [mm/day] using the classic Budyko curve
+    (geometric mean of Schreiber and Ol'dekop, Budyko 1974).
+
+    Q = P - E, where actual evapotranspiration E is:
+    E = P * sqrt( [1 - exp(-PET/P)] * (PET/P) * tanh(P/PET) )
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 13)
+        Array of input features. Only columns 0 (p_mean) and 1 (pet_mean) are used.
+
+    Returns
+    -------
+    Q : np.ndarray, shape (n,)
+        Predicted long-term mean daily runoff [mm/day].
+    """
+    P = X[:, 0]    # mean daily precipitation [mm/day]
+    PET = X[:, 1]  # mean daily potential evapotranspiration [mm/day]
+
+    # Guard against division by zero and negative values
+    P_safe = np.maximum(P, 1e-10)
+    PET_safe = np.maximum(PET, 1e-10)
+
+    # Aridity index
+    phi = PET_safe / P_safe
+
+    # Budyko curve: E/P = sqrt( (1 - exp(-phi)) * phi * tanh(1/phi) )
+    term1 = 1.0 - np.exp(-phi)
+    term2 = phi * np.tanh(1.0 / phi)
+    E_over_P = np.sqrt(np.maximum(term1 * term2, 0.0))
+
+    # Actual evapotranspiration and runoff
+    E = P_safe * E_over_P
+    Q = P - E
+
+    # Enforce physical bounds: 0 <= Q <= P
+    Q = np.clip(Q, 0.0, P)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean daily runoff per unit area (Q, mm/day)
+    using the classical Budyko (1974) curve.
+
+    Q = P * (1 - sqrt( phi * tanh(1/phi) * (1 - exp(-phi)) ))
+
+    Inputs:
+        X : 2D numpy array with columns:
+            X[:,0] = p_mean   [mm/d]
+            X[:,1] = pet_mean [mm/d]
+    """
+    P = X[:, 0]                     # mean precipitation [mm/d]
+    Ep = X[:, 1]                    # mean potential evapotranspiration [mm/d]
+    phi = np.divide(Ep, P, where=P>0, out=np.full_like(P, np.inf))  # aridity index, handle P=0 safely
+    # classical Budyko (1974) curve: E/P = sqrt( phi * tanh(1/phi) * (1 - exp(-phi)) )
+    E_over_P = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    # runoff is precipitation minus actual evapotranspiration
+    Q = P * (1.0 - E_over_P)
+    # Ensure non-negative runoff and no exceedance of precipitation (numerical safety)
+    Q = np.clip(Q, 0.0, P)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean daily runoff per unit area (mm/day) using the
+    classical Budyko (1974) curve.
+
+    Parameters
+    ----------
+    X : 2-D numpy array
+        Columns: 0 - p_mean (P), 1 - pet_mean (PET), others ignored.
+
+    Returns
+    -------
+    Q : 1-D numpy array
+        Predicted runoff (mm/day).
+    """
+    P = X[:, 0]        # mean precipitation [mm/day]
+    PET = X[:, 1]      # mean potential evapotranspiration [mm/day]
+
+    # Aridity index
+    phi = PET / P
+
+    # Budyko (1974) formula: E/P = sqrt( phi * tanh(1/phi) * (1 - exp(-phi)) )
+    E_over_P = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+
+    # Runoff is precipitation minus actual evapotranspiration
+    Q = P * (1.0 - E_over_P)
+
+    # Ensure physical bounds (runoff cannot be negative)
+    Q = np.maximum(Q, 0.0)
+    # Q is already <= P by construction
+
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean daily runoff per unit catchment area [mm/day]
+    using the Budyko-Zhang (2004) equation, a commonly cited closed-form
+    relationship in hydrology.
+    
+    Q = P - E, where E is actual evapotranspiration from:
+    E = P * (1 + w * (PET/P)) / (1 + w * (PET/P) + (PET/P)^(-1))
+    with w = 1.0 (plant-available water coefficient for forest/grassland mix).
+    """
+    p_mean = X[:, 0]   # Long-term mean daily precipitation [mm/day]
+    pet_mean = X[:, 1] # Long-term mean daily potential evapotranspiration [mm/day]
+    
+    # Plant-available water coefficient (dimensionless)
+    # w = 1.0 is a standard default for mixed vegetation (Zhang et al., 2004)
+    w = 1.0
+    
+    # Aridity index (phi = PET / P)
+    phi = pet_mean / p_mean
+    
+    # Budyko-Zhang curve for actual evapotranspiration
+    # E / P = (1 + w * phi) / (1 + w * phi + phi^(-1))
+    num = 1.0 + w * phi
+    denom = num + 1.0 / phi
+    e_ratio = num / denom
+    
+    # Actual evapotranspiration [mm/day]
+    e_mean = p_mean * e_ratio
+    
+    # Runoff = Precipitation - Evapotranspiration
+    q_mean = p_mean - e_mean
+    
+    # Ensure physical bounds: runoff cannot be negative or exceed precipitation
+    q_mean = np.maximum(q_mean, 0.0)
+    q_mean = np.minimum(q_mean, p_mean)
+    
+    return q_mean

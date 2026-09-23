@@ -1,0 +1,103 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form homogeneous simple-shear relationship:
+    tau_ss = G * gamma
+
+    G : Shear modulus [kPa], a constant fitted to experimental data.
+        Here it is set to a placeholder value (1.0 kPa) as no data are provided.
+        In a real application, G would be obtained from calibration or
+        expressed as a function of fibrinogen concentration and maturation time
+        (e.g., G = f(conc_mM, time_min)) to capture stiffness variations.
+    """
+    G = 1.0  # Placeholder shear modulus [kPa]
+    gamma = X[:, 0]
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form homogeneous simple-shear approximation:
+    tau_ss = G * gamma, where G is a constant shear modulus.
+    This is the baseline model that ignores fibrinogen concentration
+    and maturation time (the reference baselines do not consume
+    conc_mM or time_min).
+    """
+    # Shear modulus from a typical whole-blood clot (kPa)
+    G = 0.5   # kPa, fitted constant; chosen as a plausible order-of-magnitude value
+    gamma = X[:, 0]          # dimensionless shear strain
+    return G * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts simple-shear Cauchy stress τ_ss [kPa] from:
+    - gamma (engineering shear strain)
+    - conc_mM (fibrinogen concentration, mM)
+    - time_min (clot maturation time, min)
+
+    Standard closed-form: linear elastic (neo-Hookean) response
+    τ = G * gamma, with shear modulus G depending linearly on
+    fibrinogen concentration and maturation time.
+    Constants are plausible values for whole-blood clots.
+    """
+    gamma = X[:, 0]
+    conc_mM = X[:, 1]
+    time_min = X[:, 2]
+
+    # Shear modulus coefficients (kPa)
+    G0 = 0.5       # base modulus
+    alpha = 0.02   # kPa per mM fibrinogen
+    beta = 0.003   # kPa per minute maturation time
+
+    G = G0 + alpha * conc_mM + beta * time_min
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict simple-shear Cauchy stress τ_ss (kPa) from the homogeneous-simple-shear 
+    closed-form approximation.
+
+    Input X: shape (n, 3) with columns:
+        X[:,0] = gamma (engineering shear)
+        X[:,1] = conc_mM (fibrinogen concentration, mM) – not consumed
+        X[:,2] = time_min (maturation time, min) – not consumed
+
+    Returns:
+        tau_ss: 1D array of length n (kPa)
+    """
+    gamma = X[:, 0]
+    # Linear elastic / neo-Hookean shear relation: τ = G * γ
+    # G is a constant shear modulus (kPa) – placeholder value.
+    G = 1.0
+    return G * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form homogeneous simple-shear relationship:
+    τ_ss = G * γ
+
+    where G is a shear modulus (kPa).  The baseline reference does not use
+    fibrinogen concentration or maturation time, so a constant modulus is assumed.
+    The value below is a placeholder; actual fitted values would be determined
+    from experimental data.
+    """
+    G = 2.5  # kPa, placeholder shear modulus
+    return G * X[:, 0]

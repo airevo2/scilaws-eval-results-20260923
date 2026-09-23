@@ -1,0 +1,138 @@
+import numpy as np
+
+def predict(X):
+    # Burton et al. (1975) ring-current equation:
+    #   dDst*/dt = Q(t) - Dst*/tau
+    #   Dst* = Dst - b*sqrt(P_dyn) + c   (pressure-corrected Dst)
+    #   Q = a*(Ey - Ec) for Ey > Ec, else 0
+    Dst   = X[:, 0]
+    Ey    = X[:, 1]      # dawn-dusk solar wind electric field [mV/m]
+    P_dyn = X[:, 2]
+
+    # Canonical Burton constants
+    a   = -4.4    # nT/hr per (mV/m)
+    Ec  = 0.5     # mV/m  (injection threshold)
+    b   = 0.20    # nT / sqrt(nPa)
+    c   = 20.0    # nT
+    tau = 7.7     # hr    (ring-current decay time)
+
+    # Injection term Q (only for Ey above threshold)
+    Q = np.where(Ey > Ec, a * (Ey - Ec), 0.0)
+
+    # Pressure-corrected Dst
+    Dst_star = Dst - b * np.sqrt(np.clip(P_dyn, 0.0, None)) + c
+
+    # Tendency
+    dDst_dt = Q - Dst_star / tau
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Burton, McPherron & Russell (1975) ring-current equation
+    Dst   = X[:, 0]
+    Ey    = X[:, 1]   # mV/m
+    P_dyn = X[:, 2]   # nPa
+
+    # Standard Burton coefficients
+    a   = -4.5    # nT (mV/m)^-1 hr^-1  (injection efficiency)
+    Ec  = 0.5     # mV/m  (threshold electric field)
+    b   = 15.8    # nT nPa^-0.5  (dynamic-pressure term)
+    c   = 20.0    # nT  (quiet-time offset)
+    tau = 7.7     # hr  (ring-current decay time)
+
+    # Injection term Q(E): only for Ey above threshold
+    Q = np.where(Ey > Ec, a * (Ey - Ec), 0.0)
+
+    # Pressure-corrected Dst*
+    Dst_star = Dst - b * np.sqrt(np.maximum(P_dyn, 0.0)) + c
+
+    # dDst*/dt = Q - Dst*/tau
+    dDst_dt = Q - Dst_star / tau
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Burton et al. (1975) ring-current model for the Dst tendency.
+    #   dDst*/dt = Q(Ey) - Dst*/tau
+    #   Dst* = Dst - b*sqrt(Pdyn) + c   (pressure-corrected Dst)
+    # Coefficients in hourly units:
+    b   = 0.20      # nT / sqrt(nPa)   (magnetopause current term)
+    c   = 20.0      # nT               (quiet-time offset)
+    tau = 7.7       # hr               (ring-current decay time)
+    a   = 4.5       # nT/hr per (mV/m) (injection efficiency)
+    Ec  = 0.5       # mV/m             (injection threshold)
+
+    Dst   = X[:, 0]
+    Ey    = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Pressure-corrected Dst
+    Dst_star = Dst - b * np.sqrt(np.clip(P_dyn, 0.0, None)) + c
+
+    # Injection term (only for sufficiently strong dawn-dusk field)
+    Q = np.where(Ey > Ec, -a * (Ey - Ec), 0.0)
+
+    dDst_dt = Q - Dst_star / tau
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # O'Brien & McPherron (2000) / Burton et al. (1975) ring-current equation
+    # dDst*/dt = Q(Ey) - Dst*/tau,  with Dst* = Dst - b*sqrt(Pdyn) + c
+    Dst   = X[:, 0]
+    Ey    = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Pressure-corrected Dst
+    b = 7.26   # nT / nPa^0.5
+    c = 11.0   # nT
+    Dst_star = Dst - b * np.sqrt(np.clip(P_dyn, 0.0, None)) + c
+
+    # Injection term Q (nT/hr), active only for Ey above threshold Ec
+    Ec = 0.49  # mV/m
+    Q = np.where(Ey > Ec, -4.4 * (Ey - Ec), 0.0)
+
+    # Decay time constant (hr)
+    tau = 2.4 * np.exp(9.74 / (4.69 + np.clip(Ey, 0.0, None)))
+
+    dDst_dt = Q - Dst_star / tau
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Burton / O'Brien-McPherron ring-current equation:
+    #   dDst*/dt = Q(Ey) - Dst*/tau
+    # with the pressure-corrected Dst*:  Dst* = Dst - b*sqrt(Pdyn) + c
+    Dst   = X[:, 0]
+    Ey    = X[:, 1]
+    P_dyn = X[:, 2]
+
+    # Pressure correction constants (O'Brien & McPherron 2000)
+    b = 7.26   # nT / sqrt(nPa)
+    c = 11.0   # nT
+
+    # Injection term Q(t): active only for Ey above threshold Ec
+    a  = -4.4    # nT/hr per mV/m
+    Ec = 0.49    # mV/m
+    Q = np.where(Ey > Ec, a * (Ey - Ec), 0.0)
+
+    # Ey-dependent decay time (hr)
+    tau = 2.40 * np.exp(9.74 / (4.69 + Ey))
+
+    # Pressure-corrected Dst
+    Dst_star = Dst - b * np.sqrt(np.clip(P_dyn, 0, None)) + c
+
+    dDst_dt = Q - Dst_star / tau
+    return dDst_dt

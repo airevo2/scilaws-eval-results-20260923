@@ -1,0 +1,96 @@
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Non-rectangular hyperbola light-response model (Prioul & Chartier / Farquhar)
+    A_max = 10.0    # light-saturated gross assimilation asymptote [umol m-2 s-1]
+    phi = 0.05      # apparent quantum yield [mol CO2 / mol photons]
+    theta = 0.7     # convexity (curvature) [dimensionless]
+    Rd = 0.8        # dark respiration [umol m-2 s-1]
+
+    # Solve non-rectangular hyperbola for gross photosynthesis
+    a = theta
+    b = -(phi * Q + A_max)
+    c = phi * Q * A_max
+    Ag = (-b - np.sqrt(np.maximum(b**2 - 4 * a * c, 0.0))) / (2 * a)
+
+    An = Ag - Rd
+    return An
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Non-rectangular hyperbola light-response model (Farquhar/Thornley)
+    Q = X[:, 0]
+
+    # Fitted parameters (typical values)
+    phi = 0.06      # apparent quantum yield [umol CO2 / umol photons]
+    Amax = 10.0     # light-saturated gross assimilation [umol m-2 s-1]
+    theta = 0.7     # curvature (convexity) parameter [-]
+    Rd = 0.8        # dark respiration [umol m-2 s-1]
+
+    # Non-rectangular hyperbola: solve theta*Ag^2 - (phi*Q + Amax)*Ag + phi*Q*Amax = 0
+    b = phi * Q + Amax
+    Ag = (b - np.sqrt(np.maximum(b**2 - 4.0 * theta * phi * Q * Amax, 0.0))) / (2.0 * theta)
+
+    An = Ag - Rd
+    return An
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Non-rectangular hyperbola light-response model
+    Amax = 10.0   # light-saturated gross photosynthesis (umol m-2 s-1)
+    phi = 0.05    # apparent quantum yield (mol CO2 / mol photons)
+    theta = 0.7   # curvature (convexity) parameter
+    Rd = 0.8      # dark respiration (umol m-2 s-1)
+
+    a = phi * Q + Amax
+    Ag = (a - np.sqrt(np.maximum(a**2 - 4.0 * theta * phi * Q * Amax, 0.0))) / (2.0 * theta)
+    An = Ag - Rd
+    return An
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Non-rectangular hyperbola light-response curve (Farquhar/Prioul-Chartier form)
+    A_max = 10.0   # light-saturated gross photosynthesis (umol m-2 s-1)
+    phi = 0.05     # apparent quantum yield (mol CO2 / mol photons)
+    theta = 0.7    # curvature (dimensionless, 0-1)
+    Rd = 0.8       # dark respiration (umol m-2 s-1)
+
+    # Gross assimilation from non-rectangular hyperbola
+    a = theta
+    b = -(phi * Q + A_max)
+    c = phi * Q * A_max
+    Ag = (-b - np.sqrt(np.maximum(b**2 - 4 * a * c, 0.0))) / (2 * a)
+
+    return Ag - Rd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Non-rectangular hyperbola light-response model (Prioul & Chartier)
+    Amax = 10.0   # light-saturated gross assimilation asymptote [umol m-2 s-1]
+    phi = 0.05    # apparent quantum yield [mol CO2 / mol photons]
+    theta = 0.7   # curvature (convexity) parameter [dimensionless]
+    Rd = 0.8      # dark respiration [umol m-2 s-1]
+
+    a = theta
+    b = -(phi * Q + Amax)
+    c = phi * Q * Amax
+    # Gross assimilation from smaller root of quadratic
+    Ag = (-b - np.sqrt(b**2 - 4 * a * c)) / (2 * a)
+    An = Ag - Rd
+    return An

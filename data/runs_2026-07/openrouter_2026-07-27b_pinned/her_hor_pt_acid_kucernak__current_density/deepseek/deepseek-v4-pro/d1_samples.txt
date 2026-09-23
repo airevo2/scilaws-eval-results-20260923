@@ -1,0 +1,217 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict current density j [A cm-2] for HOR/HER on Pt.
+    Uses the Butler-Volmer equation with exchange current density depending
+    on temperature and H2 partial pressure. Acid concentration effect is
+    neglected (common for concentrated HClO4).
+    
+    Inputs:
+    X[:, 0] = eta (V)       -- overpotential vs RHE
+    X[:, 1] = T (K)         -- temperature
+    X[:, 2] = P_H2 (bar)    -- H2 partial pressure
+    X[:, 3] = c_acid (M)    -- HClO4 concentration (not used)
+    """
+    # Unpack inputs
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    # c_acid = X[:, 3]  # not used in this standard form
+
+    # Physical constants
+    F = 96485.3329      # Faraday constant, C mol-1
+    R = 8.314462618     # Gas constant, J mol-1 K-1
+
+    # Kinetic parameters (typical literature values for polycrystalline Pt)
+    j0_ref = 3.0e-4     # exchange current density at T_ref, P_ref [A cm-2]
+    T_ref = 298.15      # reference temperature [K]
+    Ea = 16000.0        # activation energy [J mol-1]
+    m_H2 = 0.5          # reaction order w.r.t. H2 partial pressure
+    beta = 1.0          # effective symmetry factor (beta * n = F/RT exponent)
+
+    # Exchange current density at given conditions
+    j0 = j0_ref * (P_H2 / 1.0)**m_H2 * np.exp(-Ea/R * (1.0/T - 1.0/T_ref))
+
+    # Butler-Volmer equation
+    exponent = beta * F * eta / (R * T)
+    j = j0 * (np.exp(exponent) - np.exp(-exponent))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Physical constants
+    F = 96485.3329          # Faraday constant, C mol-1
+    R = 8.314463            # Gas constant, J mol-1 K-1
+
+    # Reference conditions and fitted parameters
+    T_ref = 298.15          # Reference temperature, K
+    P_ref = 1.0             # Reference H2 partial pressure, bar
+    c_ref = 1.0             # Reference acid concentration, mol dm-3
+
+    j0_ref = 1.0e-3         # Exchange current density at reference conditions, A cm-2
+    Ea = 20.0e3             # Activation energy, J mol-1
+    gamma = 0.5             # Apparent reaction order w.r.t. H2 partial pressure
+    delta = 0.5             # Apparent reaction order w.r.t. H+ concentration
+    alpha_a = 0.5           # Anodic transfer coefficient
+    alpha_c = 0.5           # Cathodic transfer coefficient
+
+    # Unpack inputs
+    eta = X[:, 0]           # Overpotential, V
+    T = X[:, 1]             # Temperature, K
+    P_H2 = X[:, 2]          # H2 partial pressure, bar
+    c_acid = X[:, 3]        # HClO4 concentration, mol dm-3
+
+    # Exchange current density including temperature, pressure, and concentration effects
+    j0 = (j0_ref
+          * (P_H2 / P_ref) ** gamma
+          * (c_acid / c_ref) ** delta
+          * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref)))
+
+    # Butler–Volmer equation
+    j = j0 * (np.exp(alpha_a * F * eta / (R * T))
+              - np.exp(-alpha_c * F * eta / (R * T)))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form Butler-Volmer relationship for HOR/HER current density
+    per real Pt surface area (from upd-H charge).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (N, 4)
+        Columns:
+        - X[:, 0] : eta_overpotential (V vs RHE)
+        - X[:, 1] : T (K)
+        - X[:, 2] : P_H2 (bar)
+        - X[:, 3] : c_acid (mol dm^-3)
+
+    Returns
+    -------
+    j : np.ndarray, shape (N,)
+        Current density in A cm^-2 (positive = anodic = HOR, negative = cathodic = HER).
+    """
+    # Physical constants
+    F = 96485.33212           # Faraday constant, C mol^-1
+    R = 8.314462618           # Gas constant, J mol^-1 K^-1
+    
+    # Reference conditions
+    T_ref = 298.15            # K
+    P_ref = 1.0               # bar
+    c_ref = 1.0               # mol dm^-3
+    
+    # Kinetic parameters (typical literature values for polycrystalline Pt in HClO4)
+    alpha_a = 1.0             # anodic transfer coefficient
+    alpha_c = 1.0             # cathodic transfer coefficient
+    gamma_P = 0.5             # reaction order for H2
+    gamma_c = 0.5             # reaction order for H+ (approximated by c_acid)
+    E_a = 20000.0             # activation energy, J mol^-1
+    j0_ref = 0.001            # exchange current density at reference conditions, A cm^-2
+    
+    # Extract input columns
+    eta = X[:, 0]
+    T = X[:, 1]
+    P_H2 = X[:, 2]
+    c_acid = X[:, 3]
+    
+    # Exchange current density: temperature, pressure and concentration dependencies
+    j0 = (
+        j0_ref
+        * (P_H2 / P_ref) ** gamma_P
+        * (c_acid / c_ref) ** gamma_c
+        * np.exp(-E_a / R * (1.0 / T - 1.0 / T_ref))
+    )
+    
+    # Butler-Volmer equation
+    j = j0 * (np.exp(alpha_a * F * eta / (R * T))
+              - np.exp(-alpha_c * F * eta / (R * T)))
+    
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Unpack input columns
+    eta = X[:, 0]      # Overpotential vs RHE [V]
+    T = X[:, 1]        # Temperature [K]
+    P_H2 = X[:, 2]     # H2 partial pressure [bar]
+    c_acid = X[:, 3]   # HClO4 concentration [mol dm-3]
+
+    # Physical constants
+    F = 96485.3329     # Faraday constant [C mol-1]
+    R = 8.314462618    # Universal gas constant [J mol-1 K-1]
+    n = 2              # Number of electrons (2H+ + 2e- <-> H2)
+
+    # Reference conditions and kinetic parameters (typical for polycrystalline Pt)
+    T_ref = 298.15     # Reference temperature [K]
+    P_ref = 1.0        # Reference H2 pressure [bar]
+    c_ref = 1.0        # Reference acid concentration [mol dm-3]
+    j0_ref = 0.5e-3    # Reference exchange current density [A cm-2]
+    Ea = 30.0e3        # Activation energy [J mol-1]
+    m = 0.5            # Reaction order with respect to H2 partial pressure
+    p = 0.5            # Reaction order with respect to H+ activity (~concentration)
+    alpha = 0.5        # Symmetry factor (dimensionless, 0 < alpha < 1)
+
+    # Exchange current density: Arrhenius + pressure/concentration dependence
+    j0 = (j0_ref
+          * (P_H2 / P_ref) ** m
+          * (c_acid / c_ref) ** p
+          * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref)))
+
+    # Butler-Volmer equation
+    a =  alpha       * n * F / (R * T)
+    c = (1.0 - alpha) * n * F / (R * T)
+    j = j0 * (np.exp(a * eta) - np.exp(-c * eta))
+
+    return j
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict current density j (A cm-2) for HOR/HER on Pt from
+    overpotential, temperature, H2 partial pressure, and HClO4 concentration.
+
+    The model uses the Butler-Volmer equation with exchange current density
+    depending on P_H2 and temperature. The kinetics are assumed independent of
+    HClO4 concentration on the RHE scale.
+    """
+    # Unpack inputs
+    eta = X[:, 0]        # overpotential vs RHE / V
+    T = X[:, 1]          # temperature / K
+    P_H2 = X[:, 2]       # H2 partial pressure / bar
+    # c_acid = X[:, 3]   # HClO4 concentration, not used (kinetics pH-independent on RHE scale)
+
+    # Physical constants
+    F = 96485.3329        # Faraday constant / C mol-1
+    R = 8.314462618       # gas constant / J mol-1 K-1
+
+    # Reference conditions and kinetic parameters
+    T_ref = 298.15        # K
+    P_ref = 1.0           # bar
+    j0_ref = 0.7e-3       # exchange current density at T_ref, P_ref / A cm-2
+    Ea = 20.0e3           # activation energy / J mol-1
+    alpha_a = 0.5         # anodic transfer coefficient
+    alpha_c = 0.5         # cathodic transfer coefficient
+
+    # Exchange current density: j0 = j0_ref * (P_H2)^0.5 * exp(-Ea/R * (1/T - 1/T_ref))
+    j0 = j0_ref * (P_H2 / P_ref)**0.5 * np.exp(-Ea / R * (1.0 / T - 1.0 / T_ref))
+
+    # Butler-Volmer equation
+    f = F / (R * T)
+    j = j0 * (np.exp(alpha_a * f * eta) - np.exp(-alpha_c * f * eta))
+    return j

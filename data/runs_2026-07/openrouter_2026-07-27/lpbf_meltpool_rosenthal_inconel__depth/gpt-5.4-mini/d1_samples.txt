@@ -1,0 +1,80 @@
+import numpy as np
+
+def predict(X):
+    P = X[:, 0].astype(float)  # laser power [W]
+    V = X[:, 1].astype(float)  # scan velocity [mm/s]
+    D = X[:, 2].astype(float)  # beam diameter [um]
+
+    # Common conduction-mode scaling for melt pool depth:
+    # depth ~ k * sqrt( (P/V) / D )
+    # with k as an empirical constant depending on absorptivity, thermal properties, and units.
+    k = 1.0
+    d = k * np.sqrt((P / V) / D)
+
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0].astype(float)   # laser power [W]
+    V = X[:, 1].astype(float)   # scan velocity [mm/s]
+    D = X[:, 2].astype(float)   # beam diameter D4sigma [um]
+
+    # Common closed-form scaling for conduction-mode laser melt-pool depth:
+    # depth ∝ P / (V * D)
+    # A simple standard dimensional form is used here with a unitless prefactor.
+    d_um = P / (V * D)
+
+    return d_um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0]  # laser power [W]
+    V = X[:, 1]  # scan velocity [mm/s]
+    D = X[:, 2]  # beam diameter [um]
+
+    # A common closed-form scaling for laser melt-pool depth in conduction/transition regimes
+    # is proportional to the volumetric energy input per unit interaction area:
+    #   d ~ P / (V * D)
+    # Here we use a simple dimensionally consistent empirical prefactor of 1.0
+    # since no calibration data are provided.
+    d = P / (V * D)
+
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0].astype(float)   # laser power [W]
+    V = X[:, 1].astype(float)   # scan velocity [mm/s]
+    D = X[:, 2].astype(float)   # beam diameter D4sigma [um]
+
+    # Common closed-form scaling for laser melt-pool depth in conduction/keyhole-style approximations:
+    # depth ∝ (absorbed power) / (scan speed × beam diameter)
+    # Since no dataset is provided, use the standard proportional form with unit-consistent normalization.
+    d_um = (P / (V * D)) * 1e3
+
+    return d_um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    P = X[:, 0].astype(float)  # laser power [W]
+    V = X[:, 1].astype(float)  # scan velocity [mm/s]
+    D = X[:, 2].astype(float)  # beam diameter D4sigma [um]
+
+    # Standard closed-form scaling for conduction-dominated laser melt pool depth:
+    # depth ~ absorbed energy density / scan speed, with beam size setting the interaction area.
+    # Using the simplest commonly cited geometric scaling:
+    d_um = P / (V * D)
+
+    return d_um

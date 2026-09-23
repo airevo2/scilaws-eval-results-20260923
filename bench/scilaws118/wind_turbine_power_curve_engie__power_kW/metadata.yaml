@@ -1,0 +1,105 @@
+task_id: wind_turbine_power_curve_engie__power_kW
+domain: materials_and_energy / wind_energy
+license: ODbL    # ENGIE La Haute Borne open data, Open Database License
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task concerns the power curve of a utility-scale wind turbine, a core characterization in wind energy engineering.
+
+target:
+  name: power_kW
+  symbol: P
+  unit: kW
+  description: 10-minute-averaged active electrical power output of the wind turbine.
+  range: [0.0, 2051.87]
+
+inputs:
+  - name: wind_speed_mps
+    symbol: v
+    unit: m/s
+    description: 10-minute-averaged wind speed at hub height, measured by the turbine's nacelle anemometer.
+    range: [0.0, 19.31]
+
+# Dataset — Type I, two-file flat layout.  Source: ENGIE La Haute Borne
+# 2014-2015 SCADA archive (data_raw/la-haute-borne-data-2014-2015.csv,
+# 420k 10-min rows for 4 turbines R80711/R80721/R80736/R80790, all
+# Senvion MM82 2 MW machines).  Filters: drop rows with NaN in P or v,
+# and drop rows with P < 0 (curtailment / motor-power events).  Pooled
+# across 4 turbines as homogeneous power-curve-law evidence (340k rows
+# after filter); split by wind speed quantile (middle 60% train,
+# extremes 20%+20% test) to test wind-speed-extrapolation OOD.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 204288
+n_test:  136192
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: betz_limit
+    value: 0.5926
+    unit: dimensionless
+    description: Betz theoretical maximum power coefficient (16/27).
+    source: Betz 1919, "Das Maximum der theoretisch möglichen Ausnützung des Windes durch Windmotoren" — the universal upper bound on Cp for any wind energy extraction device.  A candidate value for the structural CP_EQ constant; the v2 baseline uses the lower empirical value 0.4249 fit on La Haute Borne data.
+    _role: candidate
+  - name: senvion_mm82_rated_power
+    value: 2050.0
+    unit: kW
+    description: Senvion MM82 turbine datasheet rated power.
+    source: Senvion (now Nordex) MM82 turbine product datasheet — the rated electrical power output at v ≥ v_r.  A candidate value for the asymptote / rated-power constant; both reference baselines freeze this value (Carrillo P_R = 2050, Lydia A = 2050).
+    _role: candidate
+  - name: silicon_solar_band_gap
+    value: 1.12
+    unit: eV
+    description: Crystalline-silicon photovoltaic semiconductor band gap.
+    source: A solar-energy domain quantity but irrelevant to wind power generation, which operates via mechanical kinetic-energy extraction rather than photon absorption.  A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: carrillo_2013_cubic
+    label: Carrillo et al. (2013) piecewise cubic power curve (Type I, frozen LAW_CONSTANTS)
+    formula_file: formulas/carrillo_2013_cubic.py
+    reference_pdf: reference/carrillo_2013.pdf
+    n_law_constants: 5         # V_CI, V_R, V_CO, P_R, CP_EQ
+    n_other_constants: 2       # RHO, A
+    n_local_params: 0
+    measured: {rmse: 234.36, r2: 0.8565}
+  - id: lydia_2014_4pl
+    label: Lydia et al. (2014) 4-parameter logistic (Type I, frozen LAW_CONSTANTS)
+    formula_file: formulas/lydia_2014_4pl.py
+    reference_pdf: reference/lydia_2014.pdf
+    n_law_constants: 4         # A, M, N, TAU
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 89.16, r2: 0.9792}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        5
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include aerodynamic power capture that raises output with the wind’s kinetic-energy flux in sub-rated operation"
+  - "include cut-in startup behavior that suppresses generation at very low wind speed"
+  - "include rated-power limiting that saturates output near the turbine rated power"
+  - "predicted power is non-negative for all wind speeds"
+  - "predicted power is zero below the cut-in wind speed"
+  - "predicted power is non-decreasing from cut-in wind speed up to rated wind speed"
+  - "predicted power never exceeds the Betz-limited kinetic power available through the rotor"
+  - "predicted power never exceeds the turbine rated power"
+  - "predicted power is zero above the cut-out wind speed"
+
+# === Scoring ===
+metric: rmse              # RMS error on power_kW
+best_baseline: 89.16     # lydia_2014_4pl

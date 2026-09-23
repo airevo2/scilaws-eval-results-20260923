@@ -1,0 +1,242 @@
+import numpy as np
+
+def predict(X):
+    Mw = X[:, 0]
+    R_km = X[:, 1]
+    depth_km = X[:, 2]
+    ec8_A = X[:, 3]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    sof_SS = X[:, 10]
+
+    # Effective distance (point-source approximation)
+    Re = np.sqrt(R_km**2 + depth_km**2)
+
+    # Source/path coefficients (log10 PGA in cm/s^2)
+    c1 = 1.497    # intercept (reference: rock, strike-slip)
+    c2 = 0.346    # linear magnitude scaling
+    c3 = -0.015   # quadratic magnitude scaling (saturation)
+    c4 = -1.879   # geometric spreading
+    c5 = 0.206    # magnitude-dependent geometric spreading
+
+    # EC8 site-class coefficients (reference: Class A = rock)
+    cA = 0.000
+    cB = 0.110
+    cC = 0.170
+    cD = 0.230
+    cE = 0.260
+
+    # Style-of-faulting coefficients (reference: strike-slip)
+    cNF = -0.060  # normal faulting
+    cTF = 0.040   # reverse / thrust faulting
+    cSS = 0.000   # strike-slip faulting
+
+    log10_pga = (c1 + c2 * Mw + c3 * Mw**2
+                 + (c4 + c5 * Mw) * np.log10(Re)
+                 + cA * ec8_A + cB * ec8_B + cC * ec8_C
+                 + cD * ec8_D + cE * ec8_E
+                 + cNF * sof_NF + cTF * sof_TF + cSS * sof_SS)
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Mw = X[:, 0]
+    Rjb = X[:, 1]
+    h = X[:, 2]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+    E_N = X[:, 8]
+    E_R = X[:, 9]
+
+    # Bindi et al. (2011) ITA10 — functional form:
+    # log10(Y) = a + b*Mw + c*Mw^2 + (d + e*Mw)*log10(R) + f*R + S + F
+    # where R = sqrt(Rjb^2 + h^2)
+    a = 0.614
+    b = 0.361
+    c = 0.0
+    d = -1.234
+    e = 0.126
+    f = -0.003
+
+    # Site amplification coefficients (reference: EC8 Class A)
+    S_B = 0.105
+    S_C = 0.180
+    S_D = 0.276
+    S_E = 0.218
+
+    # Style-of-faulting coefficients (reference: Strike-slip)
+    F_NF = -0.035
+    F_TF = 0.045
+
+    # Effective distance
+    R = np.sqrt(Rjb**2 + h**2)
+
+    log10_pga = (a + b * Mw + c * Mw**2
+                 + (d + e * Mw) * np.log10(R)
+                 + f * R
+                 + S_B * C_B + S_C * C_C + S_D * C_D + S_E * C_E
+                 + F_NF * E_N + F_TF * E_R)
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Mw = X[:, 0]
+    R_km = X[:, 1]
+    depth_km = X[:, 2]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+
+    # Effective distance (hypocentral-like)
+    R_eff = np.sqrt(R_km**2 + depth_km**2)
+
+    # Median prediction coefficients
+    # Functional form: log10(PGA) = a + b*Mw + (c + d*Mw)*log10(R_eff)
+    #                  + site_terms + sof_terms
+    a = 0.432
+    b = 0.369
+    c = -1.401
+    d = 0.134
+
+    # EC8 site-class coefficients (class A is the reference, coeff = 0)
+    sB = 0.105
+    sC = 0.191
+    sD = 0.295
+    sE = 0.232
+
+    # Style-of-faulting coefficients (strike-slip is the reference, coeff = 0)
+    fN = -0.055
+    fR = 0.041
+
+    log10_pga = (a + b * Mw +
+                 (c + d * Mw) * np.log10(R_eff) +
+                 sB * ec8_B + sC * ec8_C + sD * ec8_D + sE * ec8_E +
+                 fN * sof_NF + fR * sof_TF)
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    C_A = X[:, 3]
+    C_B = X[:, 4]
+    C_C = X[:, 5]
+    C_D = X[:, 6]
+    C_E = X[:, 7]
+    FN = X[:, 8]
+    FT = X[:, 9]
+    FSS = X[:, 10]
+
+    # Effective distance: combine Joyner-Boore distance with hypocentral depth
+    r = np.sqrt(R ** 2 + h ** 2)
+
+    # ---------------------------------------------------------------
+    # Ambraseys, Douglas, Sarma & Smit (2005) – functional form
+    # log10(PGA) = b1 + b2*Mw + b3*log10(r) + b4*r
+    #              + site_terms + sof_terms
+    # PGA in cm/s^2; reference site = EC8 Class A (rock);
+    # reference mechanism = strike-slip.
+    # ---------------------------------------------------------------
+
+    # Regression coefficients for PGA
+    b1 = 1.080       # intercept (rock, strike-slip)
+    b2 = 0.245       # magnitude scaling
+    b3 = -0.664      # geometric spreading (log10 distance)
+    b4 = -0.00255    # anelastic attenuation (linear distance)
+
+    # Site-class coefficients (relative to EC8 Class A – rock)
+    # Ambraseys et al. group EC8 classes into:
+    #   rock  = A          (reference, coeff = 0)
+    #   stiff = B, C       (SS)
+    #   soft  = D, E       (SD)
+    s_stiff = 0.063
+    s_soft  = 0.117
+
+    SS = C_B + C_C   # stiff-soil indicator
+    SD = C_D + C_E   # soft-soil indicator
+
+    # Style-of-faulting coefficients (relative to strike-slip)
+    f_normal = -0.053
+    f_thrust =  0.044
+
+    # Compute log10(PGA)
+    log10_pga = (b1
+                 + b2 * Mw
+                 + b3 * np.log10(r)
+                 + b4 * r
+                 + s_stiff * SS
+                 + s_soft  * SD
+                 + f_normal * FN
+                 + f_thrust * FT)
+
+    return log10_pga
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Mw = X[:, 0]
+    R = X[:, 1]
+    h = X[:, 2]
+    ec8_A = X[:, 3]
+    ec8_B = X[:, 4]
+    ec8_C = X[:, 5]
+    ec8_D = X[:, 6]
+    ec8_E = X[:, 7]
+    sof_NF = X[:, 8]
+    sof_TF = X[:, 9]
+    sof_SS = X[:, 10]
+
+    # Effective source-to-site distance using Joyner-Boore distance and hypocentral depth
+    R_eff = np.sqrt(R**2 + h**2)
+
+    # Akkar & Bommer (2010) coefficients for PGA [log10(cm/s^2)]
+    b1 = 1.644       # intercept
+    b2 = 0.438       # linear magnitude scaling
+    b3 = -0.042      # quadratic magnitude scaling (saturation)
+    b4 = -2.048      # distance attenuation
+    b5 = 0.263       # magnitude-dependent distance attenuation
+
+    # Site-class coefficients (reference: EC8 Class A — rock)
+    s_A = 0.000
+    s_B = 0.117
+    s_C = 0.162
+    s_D = 0.229
+    s_E = 0.175
+
+    # Style-of-faulting coefficients (reference: Strike-Slip)
+    f_NF = -0.045
+    f_TF = 0.047
+    f_SS = 0.000
+
+    log10_pga = (b1 + b2 * Mw + b3 * Mw**2
+                 + (b4 + b5 * Mw) * np.log10(R_eff)
+                 + s_A * ec8_A + s_B * ec8_B + s_C * ec8_C
+                 + s_D * ec8_D + s_E * ec8_E
+                 + f_NF * sof_NF + f_TF * sof_TF + f_SS * sof_SS)
+
+    return log10_pga

@@ -1,0 +1,145 @@
+task_id: alkali_rydberg_levels_quantum_defect__binding_energy
+domain: physics / atomic spectroscopy
+license: CC0-1.0
+
+# Type II -- cluster = (element, l-series). Each cluster is one Rydberg series
+# of one neutral alkali atom (e.g., Na s-series, K p-series, Rb d-series).
+# Form-discovery Type II: the per-series quantum defect is fit per cluster
+# (LOCAL). The Rydberg constant and the core charge are universal/structural
+# GIVENS (OTHER), not the discovery target -- LAW is empty.
+# (2026-06-01 audit: R_inf/Z_c/N_0 demoted LAW->OTHER per MANUAL Direction B +
+#  the GOLD treatment of universal CODATA constants like e^2; behavior-preserving.)
+type: typeII
+has_group_id: true
+
+# Background knowledge -- science framing only; no column listing, no formula form.
+context: >-
+  The energy levels of outer-electron states in alkali atoms (Na, K, Rb, Cs)
+  form regular series that converge toward the ionization limit as the principal
+  quantum number n increases. The binding energy of each level decreases as
+  n grows, approaching zero at the series limit. How tightly a given level is
+  bound depends on how strongly the outer electron penetrates or polarizes the
+  ionic core, an effect that varies systematically with the element and with the
+  orbital angular momentum of the series. The overall energy scale is common to
+  all alkali species, while the core-interaction strength is specific to each
+  (element, series) combination. Accurate knowledge of these binding energies
+  underpins precision spectroscopy, optical-clock calibration, and
+  quantum-information experiments with ultracold alkali atoms.
+
+target:
+  name: binding_energy_cm1
+  symbol: E_bind
+  unit: cm^-1
+  description: >-
+    Binding energy (term value, ionization energy) of the Rydberg level in cm^-1.
+    Computed as binding_energy_cm1 = ionization_limit - level_cm1. Both quantities
+    are derived from observed spectral transitions in the NIST ASD; the binding
+    energy is a measured quantity, not a formula output.
+  range: [19.0, 41450.0]
+
+inputs:
+  - name: n_qm
+    symbol: n
+    description: >-
+      Principal quantum number of the outer (valence) electron. Integer,
+      extracted from the electron configuration string (e.g., n=3 from "2p6.3s").
+    range: [3, 77]
+  - name: l_qm
+    symbol: l
+    description: >-
+      Orbital angular momentum quantum number of the outer electron (0=s, 1=p,
+      2=d, 3=f, 4=g, 5=h). Extracted from the spectroscopic term symbol
+      (e.g., l=1 from "2P*").
+    values: [0, 1, 2, 3, 4, 5]
+
+# Dataset -- three-file v2 Type II layout, cluster holdout.
+# 19 clusters total (element x l-series; K_g and Rb_g dropped, < 6 rows).
+# Cluster assignment: sort alphabetically; every other cluster = TEST.
+# K_train = 10 (Cs_d, Cs_g, Cs_s, K_f, K_s, Na_f, Na_h, Na_s, Rb_f, Rb_s)
+# K_test  = 9  (Cs_f, Cs_p, K_d, K_p, Na_d, Na_g, Na_p, Rb_d, Rb_p)
+# Within-cluster split: sorted by n_qm; bottom 60% = test_fit, top 40% = test_test.
+# This is a feature-axis OOD split: fit() sees low-n levels; predict() is evaluated
+# on high-n (extrapolation into the Rydberg series limit regime).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 237
+n_test_fit: 297
+n_test_test: 194
+n_clusters_train: 10
+n_clusters_test: 9
+n_rows_per_cluster_min: 11
+n_rows_per_cluster_median: 24
+n_rows_per_cluster_max: 88
+
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md sec 2.1.
+# The alternating cluster split guarantees test_fit and test_test cover the same 9 clusters.
+# harness evaluate.py currently ignores this field.
+
+# Candidate prior constants -- a grounded set. The two Rydberg-constant values are
+# the OTHER (universal-given) scale constants of the two reference baselines,
+# exposed as candidates; n_eff_ground_Na is an in-domain distractor (a derived
+# per-state quantity, not a reference formula constant). No LAW value appears
+# (both baselines have LAW = {}), so there is no leak.
+priors:
+  - name: R_inf_codata
+    value: 109737.316
+    unit: cm^-1
+    description: >-
+      Rydberg constant for infinite nuclear mass in cm^-1 (CODATA 2018).
+      Martin & Wiese (1996) PDF p. 5, eq. (3): R_inf = mec^2/(2h) = 10 973 731.568 62(9) m^-1.
+    source: Martin & Wiese 1996, PDF p. 5, eq. (3); also NIST CODATA 2018.
+    _role: candidate
+  - name: R_rydberg_1890
+    value: 109721.6
+    unit: cm^-1
+    description: >-
+      Rydberg's own 1890 experimental value for the series constant N_0, obtained
+      from the Balmer series (journal p. 42, PDF p. 42). Slightly lower than
+      the modern CODATA value due to 19th-century measurement precision.
+    source: Rydberg 1890, journal p. 42, PDF p. 42.
+    _role: candidate
+  - name: n_eff_ground_Na
+    value: 1.627
+    unit: dimensionless
+    description: >-
+      Effective principal quantum number for the Na 3s ground state
+      n* = n - delta = 3 - 1.373 = 1.627. Not a fundamental constant --
+      a derived species-specific quantity for the s-series ground state only.
+    source: NIST ASD Na I ground state binding energy 41449.451 cm^-1 => n* = sqrt(R_inf/E_bind).
+    _role: distractor
+
+# Reference baselines.
+# LAW is empty for both (form-discovery Type II): the Rydberg constant (N_0 / R_inf)
+# is a universal physical constant and Z_c=1 is a fixed structural core charge --
+# universal/structural GIVENS (OTHER), not paper-fitted discovery targets.
+references:
+  - id: rydberg_1890
+    label: "Rydberg (1890) -- constant quantum defect formula Eq. (9)"
+    formula_file: formulas/rydberg_1890.py
+    reference_pdf: reference/rydberg_1890.pdf
+    n_law_constants: 0
+    n_other_constants: 1   # N_0 = 109721.6 cm^-1 (universal Rydberg constant; given)
+    n_local_params: 1      # mu
+    measured: {rmse: 1.4295, r2: 0.9999}
+  - id: martin_1996
+    label: "Martin & Wiese (1996) -- extended Ritz formula Eqs. (11)-(12)"
+    formula_file: formulas/martin_1996.py
+    reference_pdf: reference/martin_1996.pdf
+    n_law_constants: 0
+    n_other_constants: 2   # R_inf, Z_c (universal/structural givens)
+    n_local_params: 3      # delta_0, a, b
+    measured: {rmse: 0.2400, r2: 1.0000}
+
+# v2 anti-dump caps
+caps:
+  max_law_constants: 0
+  max_local_params: 3
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+# Scoring
+metric: rmse
+best_baseline: 0.2400

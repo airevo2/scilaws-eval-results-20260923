@@ -1,0 +1,114 @@
+task_id: lake_thermocline_depth_pilla__z_t
+domain: earth_science / limnology
+license: CC0-1.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  In limnology, temperate freshwater lakes develop summer thermal stratification in which a sharp temperature gradient, the thermocline, separates the warm surface layer from colder deep water.
+
+target:
+  name: z_t_m
+  symbol: "z_t"
+  unit: m
+  description: >-
+    Summertime thermocline depth — the depth of maximum absolute temperature
+    gradient |dT/dz| in the vertical temperature profile, derived from depth-
+    interpolated summer measurements per lake and year, aggregated by median.
+    Values are on a 0.5 m grid due to the uniform interpolation spacing of the
+    source dataset.
+  range: [1.5, 42.0]
+
+inputs:
+  - name: A_s_km2
+    symbol: "A_s"
+    unit: "km^2"
+    description: >-
+      Lake surface area in square kilometres — the primary morphometric driver of
+      wind-fetch-induced thermocline deepening.
+    range: [0.1, 895.5]
+  - name: Z_max_m
+    symbol: "Z_max"
+    unit: m
+    description: >-
+      Lake maximum depth in metres — an auxiliary covariate providing a physical
+      upper bound on thermocline depth.
+    range: [5.5, 594.0]
+
+data_files:
+  train: data/train.csv    # rank-based stratified sample (4 of every 5 rows)
+  test:  data/test.csv     # rank-based stratified sample (1 of every 5 rows)
+
+# === Wave-12 NaN-row drop, 2026-05-26 (coded into prep_data 2026-05-29) ===
+# Drops rows with NaN Z_max_m AFTER the split: -25 train / -7 test.
+# Pre-drop: n_train=2780 / n_test=696. Post-drop: n_train=2755 / n_test=689.
+# Reason: simplify eval (no mask logic); aligns with GOLD (0-NaN) data shape.
+# The only baseline (boehrer_2008) uses A_s_km2 only and is unaffected.
+# Audit 2026-05-29 (FM-B9a): this drop was originally a manual CSV edit, so
+# re-running prep_data did NOT reproduce the shipped CSVs. It is now coded in
+# prep_data.split_and_write(); the CSVs were regenerated from prep_data and are
+# byte-stable across runs (data values + the boehrer metric are unchanged: the
+# regenerated multiset is identical to the old shipped CSVs, only row order differs).
+# Ref: audit/NAN_IN_DATA_SCAN_2026-05-26.md.
+n_train: 978
+n_test:  245
+
+# Optional note (audit only — not shown to SR system):
+# Split: sort by (A_s_km2, z_t_m) and take every 5th row as test.
+# z_t values quantized to 0.5 m (uniform grid of interpolated profiles).
+# An OOD split on log(A_s) was explored but abandoned: the Patalas formula
+# does not beat the naive-mean predictor within any single A_s size class
+# (positive pooled R2 comes from the cross-size variation). Rank-based split
+# preserves the cross-size signal and yields R2~0.14, RMSE~4.87 m.
+# Factor-1.5 published uncertainty (B&S 2008 p.3) sets SMAPE floor ~40-45%.
+# Audit 2026-05-29 (split-leakage limitation, ACCEPTED): the data is a per-lake
+# panel (~22 lake-years each over 126 lakes); the rank-based split is NOT grouped
+# by lake, so every test lake also appears in train (different year, near-identical
+# features). This does not affect the fixed boehrer anchor (no fitting), and the
+# max_law_constants=2 cap largely blocks an SR system from exploiting it (2
+# constants cannot memorise 126 lakes). A lake-grouped A_s-stratified split was
+# considered and deferred as optional rigor.
+
+priors: []
+# FM C12 fix (2026-05-26): removed patalas_exponent=0.205 (boehrer_2008.py LAW
+# b_patalas) and patalas_coefficient=4.6 (boehrer_2008.py LAW a_patalas). Both
+# are empirical regression coefficients from Patalas (1984) calibrated on a sample
+# of Canadian temperate lakes — no upstream physical constants anchor these values.
+# The task has only one baseline (the Patalas power law) and no other formula
+# provides an independent physical scale for thermocline depth. Per FM C12 playbook
+# §6.4: "If the formula is purely empirical with no upstream physical constants,
+# set priors: []." An empty priors list is preferable to exposing the fit answer.
+# The SR system must discover the power-law form and fit a and b from the data.
+
+references:
+  - id: boehrer_2008
+    label: "Patalas 1984 thermocline-depth scaling reproduced in Boehrer & Schultze 2008"
+    formula_file: formulas/boehrer_2008.py
+    reference_pdf: reference/boehrer_2008.pdf
+    n_law_constants:   2   # a_patalas=4.6, b_patalas=0.205
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 6.2518
+      r2:   0.1191
+
+caps:
+  max_law_constants:       2
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted thermocline depth increases with lake surface area A_s_km2 (wind-fetch-driven surface mixing deepens the thermocline as lakes get larger), i.e. is monotonically non-decreasing in A_s_km2"
+  - "predicted thermocline depth increases sublinearly / concavely with surface area (diminishing returns: a fractional-power / saturating response rather than linear or steeper)"
+  - "predicted thermocline depth is bounded above by the lake maximum depth Z_max_m, which acts as a morphometric ceiling it cannot exceed"
+  - "predicted thermocline depth is strictly positive (z_t_m > 0)"
+
+best_baseline: 6.2518    # boehrer_2008 — rmse (lower is better); regenerated after de-dup of released triples (no train/test leak)

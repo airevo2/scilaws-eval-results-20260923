@@ -1,0 +1,145 @@
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X)[:, 0]
+
+    # Common single-level Breit-Wigner form for the 197Au(n,γ) capture cross section
+    # sigma(E) = sigma_bg + sigma_res(E)
+    #
+    # Using a canonical two-term representation:
+    #   - thermal / sub-thermal background approximated by 1/v behavior
+    #   - dominant 4.9 eV resonance represented by a Lorentzian-like peak
+    #
+    # Parameters chosen to reflect the standard Au-197 capture behavior in the low-energy region.
+    sigma_bg = 98.65 / np.sqrt(np.maximum(E, 1e-30)) * np.sqrt(0.0253)  # normalized to ~98.65 b at 0.0253 eV
+
+    E_r = 4.906  # eV, prominent resonance energy
+    Gamma = 0.150  # eV, effective total width
+    sigma_pk = 33000.0  # b, approximate resonance peak height
+
+    sigma_res = sigma_pk * (0.25 * Gamma**2) / ((E - E_r)**2 + 0.25 * Gamma**2)
+
+    sigma = sigma_bg + sigma_res
+    return np.log10(np.maximum(sigma, 1e-300))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X)[:, 0]
+
+    # 197Au(n,gamma) inclusive capture cross section:
+    # standard single-level Breit-Wigner resonance + 1/v low-energy behavior.
+    # Parameters are the well-known 4.9 eV resonance values for Au-197.
+    #
+    # sigma(E) = sigma_bg(E) + sigma_res(E)
+    # where sigma_bg ~ A / sqrt(E)  (captures the thermal 1/v tail)
+    # and sigma_res is a Breit-Wigner peak centered near 4.9 eV.
+    #
+    # The exact thermal/background normalization depends on convention and
+    # self-shielding corrections; this closed-form is the standard canonical
+    # physics form used for an isolated capture resonance.
+
+    # Background 1/v term, normalized to ~98.65 b at 0.0253 eV.
+    E_th = 0.0253
+    sigma_th = 98.65  # barns at thermal energy
+    sigma_bg = sigma_th * np.sqrt(E_th / np.maximum(E, 1e-300))
+
+    # Single-level Breit-Wigner resonance for the 4.9 eV capture resonance.
+    Er = 4.905  # eV
+    Gn = 0.11   # eV, effective neutron width
+    Gg = 0.15   # eV, gamma width
+    G = Gn + Gg
+
+    # Peak normalization chosen to reproduce the large ~33,000 b capture peak.
+    # Standard resonant form:
+    # sigma_res(E) = (pi / k^2) * g * (Gn*Gg)/((E-Er)^2 + (G/2)^2)
+    # We use an equivalent practical closed form with a fitted amplitude.
+    Ares = 3.3e4 * (G / 2.0) ** 2
+    sigma_res = Ares / ((E - Er) ** 2 + (G / 2.0) ** 2)
+
+    sigma = sigma_bg + sigma_res
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X)[:, 0]
+
+    # Common single-level Breit-Wigner + 1/v-like capture background form:
+    # sigma(E) = sigma_bg(E) + sigma_res(E)
+    #
+    # A standard closed-form representative for Au-197(n,gamma) in the
+    # thermal-to-resonance epithermal region is:
+    #   sigma_bg(E) = A / sqrt(E)
+    #   sigma_res(E) = B * (Gamma_n * Gamma_g) / ((E - E_r)^2 + (Gamma/2)^2)
+    #
+    # With E in eV and sigma in barns, the following coefficients are
+    # chosen to reproduce the qualitative standard behavior:
+    # - thermal capture ~ 100 b scale
+    # - strong 4.9 eV resonance ~ 3.3e4 b peak
+    #
+    # Note: this is a compact canonical form, not a evaluated nuclear data library fit.
+
+    A = 2.4          # barn * sqrt(eV), background scale
+    B = 1.0          # barn * eV^2, resonance scale factor
+    E_r = 4.91       # eV, resonance energy
+    Gamma_n = 0.12   # eV, neutron width surrogate
+    Gamma_g = 0.08   # eV, radiative width surrogate
+    Gamma = Gamma_n + Gamma_g
+
+    sigma_bg = A / np.sqrt(np.maximum(E, 1e-20))
+    sigma_res = B * (Gamma_n * Gamma_g) / ((E - E_r)**2 + (Gamma / 2.0)**2)
+
+    sigma = sigma_bg + sigma_res
+    return np.log10(sigma)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X)[:, 0]
+
+    # Gold-197 neutron capture in the low-energy region is commonly modeled as
+    # a 1/v background plus the 4.9 eV Breit-Wigner resonance.
+    #
+    # σ(E) ≈ A / sqrt(E) + B / ((E - E_r)^2 + (Γ/2)^2)
+    #
+    # Since no evaluated-data coefficients are provided here, use the standard
+    # canonical closed-form resonance shape normalized in relative units:
+    E_r = 4.9      # eV, main resonance energy
+    Gamma = 0.15   # eV, representative width scale
+    bg = 1.0 / np.sqrt(np.maximum(E, 1e-30))
+    res = 1.0 / (((E - E_r) ** 2) + (0.5 * Gamma) ** 2)
+
+    sigma_rel = bg + res
+    return np.log10(sigma_rel)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X)[:, 0]
+
+    # Physical constants for Au-197(n,γ) around the dominant 4.9 eV resonance
+    E_r = 4.9          # resonance energy [eV]
+    Gamma = 0.15        # total width [eV], effective single-resonance approximation
+    sigma_th = 98.0     # thermal capture cross section [barn] (approx. 1/v background)
+    E_th = 0.0253       # thermal reference energy [eV]
+
+    # 1/v capture background
+    sigma_bg = sigma_th * np.sqrt(E_th / np.maximum(E, 1e-20))
+
+    # Single-level Breit-Wigner-like resonance term, normalized to a large peak
+    sigma_peak = 33000.0  # peak magnitude [barn]
+    resonance = sigma_peak * (0.25 * Gamma**2) / ((E - E_r)**2 + 0.25 * Gamma**2)
+
+    # Inclusive capture cross section approximation
+    sigma = sigma_bg + resonance
+
+    return np.log10(sigma)

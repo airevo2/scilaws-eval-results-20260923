@@ -1,0 +1,88 @@
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Hartmann 1985 standard cumulative crater size-frequency distribution for Mars
+    # log10(N) = -2.616 - 2.0 * log10(D) for D in km
+    N_cum = 10.0**(-2.616 - 2.0 * np.log10(D))
+    return N_cum
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the cumulative areal density of Mars craters N(>=D) based on the 
+    Hartmann (1985) standard cumulative size-frequency distribution (SFD).
+    
+    The canonical closed-form relationship for craters with diameter D >= 1.8 km 
+    is a power law:
+        log10(N_cum) = -2.617 - 2.20 * log10(D)
+    where N_cum is in craters per km^2 and D is in km.
+    """
+    # Extract the lower diameter edge (primary input)
+    D = X[:, 0]
+    
+    # Ensure D is strictly positive to avoid log10 issues
+    D = np.clip(D, 1e-10, None)
+    
+    # Calculate log10(N_cum)
+    log10_N = -2.617 - 2.20 * np.log10(D)
+    
+    # Convert back to linear space
+    N_cum = 10.0 ** log10_N
+    
+    return N_cum
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the cumulative areal density of Mars craters N(>=D) using a 
+    standard power-law size-frequency distribution (SFD).
+    
+    The canonical closed-form for a cumulative crater SFD is:
+        N(>=D) = c * D^(-b)
+    where D is the threshold diameter in km and N is the cumulative 
+    crater density in craters per km^2.
+    """
+    D = X[:, 0]
+    
+    # Standard power-law coefficients for Mars crater density
+    c = 1e-2  # scaling constant
+    b = 2.0   # power-law slope
+    
+    N_cum = c * np.power(D, -b)
+    
+    return N_cum
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D_lower = X[:, 0]
+    # The standard closed-form approximation for the cumulative size-frequency distribution 
+    # of craters is a power law: N(>=D) = c * D^(-b)
+    # For Mars, typical order-of-magnitude constants for the cumulative crater density are:
+    c = 1e-5
+    b = 2.0
+    N_cum = c * np.power(D_lower, -b)
+    return N_cum
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard cumulative power-law size-frequency distribution for Mars craters.
+    N(>=D) = 10^{-3} * D^{-2.0}   (D in km, N in craters/km^2)
+    This is the most commonly cited closed-form relationship for the cumulative
+    areal density of Martian craters across the 1–~600 km diameter range.
+    """
+    D = X[:, 0]  # lower diameter edge (km)
+    return 1.0e-3 * np.power(D, -2.0)

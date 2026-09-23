@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    # ISO 9806 / EN 12975 Hottel-Whillier-Bliss steady-state efficiency:
+    # eta = eta0 - a1*(T_in - T_amb)/G - a2*(T_in - T_amb)^2/G
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    eta0 = 0.75      # optical (zero-loss) efficiency
+    a1 = 3.5         # W/(m^2 K) linear loss coefficient
+    a2 = 0.015       # W/(m^2 K^2) quadratic loss coefficient
+
+    dT = T_in - T_amb
+    Tstar = dT / G
+
+    eta = eta0 - a1 * Tstar - a2 * G * Tstar**2
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # ISO 9806 / standard HWB (Hottel-Whillier-Bliss) collector efficiency law
+    # eta = eta0 - a1*(Tm - Ta)/G - a2*(Tm - Ta)^2/G
+    # Here using inlet temperature as the reference temperature.
+    eta0 = 0.75   # optical (zero-loss) efficiency
+    a1 = 3.5      # linear loss coefficient [W/(m^2 K)]
+    a2 = 0.015    # quadratic loss coefficient [W/(m^2 K^2)]
+
+    dT = T_in - T_amb
+    Tstar = dT / G
+
+    eta = eta0 - a1 * Tstar - a2 * (dT**2) / G
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # ISO 9806 Hottel-Whillier-Bliss quadratic collector model
+    # eta = eta0 - a1*(Tm-Ta)/G - a2*(Tm-Ta)^2/G
+    # Using inlet temperature as reduced-temperature reference.
+    eta0 = 0.75   # optical efficiency (zero-loss)
+    a1 = 3.5      # W/(m^2 K) linear loss coefficient
+    a2 = 0.015    # W/(m^2 K^2) quadratic loss coefficient
+
+    Tstar = (T_in - T_amb) / G
+
+    eta = eta0 - a1 * Tstar - a2 * (T_in - T_amb) * Tstar
+
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # ISO 9806 / HWB steady-state thermal efficiency (second-order)
+    # eta = eta0 - a1*(Tm-Ta)/G - a2*(Tm-Ta)^2/G
+    # Using T_in as reference temperature (inlet-based HWB form)
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # Typical flat-plate collector coefficients
+    eta0 = 0.78      # optical efficiency (zero-loss)
+    a1 = 3.5         # W/(m^2 K) first-order loss coefficient
+    a2 = 0.015       # W/(m^2 K^2) second-order loss coefficient
+
+    dT = T_in - T_amb
+    Tstar = dT / G
+
+    eta = eta0 - a1 * Tstar - a2 * (dT**2) / G
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # ISO 9806 / Hottel-Whillier-Bliss (HWB) quadratic efficiency model
+    # eta = eta0 - a1*(T_in - T_amb)/G - a2*(T_in - T_amb)^2/G
+    eta0 = 0.75   # optical (zero-loss) efficiency
+    a1 = 4.0      # W/(m^2 K) first-order loss coefficient
+    a2 = 0.010    # W/(m^2 K^2) second-order loss coefficient
+
+    dT = T_in - T_amb
+    Tstar = dT / G
+
+    eta = eta0 - a1 * Tstar - a2 * (dT**2) / G
+    return eta

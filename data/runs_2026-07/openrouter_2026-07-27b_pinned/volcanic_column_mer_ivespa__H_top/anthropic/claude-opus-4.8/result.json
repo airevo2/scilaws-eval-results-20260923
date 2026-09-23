@@ -1,0 +1,35 @@
+{
+  "task": "volcanic_column_mer_ivespa__H_top",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeI",
+  "primary": "earth_science ",
+  "formulas": [
+    {
+      "formula": "aubry_powerlaw_trainfit",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "linear_mer",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "mtt_plume_quarter_power",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "no-cite",
+      "verdict": "suspect"
+    }
+  ]
+}

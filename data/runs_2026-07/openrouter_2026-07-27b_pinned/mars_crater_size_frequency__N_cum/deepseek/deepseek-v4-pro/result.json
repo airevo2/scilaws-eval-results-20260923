@@ -1,0 +1,35 @@
+{
+  "task": "mars_crater_size_frequency__N_cum",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "hartmann_piecewise_power_law",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "neukum_2001_npf",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "single_power_law",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "no-cite",
+      "verdict": "suspect"
+    }
+  ]
+}

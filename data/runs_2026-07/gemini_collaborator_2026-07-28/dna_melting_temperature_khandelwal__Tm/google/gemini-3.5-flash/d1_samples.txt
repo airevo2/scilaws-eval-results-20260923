@@ -1,0 +1,188 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    E = X[:, 0]  # DNA strength parameter per base (average enthalpy magnitude, kcal/mol)
+    N = X[:, 1]  # Oligonucleotide sequence length (bp)
+    salt_M = X[:, 2]  # Sodium ion concentration (M)
+    dna_conc_M = X[:, 3]  # Total nucleotide strand concentration (M)
+
+    # Calculate total enthalpy change (dH) in cal/mol
+    # E is given as a positive stability parameter, so dH of association/melting is negative
+    dH = -E * N * 1000.0
+
+    # Estimate total entropy change (dS) in cal/(mol*K)
+    # Using the standard enthalpy-entropy compensation relationship for DNA duplexes
+    # and accounting for helix initiation contributions
+    dS = -2.72 * E * N - 10.8
+
+    # Apply SantaLucia (1998) salt correction to entropy
+    # dS(salt) = dS(1M) + 0.368 * (N - 1) * ln([Na+])
+    dS_salt = dS + 0.368 * (N - 1) * np.log(salt_M)
+
+    # Gas constant in cal/(mol*K)
+    R = 1.9872
+
+    # Calculate Tm in Kelvin using the standard nearest-neighbor model
+    # Assuming non-self-complementary duplexes (dna_conc_M is divided by 4)
+    Tm_K = dH / (dS_salt + R * np.log(dna_conc_M / 4.0))
+
+    # Convert to Celsius
+    Tm_C = Tm_K - 273.15
+
+    return Tm_C
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs from the 2-D numpy array
+    E = X[:, 0]  # DNA strength parameter per base (enthalpy magnitude, kcal/mol)
+    N = X[:, 1]  # Oligonucleotide sequence length (bp)
+    salt_M = X[:, 2]  # Sodium ion concentration (M)
+    dna_conc_M = X[:, 3]  # Total nucleotide strand concentration (M)
+
+    # Calculate total enthalpy change (dH) in cal/mol
+    # Since E is a positive 'strength' parameter, dH is negative
+    dH = -E * N * 1000
+
+    # Calculate total entropy change (dS) in cal/(mol*K) at 1M NaCl
+    # We use the highly accurate linear relationship between dinucleotide step enthalpy and entropy:
+    # dS_step = 2.0 * dH_step - 6.0
+    dS_1M = -(2.0 * E + 6.0) * N
+
+    # Apply the SantaLucia (1998) salt correction to entropy
+    # dS(salt) = dS(1M) + 0.368 * (N - 1) * ln([Na+])
+    dS_salt = dS_1M + 0.368 * (N - 1) * np.log(salt_M)
+
+    # Calculate the concentration contribution term: R * ln(C_DNA / 4)
+    # R = 1.9872 cal/(mol*K). The division by 4 is standard for non-self-complementary duplexes.
+    R = 1.9872
+    dT_conc = R * np.log(dna_conc_M / 4.0)
+
+    # Calculate melting temperature (Tm) in Kelvin using the Nearest-Neighbor thermodynamic relation
+    Tm_K = dH / (dS_salt + dT_conc)
+
+    # Convert Tm to Celsius
+    Tm_C = Tm_K - 273.15
+
+    return Tm_C
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    E = X[:, 0]  # DNA strength parameter per base (average dinucleotide step enthalpy magnitude, kcal/mol)
+    N = X[:, 1]  # Oligonucleotide sequence length in bp
+    salt = X[:, 2]  # Sodium ion concentration [M]
+    C_DNA = X[:, 3]  # Total nucleotide strand concentration [M]
+
+    # Enthalpy (dH) calculation in cal/mol
+    # E is in kcal/mol, we convert to cal/mol by multiplying by 1000.
+    # We add a standard initiation enthalpy of +200 cal/mol.
+    dH = -E * N * 1000.0 + 200.0
+
+    # Entropy (dS) calculation in cal/(mol*K) at 1M salt.
+    # Enthalpy-entropy compensation ratio for DNA is approximately 2.675 cal/(mol*K) per kcal/mol.
+    # We add a standard initiation entropy of -5.7 cal/(mol*K).
+    dS_1M = -2.675 * E * N - 5.7
+
+    # Salt correction to entropy (SantaLucia 1998)
+    # dS(salt) = dS(1M) + 0.368 * (N - 1) * ln([Na+])
+    dS_salt = dS_1M + 0.368 * (N - 1) * np.log(salt)
+
+    # Gas constant R in cal/(mol*K)
+    R = 1.9872
+
+    # Total strand concentration correction term.
+    # For non-self-complementary duplexes, the concentration term is R * ln(C_DNA / 4).
+    term_C = R * np.log(C_DNA / 4.0)
+
+    # Melting temperature in Kelvin
+    T_m_K = dH / (dS_salt + term_C)
+
+    # Convert to Celsius
+    T_m_C = T_m_K - 273.15
+
+    return T_m_C
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = E (DNA strength parameter, average dinucleotide step enthalpy in kcal/mol)
+    # X[:, 1] = N (sequence length in bp)
+    # X[:, 2] = salt_M (monovalent salt concentration in M)
+    # X[:, 3] = dna_conc_M (total strand concentration in M)
+
+    E = X[:, 0]
+    N = X[:, 1]
+    salt = X[:, 2]
+    dna = X[:, 3]
+
+    # Gas constant in cal / (mol * K)
+    R = 1.9872
+
+    # Enthalpy (dH) in cal/mol
+    dH = -E * N * 1000.0
+
+    # Entropy (dS) in cal/(mol * K)
+    # Derived from linear relationship of Breslauer (1986) enthalpy/entropy parameters:
+    # dS_step ≈ 2.27 * dH_step - 0.8.
+    # Initiation entropy for a non-self-complementary duplex is -16.8 cal/(mol * K).
+    dS = -(2.27 * E + 0.8) * N - 16.8
+
+    # SantaLucia (1998) salt correction applied to entropy
+    dS_salt = dS + 0.368 * (N - 1) * np.log(salt)
+
+    # Tm calculation in Kelvin, then converted to Celsius
+    # Assumes non-self-complementary strands (using Ct/4)
+    Tm = dH / (dS_salt + R * np.log(dna / 4.0)) - 273.15
+
+    return Tm
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs from the 2-D numpy array
+    E = X[:, 0]  # DNA strength parameter per base (kcal/mol)
+    N = X[:, 1]  # Oligonucleotide sequence length (bp)
+    salt_M = X[:, 2]  # Sodium ion concentration (M)
+    dna_conc_M = X[:, 3]  # DNA strand concentration (M)
+
+    # Gas constant in cal/(mol*K)
+    R = 1.9872
+
+    # Enthalpy (dH) in cal/mol
+    # E represents the average step enthalpy magnitude.
+    # Total enthalpy includes step contributions and a minor initiation term (+200 cal/mol).
+    dH = -E * N * 1000.0 + 200.0
+
+    # Entropy (dS) at 1M salt in cal/(mol*K)
+    # dS is estimated from dH using the linear correlation: dS_step = 1.83 * dH_step - 7.5
+    # Initiation entropy is -5.7 cal/(mol*K).
+    dS_1M = (-1.83 * E - 7.5) * N - 5.7
+
+    # Salt correction to entropy (SantaLucia 1998)
+    # dS(salt) = dS(1M) + 0.368 * (N - 1) * ln([Na+])
+    dS_salt = dS_1M + 0.368 * (N - 1) * np.log(salt_M)
+
+    # Total entropy including concentration effects for non-self-complementary duplexes (C_DNA / 4)
+    dS_total = dS_salt + R * np.log(dna_conc_M / 4.0)
+
+    # Calculate Tm in Celsius
+    Tm = dH / dS_total - 273.15
+
+    return Tm

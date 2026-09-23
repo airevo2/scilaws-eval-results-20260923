@@ -1,0 +1,100 @@
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Fundamental Metallicity Relation (Mannucci et al. 2010)
+    # Projection parameter mu_0.32
+    mu = log_Mstar - 0.32 * log_SFR
+    
+    # Quadratic fit for 12 + log(O/H)
+    x = mu - 10.0
+    oh = 8.90 + 0.39 * x - 0.20 * x**2
+    
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts gas-phase oxygen abundance (12 + log(O/H)) using the 
+    Fundamental Metallicity Relation (FMR) from Mannucci et al. (2010).
+    
+    Inputs:
+    X[:, 0] : log10(M_star / M_sun)
+    X[:, 1] : log10(SFR / (M_sun / yr))
+    """
+    m = X[:, 0] - 10.0
+    s = X[:, 1]
+    
+    # Mannucci et al. (2010) FMR coefficients
+    Z = 8.90 + 0.37 * m - 0.14 * s - 0.19 * m**2 + 0.12 * m * s - 0.054 * s**2
+    
+    return Z
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Fundamental Metallicity Relation (Mannucci et al. 2010)
+    # mu_0.32 = log(M*/M_sun) - 0.32 * log(SFR) - 10.0
+    mu = log_Mstar - 0.32 * log_SFR - 10.0
+    
+    # 12 + log(O/H) as a linear function of mu_0.32
+    oh = 8.90 + 0.37 * mu
+    
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Fundamental Metallicity Relation (FMR) — Mannucci et al. (2010).
+    
+    12 + log(O/H) = a + b * mu + c * mu^2
+    where mu = (log_Mstar - 10) - alpha * log_SFR
+    """
+    log_Mstar = X[:, 0]
+    log_SFR   = X[:, 1]
+
+    # FMR coefficients (Mannucci et al. 2010)
+    alpha = 0.32
+    a = 8.90
+    b = 0.37
+    c = -0.19
+
+    mu = (log_Mstar - 10.0) - alpha * log_SFR
+
+    oh = a + b * mu + c * mu**2
+    return oh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_Mstar = X[:, 0]
+    log_SFR = X[:, 1]
+    
+    # Fundamental Metallicity Relation (Mannucci et al. 2010)
+    # Projection parameter mu
+    mu = log_Mstar - 0.32 * log_SFR
+    
+    # Polynomial fit for 12 + log(O/H)
+    dm = mu - 10.0
+    oh = (8.90 
+          + 0.39 * dm 
+          - 0.20 * dm**2 
+          - 0.077 * dm**3 
+          + 0.00066 * dm**4)
+          
+    return oh

@@ -1,0 +1,164 @@
+import numpy as np
+
+def predict(X):
+    """
+    Total electron-impact single-ionization cross section in units of 1e-16 cm^2.
+
+    Standard closed-form Bethe-Born / Lotz-type semi-empirical shape:
+        sigma(E) = 0 for E <= I
+        sigma(E) = A * ln(E/I) / (E * I) * [1 - B*exp(-C*(E/I - 1))]
+
+    Since no target-specific constants are provided, this function returns the
+    most common generic one-parameter normalized form for a single-ionization
+    cross section shape, with threshold at an effective ionization energy I.
+    Here we use a widely used simple analytic form (Lotz-like threshold behavior)
+    with a default effective threshold I = 15.0 eV and scale chosen to give
+    values in 1e-16 cm^2.
+    """
+    E = np.asarray(X)[:, 0].astype(float)
+
+    # Generic effective ionization threshold (eV); target-specific in real use.
+    I = 15.0
+
+    sigma = np.zeros_like(E)
+
+    mask = E > I
+    x = E[mask] / I
+
+    # Simple common analytic shape: rises from threshold, peaks, then falls ~ln(E)/E
+    # Scale factor chosen for unit convention only; actual targets require fitting.
+    A = 4.0 * I  # yields sigma in 1e-16 cm^2 order-of-magnitude
+    sigma[mask] = A * np.log(x) / E[mask]
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Total electron-impact single-ionization cross section.
+
+    Standard closed-form semi-empirical shape based on the Lotz-type form:
+        sigma(E) ~ A * ln(E/I) / (E * I) * [1 - I/E]^B
+
+    Here, because no target-specific coefficients or ionization threshold are provided,
+    this function returns a generic normalized form using the common threshold behavior
+    and high-energy ~ ln(E)/E falloff. For E <= 0, sigma = 0.
+    """
+    E = np.asarray(X[:, 0], dtype=float)
+
+    # Generic threshold scale (eV) used only to make the closed form well-defined.
+    # In a real target-specific model, this would be the ionization potential.
+    I = 15.0
+
+    sigma = np.zeros_like(E)
+
+    mask = E > I
+    x = E[mask] / I
+
+    # Common Lotz-like functional form
+    sigma[mask] = 1.0e-16 * (np.log(x) / E[mask]) * (1.0 - 1.0 / x)**2
+
+    # Return in units of 1e-16 cm^2
+    return sigma / 1.0e-16
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Electron-impact single-ionization cross section (Lotz-type semi-empirical form).
+
+    Input
+    -----
+    X : array_like, shape (n, 1)
+        X[:, 0] = electron kinetic energy E_e in eV
+
+    Returns
+    -------
+    sigma : ndarray, shape (n,)
+        Cross section in units of 1e-16 cm^2
+    """
+    E = np.asarray(X)[:, 0].astype(float)
+
+    # Generic closed-form thresholded ionization cross-section shape.
+    # Since no species-specific constants are provided, use the standard
+    # normalized Lotz-type energy dependence with a representative threshold scale.
+    # This preserves the canonical functional form: sigma ~ ln(E/I)/(E*I).
+    I = 15.0  # eV, generic effective ionization threshold scale
+    A = 4.5    # dimensionless normalization in 1e-16 cm^2 units
+
+    sigma = np.zeros_like(E)
+    mask = E > I
+    sigma[mask] = A * np.log(E[mask] / I) / (E[mask] * I) * 1e2  # scaled to typical 1e-16 cm^2 magnitude
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Electron-impact single-ionization cross-section in units of 1e-16 cm^2.
+
+    Standard semi-empirical Lotz-type form for total single-ionization:
+        σ(E) = A * ln(E / I) / (E * I)   for E > I
+             = 0                          otherwise
+
+    Here E and I are in eV, and σ is returned in units of 1e-16 cm^2.
+    For a generic target without species-specific fit parameters, a common
+    canonical choice is to use the Lotz normalization A = 4.5 per subshell.
+    Since the prompt provides no target-specific ionization potential I or
+    shell sum, we use a simple effective threshold model with a nominal
+    ionization threshold I0 = 15.0 eV, which gives a standard closed form
+    shape for total single-ionization cross section.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, 1)
+        X[:, 0] = electron_energy_eV
+
+    Returns
+    -------
+    sigma : ndarray, shape (n_samples,)
+        Cross section in 1e-16 cm^2
+    """
+    E = np.asarray(X)[:, 0].astype(float)
+
+    # Effective threshold (eV); generic placeholder when no target-specific data are given.
+    I0 = 15.0
+
+    sigma = np.zeros_like(E)
+    mask = E > I0
+    sigma[mask] = 4.5 * np.log(E[mask] / I0) / (E[mask] * I0)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = np.asarray(X)[:, 0].astype(float)
+
+    # Lotz-type semi-empirical form for total electron-impact ionization cross section
+    # σ(E) = A * ln(E/I) / (E * I) * [1 - B * exp(-C*(E/I - 1))]
+    # Here we use a standard compact single-threshold closed form with the correct threshold behavior.
+    #
+    # Since no target-specific constants are provided, we return the canonical shape in
+    # units of 1e-16 cm^2 using a generic ionization-threshold scale I0.
+    I0 = 15.0  # eV, representative single-ionization threshold scale
+    A = 4.5    # empirical prefactor in 1e-16 cm^2 * eV
+    B = 1.0
+    C = 1.0
+
+    sigma = np.zeros_like(E, dtype=float)
+    mask = E > I0
+    x = E[mask] / I0
+    sigma[mask] = A * np.log(x) / (E[mask] * I0) * (1.0 - B * np.exp(-C * (x - 1.0)))
+
+    return sigma

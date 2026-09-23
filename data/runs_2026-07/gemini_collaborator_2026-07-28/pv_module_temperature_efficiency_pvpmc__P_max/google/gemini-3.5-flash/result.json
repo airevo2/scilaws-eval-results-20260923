@@ -1,0 +1,17 @@
+{
+  "task": "pv_module_temperature_efficiency_pvpmc__P_max",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeI",
+  "primary": "materials_science ",
+  "formulas": [
+    {
+      "formula": "dobos_2014",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

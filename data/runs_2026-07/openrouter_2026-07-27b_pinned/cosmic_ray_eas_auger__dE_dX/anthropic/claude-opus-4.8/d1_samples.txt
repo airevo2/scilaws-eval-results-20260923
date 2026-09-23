@@ -1,0 +1,151 @@
+import numpy as np
+
+def predict(X):
+    """
+    dE/dX along the shower axis described by the standard
+    Gaisser-Hillas function (Aab et al. 2019, JCAP 2019:018).
+
+        dE/dX(X) = (dE/dX)_max
+                   * ((X - X0)/(Xmax - X0))^((Xmax - X0)/lambda)
+                   * exp((Xmax - X)/lambda)
+
+    Units: X in g/cm^2, dE/dX in PeV/(g/cm^2).
+    """
+    x = np.asarray(X[:, 0], dtype=float)
+
+    # Canonical Gaisser-Hillas parameters (typical ~10 EeV shower)
+    dEdX_max = 30.0     # PeV/(g/cm^2)  -- peak energy deposit
+    Xmax     = 750.0    # g/cm^2        -- depth of shower maximum
+    X0       = 0.0      # g/cm^2        -- first-interaction depth parameter
+    lam      = 70.0     # g/cm^2        -- profile width parameter
+
+    # base of the power term, valid only where X > X0
+    base = (x - X0) / (Xmax - X0)
+    valid = base > 0.0
+
+    dEdX = np.zeros_like(x)
+    exponent = (Xmax - X0) / lam
+    dEdX[valid] = (dEdX_max
+                   * np.power(base[valid], exponent)
+                   * np.exp((Xmax - x[valid]) / lam))
+
+    return dEdX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Energy deposit per unit slant depth dE/dX along an air-shower axis,
+    described by the standard Gaisser-Hillas function (Aab 2019, JCAP 2019:018).
+
+        dE/dX(X) = (dE/dX)_max * ((X - X0)/(Xmax - X0))^((Xmax - X0)/lam)
+                   * exp((Xmax - X)/lam)
+
+    Units: dE/dX in PeV/(g/cm^2), X in g/cm^2.
+    """
+    x = np.asarray(X[:, 0], dtype=float)
+
+    # Canonical fitted parameters (typical UHECR shower ~10^19 eV)
+    dEdX_max = 40.0      # PeV/(g/cm^2)  -- peak energy-deposit rate
+    Xmax     = 750.0     # g/cm^2        -- depth of shower maximum
+    X0       = 0.0       # g/cm^2        -- first-interaction depth parameter
+    lam      = 60.0      # g/cm^2        -- shape (width) parameter
+
+    base = (x - X0) / (Xmax - X0)
+    exponent = (Xmax - X0) / lam
+
+    # Positive definite inside the physical region; zero where base <= 0
+    dEdX = np.where(
+        base > 0.0,
+        dEdX_max * np.power(np.clip(base, 0.0, None), exponent)
+                 * np.exp((Xmax - x) / lam),
+        0.0,
+    )
+    return dEdX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Energy deposit per unit slant depth dE/dX along the shower axis.
+    Standard Gaisser-Hillas parametrization (Aab 2019, JCAP 2019:018):
+
+        dE/dX(X) = (dE/dX)_max * [ (X - X0)/(Xmax - X0) ]^((Xmax - X0)/lam)
+                                 * exp( (Xmax - X)/lam )
+
+    Returns dE/dX in PeV/(g/cm^2).
+    """
+    x = np.asarray(X[:, 0], dtype=float)
+
+    # Canonical fitted parameters for a ~10 EeV air shower
+    dEdX_max = 40.0    # PeV/(g/cm^2)  -- peak energy deposit
+    Xmax     = 750.0   # g/cm^2        -- depth of shower maximum
+    X0       = 0.0     # g/cm^2        -- effective first-interaction depth
+    lam      = 70.0    # g/cm^2        -- profile width parameter
+
+    # Argument of the power law (guard against negative base)
+    base = (x - X0) / (Xmax - X0)
+    base = np.where(base > 0.0, base, 0.0)
+
+    exponent = (Xmax - X0) / lam
+    dEdX = dEdX_max * np.power(base, exponent) * np.exp((Xmax - x) / lam)
+
+    return dEdX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    dE/dX along the shower axis, described by the standard
+    Gaisser-Hillas function (Aab et al. 2019, JCAP 2019:018).
+
+        dE/dX(X) = (dE/dX)_max * ((X - X0)/(Xmax - X0))^((Xmax - X0)/lambda)
+                                * exp((Xmax - X)/lambda)
+
+    Units: X in g/cm^2, dE/dX in PeV/(g/cm^2).
+    """
+    x = np.asarray(X[:, 0], dtype=float)
+
+    # Canonical fitted shower parameters (typical ~10^19 eV EAS)
+    dEdX_max = 40.0     # PeV/(g/cm^2)  -- peak energy deposit
+    Xmax     = 750.0    # g/cm^2        -- depth of shower maximum
+    X0       = -100.0   # g/cm^2        -- effective first-interaction depth
+    lam      = 60.0     # g/cm^2        -- profile width parameter
+
+    z    = (x - X0) / (Xmax - X0)
+    expo = (Xmax - X0) / lam
+
+    val = np.zeros_like(x)
+    good = z > 0.0
+    val[good] = dEdX_max * np.power(z[good], expo) * np.exp((Xmax - x[good]) / lam)
+
+    return val
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Gaisser-Hillas function for the longitudinal energy deposit profile
+    # dE/dX(X) = dEdX_max * ((X-X0)/(Xmax-X0))^((Xmax-X0)/lam) * exp((Xmax-X)/lam)
+    x = X[:, 0]
+
+    # Typical fitted shower parameters (Aab 2019, JCAP 2019:018)
+    dEdX_max = 0.4      # PeV/(g/cm^2)  peak energy deposit
+    Xmax     = 750.0    # g/cm^2        depth of shower maximum
+    X0       = 0.0      # g/cm^2        first-interaction-like parameter
+    lam      = 60.0     # g/cm^2        width parameter
+
+    arg = (x - X0) / (Xmax - X0)
+    # keep positive-definite inside the physical region
+    arg = np.clip(arg, 1e-12, None)
+    exponent = (Xmax - X0) / lam
+
+    dEdX = dEdX_max * np.power(arg, exponent) * np.exp((Xmax - x) / lam)
+    return dEdX

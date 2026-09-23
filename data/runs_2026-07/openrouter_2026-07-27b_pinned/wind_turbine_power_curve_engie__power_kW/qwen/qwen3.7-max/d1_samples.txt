@@ -1,0 +1,128 @@
+import numpy as np
+
+def predict(X):
+    """
+    Logistic (sigmoid) power curve model for wind turbine electrical power output.
+    
+    P(v) = P_rated / (1 + exp(-k * (v - v_mid)))
+    
+    This is the most commonly cited closed-form (non-piecewise) parametric model
+    for wind turbine power curves in the wind energy forecasting literature.
+    """
+    v = X[:, 0]
+    
+    # Turbine power curve parameters
+    P_rated = 2000.0   # Rated electrical power output [kW]
+    k = 1.2            # Logistic steepness parameter [s/m]
+    v_mid = 8.0        # Wind speed at half-rated power [m/s]
+    
+    P = P_rated / (1.0 + np.exp(-k * (v - v_mid)))
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+    
+    # Standard physical constants and typical turbine parameters
+    rho = 1.225   # Air density [kg/m^3] at standard sea-level conditions
+    A = 8659.0    # Rotor swept area [m^2] (representative of a ~105m diameter rotor)
+    Cp = 0.45     # Aerodynamic power coefficient [-] (typical operational value below Betz limit)
+    eta = 0.95    # Combined mechanical and electrical drivetrain efficiency [-]
+    
+    # Standard closed-form physical relationship for wind power (Watts)
+    P_W = 0.5 * rho * A * Cp * eta * (v ** 3)
+    
+    # Convert to kilowatts
+    P_kW = P_W / 1000.0
+    
+    return P_kW
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+    
+    # Standard physical constants and typical turbine parameters
+    rho = 1.225   # Air density at sea level [kg/m^3]
+    A = 5000.0    # Rotor swept area [m^2] (typical for a ~2-3 MW turbine, e.g., ~80m diameter)
+    Cp = 0.40     # Overall power coefficient (aerodynamic efficiency * electrical efficiency)
+    
+    # Standard closed-form cubic relationship for wind power
+    P_W = 0.5 * rho * A * Cp * (v ** 3)
+    
+    # Convert from Watts to kilowatts
+    P_kW = P_W / 1000.0
+    
+    return P_kW
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+    P = np.zeros_like(v, dtype=float)
+    
+    # Standard parameters for a generic 2 MW wind turbine
+    v_in = 3.0       # Cut-in wind speed [m/s]
+    v_rated = 12.0   # Rated wind speed [m/s]
+    v_out = 25.0     # Cut-out wind speed [m/s]
+    P_rated = 2000.0 # Rated electrical power [kW]
+    
+    # Region 1: Below cut-in or above cut-out (P = 0, already initialized)
+    
+    # Region 2: Between cut-in and rated speed (Cubic approximation)
+    mask_partial = (v >= v_in) & (v < v_rated)
+    P[mask_partial] = P_rated * (v[mask_partial]**3 - v_in**3) / (v_rated**3 - v_in**3)
+    
+    # Region 3: Between rated speed and cut-out speed (Constant rated power)
+    mask_rated = (v >= v_rated) & (v <= v_out)
+    P[mask_rated] = P_rated
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+
+    # --- Standard wind-turbine power equation ---
+    # P = 0.5 * rho * A * Cp * eta * v^3
+    # with piecewise cut-in / rated / cut-out behaviour
+
+    rho = 1.225          # air density at sea level [kg/m^3]
+    R = 40.0             # rotor radius [m]  (typical ~2 MW class)
+    A = np.pi * R**2     # swept area [m^2]
+    Cp = 0.40            # aerodynamic power coefficient
+    eta = 0.95           # drivetrain + generator efficiency
+
+    v_cutin  = 3.0       # cut-in wind speed  [m/s]
+    v_rated  = 12.0      # rated wind speed    [m/s]
+    v_cutout = 25.0      # cut-out wind speed  [m/s]
+
+    # Rated electrical power [kW]
+    P_rated = 0.5 * rho * A * Cp * eta * v_rated**3 / 1000.0
+
+    P = np.zeros_like(v, dtype=float)
+
+    # Region 1: below cut-in  →  P = 0  (already set)
+
+    # Region 2: cut-in ≤ v < rated  →  cubic law
+    mask_partial = (v >= v_cutin) & (v < v_rated)
+    P[mask_partial] = 0.5 * rho * A * Cp * eta * v[mask_partial]**3 / 1000.0
+
+    # Region 3: rated ≤ v < cut-out  →  constant rated power
+    mask_rated = (v >= v_rated) & (v < v_cutout)
+    P[mask_rated] = P_rated
+
+    # Region 4: v ≥ cut-out  →  P = 0  (already set)
+
+    return P

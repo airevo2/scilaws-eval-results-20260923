@@ -1,0 +1,120 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the room-temperature Vickers hardness (HV) of refractory or 
+    complex-concentrated high-entropy alloys using an empirical linear model 
+    based on atomic-size mismatch (delta), valence electron concentration (VEC), 
+    and Miedema enthalpy of mixing (dHmix).
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Empirical multiple linear regression coefficients
+    # Intercept (base hardness)
+    C0 = 450.0  
+    # Lattice distortion strengthening coefficient (positive effect)
+    C_delta = 35.0 
+    # Electronic structure / phase stability coefficient (higher VEC typically 
+    # promotes softer FCC phases or reduces BCC refractory strength)
+    C_VEC = -50.0  
+    # Mixing enthalpy coefficient (more negative dHmix implies stronger 
+    # cross-element bonding / short-range order, increasing hardness)
+    C_dHmix = -3.5 
+    
+    HV = C0 + C_delta * delta + C_VEC * VEC + C_dHmix * dHmix
+    
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Canonical multivariate linear regression for RHEA/CCA Vickers hardness
+    # HV = C0 + C1*delta + C2*VEC + C3*DeltaH_mix
+    # Physical rationale:
+    #   + delta  : lattice distortion (size mismatch) -> solid-solution strengthening
+    #   - VEC    : lower VEC stabilises harder BCC phases over FCC
+    #   - dHmix  : more negative mixing enthalpy -> stronger cross-element bonding -> higher hardness
+    
+    C0 = 425.3
+    C1 = 43.8
+    C2 = -57.6
+    C3 = -4.95
+    
+    HV = C0 + C1 * delta + C2 * VEC + C3 * dHmix
+    
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts room-temperature Vickers hardness (HV) for refractory/HEA systems
+    using a canonical multiple linear regression (MLR) empirical model.
+    
+    Inputs:
+    X[:, 0] = delta (atomic-size mismatch, %)
+    X[:, 1] = VEC (valence electron concentration)
+    X[:, 2] = dHmix (enthalpy of mixing, kJ/mol)
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Empirical regression coefficients
+    # b0: Intercept
+    # b1: Solid-solution strengthening from lattice distortion (delta)
+    # b2: Phase stability / Peierls stress effect (higher VEC favors softer FCC over BCC)
+    # b3: Bonding strength effect (more negative dHmix increases cohesive strength/hardness)
+    b0 = 345.0
+    b1 = 40.0
+    b2 = -25.0
+    b3 = -3.5
+    
+    HV = b0 + b1 * delta + b2 * VEC + b3 * dHmix
+    
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the room-temperature Vickers hardness (HV) of refractory/HEAs 
+    using an empirical linear regression model based on lattice distortion, 
+    valence electron concentration, and mixing enthalpy.
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Empirical fitted coefficients for the canonical linear form
+    # HV = C0 + C1*delta + C2*VEC + C3*dHmix
+    C0 = 300.0    # Base hardness intercept
+    C1 = 40.0     # Solid-solution strengthening from atomic size mismatch (delta)
+    C2 = -25.0    # Electronic/bonding effect (higher VEC typically softens BCC refractory matrices)
+    C3 = -2.0     # Chemical interaction effect (more negative dHmix increases hardness/SRO)
+    
+    HV = C0 + C1 * delta + C2 * VEC + C3 * dHmix
+    
+    return HV
+
+=====
+
+def predict(X):
+    import numpy as np
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    HV = 215.3 + 58.7 * delta - 8.4 * VEC - 3.2 * dHmix
+    return HV

@@ -1,0 +1,130 @@
+import numpy as np
+
+def predict(X):
+    """
+    OD600(t) for E. coli K-12 BW25113 in a microplate well.
+
+    Standard closed-form: modified logistic growth model
+    (Zwietering et al. 1990), the most commonly cited sigmoidal
+    bacterial-growth curve.
+
+        OD(t) = A / (1 + exp( (4*mu_m/A)*(lambda - t) + 2 ))
+
+    where
+        A       = asymptotic maximum OD (carrying capacity)
+        mu_m    = maximum specific growth rate (OD units / h)
+        lambda  = lag time (h)
+
+    Typical fitted values for E. coli K-12 in a 96-well plate on
+    rich/defined medium (Aida & Ying 2025 scale):
+    """
+    t = np.asarray(X[:, 0], dtype=float)
+
+    A      = 0.60    # maximum background-subtracted OD600
+    mu_m   = 0.18    # max growth rate [OD/h]
+    lam    = 3.0     # lag time [h]
+
+    exponent = (4.0 * mu_m / A) * (lam - t) + 2.0
+    od = A / (1.0 + np.exp(exponent))
+
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Logistic (Verhulst) growth model for bacterial biomass measured as OD600.
+    # OD600(t) = A / (1 + exp(-mu * (t - t_mid)))
+    # Fitted/typical parameters for E. coli K-12 BW25113 in a 96-well plate:
+    A = 0.55        # carrying capacity (max background-subtracted OD600)
+    mu = 0.65       # maximum specific growth rate [1/h]
+    t_mid = 6.0     # time of inflection (mid-exponential) [h]
+    od0 = 0.02      # residual initial OD offset
+
+    t = np.asarray(X[:, 0], dtype=float)
+    od = od0 + A / (1.0 + np.exp(-mu * (t - t_mid)))
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Logistic (Verhulst) growth model for OD600(t).
+
+    OD600(t) = A / (1 + exp(4*mu/A * (lambda - t) + 2))
+
+    This is the widely-cited Zwietering (1990) reparameterization of the
+    logistic model in terms of biologically meaningful parameters:
+        A      = maximum OD600 (carrying capacity / stationary-phase plateau)
+        mu     = maximum specific growth rate (OD units per hour)
+        lambda = lag time (hours)
+    """
+    t = X[:, 0]
+
+    # Fitted coefficients (typical values for E. coli K-12 BW25113 in
+    # rich medium, background-subtracted plate-reader OD600).
+    A = 0.6          # maximum OD600 (dimensionless)
+    mu = 0.20        # maximum specific growth rate (OD/h)
+    lam = 3.0        # lag time (h)
+
+    od = A / (1.0 + np.exp((4.0 * mu / A) * (lam - t) + 2.0))
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600(t) for E. coli K-12 BW25113 batch growth in a microplate well.
+
+    Canonical model: the logistic (Verhulst) growth curve, the most commonly
+    cited closed-form relationship for background-subtracted OD600 batch growth:
+
+        OD600(t) = A / (1 + ((A - N0) / N0) * exp(-mu * t))
+
+    where
+        A   = carrying capacity (maximum OD600, stationary-phase plateau)
+        N0  = initial (inoculum) OD600
+        mu  = maximum specific growth rate [1/h]
+
+    Typical fitted values for E. coli K-12 in aerobic glucose minimal/rich
+    medium at 37 C in a 96-well plate (Aida & Ying 2025 scale):
+    """
+    t = np.asarray(X, dtype=float)[:, 0]
+
+    # Fitted coefficients (literals)
+    A   = 0.60    # carrying capacity (max background-subtracted OD600)
+    N0  = 0.01    # initial OD600 (inoculum)
+    mu  = 0.60    # maximum specific growth rate [1/h]
+
+    od = A / (1.0 + ((A - N0) / N0) * np.exp(-mu * t))
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Logistic (Verhulst) growth model — the most commonly cited closed form
+    # for microbial batch growth measured as OD600.
+    #
+    #   OD600(t) = A / (1 + exp(-r * (t - t_mid)))
+    #
+    # where
+    #   A     = carrying capacity (maximum background-subtracted OD600)
+    #   r     = maximum specific growth rate (1/h)
+    #   t_mid = time of the inflection point (h), ~ end of exponential phase
+    #
+    # Representative fitted values for E. coli K-12 BW25113 in a 96-well
+    # microplate (LB-like conditions, Aida & Ying 2025):
+    A = 0.65        # OD (dimensionless)
+    r = 0.55        # 1/h
+    t_mid = 6.0     # h
+
+    t = np.asarray(X, dtype=float)[:, 0]
+    od = A / (1.0 + np.exp(-r * (t - t_mid)))
+    return od

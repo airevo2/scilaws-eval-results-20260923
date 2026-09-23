@@ -1,0 +1,184 @@
+import numpy as np
+
+def predict(X):
+    M = np.asarray(X[:, 0], dtype=float)
+
+    # Chen & Kipping (2017) "Forecaster" broken power-law, Earth units.
+    # Transition masses (M_earth):
+    T1 = 2.04           # Terran -> Neptunian
+    T2 = 131.6          # Neptunian -> Jovian (~0.414 M_jup)
+    T3 = 26635.0        # Jovian -> Stellar (~0.080 M_sun)
+
+    # Slopes
+    s1, s2, s3, s4 = 0.2790, 0.589, -0.044, 0.881
+
+    # Terran normalization (10^0.00346)
+    C1 = 10 ** 0.00346
+    # Enforce continuity across regimes
+    C2 = C1 * T1 ** (s1 - s2)
+    C3 = C2 * T2 ** (s2 - s3)
+    C4 = C3 * T3 ** (s3 - s4)
+
+    R = np.empty_like(M)
+
+    m1 = M < T1
+    m2 = (M >= T1) & (M < T2)
+    m3 = (M >= T2) & (M < T3)
+    m4 = M >= T3
+
+    R[m1] = C1 * M[m1] ** s1
+    R[m2] = C2 * M[m2] ** s2
+    R[m3] = C3 * M[m3] ** s3
+    R[m4] = C4 * M[m4] ** s4
+
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Chen & Kipping (2017) "Forecaster" broken power-law mass-radius relation
+    # (all in Earth units)
+    M = np.asarray(X[:, 0], dtype=float)
+
+    # Transition masses (M_earth)
+    M_TN = 2.04                 # Terran -> Neptunian
+    M_NJ = 0.414 * 317.828      # Neptunian -> Jovian  (~131.6 M_earth)
+    M_JS = 0.0800 * 333030.0    # Jovian -> Stellar    (~26642 M_earth)
+
+    # Power-law exponents
+    a_T = 0.2790
+    a_N = 0.5890
+    a_J = -0.0440
+    a_S = 0.8810
+
+    # Normalizations (continuity enforced)
+    C_T = 1.008
+    C_N = C_T * M_TN**(a_T - a_N)
+    C_J = C_N * M_NJ**(a_N - a_J)
+    C_S = C_J * M_JS**(a_J - a_S)
+
+    R = np.empty_like(M)
+
+    t = M < M_TN
+    n = (M >= M_TN) & (M < M_NJ)
+    j = (M >= M_NJ) & (M < M_JS)
+    s = M >= M_JS
+
+    R[t] = C_T * M[t]**a_T
+    R[n] = C_N * M[n]**a_N
+    R[j] = C_J * M[j]**a_J
+    R[s] = C_S * M[s]**a_S
+
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Chen & Kipping (2017) "Forecaster" broken power-law mass-radius relation.
+    # Mass M in Earth masses, Radius R in Earth radii.
+    # log10(R) = C_i + S_i * log10(M), continuous across regime boundaries.
+    M = np.asarray(X[:, 0], dtype=float)
+
+    # Regime boundaries (in Earth masses)
+    T_TN = 2.04            # Terran -> Neptunian
+    T_NJ = 0.414 * 317.828 # Neptunian -> Jovian (~131.6 M_earth)
+    T_JS = 0.0800 * 332946 # Jovian -> Stellar  (~26636 M_earth)
+
+    # Power-law slopes
+    S1, S2, S3, S4 = 0.2790, 0.589, -0.044, 0.881
+    # Intercepts (C1 fixed; others by continuity)
+    C1 = 0.00346
+    C2 = C1 + (S1 - S2) * np.log10(T_TN)
+    C3 = C2 + (S2 - S3) * np.log10(T_NJ)
+    C4 = C3 + (S3 - S4) * np.log10(T_JS)
+
+    logM = np.log10(M)
+    logR = np.where(
+        M <= T_TN, C1 + S1 * logM,
+        np.where(
+            M <= T_NJ, C2 + S2 * logM,
+            np.where(
+                M <= T_JS, C3 + S3 * logM,
+                C4 + S4 * logM
+            )
+        )
+    )
+    return 10.0 ** logR
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Chen & Kipping (2017) "Forecaster" broken power-law mass-radius relation
+    # All quantities in Earth units. R = C * M^S (piecewise in log-space, continuous).
+    M = np.asarray(X[:, 0], dtype=float)
+
+    # Transition masses (M_earth)
+    T1 = 2.04        # Terran -> Neptunian
+    T2 = 131.6       # Neptunian -> Jovian (~0.414 M_jup)
+    T3 = 26635.6     # Jovian -> Stellar (~0.08 M_sun)
+
+    # Power-law slopes
+    S1 =  0.279      # Terran
+    S2 =  0.589      # Neptunian
+    S3 = -0.044      # Jovian
+    S4 =  0.881      # Stellar
+
+    logM = np.log10(M)
+
+    # Intercepts (log10 C) enforcing continuity across the breakpoints
+    C1 = 0.00346057
+    C2 = C1 + (S1 - S2) * np.log10(T1)
+    C3 = C2 + (S2 - S3) * np.log10(T2)
+    C4 = C3 + (S3 - S4) * np.log10(T3)
+
+    logR = np.where(
+        M <= T1, C1 + S1 * logM,
+        np.where(
+            M <= T2, C2 + S2 * logM,
+            np.where(
+                M <= T3, C3 + S3 * logM,
+                C4 + S4 * logM
+            )
+        )
+    )
+
+    return 10.0 ** logR
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Chen & Kipping (2017) "Forecaster" mass-radius relation (in Earth units)
+    # log10(R) = C + S * log10(M), piecewise in mass
+    M = np.asarray(X[:, 0], dtype=float)
+
+    # Transition masses (M_earth)
+    T1 = 2.04      # Terran -> Neptunian
+    T2 = 131.58    # Neptunian -> Jovian (0.414 M_Jup)
+    T3 = 26600.0   # Jovian -> Stellar
+
+    # Slopes and intercepts (log10)
+    def branch(logM, C, S):
+        return C + S * logM
+
+    logM = np.log10(M)
+    logR = np.empty_like(logM)
+
+    terran    = M < T1
+    neptunian = (M >= T1) & (M < T2)
+    jovian    = (M >= T2) & (M < T3)
+    stellar   = M >= T3
+
+    logR[terran]    = branch(logM[terran],    0.00346,  0.2790)
+    logR[neptunian] = branch(logM[neptunian], -0.0925,  0.5890)
+    logR[jovian]    = branch(logM[jovian],     1.2500, -0.0440)
+    logR[stellar]   = branch(logM[stellar],   -2.8500,  0.8810)
+
+    return np.power(10.0, logR)

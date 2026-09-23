@@ -1,0 +1,115 @@
+task_id: ecoli_growth_curve_chemically_defined__od600
+domain: biology / predictive microbiology
+license: CC-BY-4.0
+
+# Type II — cluster = individual growth curve (one plate-reader well under one
+# chemically defined medium condition). Per-cluster LOCAL_FITTABLE: {A, mu_m, lambda}.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot. Science framing only:
+# no task instructions, no column listing, no priors.
+context: >-
+  Bacterial growth in a closed batch culture follows a characteristic sigmoid
+  trajectory: after inoculation the culture rests in a lag phase while cells
+  adapt to the medium, then enters an exponential phase of rapid division, and
+  finally reaches a stationary plateau when nutrients are exhausted or inhibitory
+  metabolites accumulate. The rate and extent of growth vary with the chemical
+  composition of the medium — carbon source, nitrogen source, trace minerals — so
+  that each medium imposes its own characteristic lag time, maximum growth rate,
+  and carrying capacity. OD600 (optical density at 600 nm) is the standard
+  plate-reader proxy for cell density; in the relevant OD range it is
+  approximately linear in biomass concentration.
+
+target:
+  name: od600
+  symbol: OD600(t)
+  unit: OD (dimensionless)
+  description: Optical density at 600 nm; plate-reader measurement of E. coli K-12 BW25113 biomass concentration in one 96-well microplate well. Background-subtracted, as described in Aida & Ying (2025) Scientific Data 12:984.
+  range: [0.077, 0.550]
+
+inputs:
+  - name: time_h
+    symbol: t
+    unit: h
+    description: Time since inoculation (hours). Fixed 0.5 h grid from 0.5 to 45.5 h; not all curves extend to 45.5 h (different plate-reader run lengths).
+    range: [0.5, 45.5]
+
+# Dataset — three-file v2 Type II layout.
+# Cluster holdout: every 5th curve (group_id % 5 == 4) assigned to test;
+# remaining 2103 curves in train.
+# Within test clusters: ALTERNATING split (S2-T4 fallback from temporal).
+# Temporal split was found degenerate: peak OD occurs at ~13-14h for most curves,
+# and the typical curve duration is 18-25h. A 2/3 temporal split places the split
+# right at or before the plateau, making the Gompertz A parameter unidentifiable
+# (tested: Gompertz pooled R² = -26.6 under temporal split).
+# Alternating split by sorted time index (even idx -> test_fit, odd idx -> test_test)
+# ensures fit() spans the full temporal range including the stationary plateau.
+# Measured performance under alternating split: Gompertz pooled R² median ~ 0.895.
+data_files:
+  train:     data/train.csv        # 2103 train curves, all time points  -- no group_id
+  test_fit:  data/test_fit.csv     # 525 test curves, even time pts (alternating) -- group_id last
+  test_test: data/test_test.csv    # 525 test curves, odd time pts (alternating)  -- group_id last
+n_train: 97615
+n_test_fit: 12274
+n_test_test: 12091
+n_clusters_train: 2103
+n_clusters_test: 525
+n_rows_per_cluster_min: 36
+n_rows_per_cluster_median: 44
+n_rows_per_cluster_max: 91
+
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# The cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emitted for forward-compat.
+
+# Candidate prior constants — the `priors` prompt slot.
+# No published numeric constants appear in the Zwietering (1990) formula:
+# the modified Gompertz and logistic equations contain only the structural
+# constant e = exp(1), which is a universal mathematical constant, not a
+# tunable prior. Omitting the priors block (data_spec §6.5: "if nothing is
+# grounded, omit the block").
+
+# === Reference baselines ===
+# Three closed-form models from Zwietering (1990), all per-curve fits.
+# The paper presents these as the three viable reparameterisations of the
+# bacterial growth curve (Table 2 + Eq. 11, PDF p. 2-3) and recommends
+# the three-parameter Gompertz/logistic over the four-parameter Richards
+# when statistically sufficient (p. 7).
+references:
+  - id: zwietering_1990_gompertz
+    label: Zwietering 1990 — modified Gompertz (Eq. 11, PDF p. 3)
+    formula_file: formulas/zwietering_1990_gompertz.py
+    reference_pdf: reference/zwietering_1990_bacterial_growth_curve.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # A, mu_m, lambda
+    measured: {rmse: 0.0360, r2: 0.9035}
+  - id: zwietering_1990_logistic
+    label: Zwietering 1990 — modified logistic (Table 2, PDF p. 2)
+    formula_file: formulas/zwietering_1990_logistic.py
+    reference_pdf: reference/zwietering_1990_bacterial_growth_curve.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # A, mu_m, lambda
+    measured: {rmse: 0.0302, r2: 0.9318}
+  - id: zwietering_1990_richards
+    label: Zwietering 1990 — modified Richards (Table 2, PDF p. 2)
+    formula_file: formulas/zwietering_1990_richards.py
+    reference_pdf: reference/zwietering_1990_bacterial_growth_curve.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # A, mu_m, lambda, v
+    measured: {rmse: 0.0181, r2: 0.9756}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMSE on od600
+best_baseline: 0.0181     # zwietering_1990_richards rmse — the 0.5 score anchor

@@ -1,0 +1,212 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(P_vol) [log10(kW/m^3)] from input features.
+    
+    Standard Steinmetz equation extended with temperature and waveform shape:
+        log10(P_vol) = c0 + c1*log10(f) + c2*log10(B) + c3*T + c4*I(triangular) + c5*I(trapezoidal)
+    where f is in Hz, B in T, T in degC, and waveform is one-hot encoded via indicators.
+    """
+    # fitted / typical coefficients for a power ferrite material
+    c0 = -3.0   # intercept: log10(k) with k in kW/m^3
+    c1 = 1.6    # frequency exponent (alpha)
+    c2 = 2.5    # flux density exponent (beta)
+    c3 = -0.002 # linear temperature coefficient (1/degC)
+    c4 = -0.1   # log10 adjustment for triangular waveform
+    c5 = -0.05  # log10 adjustment for trapezoidal waveform
+
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+
+    logP = (
+        c0
+        + c1 * np.log10(f)
+        + c2 * np.log10(B)
+        + c3 * T
+        + c4 * (w == 1)
+        + c5 * (w == 2)
+    )
+    return logP
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(P_vol) [log10(kW/m^3)] from frequency, peak flux density,
+    temperature, and waveform shape.
+
+    Standard closed-form model: extended Steinmetz equation with linear
+    temperature correction and waveform-dependent multiplicative factor.
+    In log10 space:
+
+        log10(P_vol) = log10(k) + alpha*log10(f) + beta*log10(B)
+                     + gamma*(T - 25) + delta_wave
+
+    Input X: 2-D array with columns:
+        X[:,0] : f_Hz      [Hz]
+        X[:,1] : B_peak_T  [T]
+        X[:,2] : T_C        [degC]
+        X[:,3] : waveform_id (0=sin, 1=tri, 2=trap)
+    Returns: 1-D array of log10(P_vol)
+    """
+    # Fitted coefficients (typical values for a power ferrite)
+    LOG_K = -3.6        # log10 of Steinmetz constant k [kW/m^3 / (Hz^alpha * T^beta)]
+    ALPHA = 1.6         # frequency exponent
+    BETA  = 2.4         # flux density exponent
+    GAMMA = 0.002       # temperature coefficient 1/°C (linear around 25°C)
+
+    # Waveform corrections relative to sinusoidal (log10 scale)
+    DELTA_TRI = -0.046  # ~log10(0.9) for triangular
+    DELTA_TRAP = 0.0    # trapezoidal (default no extra correction)
+
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3].astype(int)
+
+    log_f = np.log10(f)
+    log_B = np.log10(B)
+
+    logP = LOG_K + ALPHA * log_f + BETA * log_B + GAMMA * (T - 25.0)
+
+    # Apply waveform-specific offset
+    # Use np.select or simple indexing
+    delta = np.zeros_like(f)
+    delta[w == 1] = DELTA_TRI
+    delta[w == 2] = DELTA_TRAP
+    logP += delta
+
+    return logP
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(P_vol) [log10(kW/m^3)] using the Steinmetz empirical core-loss model
+    extended with temperature and waveform factors.
+
+    P_vol = k * f^alpha * B^beta * g(T) * h(waveform)
+    log10(P_vol) = log10(k) + alpha*log10(f) + beta*log10(B) + log10(g(T)) + log10(h(waveform))
+
+    The coefficients below are typical for a MnZn power ferrite (e.g., N87) and are
+    chosen to give reasonable values over the stated input ranges.
+    """
+    f = X[:, 0]        # Hz
+    B = X[:, 1]        # T
+    T = X[:, 2]        # degC
+    w = X[:, 3]        # 0=sinusoidal, 1=triangular, 2=trapezoidal
+
+    # Steinmetz parameters (P_vol in kW/m^3)
+    k = 5.3e-4          # base coefficient
+    alpha = 1.5         # frequency exponent
+    beta = 2.5          # flux density exponent
+
+    # Core Steinmetz term
+    log10P_steinmetz = np.log10(k) + alpha * np.log10(f) + beta * np.log10(B)
+
+    # Temperature factor: quadratic around 25 °C
+    # g(T) = 1 + c1*(T-25) + c2*(T-25)^2
+    c1 = -0.01
+    c2 = 0.0001
+    temp_factor = 1.0 + c1 * (T - 25.0) + c2 * (T - 25.0)**2
+    # guard against non-positive values
+    temp_factor = np.maximum(temp_factor, 1e-10)
+    log10_temp = np.log10(temp_factor)
+
+    # Waveform factor (empirical, referenced to sinusoidal)
+    # h(w): 0 -> 1.0, 1 -> 0.8, 2 -> 0.9
+    w_factor = np.where(w == 0, 1.0, np.where(w == 1, 0.8, 0.9))
+    log10_wave = np.log10(w_factor)
+
+    return log10P_steinmetz + log10_temp + log10_wave
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    f = X[:, 0]    # frequency [Hz]
+    B = X[:, 1]    # peak flux density [T]
+    T = X[:, 2]    # ambient temperature [degC]
+    w = X[:, 3]    # waveform id: 0=sinusoidal, 1=triangular, 2=trapezoidal
+
+    # ---- Standard Steinmetz equation coefficients ----
+    # P_vol = k * f^alpha * B^beta  [kW/m^3]
+    k = 1.2e-5          # base loss coefficient (typical for ferrite)
+    alpha = 1.6         # frequency exponent
+    beta = 2.5          # flux-density exponent
+
+    # Temperature correction (quadratic around 25°C reference)
+    T_ref = 25.0
+    aT = 0.012           # linear coefficient [1/°C]
+    bT = 0.00008         # quadratic coefficient [1/°C^2]
+    temp_factor = 1.0 + aT * (T - T_ref) + bT * (T - T_ref)**2
+
+    # Waveform shape correction factors
+    # sinusoidal : 1.0, triangular : 0.78, trapezoidal : 0.92
+    wave_factor = np.where(w == 0, 1.0, np.where(w == 1, 0.78, 0.92))
+
+    # Volumetric core loss
+    P_vol = k * (f ** alpha) * (B ** beta) * temp_factor * wave_factor   # kW/m^3
+
+    # Base‑10 logarithm
+    return np.log10(P_vol)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(P_vol) [log10(kW/m^3)] using an extended Steinmetz model.
+    
+    Inputs:
+        X[:, 0] : f_Hz       Excitation frequency [Hz]
+        X[:, 1] : B_peak_T   Peak flux density [T]
+        X[:, 2] : T_C        Temperature [degC]
+        X[:, 3] : waveform_id  0=sinusoidal, 1=triangular, 2=trapezoidal
+    
+    Returns:
+        1-D array of log10(volumetric core loss in kW/m^3)
+    """
+    # Extract columns
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+    
+    # --- Model coefficients (typical for a power ferrite) ---
+    # Steinmetz parameters: P = k * f^alpha * B^beta   (P in kW/m^3)
+    log10_k = -3.0      # log10(k)  [log10(kW/(m^3 * Hz^alpha * T^beta))]
+    alpha = 1.5         # frequency exponent
+    beta = 2.5          # flux density exponent
+    
+    # Temperature dependence: linear correction around 25 °C
+    # log10(P) = log10(P_25) + gamma_T * (T - 25)
+    gamma_T = -0.005    # per °C (loss often decreases with T in this range)
+    
+    # Waveform factors (relative to sinusoidal, in log10 space)
+    # Triangular and trapezoidal waves modify the loss
+    delta_tri = 0.05    # additive log10 factor for triangular
+    delta_trap = 0.10   # additive log10 factor for trapezoidal
+    
+    # Baseline Steinmetz equation in log10 space at 25 °C, sinusoidal
+    logP = log10_k + alpha * np.log10(f) + beta * np.log10(B)
+    
+    # Temperature adjustment
+    logP += gamma_T * (T - 25.0)
+    
+    # Waveform adjustments
+    is_tri = (w == 1)
+    is_trap = (w == 2)
+    logP += delta_tri * is_tri + delta_trap * is_trap
+    
+    return logP

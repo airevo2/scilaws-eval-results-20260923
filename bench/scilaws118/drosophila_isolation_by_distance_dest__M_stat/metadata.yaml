@@ -1,0 +1,100 @@
+task_id: drosophila_isolation_by_distance_dest__M_stat
+domain: biology / population_genetics
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Isolation by distance is a population-genetics phenomenon in which the genetic differentiation between two populations, here of the fruit fly Drosophila melanogaster, relates to the geographic distance between them.
+
+target:
+  name: M_stat
+  symbol: M
+  unit: ""
+  description: Rousset's linearised differentiation statistic, M_stat = F_ST / (1 - F_ST), per pair of populations.
+  range: [0.0, 0.2934]
+
+inputs:
+  - name: log_distance_km
+    symbol: ln(d)
+    unit: ln(km)
+    description: Natural logarithm of the great-circle distance between the two populations of the pair (clipped to d >= 1 km before taking the log).
+    range: [0.0, 9.1509]
+  - name: distance_km
+    symbol: d
+    unit: km
+    description: Great-circle (Haversine) distance between the two populations.
+    range: [1.0, 9423.28]
+
+# Dataset — Type I, two-file flat layout.  Source:
+# data_raw/pairwise_F_ST.csv (1378 unordered pairs of 53 populations,
+# built by data_raw/build_pairwise.py from two 500-kb VCF subsamples
+# of DEST chromosomes 2L and 2R via Weir-Cockerham F_ST).
+#
+# Split: distance-extrapolation OOD — train = middle 60% by
+# log_distance (828 pairs, 848 km - 2575 km), test = extremes (550
+# pairs, 1 km - 848 km AND 2575 km - 9423 km).
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 828
+n_test:  550
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: rousset_2d_slope_mainland_self_fit
+    value: 0.0091
+    unit: 1 / ln(km)
+    description: Drosophila-specific b = 1/(4πD·σ²) self-fit from the v1 build_pairwise PROVENANCE.md, mainland Europe subset only.
+    source: v1 `__F_ST` task's data_raw/PROVENANCE.md sanity-check OLS regression on mainland Europe pairs (not from the Rousset 1997 paper itself; Rousset's two numerical examples involved humans and snails, not Drosophila).  Provided as a candidate ballpark for the 2-D slope; the v2 Type I reference baseline `rousset_1997` uses 0.01892 instead, derived from the v2 train band (848-2575 km, all 53 populations).
+    _role: candidate
+  - name: chromosome_translocation_rate_typical
+    value: 1.0e-3
+    unit: per generation
+    description: A typical Drosophila chromosomal translocation rate.
+    source: Drosophila-adjacent quantity but not used by either IBD reference baseline; population differentiation in this task is driven by pair-wise geographic distance, not chromosomal rearrangement.  A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: rousset_1997
+    label: Rousset (1997) 2-D IBD law M_stat = A + B·ln(d) (Type I, frozen LAW_CONSTANTS)
+    formula_file: formulas/rousset_1997.py
+    reference_pdf: reference/rousset_1997.pdf
+    n_law_constants: 2         # A, B
+    n_other_constants: 0
+    n_local_params: 0          # Type I
+    measured: {rmse: 0.0453, r2: 0.2778}
+  - id: rousset_1997_1d
+    label: Rousset (1997) 1-D IBD law M_stat = A + B·d (Type I, frozen LAW_CONSTANTS)
+    formula_file: formulas/rousset_1997_1d.py
+    reference_pdf: reference/rousset_1997.pdf
+    n_law_constants: 2         # A, B
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.0382, r2: 0.4869}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        2
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include distance-independent small-separation behavior from mutation and local dispersal details"
+  - "include isolation-by-distance differentiation from limited dispersal versus genetic drift"
+  - "predicted M_stat is non-negative for all distances in the domain"
+  - "predicted M_stat is non-decreasing with geographic separation"
+  - "predicted M_stat remains bounded across the full trans-continental distance range"
+
+# === Scoring ===
+metric: rmse              # RMS error on M_stat (dimensionless)
+best_baseline: 0.0382     # rousset_1997_1d

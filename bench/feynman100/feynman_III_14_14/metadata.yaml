@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Current Intensity"
+  symbol: "I"
+  unit: ""
+  description: "Current Intensity"
+inputs:
+  - name: "Current Intensity"
+    symbol: "I_0"
+    unit: ""
+    description: "Current Intensity"
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Voltage"
+    symbol: "Volt"
+    unit: ""
+    description: "Voltage"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"

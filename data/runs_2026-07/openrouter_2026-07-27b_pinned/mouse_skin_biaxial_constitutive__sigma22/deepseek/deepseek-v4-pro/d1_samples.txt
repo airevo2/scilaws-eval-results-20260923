@@ -1,0 +1,182 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts sigma22 (Cauchy stress in the second principal direction) for 
+    a planar mouse-skin specimen under biaxial loading using the commonly 
+    cited Fung-type exponential strain energy model.
+    
+    The model form is derived from a 2D Fung pseudo-elastic constitutive law:
+    W = c/2 * (exp(Q) - 1)
+    where Q = a1*E11^2 + a2*E22^2 + 2*a3*E11*E22
+    with E11, E22 being the Green-Lagrange strains.
+    
+    The Cauchy stress sigma22 is then:
+    sigma22 = lambda22^2 * (c/2) * exp(Q) * (2*a2*E22 + 2*a3*E11)
+    """
+    
+    # Extract stretch ratios
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Compute Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+    
+    # Material constants (typical values for mouse skin from literature)
+    c = 0.1     # MPa
+    a1 = 1.0    # dimensionless
+    a2 = 1.5    # dimensionless
+    a3 = 0.3    # dimensionless
+    
+    # Compute Q
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+    
+    # Compute Cauchy stress sigma22
+    sigma22 = lambda22**2 * (c / 2.0) * np.exp(Q) * (2.0 * a2 * E22 + 2.0 * a3 * E11)
+    
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Cauchy stress sigma22 [MPa] in the cranial-caudal direction
+    of mouse skin under biaxial loading using the standard anisotropic
+    Fung-type hyperelastic model.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n, 2)
+        X[:,0] = lambda11 (stretch in lateral direction)
+        X[:,1] = lambda22 (stretch in cranial-caudal direction)
+
+    Returns
+    -------
+    sigma22 : ndarray of shape (n,)
+        Cauchy stress in the second principal direction [MPa]
+    """
+    # Representative material constants for mouse skin (Fung model)
+    # These can be replaced with fitted values.
+    c  = 0.1    # MPa
+    a1 = 20.0
+    a2 = 20.0
+    a3 = 2.0
+
+    lambda1 = X[:, 0]
+    lambda2 = X[:, 1]
+
+    # Green-Lagrange strains (assuming no shear)
+    E11 = (lambda1**2 - 1.0) / 2.0
+    E22 = (lambda2**2 - 1.0) / 2.0
+
+    # Exponential argument Q
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Cauchy stress sigma22 for incompressible, planar tissue
+    # sigma22 = lambda2^2 * S22, with S22 = dW/dE22
+    sigma22 = c * lambda2**2 * (a2 * E22 + a3 * E11) * np.exp(Q)
+
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form prediction for Cauchy stress σ₂₂ (MPa) in the
+    cranial-caudal direction of mouse skin under planar biaxial loading.
+    
+    Uses the well-known Fung-type exponential strain-energy function:
+        W = 0.5 * c * (exp(Q) - 1)
+        Q = a1 * E11² + a2 * E22² + 2 * a3 * E11 * E22
+    with Green strains Eii = (λii² - 1) / 2.
+    
+    Cauchy stress derived for an incompressible material under plane stress:
+        σ₂₂ = λ₂₂² * ∂W/∂E₂₂
+    Fitted coefficients (c, a1, a2, a3) represent typical literature values for mouse skin.
+    """
+    # Unpack inputs
+    lambda11 = X[:, 0]   # first principal stretch
+    lambda22 = X[:, 1]   # second principal stretch (cranial-caudal)
+
+    # Constitutive parameters (typical for mouse skin biaxial tests)
+    c = 0.15       # MPa
+    a1 = 12.0      # -
+    a2 = 8.0       # -
+    a3 = 1.5       # -
+
+    # Green–Lagrange strains
+    E11 = (lambda11**2 - 1.0) / 2.0
+    E22 = (lambda22**2 - 1.0) / 2.0
+
+    # Exponential argument
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Second Piola–Kirchhoff stress S₂₂
+    S22 = c * np.exp(Q) * (a2 * E22 + a3 * E11)
+
+    # Cauchy stress σ₂₂
+    sigma22 = lambda22**2 * S22
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Fung-type anisotropic hyperelastic model for mouse skin
+    # Material constants (representative values from literature)
+    c = 0.05      # MPa
+    a1 = 0.2      # dimensionless
+    a2 = 0.2      # dimensionless
+    a3 = 0.05     # dimensionless
+
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    # Green-Lagrange strains
+    E11 = (lambda11**2 - 1.0) / 2.0
+    E22 = (lambda22**2 - 1.0) / 2.0
+
+    # Exponential strain energy argument
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Second Piola-Kirchhoff stress component S22
+    S22 = c * np.exp(Q) * (a2 * E22 + a3 * E11)
+
+    # Cauchy stress sigma22 (incompressibility: J = 1)
+    sigma22 = lambda22**2 * S22
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sigma22 (Cauchy stress in principal direction 2) for planar mouse skin 
+    under biaxial loading using the standard incompressible isotropic Neo-Hookean model.
+    
+    X[:,0] : lambda11, stretch ratio in direction 1
+    X[:,1] : lambda22, stretch ratio in direction 2
+    
+    Returns:
+    sigma22 : 1-D array of predicted Cauchy stress [MPa]
+    """
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    # Material constant: shear modulus (typical soft tissue, MPa)
+    mu = 0.5
+    
+    # Incompressibility: out-of-plane stretch
+    lambda33 = 1.0 / (lambda11 * lambda22)
+    
+    # Cauchy stress sigma22 for isotropic Neo-Hookean under plane stress
+    sigma22 = mu * (lambda22**2 - lambda33**2)
+    
+    return sigma22

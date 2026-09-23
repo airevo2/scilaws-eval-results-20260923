@@ -1,0 +1,162 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the energy deposit per unit slant depth dE/dX [PeV/(g/cm^2)]
+
+    using the standard Gaisser-Hillas parameterization for a typical
+    ultra-high-energy cosmic ray shower (E ~ 10 EeV).
+
+    Parameters:
+    - X: 2-D numpy array where X[:, 0] is the slant atmospheric depth [g/cm^2].
+
+    Returns:
+    - 1-D numpy array of dE/dX [PeV/(g/cm^2)].
+    """
+    x_depth = X[:, 0]
+
+    # Standard Gaisser-Hillas parameters for a typical ~10 EeV shower
+    dEdX_max = 16.0  # Peak energy deposit in PeV/(g/cm^2)
+    X_max = 750.0  # Depth of shower maximum in g/cm^2
+    X_0 = -120.0  # Starting depth parameter in g/cm^2
+    Lambda = 70.0  # Decay constant in g/cm^2
+
+    # Gaisser-Hillas profile calculation
+    # dE/dX = dEdX_max * ((X - X_0) / (X_max - X_0))**((X_max - X_0) / Lambda) * exp((X_max - X) / Lambda)
+    num = np.maximum(x_depth - X_0, 0)
+    den = X_max - X_0
+    exponent = den / Lambda
+
+    dEdX = dEdX_max * (num / den) ** exponent * np.exp((X_max - x_depth) / Lambda)
+
+    return dEdX
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Calculates the energy deposit per unit slant atmospheric depth (dE/dX)
+
+    along the shower axis using the standard Gaisser-Hillas parameterization
+    for a typical ultra-high-energy cosmic ray shower (E ~ 10 EeV).
+
+    Parameters:
+    - X: 2-D numpy array where X[:, 0] is the slant depth in g/cm^2.
+
+    Returns:
+    - dE_dX: 1-D numpy array of energy deposit in PeV/(g/cm^2).
+    """
+    # Extract slant depth
+    x = X[:, 0]
+
+    # Standard Gaisser-Hillas parameters for a typical 10 EeV cosmic ray shower
+    # (dE/dX_max is scaled to PeV/(g/cm^2))
+    dEdX_max = 15.0  # PeV / (g/cm^2)
+    X_max = 750.0  # g/cm^2
+    X_0 = -120.0  # g/cm^2
+    lmbda = 70.0  # g/cm^2
+
+    # Prevent base from being negative (though x is well within the positive window)
+    base = np.maximum(x - X_0, 1e-9) / (X_max - X_0)
+    exponent = (X_max - X_0) / lmbda
+
+    # Gaisser-Hillas function
+    dE_dX = dEdX_max * (base**exponent) * np.exp((X_max - x) / lmbda)
+
+    return dE_dX
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the slant depth along the shower axis in g/cm^2
+    x = X[:, 0]
+
+    # Standard Gaisser-Hillas parameters for a typical ultra-high-energy cosmic ray shower
+    # (e.g., E ~ 10^19 eV, where peak energy deposit is around 20 PeV/(g/cm^2))
+    X_max = 750.0  # g/cm^2 (typical depth of maximum)
+    X_0 = -120.0  # g/cm^2 (starting point parameter)
+    lam = 70.0  # g/cm^2 (typical GH width parameter lambda)
+    dEdX_max = 20.0  # PeV/(g/cm^2) (typical energy deposit at X_max)
+
+    # Ensure x is above X_0 to avoid complex numbers in fractional powers
+    x_safe = np.maximum(x, X_0 + 1e-9)
+
+    # Gaisser-Hillas parameterization
+    term = (x_safe - X_0) / (X_max - X_0)
+    exponent = (X_max - X_0) / lam
+    dE_dX = dEdX_max * (term**exponent) * np.exp((X_max - x_safe) / lam)
+
+    return dE_dX
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract the slant depth X from the first column of the input array
+    x = X[:, 0]
+
+    # Typical Gaisser-Hillas parameters for an ultra-high-energy cosmic ray shower
+    # (corresponding to a typical primary energy of ~10 EeV = 10,000 PeV)
+    X_max = 750.0  # Depth of maximum development [g/cm^2]
+    X_0 = -50.0  # Starting depth parameter [g/cm^2]
+    L = 70.0  # Decay constant parameter lambda [g/cm^2]
+    dEdX_max = 20.0  # Maximum energy deposit rate [PeV/(g/cm^2)]
+
+    # Standard Gaisser-Hillas parameterization
+    # Since the fitting window is [X_max - 300, X_max + 200], x is always > X_0
+    term1 = (x - X_0) / (X_max - X_0)
+    term2 = (X_max - x) / L
+    exponent = (X_max - X_0) / L
+
+    # Energy deposit per unit depth dE/dX
+    dE_dX = dEdX_max * np.power(term1, exponent) * np.exp(term2)
+
+    return dE_dX
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the energy deposit per unit slant depth dE/dX [PeV/(g/cm^2)]
+
+    as a function of slant depth X using the standard Gaisser-Hillas parameterization
+    with average cosmic ray shower parameters.
+
+    Parameters:
+    - X: 2-D numpy array where X[:, 0] is the slant depth in g/cm^2.
+
+    Returns:
+    - 1-D numpy array of dE/dX values in PeV/(g/cm^2).
+    """
+    # Extract the slant depth X
+    x = X[:, 0]
+
+    # Standard/average Gaisser-Hillas parameters for a typical UHECR shower
+    # (e.g., primary energy E ~ 10^19 eV)
+    X_max = 750.0  # Depth of shower maximum [g/cm^2]
+    X_0 = -40.0  # Starting depth parameter [g/cm^2]
+    Lambda = 70.0  # Characteristic elongation rate parameter [g/cm^2]
+    dEdX_max = 15.0  # Maximum energy deposit rate [PeV/(g/cm^2)]
+
+    # Calculate the Gaisser-Hillas profile
+    # dE/dX = dEdX_max * ((X - X_0)/(X_max - X_0))**((X_max - X_0)/Lambda) * exp((X_max - X)/Lambda)
+    exponent = (X_max - X_0) / Lambda
+    term1 = (x - X_0) / (X_max - X_0)
+
+    # Clip to avoid negative values in the base of the exponent (though x > X_0 in the window)
+    term1 = np.clip(term1, a_min=1e-10, a_max=None)
+
+    term2 = np.exp((X_max - x) / Lambda)
+
+    dedx = dEdX_max * (term1**exponent) * term2
+
+    return dedx

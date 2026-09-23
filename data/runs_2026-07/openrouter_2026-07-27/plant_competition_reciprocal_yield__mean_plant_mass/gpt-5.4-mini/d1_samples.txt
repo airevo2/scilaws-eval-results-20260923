@@ -1,0 +1,60 @@
+import numpy as np
+
+def predict(X):
+    N = X[:, 0].astype(float)
+    # Self-thinning / density-dependent size scaling:
+    # mean mass per plant declines approximately as a power law with density.
+    # w = a * N^b
+    a = 1.0
+    b = -0.5
+    return a * np.power(N, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0].astype(float)
+    # Common self-thinning / density-dependent mean plant mass relationship:
+    # w = a * N^b
+    a = 1.0
+    b = -0.75
+    return a * np.power(N, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0].astype(float)
+    # Self-thinning / size-density relationship:
+    # mean mass per plant scales approximately as N^(-3/2)
+    c = 1.0
+    return c * N ** (-1.5)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = np.asarray(X)[:, 0]
+
+    # Standard self-thinning / density-dependence power law:
+    # mean mass per plant w = a * N^b
+    # with canonical exponent b often near -3/4 for plant size–density scaling.
+    a = 1.0
+    b = -0.75
+
+    return a * np.power(N, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mean mass per surviving plant is commonly modeled with a self-thinning power law:
+    # w = a * N^b, with b typically negative.
+    N = np.asarray(X)[:, 0]
+    a = 1.0
+    b = -0.5
+    return a * np.power(N, b)

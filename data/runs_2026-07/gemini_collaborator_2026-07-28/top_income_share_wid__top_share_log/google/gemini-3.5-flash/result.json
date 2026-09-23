@@ -1,0 +1,26 @@
+{
+  "task": "top_income_share_wid__top_share_log",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "atkinson_piketty_saez_2011",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "piketty_saez_2003",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

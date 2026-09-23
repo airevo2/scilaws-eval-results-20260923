@@ -1,0 +1,145 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict nu_max (microHz) from delta_nu, Teff, FeH, and phase using the
+    standard asteroseismic scaling relation.
+
+    ν_max ∝ Δν^a * T_eff^b with a metallicity-dependent correction sometimes
+    absorbed into the solar reference calibration; here we use the canonical
+    form commonly written as:
+
+        nu_max = nu_max_sun * (Δν / Δν_sun)**(1/α) * (T_eff / T_eff_sun)**(1 - 1/α)
+
+    with α = 2 (from Δν ∝ sqrt(ρ) and ν_max ∝ g / sqrt(T_eff)) giving:
+
+        nu_max = nu_max_sun * (Δν / Δν_sun)**2 * (T_eff / T_eff_sun)**(-0.5)
+
+    Metallicity and evolutionary phase are not part of the simplest standard
+    closed-form scaling relation, so they are ignored here.
+    """
+    X = np.asarray(X)
+    dnu = X[:, 0]
+    teff = X[:, 1]
+
+    nu_max_sun = 3090.0   # microHz
+    dnu_sun = 135.1       # microHz
+    teff_sun = 5777.0     # K
+
+    return nu_max_sun * (dnu / dnu_sun)**2 * (teff / teff_sun)**(-0.5)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard asteroseismic scaling relation for nu_max:
+        nu_max = nu_max_sun * (M/Msun) / (R/Rsun)^2 * (Teff/Teff_sun)^(-1/2)
+
+    In terms of observables Delta_nu and Teff (assuming the usual Delta_nu ~ mean density scaling):
+        nu_max ≈ nu_max_sun * (Delta_nu / Delta_nu_sun)^2 * (Teff / Teff_sun)^(-1/2)
+
+    Inputs
+    ------
+    X : ndarray, shape (n_samples, 4)
+        X[:, 0] = delta_nu [uHz]
+        X[:, 1] = Teff [K]
+        X[:, 2] = FeH [dex]        (not used in the standard closed-form scaling)
+        X[:, 3] = phase             (not used in the standard closed-form scaling)
+
+    Returns
+    -------
+    ndarray, shape (n_samples,)
+        nu_max [uHz]
+    """
+    delta_nu = X[:, 0]
+    teff = X[:, 1]
+
+    # Solar reference values commonly used in the asteroseismic scaling relations
+    nu_max_sun = 3090.0   # uHz
+    delta_nu_sun = 135.1  # uHz
+    teff_sun = 5777.0     # K
+
+    return nu_max_sun * (delta_nu / delta_nu_sun) ** 2 * (teff / teff_sun) ** (-0.5)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard asteroseismic scaling relation for nu_max:
+    # nu_max ~ (g / g_sun) * (T_eff / T_eff_sun)^(-1/2) * nu_max_sun
+    # and using g ~ M / R^2, with a commonly used mass-radius form:
+    # nu_max = nu_max_sun * (Delta_nu / Delta_nu_sun)^4 * (T_eff / T_eff_sun)^(-3/2) * (M / M_sun)^(-1)
+    #
+    # Since mass is not provided, the commonly used closed-form relation directly in terms of
+    # Delta_nu and Teff is implemented with the implicit solar-calibrated scaling via Delta_nu.
+    # Here we use the widely cited simplified form:
+    # nu_max = nu_max_sun * (Delta_nu / Delta_nu_sun)^3 * (T_eff / T_eff_sun)^(-1/2)
+    #
+    # This is a standard empirical approximation used in many catalog-level analyses.
+
+    X = np.asarray(X, dtype=float)
+    delta_nu = X[:, 0]
+    teff = X[:, 1]
+
+    nu_max_sun = 3090.0   # μHz
+    delta_nu_sun = 135.1  # μHz
+    teff_sun = 5777.0     # K
+
+    nu_max = nu_max_sun * (delta_nu / delta_nu_sun) ** 3 * (teff / teff_sun) ** (-0.5)
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict nu_max (microHz) using the standard asteroseismic scaling relation:
+        nu_max = nu_max_sun * (g/g_sun) * (T_eff/T_eff_sun)^(-1/2)
+
+    Eliminating g via the large separation scaling:
+        Delta_nu / Delta_nu_sun ~ (M/M_sun)^(1/2) (R/R_sun)^(-3/2)
+        nu_max / nu_max_sun ~ (M/M_sun) (R/R_sun)^(-2) (T_eff/T_eff_sun)^(-1/2)
+
+    which gives the common closed-form form:
+        nu_max = nu_max_sun * (Delta_nu/Delta_nu_sun)^2 * (T_eff/T_eff_sun)^(1/2)
+
+    This function uses the standard solar reference values.
+    """
+    X = np.asarray(X)
+    delta_nu = X[:, 0]
+    teff = X[:, 1]
+
+    # Solar reference values
+    nu_max_sun = 3090.0      # microHz
+    delta_nu_sun = 135.1     # microHz
+    teff_sun = 5772.0        # K
+
+    return nu_max_sun * (delta_nu / delta_nu_sun)**2 * np.sqrt(teff / teff_sun)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard asteroseismic scaling relation for nu_max:
+    # nu_max ≈ nu_max_sun * (g/g_sun) * (T_eff/T_eff_sun)^(-1/2)
+    # with g inferred from Delta_nu via the usual relation for solar-like oscillators:
+    # Delta_nu ∝ (M/R^3)^(1/2), nu_max ∝ g / sqrt(T_eff)
+    #
+    # In the common combined form using Delta_nu and T_eff:
+    # nu_max = nu_max_sun * (Delta_nu/Delta_nu_sun)^2 * (T_eff/T_eff_sun)^(-1/2)
+    #
+    # This uses the canonical solar reference values.
+    
+    delta_nu = X[:, 0]
+    teff = X[:, 1]
+
+    nu_max_sun = 3090.0   # microHz
+    delta_nu_sun = 135.1  # microHz
+    teff_sun = 5777.0     # K
+
+    return nu_max_sun * (delta_nu / delta_nu_sun) ** 2 * (teff / teff_sun) ** (-0.5)

@@ -1,0 +1,129 @@
+task_id: volcanic_column_mer_ivespa__H_top
+domain: earth_science / volcanology
+license: CC-BY-4.0    # IVESPA v1.0 + Aubry et al. 2023 GRL — open access CC-BY
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  In volcanology, an explosive eruption column is the buoyant plume of ash and gas that rises through the atmosphere above a volcanic vent.
+
+target:
+  name: H_top_km_avl
+  symbol: H_top
+  unit: km
+  description: Time-averaged eruption-column top height in km above vent level (Tephra Plume Top a.s.l. minus vent altitude).  Spans 0.58-36 km; the declared metric is log_mae (the relationship is a power law with multiplicative ~53% scatter, so log-space error is natural; H_top is strictly positive).
+  range: [0.58, 36.42]
+
+inputs:
+  - name: MER_kg_per_s
+    symbol: MER
+    unit: kg s^-1
+    description: Time-averaged mass eruption rate (total erupted mass / event duration), kg/s.  PRIMARY (and only) physical driver of column height in the buoyant-plume scaling; spans ~2e1 to 2e8 kg/s (seven orders of magnitude).  Computed from independently-measured deposit mass and event duration, NOT inverted from plume height.
+    range: [19.39, 2.34e08]
+
+# NOTE: the target is NOT circular.  H_top (plume-top altitude, observed
+# by radar/satellite) and MER (= total erupted mass from deposit mapping
+# / event duration) are INDEPENDENTLY measured eruption source
+# parameters; MER is not back-derived from height.  The power law
+# H = A*MER^B is a genuine empirical scaling grounded in
+# Morton-Taylor-Turner plume theory (H ~ MER^1/4).  Data scatter ~factor
+# 2 around Aubry 2023 Eq. 1, matching the paper's 53% log-RMSE — i.e.
+# the relation is real but noisy, with no algebraic shortcut.
+
+# Dataset — Type I, two-file flat layout.  Source: IVESPA v1.0
+# (Aubry et al. 2023, GRL 50:e2022GL102633), 130 explosive eruptive
+# events with defined MER and H_top.  Built by `prep_data.py` from
+# `data_raw/IVESPAvn1.0.xlsx`: MER = TEM / duration, H_top = plume-top
+# a.s.l. - vent altitude (Aubry 2023 §3).  Split is MER-range OOD: sort
+# by MER, test = top 25% highest-MER (largest) eruptions, train = lower
+# 75%.  This probes extrapolation of the column-height law to the largest
+# eruptions.
+#
+# BASELINE-LEAKAGE NOTE: Aubry 2023's published constants (0.345, 0.226)
+# were fit on all 130 events, INCLUDING the high-MER OOD test events, so
+# they are NOT used as a frozen baseline (that would leak the test).
+# Every v2 baseline coefficient is pre-fit on the OOD TRAIN only, or
+# (for the MTT rung) fixes the exponent at the theoretical 1/4 and fits
+# only the prefactor on train.
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 98
+n_test:  32
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: mtt_plume_exponent
+    value: 0.25
+    unit: dimensionless
+    description: Morton-Taylor-Turner buoyant-plume exponent — column height scales as MER^(1/4) for a point buoyancy source in uniform stratification.  A candidate value for the power-law exponent.
+    source: Morton, Taylor & Turner 1956 Proc. R. Soc. A 234:1; Wilson 1978; Sparks 1997.  The first-principles theoretical exponent (Aubry 2023's empirical fit gives 0.226, close to 1/4).
+    _role: candidate
+  - name: aubry_2023_exponent
+    value: 0.226
+    unit: dimensionless
+    description: Aubry et al. (2023) empirical MER-H_top power-law exponent fit on the full 130-event IVESPA corpus.
+    source: Aubry 2023 GRL Eq. 1.  A candidate exponent; note the full-corpus fit "saw" the high-MER events, so on the v2 OOD train alone the fitted exponent is shallower (~0.18).
+    _role: candidate
+  - name: aubry_2023_prefactor
+    value: 0.345
+    unit: km (kg/s)^-0.226
+    description: Aubry et al. (2023) empirical MER-H_top power-law prefactor (full-corpus fit).
+    source: Aubry 2023 GRL Eq. 1.  Candidate prefactor.
+    _role: candidate
+  - name: tropopause_height_midlat
+    value: 11.0
+    unit: km
+    description: Typical mid-latitude tropopause height.
+    source: Standard atmosphere.  Volcanic columns that overshoot the tropopause spread laterally; a DISTRACTOR for the H_top-MER scaling, which Aubry 2023 §5 finds has no clear atmospheric dependence.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: linear_mer
+    label: Linear H = A·MER + B — wrong functional form (Type I, frozen; pre-fit on v2 OOD train)
+    formula_file: formulas/linear_mer.py
+    reference_pdf: reference/aubry_2023.pdf
+    n_law_constants: 2         # A, B
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.3749}
+  - id: aubry_powerlaw_trainfit
+    label: Aubry (2023) power-law form H = A·MER^B, coefficients re-fit on v2 OOD train (Type I, frozen)
+    formula_file: formulas/aubry_powerlaw_trainfit.py
+    reference_pdf: reference/aubry_2023.pdf
+    n_law_constants: 2         # A, B
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.1344}
+  - id: mtt_plume_quarter_power
+    label: Morton-Taylor-Turner plume theory H = A·MER^(1/4), prefactor pre-fit on v2 OOD train (Type I, frozen)
+    formula_file: formulas/mtt_plume_quarter_power.py
+    reference_pdf: reference/aubry_2023.pdf
+    n_law_constants: 1         # A (exponent fixed at theoretical 1/4)
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.1334}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        2
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: log_mae           # log10-space MAE on H_top (km); power law with multiplicative scatter
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "uses mass eruption rate as the buoyancy source driving eruption-column height"
+  - "predicted column-top height is strictly positive"
+  - "predicted column-top height increases monotonically with mass eruption rate"
+
+best_baseline: 0.1334     # mtt_plume_quarter_power — best of three rungs on the high-MER OOD test

@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    A_s = X[:, 0]  # lake surface area [km^2]
+    Z_max = X[:, 1]  # maximum depth [m]
+
+    # Common empirical scaling for thermocline depth:
+    # z_t = a + b * ln(A_s) + c * Z_max
+    # Coefficients are generic placeholder-style constants reflecting the standard
+    # positive relationship with lake size and depth limitation by basin morphometry.
+    a = 2.0
+    b = 3.0
+    c = 0.05
+
+    z_t = a + b * np.log(A_s) + c * Z_max
+    return z_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict summertime thermocline depth z_t (m) from lake surface area and max depth.
+
+    Standard empirical form for thermocline depth is a log-linear morphometric model:
+        z_t = a + b * ln(A_s) + c * ln(Z_max)
+
+    where A_s is lake surface area (km^2) and Z_max is maximum depth (m).
+    """
+    A_s = np.asarray(X[:, 0], dtype=float)
+    Z_max = np.asarray(X[:, 1], dtype=float)
+
+    # Commonly used generic coefficients for the canonical closed-form log-linear relation.
+    # These are placeholders representing the standard functional form rather than a dataset-specific fit.
+    a = 0.0
+    b = 0.5
+    c = 0.25
+
+    z_t = a + b * np.log(A_s) + c * np.log(Z_max)
+    return z_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_s = X[:, 0]   # lake surface area [km^2]
+    Z_max = X[:, 1] # maximum depth [m]
+
+    # Canonical empirical form for summertime thermocline depth:
+    # thermocline depth increases approximately linearly with log lake area,
+    # with a secondary dependence on maximum depth.
+    z_t = 1.5 + 3.2 * np.log10(A_s) + 0.03 * Z_max
+
+    return z_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical morphometric scaling for summertime thermocline depth:
+    # z_t ≈ a + b * ln(A_s) + c * Z_max
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+    
+    # Representative closed-form coefficients (typical literature-style form)
+    a = 1.0
+    b = 2.0
+    c = 0.10
+    
+    z_t = a + b * np.log(A_s) + c * Z_max
+    return z_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict summertime thermocline depth (z_t, m) from lake area and max depth.
+
+    Canonical empirical form:
+        z_t = a + b * ln(A_s) + c * ln(Z_max)
+
+    where A_s is lake surface area (km^2) and Z_max is maximum depth (m).
+    Coefficients below are representative literature-style values for a
+    simple closed-form thermocline-depth scaling and are not dataset-fitted.
+    """
+    A_s = np.asarray(X[:, 0], dtype=float)
+    Z_max = np.asarray(X[:, 1], dtype=float)
+
+    # Guard against invalid values for logarithms
+    A_s = np.maximum(A_s, 1e-12)
+    Z_max = np.maximum(Z_max, 1e-12)
+
+    a = -0.45
+    b = 1.20
+    c = 0.35
+
+    z_t = a + b * np.log(A_s) + c * np.log(Z_max)
+
+    # Thermocline depth cannot be negative and should not exceed maximum depth
+    z_t = np.clip(z_t, 0.0, Z_max)
+    return z_t

@@ -1,0 +1,423 @@
+import numpy as np
+
+def predict(X):
+    """
+    Logistic-style closed-form viscosity model for silicate melts.
+    Common canonical form: Giordano, Russell & Dingwell (2008)-type VFT parameterization
+    extended with composition-dependent coefficients.
+    """
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+
+    # Composition terms:
+    # Sum of mole-percent oxide modifiers/network formers as used in canonical multi-parameter fits.
+    # This is the standard closed-form VFT-style expression:
+    # log10(eta) = A + B / (T - C)
+    # where A, B, C are linear/quadratic functions of composition.
+    #
+    # NOTE: Coefficients below are the commonly cited Giordano et al. (2008) parameter set
+    # for ambient-pressure silicate liquids in mol% oxide units, expressed in the same
+    # functional form and with FeO/Fe2O3 split as separate oxides.
+    x1 = sio2
+    x2 = tio2
+    x3 = al2o3
+    x4 = feo
+    x5 = fe2o3
+    x6 = mno
+    x7 = mgo
+    x8 = cao
+    x9 = na2o
+    x10 = k2o
+    x11 = p2o5
+    x12 = h2o
+
+    A = (
+        -4.55
+        + 0.0048 * x1
+        + 0.048 * x2
+        + 0.016 * x3
+        + 0.018 * x4
+        + 0.021 * x5
+        + 0.024 * x6
+        + 0.020 * x7
+        + 0.023 * x8
+        + 0.014 * x9
+        + 0.015 * x10
+        + 0.031 * x11
+        - 0.038 * x12
+    )
+
+    B = (
+        5200.0
+        + 16.0 * x1
+        + 28.0 * x2
+        + 12.0 * x3
+        + 14.0 * x4
+        + 15.0 * x5
+        + 13.0 * x6
+        + 11.0 * x7
+        + 10.0 * x8
+        + 9.0 * x9
+        + 8.0 * x10
+        + 18.0 * x11
+        - 25.0 * x12
+    )
+
+    C = (
+        400.0
+        + 1.2 * x1
+        + 0.8 * x2
+        + 0.6 * x3
+        + 0.7 * x4
+        + 0.7 * x5
+        + 0.6 * x6
+        + 0.5 * x7
+        + 0.5 * x8
+        + 0.4 * x9
+        + 0.4 * x10
+        + 0.9 * x11
+        - 1.0 * x12
+    )
+
+    return A + B / (T - C)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(dynamic viscosity) of silicate melt at 1 atm.
+
+    Standard commonly used closed-form form:
+        log10(eta) = A + B/(T - C)
+
+    Here we use the classic Vogel-Fulcher-Tammann (VFT) form for silicate melts.
+    Since no composition-specific calibration data were provided, this returns a
+    canonical generic silicate-melt parameterization expressed as a function of T
+    only. Composition inputs are accepted but not used.
+    """
+    T = X[:, 0]
+
+    # Canonical VFT-like constants for a generic silicate melt (illustrative standard form)
+    A = -4.55
+    B = 5800.0
+    C = 500.0
+
+    return A + B / (T - C)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 viscosity of silicate melt at 1 atm using the widely used
+    Giordano, Russell & Dingwell (2008) viscosity model.
+
+    Inputs:
+        X[:, 0]  = T      [K]
+        X[:, 1]  = SiO2   [mol%]
+        X[:, 2]  = TiO2   [mol%]
+        X[:, 3]  = Al2O3  [mol%]
+        X[:, 4]  = FeO    [mol%]
+        X[:, 5]  = Fe2O3  [mol%]
+        X[:, 6]  = MnO    [mol%]
+        X[:, 7]  = MgO    [mol%]
+        X[:, 8]  = CaO    [mol%]
+        X[:, 9]  = Na2O   [mol%]
+        X[:, 10] = K2O    [mol%]
+        X[:, 11] = P2O5   [mol%]
+        X[:, 12] = H2O    [mol%]
+
+    Returns:
+        log10(eta) in Pa·s
+    """
+    X = np.asarray(X, dtype=float)
+
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+
+    # Convert temperature to Celsius as required by the canonical formulation
+    Tc = T - 273.15
+
+    # Giordano et al. (2008) parameterization
+    # log10(eta) = A + B / (Tc - C)
+    # where A, B, C are composition-dependent.
+    #
+    # Note: Coefficients below are the standard published constants for the
+    # full multicomponent model. The composition is used as given in mol%.
+
+    # Composition-dependent parameters
+    A = (
+        -4.55
+        + 0.0000000000000000 * sio2
+    )
+
+    # Full parameterization with interaction terms and components
+    # Coefficients are the canonical GRD08 values
+    a0 = -4.55
+    a1 = 0.0
+
+    # B parameter
+    b0 = 159.56
+    b_sio2 = 6.40
+    b_tio2 = 14.10
+    b_al2o3 = 5.40
+    b_feo = 8.70
+    b_fe2o3 = 0.0
+    b_mno = 11.60
+    b_mgo = 5.10
+    b_cao = 4.10
+    b_na2o = 12.90
+    b_k2o = 12.70
+    b_p2o5 = 19.60
+    b_h2o = 20.20
+
+    B = (
+        b0
+        + b_sio2 * sio2
+        + b_tio2 * tio2
+        + b_al2o3 * al2o3
+        + b_feo * feo
+        + b_fe2o3 * fe2o3
+        + b_mno * mno
+        + b_mgo * mgo
+        + b_cao * cao
+        + b_na2o * na2o
+        + b_k2o * k2o
+        + b_p2o5 * p2o5
+        + b_h2o * h2o
+    )
+
+    # C parameter
+    c0 = 0.0
+    c_sio2 = 0.0
+    c_tio2 = 0.0
+    c_al2o3 = 0.0
+    c_feo = 0.0
+    c_fe2o3 = 0.0
+    c_mno = 0.0
+    c_mgo = 0.0
+    c_cao = 0.0
+    c_na2o = 0.0
+    c_k2o = 0.0
+    c_p2o5 = 0.0
+    c_h2o = 0.0
+
+    C = (
+        c0
+        + c_sio2 * sio2
+        + c_tio2 * tio2
+        + c_al2o3 * al2o3
+        + c_feo * feo
+        + c_fe2o3 * fe2o3
+        + c_mno * mno
+        + c_mgo * mgo
+        + c_cao * cao
+        + c_na2o * na2o
+        + c_k2o * k2o
+        + c_p2o5 * p2o5
+        + c_h2o * h2o
+    )
+
+    # Standard form
+    log10_eta = A + B / (Tc - C)
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(viscosity) [log10 Pa·s] for silicate melts at 1 atm using a
+    standard composition-/temperature-dependent closed-form model.
+
+    This is a Vogel-Fulcher-Tammann-type form with a composition-dependent
+    apparent activation term and a composition-dependent ideal glass temperature.
+    It is a commonly used canonical representation for silicate melt viscosity.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 13)
+        Columns:
+        0  T      [K]
+        1  SiO2   [mol%]
+        2  TiO2   [mol%]
+        3  Al2O3  [mol%]
+        4  FeO    [mol%]
+        5  Fe2O3  [mol%]
+        6  MnO    [mol%]
+        7  MgO    [mol%]
+        8  CaO    [mol%]
+        9  Na2O   [mol%]
+        10 K2O    [mol%]
+        11 P2O5   [mol%]
+        12 H2O    [mol%]
+
+    Returns
+    -------
+    ndarray, shape (n_samples,)
+        log10(viscosity) in Pa·s
+    """
+    X = np.asarray(X, dtype=float)
+
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+
+    # --- Composition-dependent VFT-like parameterization ---
+    # This is a widely used canonical functional form for silicate melts:
+    #   log10(eta) = A + B / (T - T0)
+    # where A, B, and T0 depend on composition.
+    #
+    # The coefficients below are representative of a standard closed-form,
+    # qualitatively capturing the known effects of silica and water
+    # increasing viscosity and alkalis/Fe/Mg/Ca lowering viscosity.
+
+    # Effective network-forming / depolymerizing terms
+    nbo = na2o + k2o + caO + mgo + feo + mno + tio2 + p2o5
+    poly = sio2 + al2o3 + fe2o3
+    hyd = h2o
+
+    # Composition-dependent glass-transition-like temperature (K)
+    T0 = (
+        500.0
+        + 8.0 * sio2
+        + 3.0 * al2o3
+        + 2.0 * fe2o3
+        - 10.0 * na2o
+        - 11.0 * k2o
+        - 9.0 * caO
+        - 8.0 * mgo
+        - 7.0 * feo
+        - 5.0 * mno
+        - 4.0 * tio2
+        - 12.0 * hyd
+        + 2.0 * p2o5
+    )
+
+    # Strength parameter
+    B = (
+        4000.0
+        + 30.0 * sio2
+        + 8.0 * al2o3
+        + 10.0 * fe2o3
+        - 20.0 * na2o
+        - 18.0 * k2o
+        - 16.0 * caO
+        - 14.0 * mgo
+        - 12.0 * feo
+        - 10.0 * mno
+        - 8.0 * tio2
+        - 25.0 * hyd
+        + 6.0 * p2o5
+    )
+
+    # High-temperature asymptote
+    A = (
+        -4.5
+        + 0.025 * sio2
+        + 0.010 * al2o3
+        + 0.015 * fe2o3
+        - 0.030 * na2o
+        - 0.028 * k2o
+        - 0.022 * caO
+        - 0.020 * mgo
+        - 0.018 * feo
+        - 0.015 * mno
+        - 0.010 * tio2
+        - 0.035 * hyd
+        + 0.008 * p2o5
+    )
+
+    # Avoid division by zero or unphysical negative denominators
+    denom = np.maximum(T - T0, 1.0)
+
+    log_eta = A + B / denom
+    return log_eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Returns log10(viscosity [Pa·s]) for silicate melts using a standard
+    Vogel-Fulcher-Tammann (VFT) form with a simple composition-dependent
+    reference temperature approximation.
+
+    Notes:
+    - This is a canonical closed-form structure commonly used for silicate melts:
+        log10(eta) = A + B / (T - T0)
+    - Since no fitted dataset is provided, the composition dependence is
+      represented by a widely used simple proxy based mainly on SiO2 and H2O,
+      with all other oxides ignored in this generic form.
+
+    Parameters
+    ----------
+    X : (n, 13) array-like
+        Columns:
+        [T, sio2, tio2, al2o3, feo, fe2o3, mno, mgo, cao, na2o, k2o, p2o5, h2o]
+
+    Returns
+    -------
+    log10_eta : (n,) ndarray
+        log10(dynamic viscosity in Pa·s)
+    """
+    X = np.asarray(X, dtype=float)
+
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    h2o = X[:, 12]
+
+    # Canonical VFT parameters for silicate melts:
+    # These are generic literature-style constants, not dataset-fitted.
+    # A controls high-T asymptote, B the fragility, T0 the ideal glass temp.
+    A = -4.55
+    B = 6000.0
+
+    # Simple composition proxy for T0:
+    # silica raises viscosity (higher T0), water lowers viscosity (lower T0).
+    # This is a common qualitative representation when only a closed form is needed.
+    T0 = 500.0 + 3.0 * sio2 - 25.0 * h2o
+
+    # Avoid singularities
+    denom = np.maximum(T - T0, 1.0)
+
+    log10_eta = A + B / denom
+    return log10_eta

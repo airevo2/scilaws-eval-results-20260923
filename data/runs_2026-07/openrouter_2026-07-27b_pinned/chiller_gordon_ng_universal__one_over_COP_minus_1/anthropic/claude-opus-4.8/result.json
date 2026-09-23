@@ -1,0 +1,17 @@
+{
+  "task": "chiller_gordon_ng_universal__one_over_COP_minus_1",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeII",
+  "primary": "engineering",
+  "formulas": [
+    {
+      "formula": "gordon_ng_sreedharan2001",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

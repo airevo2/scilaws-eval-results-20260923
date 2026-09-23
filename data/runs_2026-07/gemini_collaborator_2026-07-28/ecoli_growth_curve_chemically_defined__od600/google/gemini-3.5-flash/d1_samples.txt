@@ -1,0 +1,123 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract time in hours
+    t = X[:, 0]
+
+    # Standard parameters for E. coli K-12 BW25113 growth in a 96-well plate
+    # (background-subtracted OD600)
+    od_min = 0.03  # Initial background-subtracted OD600
+    A = 0.85  # Maximum OD600 increase (carrying capacity - od_min)
+    mu_max = 0.75  # Maximum specific growth rate (1/h)
+    lmbda = 2.0  # Lag time (h)
+
+    # Modified Gompertz model (canonical in predictive microbiology)
+    # OD(t) = od_min + A * exp(-exp((mu_max * e / A) * (lmbda - t) + 1))
+    e = np.e
+    inner_term = (mu_max * e / A) * (lmbda - t) + 1
+
+    # Safe evaluation to prevent overflow/underflow
+    inner_term = np.clip(inner_term, -50, 50)
+    od = od_min + A * np.exp(-np.exp(inner_term))
+
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract time in hours
+    t = X[:, 0]
+    
+    # Canonical parameters for E. coli K-12 BW25113 growth in a 96-well plate
+    od_min = 0.05      # Background-subtracted initial OD600
+    od_max = 1.15      # Carrying capacity / maximum OD600
+    mu_max = 0.85      # Maximum specific growth rate (1/h)
+    lag = 2.2          # Lag time (h)
+    
+    # Modified Gompertz equation (canonical in predictive microbiology)
+    # OD(t) = od_min + (od_max - od_min) * exp(-exp( (mu_max * e) / (od_max - od_min) * (lag - t) + 1 ))
+    e = np.e
+    inner_term = (mu_max * e / (od_max - od_min)) * (lag - t) + 1
+    
+    # Clip to prevent numerical overflow/underflow
+    inner_term = np.clip(inner_term, -50, 50)
+    
+    od_t = od_min + (od_max - od_min) * np.exp(-np.exp(inner_term))
+    return od_t
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract time in hours from the first column of X
+    t = X[:, 0]
+
+    # Typical growth parameters for E. coli K-12 BW25113 in a 96-well plate
+    # (background-subtracted optical density at 600 nm)
+    y0 = 0.02  # Initial background-subtracted OD600
+    ymax = 0.90  # Asymptotic maximum OD600
+    mu_max = 0.65  # Maximum specific growth rate (h^-1)
+    lmbda = 2.5  # Lag time duration (h)
+
+    # Modified Gompertz model (Zwietering et al., 1990)
+    A = ymax - y0
+    e = np.exp(1)
+    od = y0 + A * np.exp(-np.exp((mu_max * e / A) * (lmbda - t) + 1))
+
+    return od
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract time in hours
+    t = X[:, 0]
+
+    # Canonical parameters for E. coli K-12 BW25113 in a 96-well plate reader
+    # (Background-subtracted OD600)
+    od_min = 0.02  # Initial background-subtracted OD600
+    od_max = 0.95  # Carrying capacity / maximum OD600
+    mu_max = 0.75  # Maximum specific growth rate (h^-1)
+    lag = 2.5  # Lag time (h)
+
+    # Modified Gompertz model (most commonly cited predictive microbiology model)
+    od = od_min + (od_max - od_min) * np.exp(
+        -np.exp((mu_max * np.e / (od_max - od_min)) * (lag - t) + 1)
+    )
+
+    return od
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract time since inoculation (hours)
+    t = X[:, 0]
+
+    # Standard parameters for E. coli K-12 BW25113 in a 96-well plate reader
+    # (background-subtracted OD600)
+    od_min = 0.02  # Initial background-subtracted OD600
+    od_max = 0.85  # Asymptotic maximum OD600
+    mu_max = 0.75  # Maximum specific growth rate (1/h)
+    lag = 2.0  # Lag time (h)
+
+    # Modified Gompertz model parameters
+    A = od_max - od_min
+
+    # Calculate the exponent term safely to avoid numerical overflow
+    inner_term = (mu_max * np.e / A) * (lag - t) + 1
+    inner_term = np.clip(inner_term, -50, 50)
+
+    # Modified Gompertz equation
+    od600 = od_min + A * np.exp(-np.exp(inner_term))
+
+    return od600

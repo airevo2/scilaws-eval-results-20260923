@@ -1,0 +1,130 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract principal quantum number n and orbital angular momentum l
+    n = X[:, 0]
+    l = X[:, 1]
+
+    # Rydberg constant for infinite mass in cm^-1
+    R_y = 109737.31568
+
+    # Empirical quantum defect delta(l) which decreases as l increases.
+    # This represents a typical average behavior for neutral Rydberg atoms.
+    delta = 1.5 / (l + 0.5) ** 2
+
+    # Avoid division by zero or unphysical values if n is extremely small
+    effective_n = np.maximum(n - delta, 0.5)
+
+    # Rydberg formula for binding energy
+    E_bind = R_y / (effective_n**2)
+
+    return E_bind
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract principal quantum number n and orbital angular momentum l
+    n = X[:, 0]
+    l = X[:, 1]
+
+    # Rydberg constant for an infinitely heavy nucleus in cm^-1
+    R_inf = 109737.315685
+
+    # Quantum defect delta(l) approximation for a typical neutral atom.
+    # The quantum defect decreases rapidly as l increases.
+    # We use a standard empirical parametrization: delta = a / (l + b)^2
+    a = 1.5
+    b = 0.8
+    delta = a / (l + b) ** 2
+
+    # Effective principal quantum number n* = n - delta
+    # Ensure n* is positive to avoid division by zero
+    n_eff = np.maximum(n - delta, 0.5)
+
+    # Rydberg-Ritz formula for the binding energy
+    E_bind = R_inf / (n_eff**2)
+
+    return E_bind
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract principal quantum number (n) and orbital angular momentum (l)
+    n = X[:, 0]
+    l = X[:, 1]
+
+    # Rydberg constant for infinite mass in cm^-1
+    R_inf = 109737.315685
+
+    # Quantum defect (delta) typically decreases rapidly with orbital angular momentum (l).
+    # We use a standard exponential approximation for the average quantum defect.
+    delta = 1.2 * np.exp(-l)
+
+    # Effective principal quantum number n* = n - delta
+    n_eff = np.maximum(n - delta, 0.5)
+
+    # Rydberg formula for the binding energy (term value)
+    E_bind = R_inf / (n_eff**2)
+
+    return E_bind
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # X[:, 0] = n (principal quantum number)
+    # X[:, 1] = l (orbital angular momentum quantum number)
+    n = X[:, 0]
+    l = X[:, 1]
+    
+    # Rydberg constant for an infinitely heavy nucleus in cm^-1
+    R_inf = 109737.315685
+    
+    # Standard Rydberg-Ritz formula uses a quantum defect delta that depends on l.
+    # We use a representative exponential decay model for the quantum defect: delta(l) = a * exp(-b * l)
+    # which captures the rapid decrease of core penetration/polarization as l increases.
+    delta = 1.8 * np.exp(-0.8 * l)
+    
+    # Binding energy (term value) in cm^-1
+    E_bind = R_inf / (n - delta) ** 2
+    
+    return E_bind
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract principal quantum number n and orbital angular momentum l
+    n = X[:, 0]
+    l = X[:, 1]
+
+    # Rydberg constant for infinite mass in cm^-1
+    R_inf = 109737.315685
+
+    # Representative quantum defects (delta) for a typical neutral atom.
+    # Quantum defects decrease rapidly as the orbital angular momentum l increases
+    # because the centrifugal barrier prevents the electron from penetrating the core.
+    delta_table = np.array([1.35, 0.85, 0.15, 0.05, 0.01, 0.0])
+
+    # Map l to the quantum defect, capping at the maximum indexed l
+    l_idx = np.clip(l.astype(int), 0, len(delta_table) - 1)
+    delta = delta_table[l_idx]
+
+    # Calculate effective principal quantum number (n* = n - delta)
+    # Ensure n_eff is positive to avoid division by zero
+    n_eff = np.maximum(n - delta, 0.5)
+
+    # Rydberg formula for binding energy
+    E_bind = R_inf / (n_eff**2)
+
+    return E_bind

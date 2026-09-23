@@ -1,0 +1,169 @@
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017), CQG 34, 105014 - dynamical ejecta mass fit
+    M1  = X[:, 0]
+    M2  = X[:, 1]
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1  = X[:, 4]
+    C2  = X[:, 5]
+
+    a = -1.35695
+    b =  6.11252
+    c = -49.43355
+    d =  16.1144
+    n = -2.5484
+
+    # term for star 1 (uses companion mass ratio Mb2/Mb1)
+    term1 = (a * (Mb2 / Mb1)**(1.0/3.0) * (1.0 - 2.0*C1) / C1
+             + b * (Mb2 / Mb1)**n
+             + c * (1.0 - M1 / Mb1)) * Mb1
+
+    # term for star 2 (1 <-> 2 swap)
+    term2 = (a * (Mb1 / Mb2)**(1.0/3.0) * (1.0 - 2.0*C2) / C2
+             + b * (Mb1 / Mb2)**n
+             + c * (1.0 - M2 / Mb2)) * Mb2
+
+    Mej_1e3 = term1 + term2 + d  # in units of 1e-3 M_sun
+
+    Mej = Mej_1e3 * 1.0e-3
+    Mej = np.clip(Mej, 0.0, None)
+    return Mej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017) dynamical ejecta fit
+    M1  = X[:, 0]
+    M2  = X[:, 1]
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1  = X[:, 4]
+    C2  = X[:, 5]
+
+    # Fitted coefficients
+    a = -1.35695
+    b =  6.11252
+    c = -49.43355
+    d =  16.1144
+    n = -2.5484
+
+    # Term for star 1 (uses companion mass ratio M2/M1) plus symmetric term (1<->2)
+    term1 = (a * (M2 / M1) ** (1.0 / n) * (1.0 - 2.0 * C1) / C1 * Mb1
+             + b * (M2 / M1) ** n * Mb1
+             + c * (1.0 - M1 / Mb1) * Mb1)
+
+    term2 = (a * (M1 / M2) ** (1.0 / n) * (1.0 - 2.0 * C2) / C2 * Mb2
+             + b * (M1 / M2) ** n * Mb2
+             + c * (1.0 - M2 / Mb2) * Mb2)
+
+    Mej = (term1 + term2 + d) * 1e-3
+
+    # Ejecta mass is non-negative
+    return np.maximum(Mej, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017), Class. Quantum Grav. 34, 105014
+    # Dynamical ejecta mass fitting formula.
+    M1  = X[:, 0]
+    M2  = X[:, 1]
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1  = X[:, 4]
+    C2  = X[:, 5]
+
+    a = -1.35695
+    b =  6.11252
+    c = -49.43355
+    d =  16.1144
+    n = -2.5484
+
+    # term for star 1 (companion is star 2)
+    term1 = ( a * (M2 / M1)**(1.0/3.0) * (1.0 - 2.0 * C1) / C1
+              + b * (M2 / M1)**n
+              + c * (1.0 - M1 / Mb1) ) * Mb1
+
+    # term for star 2 (companion is star 1) -- swap 1<->2
+    term2 = ( a * (M1 / M2)**(1.0/3.0) * (1.0 - 2.0 * C2) / C2
+              + b * (M1 / M2)**n
+              + c * (1.0 - M2 / Mb2) ) * Mb2
+
+    Mej = (term1 + term2 + d) * 1e-3  # result in solar masses
+
+    # ejecta mass cannot be negative
+    Mej = np.maximum(Mej, 0.0)
+    return Mej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017) dynamical ejecta mass fit
+    # Mej in units of 1e-3 Msun
+    M1  = X[:, 0]
+    M2  = X[:, 1]
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1  = X[:, 4]
+    C2  = X[:, 5]
+
+    a = -1.35695
+    b =  6.11252
+    c = -49.43355
+    d =  16.1144
+    n = -2.5484
+
+    # term for star 1 (with companion 2)
+    term1 = (a * (M2 / M1) ** (1.0 / 3.0) * (1.0 - 2.0 * C1) / C1 * Mb1
+             + b * (M2 / M1) ** n * Mb1
+             + c * (1.0 - M1 / Mb1) * Mb1)
+
+    # term for star 2 (with companion 1) — swap indices
+    term2 = (a * (M1 / M2) ** (1.0 / 3.0) * (1.0 - 2.0 * C2) / C2 * Mb2
+             + b * (M1 / M2) ** n * Mb2
+             + c * (1.0 - M2 / Mb2) * Mb2)
+
+    Mej_1e3 = term1 + term2 + d      # in units of 1e-3 Msun
+    Mej = Mej_1e3 * 1e-3             # Msun
+
+    # physical floor (ejecta mass cannot be negative)
+    Mej = np.clip(Mej, 0.0, None)
+    return Mej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Dietrich & Ujevic (2017), CQG 34, 105014
+    # Fit for dynamical ejecta mass
+    M1  = X[:, 0]
+    M2  = X[:, 1]
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1  = X[:, 4]
+    C2  = X[:, 5]
+
+    a = -1.35695
+    b =  6.11252
+    c = -0.10
+    n = -2.5484
+
+    term1 = ( a * (M2 / M1) ** (1.0 / 3.0) * (1.0 - 2.0 * C1) / C1 * Mb1
+              + b * (M2 / M1) ** n * Mb1 )
+    term2 = ( a * (M1 / M2) ** (1.0 / 3.0) * (1.0 - 2.0 * C2) / C2 * Mb2
+              + b * (M1 / M2) ** n * Mb2 )
+
+    Mej = (term1 + term2 + c) * 1e-3
+
+    # Ejecta mass cannot be negative
+    Mej = np.clip(Mej, 0.0, None)
+    return Mej

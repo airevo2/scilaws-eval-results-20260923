@@ -1,0 +1,105 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = prey_density (N)
+    N = X[:, 0]
+
+    # Holling's Type II Functional Response parameters (canonical values)
+    # a: attack rate (searching efficiency)
+    # Th: handling time per prey item
+    # T: total trial time (assumed to be 1 for normalized rates)
+    a = 0.05
+    Th = 0.01
+    T = 1.0
+
+    # Holling's Type II disk equation
+    prey_eaten = (a * N * T) / (1.0 + a * Th * N)
+
+    return prey_eaten
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract prey density (N) from the first column of X
+    N = X[:, 0]
+
+    # Holling's Type II functional response parameters (typical values)
+    # a: attack rate / searching efficiency
+    # h: handling time per prey item
+    a = 0.5
+    h = 0.01
+
+    # Holling's Type II Disc Equation
+    prey_eaten = (a * N) / (1 + a * h * N)
+
+    return prey_eaten
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] represents the initial prey density (N)
+    N = X[:, 0]
+
+    # Standard Holling's Type II functional response parameters
+    # a: search rate / attack rate
+    # Th: handling time per prey item
+    # T: total trial time (standardized to 1.0)
+    a = 0.6
+    Th = 0.005
+    T = 1.0
+
+    # Holling's Type II disc equation
+    prey_eaten = (a * N * T) / (1.0 + a * Th * N)
+
+    return prey_eaten
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract prey density (N) from the first column of X
+    N = X[:, 0]
+
+    # Standard parameters for Holling's Type II functional response (disk equation)
+    # a: attack rate / searching efficiency
+    # Th: handling time per prey item
+    # T: total experimental time (assumed to be 1)
+    a = 0.1
+    Th = 0.01
+    T = 1.0
+
+    # Holling's Type II functional response equation
+    N_a = (a * T * N) / (1 + a * Th * N)
+
+    return N_a
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract initial prey density (N) from the first column of X
+    N = X[:, 0]
+
+    # Standard parameters for Holling's Type II functional response
+    # a: attack rate (searching efficiency)
+    # T_h: handling time per prey item
+    # T: total trial time (standardized to 1.0)
+    a = 0.1
+    T_h = 0.005
+    T = 1.0
+
+    # Holling's Type II disc equation
+    prey_eaten = (a * T * N) / (1.0 + a * T_h * N)
+
+    return prey_eaten

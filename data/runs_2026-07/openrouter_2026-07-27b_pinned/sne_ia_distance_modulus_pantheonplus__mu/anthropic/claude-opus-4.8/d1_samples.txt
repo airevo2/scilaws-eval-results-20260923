@@ -1,0 +1,146 @@
+import numpy as np
+
+def predict(X):
+    z = X[:, 0]
+    
+    # Cosmological parameters (flat LCDM, Planck-like)
+    H0 = 70.0            # km/s/Mpc
+    Om = 0.3
+    OL = 0.7
+    c = 299792.458       # km/s
+    
+    # Comoving distance via numerical integration
+    def E(zp):
+        return np.sqrt(Om * (1 + zp)**3 + OL)
+    
+    mu = np.empty_like(z, dtype=float)
+    for i, zi in enumerate(z):
+        zz = np.linspace(0.0, zi, 2000)
+        integrand = 1.0 / E(zz)
+        Dc = np.trapz(integrand, zz)          # dimensionless comoving distance
+        dL = (c / H0) * (1 + zi) * Dc          # luminosity distance in Mpc
+        mu[i] = 5.0 * np.log10(dL) + 25.0      # dL in Mpc -> +25
+    
+    return mu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    z = X[:, 0]
+    
+    # Cosmological parameters (flat LambdaCDM, Planck-like)
+    H0 = 70.0          # km/s/Mpc
+    Om = 0.3           # matter density
+    OL = 0.7           # dark energy density
+    c = 299792.458     # speed of light km/s
+    
+    # Hubble distance in Mpc
+    DH = c / H0
+    
+    # Comoving distance via numerical integration of 1/E(z)
+    def E(zp):
+        return np.sqrt(Om * (1.0 + zp)**3 + OL)
+    
+    Dc = np.zeros_like(z)
+    for i, zi in enumerate(z):
+        zz = np.linspace(0.0, zi, 2000)
+        integrand = 1.0 / E(zz)
+        Dc[i] = DH * np.trapz(integrand, zz)
+    
+    # Luminosity distance (flat universe)
+    dL = (1.0 + z) * Dc   # in Mpc
+    
+    # Distance modulus: mu = 5 log10(dL / 10pc) = 5 log10(dL[Mpc]) + 25
+    mu = 5.0 * np.log10(dL) + 25.0
+    
+    return mu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    z = X[:, 0]
+    
+    # Cosmological parameters (flat LCDM, Planck-like)
+    H0 = 70.0          # km/s/Mpc
+    Om = 0.3
+    OL = 0.7
+    c = 299792.458     # km/s
+    
+    # Comoving distance via numerical integration of 1/E(z)
+    def E(zp):
+        return np.sqrt(Om * (1.0 + zp)**3 + OL)
+    
+    dL = np.empty_like(z)
+    for i, zi in enumerate(z):
+        zz = np.linspace(0.0, zi, 2000)
+        integrand = 1.0 / E(zz)
+        Dc = np.trapz(integrand, zz)          # dimensionless comoving distance
+        dC = (c / H0) * Dc                     # Mpc
+        dL[i] = (1.0 + zi) * dC                # luminosity distance in Mpc
+    
+    # Distance modulus: mu = 5 log10(dL/10pc) = 5 log10(dL[Mpc]) + 25
+    mu = 5.0 * np.log10(dL) + 25.0
+    return mu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    z = X[:, 0]
+    
+    # Cosmological parameters (flat LCDM, standard values)
+    H0 = 70.0            # km/s/Mpc
+    Om = 0.3             # matter density
+    OL = 1.0 - Om        # dark energy density (flat)
+    c = 299792.458       # speed of light km/s
+    
+    # Hubble distance in Mpc
+    D_H = c / H0
+    
+    # Comoving distance via numerical integration of 1/E(z)
+    def E(zp):
+        return np.sqrt(Om * (1.0 + zp)**3 + OL)
+    
+    D_C = np.zeros_like(z)
+    for i, zi in enumerate(z):
+        zz = np.linspace(0.0, zi, 2000)
+        integrand = 1.0 / E(zz)
+        D_C[i] = D_H * np.trapz(integrand, zz)
+    
+    # Luminosity distance (flat universe): d_L = (1+z) * D_C
+    d_L = (1.0 + z) * D_C   # in Mpc
+    
+    # Distance modulus: mu = 5*log10(d_L / 10pc) = 5*log10(d_L[Mpc]) + 25
+    mu = 5.0 * np.log10(d_L) + 25.0
+    
+    return mu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    z = X[:, 0]
+    # Cosmological parameters (flat LCDM, Planck-like)
+    H0 = 70.0          # km/s/Mpc
+    Om = 0.3
+    OL = 0.7
+    c = 299792.458     # km/s
+
+    # Comoving distance via numerical integration of 1/E(z)
+    def E(zp):
+        return np.sqrt(Om * (1 + zp)**3 + OL)
+
+    mu = np.empty_like(z, dtype=float)
+    for i, zi in enumerate(z):
+        zz = np.linspace(0.0, zi, 2000)
+        integrand = 1.0 / E(zz)
+        Dc = np.trapz(integrand, zz)          # dimensionless comoving distance
+        dL = (c / H0) * (1 + zi) * Dc          # luminosity distance in Mpc
+        mu[i] = 5.0 * np.log10(dL) + 25.0      # dL in Mpc -> +25
+    return mu

@@ -1,0 +1,35 @@
+{
+  "task": "exfor_neutron_capture_resonance_gold__sigma_E",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "constant_sigma",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "one_over_v",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "one_over_v_plus_breit_wigner",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "task": "top_income_share_wid__top_share_log",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "atkinson_piketty_saez_2011",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "piketty_saez_2003",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "clean"
+    }
+  ]
+}

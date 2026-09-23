@@ -1,0 +1,115 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the discharge capacity per cycle (Q) in Ah using a standard
+    semi-empirical power-law capacity fade model (SEI growth-dominated).
+    
+    Model: Q(k) = Q_0 - a * k^0.5
+    
+    Parameters:
+    - X: 2-D numpy array where X[:, 0] is the cycle index (k)
+    
+    Returns:
+    - 1-D numpy array of capacity (Q) in Ah
+    """
+    # Extract cycle index k
+    k = X[:, 0]
+    
+    # Typical parameters for a lithium-ion cell (e.g., nominal capacity of 2.0 Ah)
+    Q_0 = 2.0  # Initial capacity in Ah
+    a = 0.015  # Fade rate coefficient (Ah / cycle^0.5)
+    
+    # Calculate capacity at cycle k
+    Q = Q_0 - a * np.sqrt(k)
+    
+    return Q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = cycle_index (k)
+    k = X[:, 0]
+
+    # Standard capacity fade model based on diffusion-limited SEI growth (k^0.5 dependency)
+    # Q(k) = Q_0 - alpha * sqrt(k)
+    # Q_0: Nominal initial capacity (e.g., 2.0 Ah)
+    # alpha: Capacity loss coefficient (e.g., 0.0075 Ah/cycle^0.5)
+    Q_0 = 2.0
+    alpha = 0.0075
+
+    Q = Q_0 - alpha * np.sqrt(k)
+    return Q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the discharge capacity (Q in Ah) as a function of cycle index.
+
+    Uses a standard semi-empirical capacity fade model accounting for both
+    diffusion-limited SEI growth (proportional to square root of cycles) and
+    linear active material loss.
+
+    Parameters:
+    X : np.ndarray
+        2D array where X[:, 0] is the cycle_index (k)
+
+    Returns:
+    np.ndarray
+        1D array of discharge capacity in Ah
+    """
+    k = X[:, 0]
+
+    # Model parameters for a typical commercial lithium-ion cell (e.g., LFP pouch cell)
+    Q_0 = 1.1  # Initial nominal capacity in Ah
+    a = 0.005  # SEI growth coefficient (Ah/cycle^0.5)
+    b = 0.0002  # Linear degradation coefficient (Ah/cycle)
+
+    # Standard capacity degradation formula
+    Q = Q_0 - a * np.sqrt(k) - b * k
+
+    # Ensure capacity does not drop physically below 0
+    return np.clip(Q, 0, None)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = cycle_index (k)
+    k = X[:, 0]
+
+    # Standard power-law capacity fade model (often used for SEI-driven degradation)
+    # Q(k) = Q_0 - a * k^b
+    # Typical values for a commercial lithium-ion cell (e.g., LFP 1.1 Ah nominal capacity)
+    Q_0 = 1.1  # Initial nominal capacity in Ah
+    a = 0.0075  # Degradation rate coefficient
+    b = 0.5  # Power-law exponent (0.5 represents diffusion-limited SEI growth)
+
+    Q = Q_0 - a * np.power(k, b)
+    return Q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = cycle_index (k)
+    k = X[:, 0]
+
+    # Standard power-law capacity fade model based on diffusion-limited SEI growth
+    # Q(k) = Q_0 - a * k^0.5
+    # Parameters represent a typical lithium-ion cell (nominal capacity ~2.0 Ah)
+    Q_0 = 2.0  # Initial capacity in Ah
+    a = 0.005  # Degradation rate coefficient
+
+    Q = Q_0 - a * np.sqrt(k)
+    return Q

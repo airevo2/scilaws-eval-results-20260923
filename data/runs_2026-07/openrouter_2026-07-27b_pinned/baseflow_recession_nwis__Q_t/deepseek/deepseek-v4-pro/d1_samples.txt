@@ -1,0 +1,133 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily-mean streamflow discharge Q(t) during a recession event.
+    
+    Uses the standard exponential recession equation:
+    Q(t) = Q_0 * exp(-alpha * t)
+    
+    where alpha is the recession constant (day^-1).
+    A typical value for alpha is around 0.1 day^-1, which represents
+    a moderately fast recession. This can vary based on catchment characteristics.
+    """
+    t = X[:, 0]
+    Q_0 = X[:, 1]
+    
+    # Recession constant (day^-1) - typical value
+    alpha = 0.1
+    
+    Q_t = Q_0 * np.exp(-alpha * t)
+    
+    return Q_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily-mean discharge Q(t) during a recession event using the exponential decay model
+    (Maillet's formula): Q(t) = Q0 * exp(-alpha * t).
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] : t    (days)  elapsed time since start of recession
+        X[:, 1] : Q_0  (ft3/s) discharge at t=0
+
+    Returns
+    -------
+    np.ndarray, shape (n,)
+        Predicted Q(t) in ft3/s.
+
+    Notes
+    -----
+    The recession coefficient `alpha` is set to a typical value of 0.1 day^-1.
+    In practice, this parameter is estimated from observed recession limbs.
+    """
+    alpha = 0.1  # recession coefficient (1/day)
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    return Q0 * np.exp(-alpha * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily-mean streamflow discharge Q(t) during a recession event
+    using the standard exponential decay (Maillet) model.
+
+    Input X: 2-D numpy array with columns:
+        X[:, 0] = t   (days since start of recession)
+        X[:, 1] = Q_0 (discharge at t=0, ft3/s)
+
+    Returns: 1-D array of Q(t) in ft3/s.
+    """
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    # Typical recession constant for daily streamflow (day^-1)
+    # Value ~0.1 corresponds to a daily recession ratio K = exp(-0.1) ≈ 0.905
+    alpha = 0.1
+    return Q0 * np.exp(-alpha * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily-mean streamflow discharge Q(t) during a recession event.
+    
+    Uses the standard exponential recession model (Maillet, 1905):
+        Q(t) = Q0 * exp(-alpha * t)
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n, 2)
+        X[:, 0] = t    : elapsed time [days] since start of recession (t=0,1,2,...)
+        X[:, 1] = Q0   : observed discharge at t=0 [ft3/s]
+    
+    Returns
+    -------
+    Q_t : ndarray, shape (n,)
+        Predicted discharge at time t [ft3/s]
+    """
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    # recession coefficient (1/day) - typical value for baseflow recession
+    alpha = 0.1
+    Q_t = Q0 * np.exp(-alpha * t)
+    return Q_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily-mean streamflow discharge Q(t) during a recession event.
+    
+    Uses the standard exponential decay model (Maillet's law):
+        Q(t) = Q_0 * exp(-alpha * t)
+    
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, 2)
+        X[:,0] : t   (days since start of recession, integer)
+        X[:,1] : Q_0 (discharge at t=0, ft3/s)
+    
+    Returns
+    -------
+    Qt : ndarray of shape (n_samples,)
+        Predicted discharge at time t, ft3/s.
+    """
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    # Typical baseflow recession coefficient (1/day); in practice this would be
+    # calibrated for a given watershed. A commonly cited value is around 0.05.
+    ALPHA = 0.05  
+    Qt = Q0 * np.exp(-ALPHA * t)
+    return Qt

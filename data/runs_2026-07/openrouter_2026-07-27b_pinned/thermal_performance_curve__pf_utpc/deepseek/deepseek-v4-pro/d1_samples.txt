@@ -1,0 +1,154 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts performance (P) from temperature (T) using the Sharpe-Schoolfield model,
+    a standard mechanistic thermal performance curve for rate-like biological traits.
+    """
+    T_C = X[:, 0]                     # temperature in degrees Celsius
+    T_K = T_C + 273.15                # convert to Kelvin
+
+    # Model parameters (typical values, can be refitted to specific data)
+    T_ref = 298.15                    # reference temperature in Kelvin (25°C)
+    E_a   = 0.6                       # activation energy in eV
+    E_h   = 2.0                       # high-temperature inactivation energy in eV
+    T_h   = 308.15                    # half-inactivation temperature in Kelvin (35°C)
+    kB    = 8.617333262145e-5         # Boltzmann constant in eV/K
+    P_ref = 1.0                       # performance at T_ref (scale factor)
+
+    # Sharpe-Schoolfield equation
+    numerator = P_ref * (T_K / T_ref) * np.exp((E_a / kB) * (1.0 / T_ref - 1.0 / T_K))
+    denominator = 1.0 + np.exp((E_h / kB) * (1.0 / T_h - 1.0 / T_K))
+    P = numerator / denominator
+
+    return P
+
+=====
+
+import numpy as np
+
+# Standard Sharpe–Schoolfield model parameters (thermodynamic thermal performance curve)
+k = 8.617333262145e-5     # Boltzmann constant, eV/K
+T_ref = 298.15            # reference temperature, K (25°C)
+rho = 1.0                 # scaling parameter (absorbed by per-cluster scale)
+E = 0.6                   # activation energy, eV
+E_h = 3.0                 # high-temperature deactivation energy, eV
+T_h = 308.15              # temperature of half high-T inactivation, K (35°C)
+
+def predict(X):
+    """
+    Predicts biological performance (rate-like trait) as a function of temperature.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = temperature in degrees Celsius.
+
+    Returns
+    -------
+    P : np.ndarray, shape (n_samples,)
+        Predicted performance at each input temperature.
+    """
+    T_C = X[:, 0]                # Celsius
+    T_K = T_C + 273.15           # absolute temperature, Kelvin
+
+    # Numerator: Arrhenius-like rate including T/T_ref factor
+    numerator = rho * (T_K / T_ref) * np.exp((E / k) * (1.0 / T_ref - 1.0 / T_K))
+
+    # Denominator: high-temperature inactivation
+    denominator = 1.0 + np.exp((E_h / k) * (1.0 / T_h - 1.0 / T_K))
+
+    P = numerator / denominator
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts performance P(T) using the Sharpe-Schoolfield model,
+    a standard thermodynamic model for temperature-dependent biological rates.
+    
+    Parameters (typical values for a generic rate-like trait):
+    - T_ref: Reference temperature in Kelvin (25°C)
+    - rho_ref: Performance at T_ref (arbitrary scale, absorbed by cluster-specific scaling)
+    - E_a: Activation energy (eV) for the rate-limiting enzyme
+    - E_l: Low-temperature inactivation enthalpy (eV)
+    - E_h: High-temperature inactivation enthalpy (eV)
+    - T_l: Low-temperature half-inactivation point (K)
+    - T_h: High-temperature half-inactivation point (K)
+    - k_B: Boltzmann constant in eV/K
+    """
+    # Constants
+    T_ref = 25.0 + 273.15   # K
+    rho_ref = 1.0
+    E_a = 0.65              # eV
+    k_B = 8.617333262145e-5 # eV/K
+    T_h = 40.0 + 273.15     # K
+    E_h = 3.0               # eV
+    T_l = 5.0 + 273.15      # K
+    E_l = 2.5               # eV
+
+    # Convert Celsius to Kelvin
+    T_K = X[:, 0] + 273.15
+
+    # Sharpe-Schoolfield equation
+    numerator = (T_K / T_ref) * np.exp((E_a / k_B) * (1.0/T_ref - 1.0/T_K))
+    denominator = (1.0 
+                   + np.exp((E_l / k_B) * (1.0/T_l - 1.0/T_K)) 
+                   + np.exp((E_h / k_B) * (1.0/T_h - 1.0/T_K)))
+    P = rho_ref * numerator / denominator
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard thermal performance curve: Sharpe-Schoolfield model.
+    P(T) = rho * (T_K/T_ref) * exp(E_a/R * (1/T_ref - 1/T_K)) /
+           (1 + exp(E_l/R * (1/T_l - 1/T_K)) + exp(E_h/R * (1/T_h - 1/T_K)))
+
+    Parameters are set to typical literature values for biological rates.
+    """
+    # constants
+    T_C = X[:, 0]                     # temperature in Celsius
+    T_K = T_C + 273.15                # convert to Kelvin
+    R = 8.617333262145e-5             # universal gas constant (eV/K)
+
+    # Parameters (typical values from thermal biology)
+    rho   = 1.0                       # scaling factor (absorbs unit, dimensionless here)
+    T_ref = 298.15                    # reference temperature (25°C in Kelvin)
+    E_a   = 0.65                      # activation energy (eV)
+    E_l   = 3.0                       # low-temperature inactivation energy (eV)
+    T_l   = 280.0                     # low-temperature half-inactivation point (K)
+    E_h   = 3.0                       # high-temperature inactivation energy (eV)
+    T_h   = 310.0                     # high-temperature half-inactivation point (K)
+
+    # compute numerator and denominator
+    inv_diff_ref = (1.0 / T_ref) - (1.0 / T_K)
+    numerator = rho * (T_K / T_ref) * np.exp((E_a / R) * inv_diff_ref)
+
+    denom_low  = np.exp((E_l / R) * ((1.0 / T_l) - (1.0 / T_K)))
+    denom_high = np.exp((E_h / R) * ((1.0 / T_h) - (1.0 / T_K)))
+    denominator = 1.0 + denom_low + denom_high
+
+    P = numerator / denominator
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict performance P from temperature T using the Gaussian thermal performance curve,
+    a commonly cited phenomenological model for biological rate traits.
+    """
+    T = X[:, 0]  # temperature in degrees Celsius
+    T_opt = 30.0   # optimal temperature (°C)
+    sigma = 15.0   # thermal breadth (°C)
+    P_max = 1.0    # scale factor (can be absorbed by cluster-specific units)
+    return P_max * np.exp(-0.5 * ((T - T_opt) / sigma) ** 2)

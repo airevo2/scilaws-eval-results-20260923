@@ -1,0 +1,84 @@
+import numpy as np
+
+def predict(X):
+    c = X[:, 0]  # concentration [g/L]
+    l = X[:, 1]  # path length [cm]
+    
+    # Beer-Lambert Law: A = epsilon * c_molar * l
+    # Convert mass concentration to molar concentration:
+    #   c_molar [mol/L] = c [g/L] / M [g/mol]
+    
+    M = 294.185  # Molar mass of K2Cr2O7 [g/mol]
+    
+    # Molar absorptivity at 350 nm (commonly used reference wavelength
+    # for potassium dichromate spectrophotometric standards)
+    epsilon = 315.0  # [L / (mol * cm)]
+    
+    # Specific absorptivity: a = epsilon / M  [L / (g * cm)]
+    a = epsilon / M
+    
+    A = a * c * l
+    return A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    c = X[:, 0]
+    l = X[:, 1]
+    
+    # Specific mass attenuance (absorptivity) in L/(g*cm).
+    # The exact value depends on the wavelength, which is not provided,
+    # so a generic named constant is used for the Beer-Lambert relationship.
+    epsilon = 1.0 
+    
+    A = epsilon * c * l
+    return A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    c = X[:, 0]
+    l = X[:, 1]
+    
+    # Beer-Lambert Law: A = epsilon * c * l
+    # epsilon is the specific absorptivity (mass attenuation coefficient).
+    # Since the wavelength is not specified, a generic proportionality constant is used.
+    epsilon = 1.0 
+    
+    A = epsilon * c * l
+    return A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    c = X[:, 0]
+    l = X[:, 1]
+    
+    # Specific absorbance (mass attenuation coefficient) of potassium dichromate 
+    # at the standard UV wavelength of 257 nm, in L/(g*cm).
+    epsilon = 14.48 
+    
+    A = epsilon * c * l
+    return A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    c = X[:, 0]
+    l = X[:, 1]
+    
+    # Beer-Lambert Law: A = epsilon * c * l
+    # epsilon is the specific mass attenuation coefficient (absorptivity).
+    # For potassium dichromate (e.g., at 350 nm), epsilon is approx 1.07 L/(g*cm).
+    epsilon = 1.07 
+    
+    A = epsilon * c * l
+    return A

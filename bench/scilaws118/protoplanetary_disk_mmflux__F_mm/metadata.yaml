@@ -1,0 +1,97 @@
+task_id: protoplanetary_disk_mmflux__F_mm
+domain: astronomy / star_and_planet_formation
+license: VizieR-custom-free
+
+type: typeI
+has_group_id: false
+
+context: >-
+  Protoplanetary disks are the circumstellar reservoirs of gas and dust around young stars from which planetary systems form, traced by their millimeter-wave continuum emission, a topic in astronomy.
+
+target:
+  name: log10_F_1p3_Jy
+  symbol: "log₁₀ Fₘₘ"
+  unit: dex(Jy)
+  description: Base-10 logarithm of the 1.3 mm continuum flux density of the protoplanetary disk at an assumed distance of 140 pc; includes both detections and 3-sigma upper limits.
+  range: [-2.96, -0.33]
+
+inputs:
+  - name: log10_M_star
+    symbol: "log₁₀ M★"
+    unit: dex(M_sun)
+    description: Base-10 logarithm of stellar mass in solar masses, inferred via the DM97 pre-main-sequence evolutionary model grid.
+    range: [-2.10, 0.82]
+  - name: log10_M_star_BCAH98
+    symbol: "log₁₀ M★(BCAH98)"
+    unit: dex(M_sun)
+    description: Base-10 logarithm of stellar mass inferred via the BCAH98 pre-main-sequence evolutionary model grid.
+    range: [-1.93, 1.42]
+  - name: log10_M_star_SDF00
+    symbol: "log₁₀ M★(SDF00)"
+    unit: dex(M_sun)
+    description: Base-10 logarithm of stellar mass inferred via the SDF00 pre-main-sequence evolutionary model grid.
+    range: [-2.09, 0.87]
+  - name: is_F_uplim
+    symbol: "θ_ul"
+    unit: ""
+    description: Upper-limit flag — 1 if the reported flux is a 3-sigma non-detection upper limit, 0 if it is a direct detection.
+    categories: [0, 1]
+  - name: log10_age
+    symbol: "log₁₀ t"
+    unit: dex(Myr)
+    description: Base-10 logarithm of stellar age in megayears, inferred via the DM97 pre-main-sequence evolutionary model grid.
+    range: [-1.57, 1.70]
+
+priors: []
+
+data_files:
+  train: data/train.csv   # low/mid-mass T Tauri stars, log10_M_star <= -0.3 (~0.5 M_sun)
+  test:  data/test.csv    # solar-mass and higher-mass hosts, log10_M_star > -0.3
+
+n_train: 168
+n_test:  38
+
+# Audit note: The OOD split uses log10_M_star (DM97) = -0.3 as the threshold.
+# Train covers late-M through early-K hosts (mostly <0.5 M_sun); test covers
+# K and earlier types (>0.5 M_sun). The shipped baseline (sdf00) uses the SDF00
+# mass column; the split is on the DM97 mass column — these are the same physical
+# quantity inferred via two tightly-correlated pre-MS grids (~0.05 dex apart), so
+# the high-mass-host OOD intent holds (not a true split/baseline decoupling).
+# Intrinsic scatter floor is ~0.7 dex (Andrews 2013 §3.2.2, PDF p. 13-14);
+# RMSE on test is expected to be near that floor for the best baseline.
+
+references:
+  - id: andrews_2013_sdf00
+    label: "Andrews 2013 — SDF00 pre-MS grid: log F_mm = -1.6 + 1.7*log M_star"
+    formula_file: formulas/andrews_2013_sdf00.py
+    reference_pdf: reference/andrews_2013.pdf
+    n_law_constants: 2
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.5330
+      r2: 0.2556
+  # andrews_2013_dm97 + andrews_2013_bcah98 removed from the bank 2026-05-29 (audit):
+  # F8 padding — identical log-linear form, same paper, differing only by pre-MS grid
+  # (correlated stellar-mass estimates); sdf00 is the best variant. (WAVE16's re-add was
+  # incomplete — it never updated formulas/__init__._STEMS, so they were never in the live
+  # bank, and the metadata residue disagreed with reference_metrics.) See VERDICT.md.
+
+caps:
+  max_law_constants:       2
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include the positive scaling of 1.3 mm disk continuum flux with host stellar mass"
+  - "include a decline of mm continuum flux with increasing host-star age (disk depletion / dispersal over time)"
+  - "the mm-flux dependence on host stellar mass is a single power law (log-log linear, no break or turnover across the mass range)"
+
+best_baseline: 0.532986    # andrews_2013_sdf00 — rmse (lower is better); regenerated 2026-05-30

@@ -1,0 +1,58 @@
+import numpy as np
+
+def predict(X):
+    # Standard urban scaling relationship:
+    # ln(Y) = a + beta * ln(N)
+    # A commonly cited benchmark for metropolitan GDP is superlinear scaling,
+    # with beta around 1.15.
+    a = -1.0
+    beta = 1.15
+    return a + beta * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard urban scaling relationship for metropolitan output:
+    # ln(Y) = alpha + beta * ln(N)
+    # with the canonical estimate beta ≈ 1.15 for GMP vs population.
+    alpha = -2.6
+    beta = 1.15
+    return alpha + beta * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard urban scaling / size relationship:
+    # ln(GMP) = a + b * ln(population)
+    # A commonly cited canonical exponent for metro output is ~1.15
+    a = -2.0
+    b = 1.15
+    return a + b * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard urban scaling relationship for metropolitan economic output:
+    # ln(Y) = a + beta * ln(N)
+    # A commonly cited benchmark exponent for GDP is superlinear, around 1.15.
+    a = -1.5
+    beta = 1.15
+    return a + beta * X[:, 0]
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard urban scaling / agglomeration form:
+    # ln(GMP) = a + beta * ln(population)
+    # Canonical benchmark often used for metro GDP vs. population is near-unity elasticitiy.
+    a = 0.0
+    beta = 1.0
+    return a + beta * X[:, 0]

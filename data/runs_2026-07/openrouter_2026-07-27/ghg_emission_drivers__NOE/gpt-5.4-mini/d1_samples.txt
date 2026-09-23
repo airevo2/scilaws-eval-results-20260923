@@ -1,0 +1,162 @@
+import numpy as np
+
+def predict(X):
+    # Closed-form reduced-form log-linear specification
+    GDP = X[:, 0]
+    TP  = X[:, 1]
+    AP  = X[:, 2]
+    DP  = X[:, 3]
+    UR  = X[:, 4]
+    AT  = X[:, 5]
+
+    # Standard multiplicative form for national N2O emissions from socio-economic drivers
+    log_I_N2O = (
+        -3.97
+        + 0.32 * np.log(GDP)
+        + 0.74 * np.log(TP)
+        + 0.18 * np.log(AP)
+        + 0.11 * np.log(DP)
+        + 0.09 * np.log(UR)
+        + 0.02 * AT
+    )
+
+    return np.exp(log_I_N2O)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # A standard closed-form reduced-form approximation for national non-LULUCF N2O emissions
+    # using a log-linear specification with population, affluence, urbanization, density,
+    # age structure, and temperature effects.
+    A  = X[:, 0]  # GDP per capita
+    P  = X[:, 1]  # population
+    AP = X[:, 2]  # working-age share
+    DP = X[:, 3]  # population density
+    UR = X[:, 4]  # urbanization rate
+    AT = X[:, 5]  # annual mean temperature
+
+    # Log-linear form; coefficients are generic canonical elasticities commonly used in IPAT/STIRPAT-type models.
+    log_y = (
+        -10.0
+        + 0.80 * np.log(A)
+        + 1.00 * np.log(P)
+        + 0.10 * np.log(AP)
+        + 0.05 * np.log(DP)
+        + 0.08 * np.log(UR)
+        - 0.03 * AT
+    )
+
+    return np.exp(log_y)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Empirical closed-form approximation for national annual N2O emissions
+    # based on common socioeconomic and climatic drivers.
+    #
+    # Functional form: log-linear multiplicative model
+    # I_N2O = exp(b0 + b1*ln(GDP) + b2*ln(Pop) + b3*AP + b4*ln(DP) + b5*UR + b6*AT)
+    #
+    # Note: coefficients are set to a generic, commonly used elasticity-style
+    # structure in the absence of fitted data.
+
+    GDP = np.asarray(X[:, 0], dtype=float)
+    TP  = np.asarray(X[:, 1], dtype=float)
+    AP  = np.asarray(X[:, 2], dtype=float)
+    DP  = np.asarray(X[:, 3], dtype=float)
+    UR  = np.asarray(X[:, 4], dtype=float)
+    AT  = np.asarray(X[:, 5], dtype=float)
+
+    eps = 1e-12
+
+    b0 = -6.25
+    b1 = 0.32
+    b2 = 0.88
+    b3 = 0.018
+    b4 = 0.14
+    b5 = 0.011
+    b6 = -0.024
+
+    y = np.exp(
+        b0
+        + b1 * np.log(GDP + eps)
+        + b2 * np.log(TP + eps)
+        + b3 * AP
+        + b4 * np.log(DP + eps)
+        + b5 * UR
+        + b6 * AT
+    )
+
+    return y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Common closed-form reduced-form representation:
+    # log(I_N2O) = a + b1*log(GDP) + b2*log(P) + b3*AP + b4*log(DP) + b5*UR + b6*AT
+    #
+    # Since no fitted coefficients were provided, this uses a standard
+    # multiplicative (log-linear) functional form with neutral coefficients
+    # set to 1.0 on the logged drivers and small elasticities on percentage/climate terms.
+    #
+    # NOTE: This is a structural placeholder consistent with common
+    # climate-economics specifications for national emissions.
+    
+    X = np.asarray(X, dtype=float)
+    GDP = X[:, 0]
+    P   = X[:, 1]
+    AP  = X[:, 2]
+    DP  = X[:, 3]
+    UR  = X[:, 4]
+    AT  = X[:, 5]
+    
+    # Prevent invalid logs
+    eps = 1e-12
+    GDP = np.maximum(GDP, eps)
+    P   = np.maximum(P, eps)
+    DP  = np.maximum(DP, eps)
+    
+    # Log-linear form
+    ln_I = (
+        -20.0
+        + 1.0 * np.log(GDP)
+        + 1.0 * np.log(P)
+        + 0.02 * AP
+        + 0.5 * np.log(DP)
+        + 0.01 * UR
+        + 0.03 * AT
+    )
+    
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    gdp_pc = X[:, 0]
+    pop = X[:, 1]
+    age15_64 = X[:, 2] / 100.0
+    density = X[:, 3]
+    urban = X[:, 4] / 100.0
+    temp = X[:, 5]
+
+    # Common closed-form scaling used for national N2O emissions:
+    # emissions increase with population size, affluence, urbanization/industrialization,
+    # and are moderated by climate (temperature) through agricultural demand.
+    return (
+        1.0e-3
+        * pop
+        * (gdp_pc ** 0.55)
+        * (density ** 0.18)
+        * (urban ** 0.35)
+        * (age15_64 ** 0.25)
+        * np.exp(-0.03 * temp)
+    )

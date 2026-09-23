@@ -1,0 +1,123 @@
+import numpy as np
+
+def predict(X):
+    # Andrews et al. (2013) scaling: log10(Fmm/mJy) = 1.3 + 1.8*log10(M*/Msun) at 140 pc
+    # Convert to log10(Fmm/Jy): subtract 3.0
+    logM = X[:, 0]        # DM97 stellar mass
+    is_uplim = X[:, 3]
+
+    a = 1.3   # intercept in log10(mJy)
+    b = 1.8   # slope with stellar mass
+
+    log_F_mJy = a + b * logM
+    log_F_Jy = log_F_mJy - 3.0
+
+    # Upper limits tend to sit slightly below the detection relation
+    log_F_Jy = log_F_Jy - 0.3 * is_uplim
+
+    return log_F_Jy
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard disk-mass / stellar-mass relation (Andrews et al. 2013):
+    #   F_mm (1.3 mm, 140 pc) scales roughly as M_star^1.5-2.0
+    #   log10(F_mm/Jy) = a + b * log10(M_star)
+    log_Mstar = X[:, 0]
+    is_uplim  = X[:, 3]
+
+    a = -1.30   # intercept: ~0.05 Jy (50 mJy) for a solar-mass star at 140 pc
+    b = 1.5     # slope of the F_mm - M_star correlation
+    c = -0.35   # upper limits sit systematically below the detection relation
+
+    log_F = a + b * log_Mstar + c * is_uplim
+    return log_F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relation for protoplanetary disk 1.3 mm continuum flux.
+
+    The most commonly cited relation (e.g. Andrews et al. 2013) is a
+    power-law between disk millimeter flux and stellar mass:
+
+        Fmm  ∝  M_star^gamma
+        log10(Fmm) = a + b * log10(M_star)
+
+    with a slope near b ~ 1.5-2.0 and normalization set so that a
+    solar-mass star (log M_star = 0) has ~ tens of mJy at 140 pc.
+    A modest downward offset is applied for 3-sigma upper limits, and a
+    weak (secular) decline of disk flux with age is included.
+    """
+    log_Mstar = X[:, 0]     # DM97 stellar mass
+    is_uplim  = X[:, 3]     # upper-limit flag
+    log_age   = X[:, 4]     # DM97 age
+
+    # Canonical fit coefficients
+    a = -1.20   # intercept: log10 flux (Jy) at M_star = 1 Msun, age = 1 Myr
+    b =  1.7    # power-law slope Fmm ∝ M_star^1.7
+    c = -0.15   # weak decline of disk flux with age
+    d = -0.30   # offset for non-detections (upper limits sit lower)
+
+    log_F = a + b * log_Mstar + c * log_age + d * is_uplim
+
+    return log_F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relation for the 1.3 mm continuum flux density
+    of protoplanetary disks (at d = 140 pc), following the canonical
+    Andrews et al. (2013)-type millimeter-flux / stellar-mass correlation:
+
+        log10( F_mm / mJy ) = alpha + beta * log10( M_star / M_sun )
+
+    with alpha ~ 2.7 (dex, mJy) and beta ~ 1.8 (the ~F ∝ M_star^1.5-2 trend).
+    Converting mJy -> Jy subtracts 3 dex.
+    """
+    logM = X[:, 0]        # DM97 stellar mass (dex M_sun)
+    is_ul = X[:, 3]       # upper-limit flag
+
+    # Canonical fit coefficients (flux in mJy at 140 pc)
+    alpha_mJy = 2.7       # dex(mJy) at M_star = 1 M_sun
+    beta      = 1.8       # power-law slope
+
+    # log10 flux in mJy
+    logF_mJy = alpha_mJy + beta * logM
+
+    # Convert to Jy (1 Jy = 1000 mJy)
+    logF_Jy = logF_mJy - 3.0
+
+    # Upper limits sit slightly below the detection trend on average
+    logF_Jy = logF_Jy - 0.3 * is_ul
+
+    return logF_Jy
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Andrews et al. (2013) style relation: F_mm scales with stellar mass
+    # log10(F_mm) ~ intercept + slope * log10(M_star)
+    # with disks near solar mass having ~30 mJy at 140 pc.
+    log_M   = X[:, 0]   # DM97 stellar mass
+    is_ul   = X[:, 3]   # upper-limit flag
+
+    slope     = 1.5     # F_mm ∝ M_star^1.5
+    intercept = -1.5    # ~30 mJy at 1 Msun, 140 pc
+
+    log_F = intercept + slope * log_M
+
+    # non-detections (upper limits) sit systematically lower
+    log_F = log_F - 0.3 * is_ul
+
+    return log_F

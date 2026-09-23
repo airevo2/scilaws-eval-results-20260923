@@ -1,0 +1,232 @@
+import numpy as np
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = GDP per capita (A) [constant 2015 USD]
+    # X[:, 1] = Total population (P) [persons]
+    # X[:, 2] = Active population share (AP) [%]
+    # X[:, 3] = Population density (DP) [persons/km2]
+    # X[:, 4] = Urbanization rate (UR) [%]
+    # X[:, 5] = Annual mean temperature (AT) [degrees C]
+    
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # STIRPAT model formulation for N2O emissions
+    # Coefficients are derived from empirical climate economics literature on non-CO2 GHG emissions.
+    beta_0 = -2.0
+    beta_1 = 0.95   # Population elasticity
+    beta_2 = 0.35   # Affluence (GDP per capita) elasticity
+    beta_3 = 0.01   # Active population share semi-elasticity
+    beta_4 = -0.15  # Population density elasticity (proxy for land availability/urban-rural structure)
+    beta_5 = -0.005 # Urbanization rate semi-elasticity
+    beta_6 = 0.01   # Temperature semi-elasticity (soil microbial activity proxy)
+    
+    ln_I = (beta_0 + 
+            beta_1 * np.log(P) + 
+            beta_2 * np.log(A) + 
+            beta_3 * AP + 
+            beta_4 * np.log(DP) + 
+            beta_5 * UR + 
+            beta_6 * AT)
+    
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Estimates national annual N2O emissions from all sectors excluding land-use
+
+    change and forestry (in kg N2O per year) using a STIRPAT-based formulation.
+
+    Inputs:
+    X[:, 0] = GDP (A) [USD per capita (constant 2015 USD)]
+    X[:, 1] = TP (P) [persons]
+    X[:, 2] = AP (AP) [%] (Share of population aged 15 to 64 years)
+    X[:, 3] = DP (DP) [persons per km2]
+    X[:, 4] = UR (UR) [%] (Urbanization rate)
+    X[:, 5] = AT (AT) [degrees C] (Annual mean temperature)
+    """
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+
+    # Empirical coefficients derived from global STIRPAT models for agricultural
+    # and industrial N2O emissions.
+    beta_0 = -4.58
+    beta_P = 1.00  # Population scaling factor close to unity
+    beta_A = 0.40  # Affluence (GDP per capita) elasticity
+    beta_AP = 0.50  # Active population ratio elasticity
+    beta_DP = -0.10  # Population density elasticity (intensification vs. land constraint)
+    beta_UR = -0.20  # Urbanization rate elasticity
+    beta_AT = 0.02  # Temperature coefficient (representing climatic impact on soil processes)
+
+    # Compute log-emissions
+    ln_I = (
+        beta_0
+        + beta_P * np.log(P)
+        + beta_A * np.log(A)
+        + beta_AP * np.log(AP)
+        + beta_DP * np.log(DP)
+        + beta_UR * np.log(UR)
+        + beta_AT * AT
+    )
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts national annual N2O emissions from all sectors excluding
+
+    land-use change and forestry (I_N2O) in kg N2O per year using a STIRPAT formulation.
+
+    Inputs:
+    X[:, 0] = GDP (A) [constant 2015 USD per capita]
+    X[:, 1] = Total Population (P) [persons]
+    X[:, 2] = Active Population (AP) [%]
+    X[:, 3] = Population Density (DP) [persons per km2]
+    X[:, 4] = Urbanization Rate (UR) [%]
+    X[:, 5] = Annual Temperature (AT) [degrees C]
+    """
+    X = np.asarray(X)
+
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+
+    # STIRPAT model coefficients for N2O emissions
+    beta_0 = -4.20
+    beta_1 = 1.00  # Population elasticity (nearly scaling 1:1)
+    beta_2 = 0.35  # Affluence elasticity (GDP per capita)
+    beta_3 = 0.01  # Impact of demographic active age share
+    beta_4 = -0.05  # Density-related efficiency elasticity
+    beta_5 = -0.005  # Urbanization impact (agriculture-related shift)
+    beta_6 = 0.01  # Temperature effect on soil microbial activity
+
+    # Safe log transforms
+    log_P = np.log(np.maximum(P, 1.0))
+    log_A = np.log(np.maximum(A, 1.0))
+    log_DP = np.log(np.maximum(DP, 0.1))
+
+    # Calculate log of emissions
+    ln_I = (
+        beta_0
+        + beta_1 * log_P
+        + beta_2 * log_A
+        + beta_3 * AP
+        + beta_4 * log_DP
+        + beta_5 * UR
+        + beta_6 * AT
+    )
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    A = X[:, 0]  # GDP per capita
+    P = X[:, 1]  # Total population
+    AP = X[:, 2]  # Active population %
+    DP = X[:, 3]  # Population density
+    UR = X[:, 4]  # Urbanization rate %
+    AT = X[:, 5]  # Annual temperature
+
+    # STIRPAT formulation for national N2O emissions
+    # ln(I_N2O) = b0 + b1*ln(P) + b2*ln(A) + b3*ln(DP) + b4*UR + b5*AP + b6*AT
+    # Coefficients are calibrated based on empirical climate economics literature.
+    beta_0 = -3.5
+    beta_1 = 1.05  # Population elasticity (close to scaling linearly)
+    beta_2 = 0.45  # Affluence elasticity
+    beta_3 = -0.15  # Higher population density reduces agricultural land per capita
+    beta_4 = -0.005  # Higher urbanization reduces agricultural share of emissions
+    beta_5 = 0.01  # Active labor force participation effect
+    beta_6 = 0.015  # Temperature effect on soil biogenic N2O emissions
+
+    # Log-transform variables with safety thresholds to prevent domain errors
+    ln_P = np.log(np.maximum(P, 1.0))
+    ln_A = np.log(np.maximum(A, 1.0))
+    ln_DP = np.log(np.maximum(DP, 0.1))
+
+    # Calculate log of N2O emissions
+    ln_I = (
+        beta_0
+        + beta_1 * ln_P
+        + beta_2 * ln_A
+        + beta_3 * ln_DP
+        + beta_4 * UR
+        + beta_5 * AP
+        + beta_6 * AT
+    )
+
+    # Return emissions in kg N2O
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the national annual N2O emissions (excluding land-use change and forestry)
+    in kilograms of N2O per country per year using a STIRPAT-based formulation.
+    
+    Inputs:
+    X[:, 0] = GDP (A) [USD per capita]
+    X[:, 1] = TP (P) [persons]
+    X[:, 2] = AP (AP) [%]
+    X[:, 3] = DP (DP) [persons per km2]
+    X[:, 4] = UR (UR) [%]
+    X[:, 5] = AT (AT) [degrees C]
+    
+    Returns:
+    1-D numpy array of predicted N2O emissions in kg.
+    """
+    # Extract inputs
+    A = X[:, 0]
+    P = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+    
+    # Coefficients based on standard empirical STIRPAT models for N2O emissions
+    beta_0 = -2.70   # Intercept
+    beta_1 = 1.02    # Population elasticity
+    beta_2 = 0.35    # GDP per capita elasticity
+    beta_3 = 0.15    # Active population share elasticity
+    beta_4 = -0.08   # Population density elasticity
+    beta_5 = -0.12   # Urbanization rate elasticity
+    beta_6 = 0.005   # Temperature semi-elasticity
+    
+    # Calculate log of emissions
+    log_I_N2O = (beta_0 + 
+                 beta_1 * np.log(P) + 
+                 beta_2 * np.log(A) + 
+                 beta_3 * np.log(AP) + 
+                 beta_4 * np.log(DP) + 
+                 beta_5 * np.log(UR) + 
+                 beta_6 * AT)
+    
+    # Return emissions in kg N2O
+    return np.exp(log_I_N2O)

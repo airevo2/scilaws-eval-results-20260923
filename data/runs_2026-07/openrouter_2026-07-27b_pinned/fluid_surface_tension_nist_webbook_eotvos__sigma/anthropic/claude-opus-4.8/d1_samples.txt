@@ -1,0 +1,94 @@
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    rho = X[:, 1]
+    Tc = X[:, 2]
+    M = X[:, 3]
+
+    # Eötvös rule: sigma * V_m^(2/3) = k * (T_c - T)
+    # V_m = M / rho  [m^3/mol]
+    # k ~ 2.1e-7 J/(K mol^(2/3))
+    k = 2.1e-7
+
+    V_m = M / rho
+    sigma = k * (Tc - T) / np.power(V_m, 2.0 / 3.0)
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Eötvös rule: sigma * V_m^(2/3) = k * (T_c - T)
+    # k ~ 2.1e-7 J/(K*mol^(2/3))
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+
+    k = 2.1e-7  # J K^-1 mol^-2/3
+
+    V_m = M_mol / rho_liq          # molar volume [m^3/mol]
+    sigma = k * (T_c - T) / np.power(V_m, 2.0 / 3.0)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M = X[:, 3]
+
+    # Eötvös equation: sigma * V_m^(2/3) = k * (T_c - T)
+    # k is the Eötvös constant ~ 2.1e-7 J / (K * mol^(2/3))
+    k = 2.1e-7  # J K^-1 mol^-(2/3)
+
+    V_m = M / rho_liq          # molar volume [m^3/mol]
+    sigma = k * (T_c - T) / np.power(V_m, 2.0 / 3.0)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T      = X[:, 0]          # K
+    rho    = X[:, 1]          # kg/m^3
+    T_c    = X[:, 2]          # K
+    M      = X[:, 3]          # kg/mol
+
+    # Eötvös rule:  sigma * V_m^(2/3) = k * (T_c - T)
+    # with the empirical Eötvös constant k ~ 2.1e-7 J/(K mol^(2/3))
+    k = 2.1e-7
+
+    V_m = M / rho             # molar volume [m^3/mol]
+    sigma = k * (T_c - T) / np.power(V_m, 2.0/3.0)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T      = X[:, 0]          # K
+    rho    = X[:, 1]          # kg/m^3
+    Tc     = X[:, 2]          # K
+    M      = X[:, 3]          # kg/mol
+
+    # Molar volume V_m [m^3/mol]
+    Vm = M / rho
+
+    # Eötvös rule: sigma * Vm^(2/3) = k * (T_c - T)
+    # with the commonly cited Eötvös constant k ~ 2.1e-7 J/(K mol^(2/3))
+    k = 2.1e-7
+
+    sigma = k * (Tc - T) / np.power(Vm, 2.0/3.0)
+
+    return sigma

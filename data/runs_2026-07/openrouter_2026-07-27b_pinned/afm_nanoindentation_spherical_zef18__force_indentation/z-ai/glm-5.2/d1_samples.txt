@@ -1,0 +1,88 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard Hertzian contact model for a spherical indenter on an elastic half-space:
+    F = (4/3) * E_star * sqrt(R) * delta^(3/2)
+    where E_star is the reduced Young's modulus.
+    """
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Reduced Young's modulus (fitted coefficient, set to a placeholder value)
+    E_star = 1.0 
+    
+    # Ensure non-negative indentation to avoid complex numbers for delta < 0
+    delta_pos = np.maximum(delta, 0.0)
+    
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * np.power(delta_pos, 1.5)
+    
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Fitted effective Young's modulus (Pa) for the Hertz contact model
+    E_eff = 1.0e3 
+    
+    # Hertz model for a spherical indenter: F = (4/3) * E_eff * sqrt(R) * delta^(3/2)
+    F = (4.0 / 3.0) * E_eff * np.sqrt(R) * np.power(delta, 1.5)
+    
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Effective elastic modulus (reduced Young's modulus, E*)
+    # In the standard Hertz model, this is the primary fitted coefficient.
+    E_eff = 1.0 
+    
+    # Hertz model for a spherical indenter on an elastic half-space:
+    # F = (4/3) * E* * sqrt(R) * delta^(3/2)
+    F = (4.0 / 3.0) * E_eff * np.sqrt(R) * np.power(delta, 1.5)
+    
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Effective Young's modulus (fitted coefficient, Pa)
+    E_star = 1.0 
+    
+    # Hertz contact model for a spherical indenter
+    F = (4.0 / 3.0) * E_star * np.sqrt(R) * np.power(delta, 1.5)
+    
+    return F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    R = X[:, 1]
+    
+    # Fitted effective Young's modulus (E*) in Pascals (Pa)
+    # A typical value of 1000.0 Pa (1 kPa) is used as a representative constant
+    E_eff = 1000.0 
+    
+    # Hertzian contact mechanics model for a spherical indenter:
+    # F = (4/3) * E_eff * sqrt(R) * delta^(3/2)
+    F = (4.0 / 3.0) * E_eff * np.sqrt(R) * np.power(np.maximum(delta, 0.0), 1.5)
+    
+    return F

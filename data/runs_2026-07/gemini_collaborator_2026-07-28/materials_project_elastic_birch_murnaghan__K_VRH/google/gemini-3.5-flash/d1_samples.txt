@@ -1,0 +1,141 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    V_a = X[:, 0]  # Atomic volume [angstrom^3]
+    rho = X[:, 2]  # Mass density [g/cm^3]
+    cs = X[:, 3]  # Crystal system ID (2 to 7)
+
+    # Power-law relationship based on atomic volume and density.
+    # Bulk modulus scales inversely with atomic volume and positively with density.
+    K_base = 2818.4 * (V_a**-1.7) * (rho**0.7)
+
+    # Empirical correction for crystal system symmetry (cs: 2=monoclinic, 7=cubic).
+    # Higher symmetry systems tend to have slightly higher packing efficiency and isotropic stiffness.
+    cs_correction = 0.95 + 0.01 * cs
+
+    K_VRH = K_base * cs_correction
+
+    # Bulk modulus must be positive (clip at a reasonable physical lower bound of 0.1 GPa)
+    return np.clip(K_VRH, 0.1, None)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Voigt-Reuss-Hill average polycrystalline bulk modulus K_VRH (in GPa)
+    using an empirical, physically-informed scaling relationship based on 
+    atomic volume, average atomic mass, density, and crystal system.
+    
+    Inputs:
+    X[:, 0] = V_atomic_A3 (V_a) [angstrom^3]
+    X[:, 1] = M_avg_amu (M_avg) [amu]
+    X[:, 2] = density_g_cm3 (rho) [g/cm^3]
+    X[:, 3] = crystal_system_id (cs) [2 to 7]
+    """
+    V_a = X[:, 0]
+    M_avg = X[:, 1]
+    rho = X[:, 2]
+    cs = X[:, 3]
+    
+    # Empirical power-law relationship incorporating atomic packing,
+    # elemental mass, mass density, and structural symmetry.
+    ln_K = 7.8 - 1.4 * np.log(V_a) - 0.1 * np.log(M_avg) + 0.4 * np.log(rho) + 0.05 * cs
+    K_VRH = np.exp(ln_K)
+    
+    return K_VRH
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the Voigt-Reuss-Hill average polycrystalline bulk modulus K_VRH (in GPa)
+    using a physically-motivated semi-empirical power-law relationship based on
+    atomic volume, mass density, average atomic mass, and crystal system symmetry.
+    
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = V_atomic_A3 (V_a) [angstrom^3]
+        - X[:, 1] = M_avg_amu (M_avg) [amu]
+        - X[:, 2] = density_g_cm3 (rho) [g/cm^3]
+        - X[:, 3] = crystal_system_id (cs) [2 to 7]
+    
+    Returns:
+    - 1-D numpy array of K_VRH [GPa]
+    """
+    V_a = X[:, 0]
+    M_avg = X[:, 1]
+    rho = X[:, 2]
+    cs = X[:, 3]
+    
+    # Semi-empirical scaling model derived from the electrostatic energy density
+    # and packing characteristics of crystal systems.
+    ln_K = 8.1 - 1.25 * np.log(V_a) + 0.55 * np.log(rho) - 0.32 * np.log(M_avg) + 0.04 * cs
+    
+    return np.exp(ln_K)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract features from input array
+    V_a = X[:, 0]  # Atomic volume [A^3]
+    M_avg = X[:, 1]  # Average atomic mass [amu]
+    rho = X[:, 2]  # Density [g/cm^3]
+    cs = X[:, 3]  # Crystal system ID (2 to 7)
+
+    # Semi-empirical log-linear relationship for polycrystalline bulk modulus K_VRH (in GPa)
+    # derived from solid-state scaling laws (K scales strongly with packing density and V_a^-4/3)
+    ln_K = (
+        8.15
+        - 1.35 * np.log(V_a)
+        - 0.12 * np.log(M_avg)
+        + 0.15 * np.log(rho)
+        + 0.06 * cs
+    )
+
+    return np.exp(ln_K)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the Voigt-Reuss-Hill bulk modulus K_VRH (in GPa) using a
+
+    physically-motivated empirical power-law relationship based on atomic
+    volume, average atomic mass, density, and crystal system.
+
+    Inputs:
+        X: 2-D numpy array where:
+           - X[:, 0] = V_atomic_A3 (V_a) [angstrom^3]
+           - X[:, 1] = M_avg_amu (M_avg) [amu]
+           - X[:, 2] = density_g_cm3 (rho) [g/cm^3]
+           - X[:, 3] = crystal_system_id (cs) [2 to 7]
+
+    Returns:
+        1-D numpy array of predicted K_VRH [GPa].
+    """
+    V_a = X[:, 0]
+    M_avg = X[:, 1]
+    cs = X[:, 3]
+
+    # Power law relation: K is inversely proportional to atomic volume (V_a)
+    # and average atomic mass (M_avg), with a correction for crystal system symmetry.
+    K_pred = (
+        12000.0
+        * np.power(V_a, -1.6)
+        * np.power(M_avg, -0.1)
+        * (1.0 + 0.05 * (cs - 5.0))
+    )
+
+    # Ensure physical lower bound for bulk modulus
+    return np.maximum(K_pred, 0.1)

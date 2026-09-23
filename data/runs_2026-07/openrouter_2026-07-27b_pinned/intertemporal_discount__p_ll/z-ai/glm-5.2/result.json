@@ -1,0 +1,26 @@
+{
+  "task": "intertemporal_discount__p_ll",
+  "model": "z-ai/glm-5.2",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "laibson_1997",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "mazur_1987",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

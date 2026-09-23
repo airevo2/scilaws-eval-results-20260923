@@ -1,0 +1,109 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of the 1.3 mm continuum flux density (Jy) for protoplanetary
+    disks at 140 pc using the canonical sub-mm flux–stellar mass relation:
+
+        F_mm ∝ M_star^alpha
+
+    Reference slope alpha ~ 1.5 is the most commonly cited value from
+    Andrews & Williams (2005), Andrews et al. (2013), and reviews
+    (e.g., Williams & Cieza 2011; Testi et al. 2014).
+    Normalization chosen so a 1 M_sun star yields ~50 mJy, consistent
+    with the Taurus survey medians.
+    """
+    log10_M_star = X[:, 0]
+
+    # Canonical power-law index for F_mm vs M_star
+    alpha = 1.5
+
+    # Intercept: log10(F_0 / Jy) where F_0 is the flux at M_star = 1 M_sun
+    # ~50 mJy for a solar-mass T Tauri star in Taurus at 140 pc
+    beta = -1.3
+
+    log10_F = alpha * log10_M_star + beta
+    return log10_F
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard empirical power-law relation for 1.3 mm continuum flux density
+    of protoplanetary disks (Lupus-like, d = 140 pc):
+    
+        log10(F_mm / Jy) = alpha * log10(M_star / M_sun) + beta
+    
+    This is the canonical F_mm proportional to M_star^alpha relation
+    (e.g., Andrews & Williams 2005; Ansdell et al. 2016; Manara et al. 2018).
+    """
+    log10_M_star = X[:, 0]
+    
+    # Canonical power-law index from Lupus/Taurus disk surveys
+    alpha = 1.5
+    
+    # Normalization calibrated for 1.3 mm at 140 pc
+    # (F ~ 10 mJy for a 1 M_sun star, consistent with ALMA Lupus surveys)
+    beta = -2.0
+    
+    log10_F_1p3 = alpha * log10_M_star + beta
+    return log10_F_1p3
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard log-linear disk mass (flux) -- stellar mass relation:
+    #   log10(F_mm) = alpha * log10(M_star) + beta
+    # The most commonly cited slope alpha ~ 1.5 (e.g., Andrews et al. 2013;
+    # Ansdell et al. 2016) from M_dust proportional to M_star^alpha.
+    # Intercept calibrated for 1.3 mm flux in Jy at d = 140 pc.
+    log10_M_star = X[:, 0]
+    alpha = 1.5
+    beta = -1.5
+    return alpha * log10_M_star + beta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard disk mass-stellar mass correlation (power law in log space)
+    # log10(F_mm) = alpha * log10(M_star) + beta
+    # Canonical slope alpha ~ 2.0 (accounting for upper limits via survival analysis,
+    # e.g., Andrews et al. 2013) and intercept calibrated for 1.3 mm at 140 pc.
+    alpha = 2.0
+    beta = -1.5
+    
+    log10_M_star = X[:, 0]  # DM97 stellar mass (primary grid)
+    return alpha * log10_M_star + beta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the base-10 logarithm of the 1.3 mm continuum flux density 
+    using the canonical protoplanetary disk scaling relation F_mm ~ M_star^alpha.
+    
+    The other columns (alternative PMS tracks, upper limit flags, age) are 
+    catalog-specific metadata or quality flags and are not part of the 
+    fundamental physical scaling law.
+    """
+    log10_M_star = X[:, 0]
+    
+    # Canonical scaling exponent for mm flux vs stellar mass 
+    # (e.g., Andrews & Williams 2005; Andrews et al. 2013)
+    alpha = 1.5
+    
+    # Normalization constant: typical 1.3 mm flux for a 1 M_sun star 
+    # at 140 pc is ~30 mJy. log10(0.03 Jy) ≈ -1.52
+    beta = -1.52
+    
+    log10_F_1p3_Jy = alpha * log10_M_star + beta
+    
+    return log10_F_1p3_Jy

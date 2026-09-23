@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "E_n"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Dimensionless"
+    symbol: "n"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"
+  - name: "volume"
+    symbol: "V1"
+    unit: ""
+    description: "volume"
+  - name: "volume"
+    symbol: "V2"
+    unit: ""
+    description: "volume"

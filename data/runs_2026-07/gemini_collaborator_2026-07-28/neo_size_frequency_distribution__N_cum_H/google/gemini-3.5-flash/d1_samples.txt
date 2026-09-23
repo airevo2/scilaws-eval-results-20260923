@@ -1,0 +1,83 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is H_upper (absolute magnitude)
+    H = X[:, 0]
+
+    # The cumulative size frequency distribution (SFD) for NEOs is modeled
+    # as a power-law in size, which translates to an exponential in magnitude:
+    # N(<H) = 10**(a + b * H)
+    # Using the boundary conditions: N(<12.06) approx 2, N(<18.0) approx 1097
+    b = 0.4613
+    a = -5.2638
+
+    return 10 ** (a + b * H)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the absolute magnitude H
+    H = X[:, 0]
+
+    # Standard cumulative size-frequency distribution (SFD) for NEOs:
+    # N(<H) = 10^(a + b * H)
+    # Fitted to match N(<H) ~ 2 at H = 12.06 and N(<H) ~ 1097 at H = 18.0
+    a = -5.2639
+    b = 0.46134
+
+    return 10 ** (a + b * H)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the absolute magnitude threshold H
+    H = X[:, 0]
+
+    # Cumulative size-frequency distribution (SFD) of NEOs
+    # Modeled as log10(N) = a * H + b, fit to the range N(12) = 2 to N(18) = 1097
+    a = 0.456528
+    b = -5.1773
+
+    return 10 ** (a * H + b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the cumulative count of near-Earth objects N(<H) with absolute 
+    magnitude at or brighter than H_upper.
+    
+    Uses the canonical power-law cumulative size-frequency distribution (SFD)
+    of near-Earth objects modeled as N(<H) = 10^(a * H + b), calibrated to the
+    range of [12, 18] where N(<12) ~ 2 and N(<18) ~ 1097.
+    """
+    H = X[:, 0]
+    # Calibrated coefficients for the exponential SFD in the H in [12, 18] range
+    a = 0.45653
+    b = -5.17733
+    return 10**(a * H + b)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract the absolute magnitude upper limit H
+    H = X[:, 0]
+
+    # Cumulative size frequency distribution (SFD) modeled as an exponential relation
+    # log10(N) = a * H + b, fitted to match the boundaries N(12) = 2 and N(18) = 1097
+    a = 0.45652944
+    b = -5.1773233
+
+    return 10 ** (a * H + b)

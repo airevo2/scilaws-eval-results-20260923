@@ -1,0 +1,213 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict annual national primary energy consumption (I_E) in TJ using 
+    an extended STIRPAT (IPAT) multiplicative model. The model expresses 
+    I_E as the product of population, affluence (GDP per capita), and a 
+    technology/energy-intensity factor that can be further decomposed into 
+    the supplied drivers (working-age share, population density, 
+    urbanization, and temperature). Coefficients are set to placeholder 
+    values that reduce the formula to the fundamental Kaya identity 
+    (E = energy_intensity * Population * GDP_per_capita); they should be 
+    calibrated against data for real applications.
+    """
+    # Unpack inputs
+    gdp_per_cap = X[:, 0]        # A   (USD per capita)
+    pop = X[:, 1]                # P   (persons)
+    active_share = X[:, 2]       # f_active (%, working-age share)
+    density = X[:, 3]            # rho (persons per km2)
+    urban_share = X[:, 4]        # f_urban (%, urban population share)
+    temperature = X[:, 5]        # T   (degrees C)
+
+    # --- Coefficients (named constants; replace with fitted values) ---
+    # Energy intensity (TJ per 2015 USD) – global average ~ 7e-6
+    energy_intensity = 1.0       # placeholder
+    # Exponents (elasticities) for each driver
+    b_pop = 1.0                  # population elasticity
+    b_gdp = 1.0                  # GDP per capita elasticity
+    b_active = 0.0               # working-age share elasticity
+    b_density = 0.0              # population density elasticity
+    b_urban = 0.0                # urbanization elasticity
+    b_temp = 0.0                 # temperature semi-elasticity (for linear T)
+    # ----------------------------------------------------------------
+
+    # Extended STIRPAT (IPAT) model
+    I_E = (energy_intensity *
+           (pop ** b_pop) *
+           (gdp_per_cap ** b_gdp) *
+           (active_share ** b_active) *
+           (density ** b_density) *
+           (urban_share ** b_urban) *
+           np.exp(b_temp * temperature))
+
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict annual national primary energy consumption I_E [TJ] using a standard
+    STIRPAT (Stochastic Impacts by Regression on Population, Affluence, and Technology)
+    multiplicative model. The inputs are:
+    
+    X[:, 0] = A   : GDP per capita [USD/capita, constant 2015]
+    X[:, 1] = P   : Total resident population [persons]
+    X[:, 2] = f_active : Working-age fraction [%]
+    X[:, 3] = rho : Population density [persons/km²]
+    X[:, 4] = f_urban  : Urban population share [%]
+    X[:, 5] = T   : Mean annual surface air temperature [°C]
+    
+    Coefficients are based on typical cross-country estimates from the energy‑economics
+    literature (e.g., Liddle, 2014; York et al., 2003).
+    """
+    # Unpack inputs
+    A = X[:, 0]
+    P = X[:, 1]
+    f_active = X[:, 2] / 100.0   # fraction [0–1]
+    rho = X[:, 3]
+    f_urban = X[:, 4] / 100.0    # fraction [0–1]
+    T = X[:, 5]
+
+    # Model coefficients (log-linear form)
+    b0   = -8.8      # intercept (calibrated to global energy scale in TJ)
+    b_P  = 1.0       # population elasticity
+    b_A  = 0.7       # GDP-per-capita elasticity
+    b_urb = 0.3      # semi-elasticity for urban share
+    b_act = 0.2      # semi-elasticity for working-age share
+    b_rho = -0.1     # population density elasticity
+    b_T   = 0.01     # semi-elasticity for temperature [per °C]
+
+    # Log of total primary energy
+    log_E = (b0
+             + b_P  * np.log(P)
+             + b_A  * np.log(A)
+             + b_urb * f_urban
+             + b_act * f_active
+             + b_rho * np.log(rho)
+             + b_T   * T)
+
+    I_E = np.exp(log_E)   # [TJ]
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard STIRPAT-style closed-form model for annual national primary energy consumption (I_E) in TJ.
+    I_E = intercept * (GDP)^a * (P)^b * (AP)^c * (DP)^d * (UR)^e * exp(f * AT)
+    Coefficients are named constants (placeholders; to be replaced with fitted values).
+    """
+    # Named coefficients (to be calibrated)
+    intercept = 1.0
+    a = 1.0   # elasticity w.r.t. GDP per capita
+    b = 1.0   # elasticity w.r.t. total population
+    c = 0.0   # elasticity w.r.t. working-age share
+    d = 0.0   # elasticity w.r.t. population density
+    e = 0.0   # elasticity w.r.t. urban share
+    f = 0.0   # semi-elasticity w.r.t. mean annual temperature
+
+    GDP = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P   = X[:, 1]   # Total population (persons)
+    AP  = X[:, 2]   # Working-age share (%)
+    DP  = X[:, 3]   # Population density (persons/km2)
+    UR  = X[:, 4]   # Urban share (%)
+    AT  = X[:, 5]   # Mean annual temperature (deg C)
+
+    I_E = intercept * (GDP ** a) * (P ** b) * (AP ** c) * (DP ** d) * (UR ** e) * np.exp(f * AT)
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Unpack inputs
+    A    = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P    = X[:, 1]   # Total population (persons)
+    APop = X[:, 2]   # Working-age share (%)
+    DP   = X[:, 3]   # Population density (persons per km2)
+    UR   = X[:, 4]   # Urban population share (%)
+    AT   = X[:, 5]   # Mean annual surface air temperature (deg C)
+
+    # Fitted coefficients (canonical energy‑economy model)
+    BETA0     = -11.16     # constant
+    BETA_LNA  = -0.20      # ln(GDP per capita)
+    BETA_LNA2 =  0.01      # [ln(GDP per capita)]^2
+    BETA_UR   =  0.005     # urbanisation share (%)
+    BETA_AP   =  0.010     # working‑age share (%)
+    BETA_LNDP = -0.15      # ln(population density)
+    BETA_AT   =  0.001     # temperature
+
+    # Log‑linear model (STIRPAT / reduced‑form demand)
+    ln_A  = np.log(A)
+    ln_P  = np.log(P)
+    ln_DP = np.log(DP)
+
+    ln_E = (ln_P
+            + (1.0 + BETA_LNA) * ln_A
+            + BETA_LNA2 * ln_A**2
+            + BETA_UR * UR
+            + BETA_AP * APop
+            + BETA_LNDP * ln_DP
+            + BETA_AT * AT
+            + BETA0)
+
+    I_E = np.exp(ln_E)      # primary energy consumption in TJ
+    return I_E
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts annual national primary energy consumption (I_E) in terajoules [TJ]
+    using a standard STIRPAT (Stochastic Impacts by Regression on Population,
+    Affluence, and Technology) multiplicative form combined with a quadratic
+    temperature response.
+    
+    Inputs (X is a 2-D numpy array; X[:, i] is the i-th input):
+        X[:,0] = GDP (A)                 [USD per capita, constant 2015 USD]
+        X[:,1] = TP (P)                  [persons]
+        X[:,2] = AP (f_active)           [%]  working-age share (15-64)
+        X[:,3] = DP (rho)                [persons per km²]
+        X[:,4] = UR (f_urban)            [%]  urban population share
+        X[:,5] = AT (T)                  [°C] mean annual surface air temperature
+    Returns:
+        I_E : 1-D numpy array of primary energy consumption in TJ.
+    """
+    # Unpack inputs
+    A = X[:, 0]          # GDP per capita
+    P = X[:, 1]          # total population
+    f_active = X[:, 2] / 100.0   # working-age fraction
+    rho = X[:, 3]                 # population density
+    f_urban = X[:, 4] / 100.0    # urban fraction
+    T = X[:, 5]                   # temperature
+
+    # --- Fitted coefficients from representative cross‑country energy studies ---
+    # log‑intercept (calibrated to give realistic TJ levels)
+    B0 = -7.78
+    B_POP = 0.95       # population elasticity
+    B_GDP = 0.75       # income elasticity (GDP per capita)
+    B_ACT = 0.20       # working-age share elasticity
+    B_DENS = -0.05     # population density elasticity
+    B_URB = 0.30       # urbanisation elasticity
+    B_TEMP2 = 0.0015   # quadratic temperature coefficient (symmetric U‑shape)
+    T_REF = 18.0       # comfort temperature (°C) minimising heating/cooling demand
+
+    # Compute the log of primary energy consumption
+    ln_IE = (B0
+             + B_POP  * np.log(P)
+             + B_GDP  * np.log(A)
+             + B_ACT  * np.log(f_active)
+             + B_DENS * np.log(rho)
+             + B_URB  * np.log(f_urban)
+             + B_TEMP2 * (T - T_REF) ** 2)
+
+    I_E = np.exp(ln_IE)   # primary energy in TJ
+    return I_E

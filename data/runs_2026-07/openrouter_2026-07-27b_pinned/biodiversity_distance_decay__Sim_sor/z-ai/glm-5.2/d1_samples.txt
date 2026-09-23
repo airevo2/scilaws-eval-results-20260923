@@ -1,0 +1,59 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Standard negative exponential decay of similarity with distance
+    # S = a * exp(-b * d)
+    a = 1.0
+    b = 0.3
+    S = a * np.exp(-b * d)
+    return np.clip(S, 0, 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Standard distance-decay of similarity model (negative exponential):
+    # S = a * exp(-b * d)
+    a = 0.95   # expected similarity at zero environmental distance
+    b = 0.25   # decay rate per unit standardised environmental distance
+    S = a * np.exp(-b * d)
+    return S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Exponential distance-decay of similarity: S = a * exp(-b * d)
+    a = 0.95  # Initial similarity (intercept at d=0)
+    b = 0.30  # Rate of decay
+    S = a * np.exp(-b * d)
+    return np.clip(S, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    # Standard exponential distance-decay of similarity: S = a * exp(-b * d)
+    a = 0.95  # intercept (similarity at d=0)
+    b = 0.4   # decay rate
+    S = a * np.exp(-b * d)
+    return np.clip(S, 0, 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    a = 0.95   # initial similarity at zero environmental distance
+    b = 0.30   # exponential decay rate
+    S = a * np.exp(-b * d)
+    S = np.clip(S, 0.0, 1.0)
+    return S

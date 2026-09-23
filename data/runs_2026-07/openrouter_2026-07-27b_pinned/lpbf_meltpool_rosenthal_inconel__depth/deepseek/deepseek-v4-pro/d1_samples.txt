@@ -1,0 +1,217 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict melt pool depth using the normalized enthalpy model (King et al., 2014)
+    for conduction-mode laser melting. This is a widely cited closed-form relationship
+    in laser powder-bed fusion additive manufacturing.
+    
+    Inputs:
+        X[:,0] : laser_power_W (P)                      [W]
+        X[:,1] : scan_velocity_mm_per_s (V)              [mm/s]
+        X[:,2] : beam_diameter_um (D4sigma)              [um]
+                 (D4sigma = 4 * (1/e^2 radius))
+    Output:
+        d : meltpool_depth_um                            [um]
+    """
+    # Unpack inputs
+    P = X[:, 0]          # Laser power [W]
+    V = X[:, 1]          # Scan velocity [mm/s]
+    D4s = X[:, 2]        # D4sigma beam diameter [um]
+
+    # Convert to SI units
+    V_ms = V * 1e-3               # m/s
+    D4s_m = D4s * 1e-6            # m
+
+    # King et al. use the 1/e^2 beam diameter.
+    # Given D4sigma = 4 * (1/e^2 radius), the 1/e^2 diameter = D4sigma / 2.
+    D_1e2 = D4s_m / 2.0           # 1/e^2 diameter [m]
+
+    # Material constants for Ti-6Al-4V (typical values for laser AM)
+    A_abs = 0.35          # absorptivity [-]
+    rho   = 4420.0        # density [kg/m^3]
+    Cp    = 600.0         # specific heat capacity [J/(kg*K)]
+    Tm    = 1923.0        # melting temperature [K]
+    T0    = 300.0         # ambient / preheat temperature [K]
+    alpha = 2.6e-6        # thermal diffusivity [m^2/s]
+
+    delta_T = Tm - T0     # K
+
+    # Normalized enthalpy (dimensionless)
+    # ΔH/h_s = (A * P) / (π * ρ * Cp * ΔT * sqrt(α * V * D^3))
+    denom = np.pi * rho * Cp * delta_T * np.sqrt(alpha * V_ms * D_1e2**3)
+    delta_H_hs = (A_abs * P) / denom
+
+    # Conduction-mode melt-pool depth ratio (d / D)
+    d_ratio = np.sqrt((2.0 / np.pi) * delta_H_hs)
+
+    # Melt-pool depth [m]
+    d_m = d_ratio * D_1e2
+
+    # Convert to microns
+    d_um = d_m * 1e6
+
+    return d_um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict melt pool depth d [um] from laser power P [W], scan velocity V [mm/s],
+    and beam diameter D [um] using a conduction-mode energy balance model.
+
+    d = (eta * P) / (V * D * rho * cp * (Tm - T0)) * (2/pi)   [all in SI, then converted to um]
+    """
+    # Unpack inputs
+    P = X[:, 0]   # laser power [W]
+    V = X[:, 1]   # scan velocity [mm/s]
+    D = X[:, 2]   # beam diameter (D4sigma) [um]
+
+    # Material constants (typical values for Ti-6Al-4V)
+    eta = 0.35          # absorptivity [-]
+    rho = 4420.0        # density [kg/m^3]
+    cp  = 560.0         # specific heat capacity [J/(kg*K)]
+    Tm  = 1923.0        # melting temperature [K]
+    T0  = 300.0         # pre-heat / ambient temperature [K]
+    shape_factor = 2.0 / np.pi   # geometric factor for a moving line source
+
+    # Convert inputs to SI units
+    V_ms = V * 1e-3      # m/s
+    D_m  = D * 1e-6      # m
+
+    # Melt pool depth in meters
+    d_m = (eta * P) / (V_ms * D_m * rho * cp * (Tm - T0)) * shape_factor
+
+    # Convert to micrometers
+    d_um = d_m * 1e6
+    return d_um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict meltpool depth d [um] from laser power P [W], scan velocity V [mm/s],
+    and D4sigma beam diameter D [um] using the standard simple energy-balance
+    closed-form relationship: d = a * P / (V * D) + b.
+    The coefficients a, b are fitted constants (placeholder values shown).
+    """
+    P = X[:, 0]   # laser power [W]
+    V = X[:, 1]   # scan velocity [mm/s]
+    D = X[:, 2]   # beam diameter [um]
+
+    # Fitted constants (units chosen to give d in um)
+    a = 1.0e6      # example: um^2 * mm / (W * s)
+    b = 0.0        # offset [um]
+
+    d = a * P / (V * D) + b
+    return d
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict meltpool_depth_um (d) using the normalized enthalpy scaling law
+    (King et al., 2014) for conduction-mode laser melting.
+    
+    Inputs:
+        X[:,0] = laser_power_W (P)
+        X[:,1] = scan_velocity_mm_per_s (V)
+        X[:,2] = beam_diameter_um (D4sigma)
+    
+    Returns:
+        1-D array of melt pool depth in um.
+    """
+    # Extract inputs
+    P = X[:, 0]  # W
+    V = X[:, 1]  # mm/s
+    D = X[:, 2]  # um
+    
+    # Convert to SI units
+    V_si = V * 1e-3          # m/s
+    D_si = D * 1e-6          # m
+    r_beam = D_si / 2.0      # beam radius (m)
+    
+    # Material properties (typical for Ti-6Al-4V)
+    ABSORPTIVITY = 0.4        # laser absorptivity
+    RHO = 4420.0              # density (kg/m^3)
+    CP = 560.0                # specific heat (J/(kg*K))
+    TM = 1650.0               # melting temperature (deg C)
+    T0 = 20.0                 # preheat / ambient temperature (deg C)
+    LATENT_HEAT = 365000.0    # latent heat of fusion (J/kg)
+    THERMAL_COND = 7.0        # thermal conductivity (W/(m*K))
+    
+    # Derived material constants
+    alpha = THERMAL_COND / (RHO * CP)          # thermal diffusivity (m^2/s)
+    h_s = CP * (TM - T0) + LATENT_HEAT         # effective enthalpy to melt (J/kg)
+    
+    # Fitted proportionality constant (≈ 1 for conduction mode)
+    C = 1.0
+    
+    # Normalized enthalpy (King et al., 2014)
+    # ΔH/h_s = (A * P) / (π * ρ * h_s * sqrt(α * V * r_beam^3))
+    denominator = np.pi * RHO * h_s * np.sqrt(alpha * V_si * r_beam**3)
+    enthalpy_norm = (ABSORPTIVITY * P) / denominator
+    
+    # Melt pool depth scaling: d / r_beam = C * sqrt(ΔH/h_s)
+    d_si = C * r_beam * np.sqrt(enthalpy_norm)  # depth in meters
+    
+    # Convert to um
+    d_um = d_si * 1e6
+    
+    return d_um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict melt pool depth using the normalized enthalpy model 
+    (King et al., 2014).  Conduction-mode closed-form approximation.
+    
+    Inputs:
+        X[:,0] = laser_power_W (P)          [W]
+        X[:,1] = scan_velocity_mm_per_s (V) [mm/s]
+        X[:,2] = beam_diameter_um (D4sigma) [um]
+    
+    Returns:
+        d_um : 1-D array of melt pool depth [um]
+    """
+    # Unpack inputs
+    P = X[:, 0]          # W
+    V = X[:, 1]          # mm/s
+    D4sigma = X[:, 2]    # um
+
+    # Convert to SI base units
+    V_ms = V / 1000.0                 # m/s
+    w0_m = D4sigma * 1e-6 / 4.0       # 1/e^2 radius [m] (D4sigma = 4*w0)
+
+    # Material constants for 316L stainless steel
+    A = 0.35          # laser absorptivity
+    rho = 8000.0      # density [kg/m^3]
+    cp = 500.0        # specific heat [J/(kg K)]
+    alpha = 5e-6      # thermal diffusivity [m^2/s]
+    Tm = 1700.0       # melting temperature [K]
+    T0 = 300.0        # initial temperature [K]
+    Lf = 2.7e5        # latent heat of fusion [J/kg]
+
+    # Enthalpy required to melt
+    hs = cp * (Tm - T0) + Lf        # [J/kg]
+
+    # Normalized enthalpy (dimensionless)
+    delta_H_hs = (A * P) / (
+        np.pi * rho * hs * np.sqrt(alpha * V_ms * w0_m**3)
+    )
+
+    # Melt pool depth in conduction mode
+    d_m = w0_m * np.sqrt(2.0 / np.pi * delta_H_hs)   # [m]
+
+    # Convert to microns
+    d_um = d_m * 1e6
+    return d_um

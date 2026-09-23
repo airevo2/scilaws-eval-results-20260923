@@ -1,0 +1,446 @@
+import numpy as np
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = T (K)
+    # X[:, 1] = sio2 (mol%)
+    # X[:, 2] = tio2 (mol%)
+    # X[:, 3] = al2o3 (mol%)
+    # X[:, 4] = feo (mol%)
+    # X[:, 5] = fe2o3 (mol%)
+    # X[:, 6] = mno (mol%)
+    # X[:, 7] = mgo (mol%)
+    # X[:, 8] = cao (mol%)
+    # X[:, 9] = na2o (mol%)
+    # X[:, 10] = k2o (mol%)
+    # X[:, 11] = p2o5 (mol%)
+    # X[:, 12] = h2o (mol%)
+    
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+    
+    # Calculate total Fe as FeO (mol%)
+    feot = feo + 2.0 * fe2o3
+    
+    # Normalize compositions to 100 mol%
+    total = sio2 + tio2 + al2o3 + feot + mno + mgo + cao + na2o + k2o + p2o5 + h2o
+    total = np.where(total == 0, 100.0, total)
+    
+    # Grouped components for the Giordano et al. (2008) model
+    X1 = (sio2 + tio2) / total * 100.0
+    X2 = al2o3 / total * 100.0
+    X3 = (feot + mno) / total * 100.0
+    X4 = mgo / total * 100.0
+    X5 = cao / total * 100.0
+    X6 = (na2o + k2o) / total * 100.0
+    X7 = h2o / total * 100.0
+    
+    # Giordano et al. (2008) VFT model parameters
+    A = -4.55
+    
+    # B coefficients
+    b1 = 159.56
+    b2 = -30.68
+    b3 = -101.12
+    b4 = -125.69
+    b5 = -156.44
+    b6 = -137.93
+    b7 = -159.14
+    b11 = -112.53
+    b12 = -204.31
+    b22 = 12.45
+    
+    B = (b1 * X1 + b2 * X2 + b3 * X3 + b4 * X4 + b5 * X5 + b6 * X6 + b7 * X7 +
+         b11 * X1 * (X6 + X7) / 100.0 +
+         b12 * X2 * X6 / 100.0 +
+         b22 * X2 * X7 / 100.0)
+    
+    # C coefficients
+    c2 = 15.67
+    c3 = 8.32
+    c4 = 10.54
+    c5 = 11.92
+    c6 = 11.39
+    c7 = -11.11
+    
+    C = (c2 * X2 + c3 * X3 + c4 * X4 + c5 * X5 + c6 * X6 + c7 * X7)
+    
+    # Prevent division by zero or negative denominator
+    denom = T - C
+    denom = np.where(denom <= 0, 1e-5, denom)
+    
+    log_viscosity = A + B / denom
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract temperature (K)
+    T = X[:, 0]
+
+    # Extract composition oxides (mol%)
+    # X[:, 1:13] corresponds to SiO2, TiO2, Al2O3, FeO, Fe2O3, MnO, MgO, CaO, Na2O, K2O, P2O5, H2O
+    oxides = X[:, 1:13]
+
+    # Normalize compositions to sum to 100 mol%
+    tot = np.sum(oxides, axis=1, keepdims=True)
+    tot = np.where(tot == 0, 1e-10, tot)
+    norm_X = 100.0 * oxides / tot
+
+    # Map normalized oxides to variables
+    SiO2 = norm_X[:, 0]
+    TiO2 = norm_X[:, 1]
+    Al2O3 = norm_X[:, 2]
+    FeO = norm_X[:, 3]
+    Fe2O3 = norm_X[:, 4]
+    MnO = norm_X[:, 5]
+    MgO = norm_X[:, 6]
+    CaO = norm_X[:, 7]
+    Na2O = norm_X[:, 8]
+    K2O = norm_X[:, 9]
+    P2O5 = norm_X[:, 10]
+    H2O = norm_X[:, 11]
+
+    # Grouped components for the Giordano et al. (2008) model
+    X1 = SiO2 + TiO2
+    X2 = Al2O3
+    X3 = FeO + Fe2O3 + MnO
+    X4 = MgO
+    X5 = CaO
+    X6 = Na2O
+    X7 = K2O
+    X8 = P2O5
+    X9 = H2O
+
+    # Model parameter A (global constant in GRD2008)
+    A = -4.55
+
+    # Model parameter B
+    B = (
+        159.56 * X1
+        - 89.33 * X2
+        - 105.4 * X3
+        - 314.5 * X4
+        - 67.7 * X5
+        - 228.6 * X6
+        - 115.6 * X7
+        - 114.2 * X8
+        - 251.2 * X9
+        + 1.15 * X1 * (X3 + X4)
+        + 1.98 * (X1 + X2) * (X6 + X7 + X9)
+        - 3.9 * X2 * (X6 + X7)
+    )
+
+    # Model parameter C
+    C = (
+        2.75 * X2
+        + 14.1 * X3
+        + 10.1 * X4
+        + 12.0 * X5
+        - 3.07 * (X6 + X7)
+        + 13.0 * X9
+    )
+
+    # Calculate temperature difference, clipping to avoid division by zero or negative values
+    dT = np.maximum(T - C, 10.0)
+
+    # Calculate log10 viscosity (Pa s)
+    log_viscosity = A + B / dT
+
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X shape: (N, 13)
+    # X[:, 0] = T (K)
+    # X[:, 1:13] = SiO2, TiO2, Al2O3, FeO, Fe2O3, MnO, MgO, CaO, Na2O, K2O, P2O5, H2O (mol%)
+
+    T = X[:, 0]
+    oxides = X[:, 1:13]
+
+    # Normalize oxides to sum to 100 mol%
+    sum_oxides = np.sum(oxides, axis=1, keepdims=True)
+    sum_oxides = np.where(sum_oxides == 0, 1.0, sum_oxides)
+    y = (oxides / sum_oxides) * 100.0
+
+    # Extract individual normalized components
+    SiO2 = y[:, 0]
+    TiO2 = y[:, 1]
+    Al2O3 = y[:, 2]
+    FeO = y[:, 3]
+    Fe2O3 = y[:, 4]
+    MnO = y[:, 5]
+    MgO = y[:, 6]
+    CaO = y[:, 7]
+    Na2O = y[:, 8]
+    K2O = y[:, 9]
+    P2O5 = y[:, 10]
+    H2O = y[:, 11]
+
+    # Group components by their structural roles
+    network_formers = SiO2 + TiO2
+    Al = Al2O3
+    alkalis = Na2O + K2O
+    divalents = MgO + CaO + FeO + Fe2O3 + MnO
+
+    # B parameter (activation-energy-like term)
+    B = (
+        150.0 * network_formers
+        + 110.0 * Al
+        + 60.0 * divalents
+        + 50.0 * alkalis
+        + 80.0 * P2O5
+    )
+
+    # Structural interaction terms
+    B += 1.5 * Al * alkalis
+    B += 0.5 * Al * divalents
+
+    # Highly non-linear water effect on B
+    B_H2O = -35.0 * H2O / (1.0 + 0.2 * H2O)
+    B += B_H2O * (network_formers + Al)
+
+    # C parameter (VFT temperature shift)
+    C = (
+        0.0 * network_formers
+        + 2.0 * Al
+        + 4.0 * divalents
+        + 3.0 * alkalis
+        + 2.5 * P2O5
+    )
+
+    # Water effect on C (lowers glass transition temperature)
+    C_H2O = -10.0 * H2O / (1.0 + 0.1 * H2O)
+    C += C_H2O * divalents
+
+    # Prevent singularity near the glass transition temperature
+    C = np.minimum(C, T - 10.0)
+
+    # Calculate log10 of dynamic viscosity (Pa·s)
+    # A = -4.55 is the universal high-temperature limit from Giordano et al. (2008)
+    log_viscosity = -4.55 + B / (T - C)
+
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Temperature (K)
+    T = X[:, 0]
+
+    # Extract Oxide compositions (mol%)
+    SD = X[:, 1] + X[:, 2]  # SiO2 + TiO2
+    AL = X[:, 3]  # Al2O3
+    FM = X[:, 4] + X[:, 5] + X[:, 6]  # FeO + Fe2O3 + MnO
+    MG = X[:, 7]  # MgO
+    CA = X[:, 8]  # CaO
+    NA = X[:, 9]  # Na2O
+    K = X[:, 10]  # K2O
+    P = X[:, 11]  # P2O5
+    H = X[:, 12]  # H2O
+
+    # Normalize composition to 100 mol% to ensure consistency
+    total = SD + AL + FM + MG + CA + NA + K + P + H
+    total = np.where(total == 0, 1.0, total)
+
+    SD_norm = (SD / total) * 100.0
+    AL_norm = (AL / total) * 100.0
+    FM_norm = (FM / total) * 100.0
+    MG_norm = (MG / total) * 100.0
+    CA_norm = (CA / total) * 100.0
+    NA_norm = (NA / total) * 100.0
+    K_norm = (K / total) * 100.0
+    P_norm = (P / total) * 100.0
+    H_norm = (H / total) * 100.0
+
+    # Combined compositional parameters
+    NKH = NA_norm + K_norm + H_norm
+    FMC = FM_norm + MG_norm + CA_norm
+
+    # Giordano et al. (2008) VFT parameters
+    # High-temperature limit constant
+    A = -4.55
+
+    # Coefficients for B (pseudo-activation energy term)
+    b1 = 159.56
+    b2 = -30.68
+    b3 = -135.48
+    b4 = -104.42
+    b5 = -34.80
+    b6 = -85.42
+    b7 = -111.41
+    b8 = -242.03
+    b9 = -101.41
+
+    b11 = -2.69  # (SiO2 + TiO2) * (Na2O + K2O + H2O)
+    b12 = -1.54  # (SiO2 + TiO2) * (FeO + Fe2O3 + MnO + MgO + CaO)
+    b13 = 4.86  # Al2O3 * (Na2O + K2O + H2O)
+    b14 = 2.10  # Al2O3 * (FeO + Fe2O3 + MnO + MgO + CaO)
+
+    B = (
+        b1 * SD_norm
+        + b2 * AL_norm
+        + b3 * FM_norm
+        + b4 * MG_norm
+        + b5 * CA_norm
+        + b6 * NA_norm
+        + b7 * K_norm
+        + b8 * H_norm
+        + b9 * P_norm
+        + b11 * (SD_norm * NKH)
+        + b12 * (SD_norm * FMC)
+        + b13 * (AL_norm * NKH)
+        + b14 * (AL_norm * FMC)
+    )
+
+    # Coefficients for C (VFT temperature term)
+    c1 = 0.0
+    c2 = 15.9
+    c3 = 11.4
+    c4 = 11.2
+    c5 = 13.6
+    c6 = 42.2
+    c7 = 29.0
+    c8 = -102.3
+    c9 = 0.0
+
+    C = (
+        c1 * SD_norm
+        + c2 * AL_norm
+        + c3 * FM_norm
+        + c4 * MG_norm
+        + c5 * CA_norm
+        + c6 * NA_norm
+        + c7 * K_norm
+        + c8 * H_norm
+        + c9 * P_norm
+    )
+
+    # Calculate log10 viscosity (Pa·s)
+    # Clip T - C to prevent division by zero or negative values at very low temperatures
+    dt = np.clip(T - C, 1.0, None)
+    log_viscosity = A + B / dt
+
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+    
+    # Normalize composition to 100 mol% (excluding T)
+    comp_sum = sio2 + tio2 + al2o3 + feo + fe2o3 + mno + mgo + cao + na2o + k2o + p2o5 + h2o
+    comp_sum = np.where(comp_sum == 0, 100.0, comp_sum)
+    
+    f_sio2 = sio2 / comp_sum * 100.0
+    f_tio2 = tio2 / comp_sum * 100.0
+    f_al2o3 = al2o3 / comp_sum * 100.0
+    f_feo = feo / comp_sum * 100.0
+    f_fe2o3 = fe2o3 / comp_sum * 100.0
+    f_mno = mno / comp_sum * 100.0
+    f_mgo = mgo / comp_sum * 100.0
+    f_cao = cao / comp_sum * 100.0
+    f_na2o = na2o / comp_sum * 100.0
+    f_k2o = k2o / comp_sum * 100.0
+    f_p2o5 = p2o5 / comp_sum * 100.0
+    f_h2o = h2o / comp_sum * 100.0
+    
+    # Giordano, Russell, and Dingwell (2008) formulation
+    # Define compositional variables
+    comp_1 = f_sio2 + f_tio2
+    comp_2 = f_al2o3
+    comp_3 = f_feo + f_fe2o3 + f_mno
+    comp_4 = f_mgo
+    comp_5 = f_cao
+    comp_6 = f_na2o
+    comp_7 = f_k2o
+    comp_8 = f_p2o5
+    comp_9 = f_h2o
+    
+    # Cross terms
+    comp_10 = comp_1 * (comp_3 + comp_4)
+    comp_11 = (comp_1 + comp_2) * (comp_6 + comp_7 + comp_9)
+    comp_12 = comp_2 * (comp_6 + comp_7)
+    
+    # Coefficients for B (VFT parameter)
+    b1 = 159.56
+    b2 = -32.32
+    b3 = -135.12
+    b4 = -111.41
+    b5 = -120.48
+    b6 = -125.11
+    b7 = -140.01
+    b8 = -250.0
+    b9 = -180.0
+    b10 = 1.15
+    b11 = -0.45
+    b12 = 0.30
+    
+    # Coefficients for C (VFT parameter)
+    c1 = 305.1
+    c2 = 100.5
+    c3 = -50.2
+    c4 = -20.1
+    c5 = -10.5
+    c6 = -80.4
+    c7 = -90.2
+    c8 = -150.0
+    c9 = -120.0
+    c10 = 2.5
+    c11 = -1.2
+    c12 = 0.5
+    
+    # Calculate B and C
+    B = (b1 * comp_1 + b2 * comp_2 + b3 * comp_3 + b4 * comp_4 + b5 * comp_5 + 
+         b6 * comp_6 + b7 * comp_7 + b8 * comp_8 + b9 * comp_9 + 
+         b10 * comp_10 + b11 * comp_11 + b12 * comp_12)
+         
+    C = (c1 * comp_1 + c2 * comp_2 + c3 * comp_3 + c4 * comp_4 + c5 * comp_5 + 
+         c6 * comp_6 + c7 * comp_7 + c8 * comp_8 + c9 * comp_9 + 
+         c10 * comp_10 + c11 * comp_11 + c12 * comp_12)
+         
+    # Constant pre-exponential factor A (Pa·s)
+    A = -4.55
+    
+    # Prevent division by zero or negative values in (T - C)
+    dt = T - C
+    dt = np.where(dt <= 10.0, 10.0, dt)
+    
+    log_viscosity = A + B / dt
+    return log_viscosity

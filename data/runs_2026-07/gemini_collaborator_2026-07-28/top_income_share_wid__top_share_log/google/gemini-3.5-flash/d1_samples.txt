@@ -1,0 +1,218 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top income share, ln S(p), using the canonical
+    Pareto interpolation framework for top income tails:
+    
+        ln S(p) = ln S(p_0) + (1 - 1/alpha) * (ln p - ln p_0)
+        
+    where:
+      - p_0 = 0.10 (top 10% anchor bracket)
+      - S(p_0) is the estimated top-10% income share, adapted for year and region
+      - alpha is the Pareto tail index (typically between 1.5 and 2.2)
+    """
+    # Extract inputs
+    ln_p = np.asarray(X[:, 0], dtype=float)
+    year = np.asarray(X[:, 2], dtype=float)
+    regions = X[:, 3]
+    
+    # Anchor at p_0 = 0.10 (top 10% share)
+    ln_p0 = np.log(0.10)
+    
+    # Estimate the baseline top 10% share S(p_0) based on region and year
+    # Base share of ~38% for the top 10%
+    S_p0 = 0.38 + 0.0012 * (year - 2000)
+    
+    # Adjust S(p_0) based on macro-region inequality profiles
+    for i, r in enumerate(regions):
+        r_str = str(r).lower()
+        if 'europe' in r_str:
+            S_p0[i] -= 0.05  # More egalitarian
+        elif 'america' in r_str:
+            S_p0[i] += 0.06  # Higher inequality (e.g., US, Latin America)
+        elif 'africa' in r_str:
+            S_p0[i] += 0.08  # High inequality
+        elif 'asia' in r_str:
+            S_p0[i] += 0.02  # Moderate-to-high inequality
+        elif 'oceania' in r_str:
+            S_p0[i] -= 0.02  # Moderately egalitarian
+            
+    # Clip S(p_0) to physically plausible bounds [0.20, 0.65]
+    S_p0 = np.clip(S_p0, 0.20, 0.65)
+    ln_S_p0 = np.log(S_p0)
+    
+    # Inverted Pareto exponent (1 - 1/alpha)
+    # A standard Pareto index alpha of ~1.8 yields a slope of ~0.44
+    # We allow alpha to decrease slightly over time (reflecting rising tail inequality)
+    alpha = 1.9 - 0.003 * (year - 2000)
+    alpha = np.clip(alpha, 1.4, 2.4)
+    slope = 1.0 - (1.0 / alpha)
+    
+    # Closed-form Pareto tail relation for ln S(p)
+    ln_S_p = ln_S_p0 + slope * (ln_p - ln_p0)
+    
+    # Ensure S(p) <= 1, meaning ln S(p) <= 0
+    return np.minimum(ln_S_p, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top p income share (ln S(p)) using the canonical 
+    Pareto tail relation: ln S(p) = (1 / b) * ln p, where b is the inverted Pareto coefficient.
+    
+    Inputs:
+    - X[:, 0]: log_p_above (ln p)
+    - X[:, 1]: top_pct (100p) - ignored (redundant)
+    - X[:, 2]: year (t)
+    - X[:, 3]: region (categorical)
+    """
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+    
+    # Base value for 1/b (where b is the inverted Pareto coefficient).
+    # Globally, 1/b typically ranges from 0.35 (more unequal) to 0.55 (more equal).
+    # Inequality has generally risen since 1980, meaning b increases, so 1/b decreases.
+    one_over_b = 0.46 - 0.0012 * (year - 2000)
+    
+    # Regional adjustments to inequality (smaller 1/b means higher inequality / larger top shares)
+    adj = np.zeros_like(year)
+    for i, r in enumerate(region):
+        r_str = str(r).lower()
+        if 'europe' in r_str:
+            adj[i] = 0.06     # More equal -> larger 1/b
+        elif 'america' in r_str:
+            adj[i] = -0.04    # Less equal -> smaller 1/b
+        elif 'africa' in r_str:
+            adj[i] = -0.05    # Less equal -> smaller 1/b
+        elif 'asia' in r_str:
+            adj[i] = -0.01
+        elif 'oceania' in r_str:
+            adj[i] = 0.02
+            
+    one_over_b += adj
+    
+    # Clip to theoretically and empirically sound boundaries for the Pareto shape
+    one_over_b = np.clip(one_over_b, 0.25, 0.75)
+    
+    # ln S(p) = (1/b) * ln p
+    return one_over_b * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top income share, ln S(p), using the 
+    canonical Pareto distribution relationship: ln S(p) = ln(p) / b, 
+    where b is the inverted Pareto coefficient (b = alpha / (alpha - 1)).
+    
+    Inputs:
+    - X[:, 0]: ln(p), log of the top-fraction p
+    - X[:, 1]: 100p (ignored as it is redundant)
+    - X[:, 2]: year (t)
+    - X[:, 3]: region (categorical)
+    """
+    log_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+    
+    # Initialize base inverted Pareto coefficient (b) for each region.
+    # Higher b corresponds to higher inequality (larger top income shares).
+    b_base = np.full_like(log_p, 2.0)  # Default fallback
+    
+    # Assign baseline b values based on empirical regional inequality levels
+    b_base[region == 'Europe'] = 1.8
+    b_base[region == 'Oceania'] = 1.95
+    b_base[region == 'Asia'] = 2.15
+    b_base[region == 'Africa'] = 2.35
+    b_base[region == 'Americas'] = 2.4
+    
+    # Model the rise in global income inequality over time (b increases over time)
+    # On average, b has increased by roughly 0.005 per year since 1980
+    b = b_base + 0.005 * (year - 2000)
+    
+    # Clip b to keep it within economically plausible limits [1.1, 3.5]
+    b = np.clip(b, 1.1, 3.5)
+    
+    # Standard closed-form Pareto tail relationship: ln S(p) = ln(p) / b
+    log_S = log_p / b
+    
+    return log_S
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is log_p_above (ln p)
+    log_p_above = X[:, 0]
+
+    # Under a Pareto distribution assumption, the top income share S(p) relates to p via:
+    # S(p) = p^(1 - 1/alpha) = p^(1/b)
+    # where alpha is the Pareto exponent and b = alpha / (alpha - 1) is the inverted Pareto coefficient.
+    # Taking the natural logarithm yields: ln S(p) = (1/b) * ln p.
+    # A standard, representative empirical value for the inverted Pareto coefficient b is approximately 1.8.
+    b = 1.8
+    return log_p_above / b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top p income share, ln S(p),
+    using the standard Pareto distribution closed-form relationship:
+        ln S(p) = (1 - 1/alpha) * ln p
+    where alpha is the Pareto tail index, which varies by region and year.
+    """
+    # X[:, 0] = ln(p)
+    # X[:, 2] = year
+    # X[:, 3] = region
+    ln_p = X[:, 0].astype(float)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+    
+    # Initialize the power-law exponent: gamma = 1 - 1/alpha
+    # S(p) = p^gamma. A smaller gamma implies higher inequality (larger top shares).
+    gamma = np.zeros(X.shape[0])
+    
+    for i in range(len(region)):
+        r = str(region[i]).strip().lower()
+        t = year[i]
+        
+        # Standard regional baseline values for gamma around year 2000
+        # and historical trends (inequality rising -> gamma decreasing)
+        if 'europe' in r:
+            base_gamma = 0.46
+            trend = -0.0008
+        elif 'america' in r:
+            base_gamma = 0.36
+            trend = -0.0015
+        elif 'africa' in r:
+            base_gamma = 0.33
+            trend = -0.0005
+        elif 'asia' in r:
+            base_gamma = 0.38
+            trend = -0.0010
+        elif 'oceania' in r:
+            base_gamma = 0.42
+            trend = -0.0008
+        else:
+            base_gamma = 0.40
+            trend = -0.0010
+            
+        gamma[i] = base_gamma + trend * (t - 2000)
+        
+    # Keep gamma within theoretically sound bounds (0 < gamma < 1 for finite mean)
+    gamma = np.clip(gamma, 0.15, 0.85)
+    
+    # ln S(p) = gamma * ln p
+    return gamma * ln_p

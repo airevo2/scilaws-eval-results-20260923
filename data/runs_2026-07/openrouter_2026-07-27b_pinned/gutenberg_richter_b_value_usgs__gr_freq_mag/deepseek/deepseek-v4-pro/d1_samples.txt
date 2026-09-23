@@ -1,0 +1,123 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of cumulative annual earthquake rate for M >= M_threshold
+    using the Gutenberg-Richter law: log10(N) = a - b * M.
+    Global canonical parameters: a = 8.0, b = 1.0.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = M_threshold, moment magnitude threshold.
+
+    Returns
+    -------
+    log10_N : np.ndarray, shape (n_samples,)
+        Log10 of the cumulative annual number of earthquakes with Mw >= M_threshold.
+    """
+    M_threshold = X[:, 0]
+    a = 8.0  # annual productivity (intercept)
+    b = 1.0  # Gutenberg-Richter b-value
+    log10_N = a - b * M_threshold
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of the cumulative annual earthquake rate for events
+    with moment magnitude >= M_threshold using the Gutenberg-Richter law.
+    
+    The canonical global relationship is:
+        log10(N) = a - b * M
+    with typical values a = 8.0, b = 1.0.
+    """
+    # Gutenberg-Richter coefficients (global annual average)
+    a = 8.0   # intercept: log10 number of events with M >= 0
+    b = 1.0   # slope: b-value
+    
+    M_threshold = X[:, 0]
+    log10_N = a - b * M_threshold
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute log10_N, the base-10 logarithm of the cumulative annual earthquake rate
+    for events with moment magnitude >= M_threshold.
+
+    Uses the standard Gutenberg-Richter law:
+        log10 N = a - b * M
+    with global annual coefficients a = 8.0, b = 1.0.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = M_threshold
+
+    Returns
+    -------
+    log10_N : np.ndarray, shape (n_samples,)
+    """
+    M = X[:, 0]
+    a = 8.0   # global annual a-value
+    b = 1.0   # b-value
+    return a - b * M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of cumulative annual earthquake rate for M >= M_threshold
+    using the Gutenberg-Richter law:
+    log10(N) = a - b * M_threshold
+    
+    Parameters:
+    X : numpy ndarray of shape (n_samples, 1)
+        X[:, 0] = M_threshold (moment magnitude threshold)
+    
+    Returns:
+    numpy ndarray of shape (n_samples,)
+        log10_N values
+    """
+    # Gutenberg-Richter parameters (global averages)
+    a = 4.0   # intercept: log10 of annual rate for M >= 0
+    b = 1.0   # slope: b-value
+    
+    M_threshold = X[:, 0]
+    log10_N = a - b * M_threshold
+    
+    return log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute log10 of the cumulative annual earthquake rate for Mw >= M_threshold
+    using the standard Gutenberg-Richter global rule-of-thumb:
+        log10 N = 8.0 - M_threshold
+    where N is the cumulative number of earthquakes per year.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = M_threshold (moment magnitude threshold)
+
+    Returns
+    -------
+    log10_N : np.ndarray, shape (n_samples,)
+        Log10 of the cumulative annual earthquake rate.
+    """
+    M = X[:, 0]
+    log10_N = 8.0 - M
+    return log10_N

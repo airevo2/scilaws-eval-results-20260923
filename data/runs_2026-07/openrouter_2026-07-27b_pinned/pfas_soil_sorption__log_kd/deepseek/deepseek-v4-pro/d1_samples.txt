@@ -1,0 +1,214 @@
+import numpy as np
+
+def predict(X):
+    # Standard closed-form relationship for log Kd:
+    # log Kd = log10(foc) + a * log10(Kow) + b
+    # using Karickhoff's widely cited regression: a = 0.989, b = -0.346
+    # X[:,6] = log_Kow, X[:,13] = foc (fraction, dimensionless)
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+    # Prevent log of zero or negative foc (though typical range is >0)
+    log_foc = np.log10(np.maximum(foc, 1e-12))
+    return log_foc + 0.989 * log_Kow - 0.346
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log Kd (log10 L/kg) for PFAS compounds.
+    
+    Inputs X: 2-D numpy array with columns:
+    0: MW, 1: pKa1, 2: C_num, 3: F_num, 4: F_pct, 5: log_S,
+    6: log_Kow, 7: pH, 8: CEC, 9: Sand, 10: Silt, 11: Clay, 12: Corg, 13: foc
+    """
+    # Extract inputs
+    pKa1 = X[:, 1]
+    C_num = X[:, 2]
+    log_Kow = X[:, 6]
+    pH = X[:, 7]
+    CEC = X[:, 8]
+    foc = X[:, 13]
+    
+    # Partitioning model:
+    # log Kd = log(foc) + log_Koc
+    # where log_Koc incorporates hydrophobic and electrostatic contributions
+    
+    # Base hydrophobic sorption: log_Koc_hydrophobic ~ a * log_Kow + b
+    # Typical correlation for PFAS: log_Koc_hydrophobic = 0.8 * log_Kow + 0.5
+    log_Koc_hydrophobic = 0.8 * log_Kow + 0.5
+    
+    # Electrostatic contribution for ionizable PFAS
+    # Fraction ionized (anionic PFAS with low pKa are largely deprotonated at environmental pH)
+    # For acids: alpha_anion = 1 / (1 + 10^(pKa - pH))
+    alpha_anion = 1.0 / (1.0 + 10.0**(pKa1 - pH))
+    
+    # Cationic fraction (some PFAS can be cationic at low pH if pKa is high)
+    alpha_cation = 1.0 / (1.0 + 10.0**(pH - pKa1))
+    
+    # Neutral fraction
+    alpha_neutral = 1.0 - alpha_anion - alpha_cation
+    alpha_neutral = np.clip(alpha_neutral, 0, 1)
+    
+    # Electrostatic enhancement for anions on clay/organic matter (typically reduces log_Koc)
+    # Anionic PFAS sorb less due to electrostatic repulsion
+    delta_logK_anion = -1.5 * alpha_anion
+    
+    # Cationic PFAS sorb more via CEC-related electrostatic attraction
+    # log_Koc_cationic = log_Koc_hydrophobic + beta * log(CEC)
+    delta_logK_cation = 0.4 * np.log1p(CEC) * alpha_cation
+    
+    # Chain length effect beyond log_Kow (CF2 increment ~ 0.3-0.5 log units per carbon)
+    delta_chain = 0.35 * (C_num - 6.0)  # referenced to 6-carbon chain
+    
+    # Combine contributions
+    log_Koc = (log_Koc_hydrophobic 
+               + delta_logK_anion 
+               + delta_logK_cation 
+               + delta_chain)
+    
+    # Convert Koc to Kd using foc: log Kd = log(Koc) + log(foc)
+    log_Kd = log_Koc + np.log10(np.maximum(foc, 1e-6))
+    
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log Kd (log10 L/kg) for PFAS compounds using the standard
+    hydrophobic partitioning model based on organic carbon and Kow.
+
+    Parameters
+    ----------
+    X : 2-D numpy array
+        Columns:
+        0  MW       [g/mol]
+        1  pKa1
+        2  C_num    [count]
+        3  F_num    [count]
+        4  F_pct    [%]
+        5  log_S    [log10(mg/L)]
+        6  log_Kow  [log10]
+        7  pH
+        8  CEC      [cmol+/kg]
+        9  Sand     [%]
+        10 Silt     [%]
+        11 Clay     [%]
+        12 Corg     [%]
+        13 foc      [fraction]
+
+    Returns
+    -------
+    log_Kd : 1-D numpy array
+        log10 of solid-liquid distribution coefficient [log10(L/kg)]
+    """
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    # Classic Karickhoff relationship for Koc from Kow
+    log_Koc = 0.81 * log_Kow + 0.1
+
+    # Kd = foc * Koc   =>   log Kd = log(foc) + log Koc
+    log_Kd = np.log10(foc) + log_Koc
+
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(Kd) for PFAS in soil using a mechanistic sorption model.
+    
+    Parameters
+    ----------
+    X : 2-D numpy array
+        Columns:
+        0  MW       [g/mol]
+        1  pKa1     []
+        2  C_num    [count]
+        3  F_num    [count]
+        4  F_pct    [%]
+        5  log_S    [log10(mg/L)]
+        6  log_Kow  []
+        7  pH       []
+        8  CEC      [cmol+/kg]
+        9  Sand     [%]
+        10 Silt     [%]
+        11 Clay     [%]
+        12 Corg     [%]
+        13 foc      []
+    
+    Returns
+    -------
+    log_Kd : 1-D numpy array, log10(L/kg)
+    """
+    # Extract relevant columns
+    pKa1   = X[:, 1]
+    C_num  = X[:, 2]
+    log_Kow = X[:, 6]
+    pH     = X[:, 7]
+    CEC    = X[:, 8]
+    Clay   = X[:, 11]
+    foc    = X[:, 13]
+
+    # Neutral fraction (acid dissociation: HA <-> A- + H+)
+    fn = 1.0 / (1.0 + 10.0**(pH - pKa1))
+
+    # Organic carbon normalized partition coefficients (L/kg)
+    # Neutral species sorption (similar to traditional hydrophobic sorption)
+    log_Koc_neutral = 0.55 * log_Kow + 0.05 * C_num + 0.2
+    # Anionic species sorption (weaker, more chain-length dependent)
+    log_Koc_anion   = 0.30 * log_Kow + 0.20 * C_num - 2.5
+
+    Koc_neutral = 10.0**log_Koc_neutral
+    Koc_anion   = 10.0**log_Koc_anion
+
+    # Organic carbon mediated sorption (L/kg)
+    Kd_oc = foc * (fn * Koc_neutral + (1.0 - fn) * Koc_anion)
+
+    # Mineral phase sorption (electrostatic, mainly on clay)
+    # Coefficients convert CEC (cmol+/kg) and Clay (%) to L/kg
+    Kd_min = 0.01 * CEC + 0.005 * Clay
+
+    # Total solid-liquid distribution coefficient
+    Kd_total = Kd_oc + Kd_min
+
+    # Log10 transform
+    log_Kd = np.log10(Kd_total)
+
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 Kd (L/kg) for PFAS compounds using the canonical organic
+    carbon partitioning model (Seth et al., 1999), which is the standard
+    starting point for hydrophobic organic contaminants.
+
+    Inputs:
+        X[:, 6]  = log_Kow  (log10 octanol-water partition coefficient)
+        X[:, 13] = foc      (fraction of organic carbon, dimensionless)
+
+    Returns:
+        1-D array of log10 Kd (log10(L/kg))
+    """
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    # Seth et al. (1999) relationship for organic carbon normalized
+    # partition coefficient of neutral organic compounds:
+    log_Koc = 1.04 * log_Kow - 0.24
+
+    # Standard definition: Kd = Koc * foc  ->  log Kd = log Koc + log(foc)
+    log_Kd = log_Koc + np.log10(foc)
+
+    return log_Kd

@@ -1,0 +1,167 @@
+task_id: soil_water_retention_gshp__theta
+domain: earth_science / soil physics
+license: CC-BY-4.0
+
+# Type II — cluster = one soil water characteristic curve (SWCC), identified
+# by layer_id in the GSHP database. Each SWCC constitutes one soil sample
+# whose retention behaviour is governed by per-sample van Genuchten parameters
+# (theta_r, theta_s, alpha, n). Rows from different SWCCs are NOT
+# interchangeable: a clay SWCC (n~1.3, alpha~0.02 m^-1) has entirely
+# different dynamics from a sand SWCC (n~20, alpha~3 m^-1).
+# Type II criterion (a) fires: primary baseline has 4 per-cluster LOCAL_FITTABLE
+# parameters.
+type: typeII
+has_group_id: true
+
+# FM-A1 audit note: theta values are measured volumetric water content from lab
+# tensiometer / pressure plate / TDR measurements (lab_wrc column in GSHP).
+# The GSHP dataset also stores pre-fitted vG parameters (columns alpha, n,
+# thetar, thetas) — these are deliberately excluded to prevent circular formula
+# recovery. FM-A1: PASS.
+
+# FM-T-P-axis note: Within-cluster split uses INTERLEAVED alternating h-rank
+# (even-idx -> test_fit, odd-idx -> test_test after sorting by lab_head_m).
+# Axis-aligned split (wet-end fit, dry-end test) is degenerate for van Genuchten:
+# empirical verification on 100 sample clusters (>= 8 pts) showed:
+#   Axis-aligned: median R2 = -0.93, 73% of clusters negative R2
+#   Interleaved:  median R2 = +0.96, 0% of clusters negative R2
+# Root cause: the vG inflection point is at h_inf = (1/alpha)*((n-1)/n)^(1/n);
+# the wet end (low h) is the flat plateau theta ~ theta_s where dtheta/dh ~ 0,
+# making alpha and n nearly unidentifiable from wet-end data alone.
+# Interleaved split mandated per FM-T-P-axis. PASS.
+
+# FM-T-ID1 note: Test clusters require >= 9 (theta, h) points for the
+# interleaved split to yield >= 5 fit rows (floor for 4-param VG fit) and
+# >= 4 test rows. 1352 test-candidate clusters with 5-8 pts are moved to
+# train (cluster-level reassignment). Remaining 1392 test clusters all
+# satisfy the floor. FM-T-ID1: PASS.
+
+# FM-J4 note: The vG formula theta = theta_r + (theta_s-theta_r) / [1+(alpha|h|)^n]^m
+# approaches theta_s as h->0 (not a pole, but a smooth asymptote). At h=0 itself,
+# (1 + 0)^m = 1 -> theta = theta_s exactly. No numerical instability.
+# The benchmark drops h=0 rows (step 2 of filtering) to maintain consistency
+# with non-zero inputs used for parameter fitting. FM-J4: N/A (no pole).
+
+context: >-
+  The ability of soils to retain and release water governs water availability for
+  plant roots, controls subsurface flow paths, and regulates the timing of
+  streamflow during storms and dry spells. At the microscale, water in soil pores
+  is held by capillary forces that depend on the size and geometry of the pore
+  network. Dry soils pull water in more strongly than wet soils, creating the
+  soil-water characteristic curve (SWCC) that relates volumetric water content to
+  the matric suction (the negative pore water pressure, expressed as a positive
+  head in metres). Van Genuchten (1980) derived a smooth, closed-form SWRC that
+  became the global standard: as suction increases from zero (saturated) to
+  extreme dryness, water content decreases from a saturated maximum (theta_s) to
+  an irreducible residual minimum (theta_r) through an S-shaped curve whose
+  steepness and inflection position are controlled by the shape parameters alpha
+  (inverse air-entry pressure, m^-1) and n (pore-size distribution index,
+  dimensionless). Each soil sample has its own SWCC governed by its texture,
+  porosity, organic matter, and structure, so (theta_r, theta_s, alpha, n) are
+  per-sample parameters. The GSHP database (Gupta and colleagues 2022) assembles 15,259
+  measured SWCCs from soil samples worldwide, spanning all USDA texture classes
+  and all climate zones.
+
+target:
+  name: theta
+  symbol: "theta"
+  unit: m^3/m^3
+  description: >-
+    Volumetric water content measured in the lab (lab_wrc in GSHP) at the
+    corresponding matric suction step. Represents the volume fraction of soil
+    pores filled with water at that suction. Measured by pressure plate / TDR /
+    gravimetric method. NOT a van Genuchten formula output.
+  range: [0.000000, 0.899267]
+
+inputs:
+  - name: lab_head_m
+    symbol: "h"
+    unit: m
+    description: >-
+      Matric suction (positive; = -psi, where psi is pore water pressure).
+      Stored as positive values in GSHP (metres). Ranges from 0.001 m (near-
+      saturated) to 100,000 m (extremely dry). Passed directly to the van
+      Genuchten formula as |psi| without sign inversion.
+    range: [0.001, 100000.0]
+
+# Dataset — three-file v2 Type II layout, cluster holdout.
+# Cluster = SWCC / soil layer (layer_id from GSHP database). 13,743 unique
+# SWCCs after filtering; 12,351 train (including 1,352 short-test clusters
+# reassigned for FM-T-ID1 floor compliance), 1,392 test.
+#
+# Cluster holdout: abs(MD5(layer_id)) % 5 == 0 -> test candidate.
+# Test candidates with < 9 points moved to train (floor enforcement).
+# Within-cluster split: interleaved alternating h-rank (even-idx -> test_fit,
+# odd-idx -> test_test after h-ascending sort). Both windows span the
+# full h-range per cluster.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 110191
+n_test_fit: 9959
+n_test_test: 8654
+n_clusters_train: 12351
+n_clusters_test: 1392
+n_rows_per_cluster_min: 5
+n_rows_per_cluster_median: 6
+n_rows_per_cluster_max: 121
+
+unseen_group_strategy: error
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# Cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emitted for forward-compat.
+
+# Candidate prior constants — van Genuchten (1980) has no universal law constants.
+# The structural constraint m = 1 - 1/n (Mualem 1976a) is a derived algebraic
+# identity, not a fitted constant. The tortuosity exponent 0.5 appears in K_r
+# (not in the theta SWRC). All four parameters (theta_r, theta_s, alpha, n) are
+# per-cluster. priors: [] is the correct anti-fabrication entry.
+priors: []
+
+# Reference-baseline bank (2 baselines)
+references:
+  - id: vangenuchten_1980
+    label: "Van Genuchten (1980) SWRC — theta = theta_r + (theta_s-theta_r)/[1+(alpha*h)^n]^(1-1/n)"
+    formula_file: formulas/vangenuchten_1980.py
+    reference_pdf: reference/vangenuchten_1980.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # theta_r, theta_s, alpha, n
+    measured:
+      rmse: 0.01738176
+      r2: 0.98534120
+  - id: brooks_corey_1964
+    label: "Brooks & Corey (1964) SWRC — theta = theta_r + (theta_s-theta_r)*(psi_b/h)^lambda for h>=psi_b"
+    formula_file: formulas/brooks_corey_1964.py
+    reference_pdf: reference/brooks_corey_1964.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4          # theta_r, theta_s, psi_b, lam
+    measured:
+      rmse: 0.02703951
+      r2: 0.96452616
+
+# Metric-sanity note for brooks_corey_1964:
+# Per-cluster mean R2 = -0.97 (heavily negative) despite pooled R2 = 0.965.
+# Root cause: Brooks-Corey has a slope discontinuity at the bubbling pressure psi_b.
+# When fitted on the test_fit (interleaved) window, psi_b is estimated from the
+# wet-end data. For clusters where psi_b falls between the fit-window and test-window
+# h values, BC predicts constant theta=theta_s for all test_test points above psi_b
+# -> per-cluster theta variance maps to per-cluster SS_tot >> 0, but BC output is
+# flat -> large negative per-cluster R2. Pooled R2 is positive because the
+# inter-cluster variance (theta_s differences across soil types) swamps the
+# per-cluster residuals. This is a known structural limitation of BC (see
+# vangenuchten_1980.py docstring: "BC has a discontinuity in slope at the
+# bubbling pressure"). The pattern is legitimate and documented here.
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.01738176   # vangenuchten_1980 pooled rmse — 0.5 score anchor

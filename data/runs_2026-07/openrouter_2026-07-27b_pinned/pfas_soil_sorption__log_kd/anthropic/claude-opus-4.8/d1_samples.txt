@@ -1,0 +1,128 @@
+import numpy as np
+
+def predict(X):
+    # Canonical organic-carbon partitioning model:
+    #   Kd = foc * Koc   ->   log10(Kd) = log10(foc) + log10(Koc)
+    # with the standard hydrophobicity QSAR for the organic-carbon
+    # partition coefficient (Karickhoff-type relationship, commonly
+    # applied to PFAS via log Kow):
+    #   log10(Koc) = a * log_Kow + b
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    a = 0.60      # slope of log Koc vs log Kow (per hydrophobicity unit)
+    b = 0.60      # intercept
+
+    log_Koc = a * log_Kow + b
+
+    # Guard against non-positive foc
+    foc_safe = np.clip(foc, 1e-8, None)
+
+    log_kd = np.log10(foc_safe) + log_Koc
+    return log_kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    # Standard hydrophobic partitioning relationship:
+    #   Kd = foc * Koc   ->   log Kd = log10(foc) + log Koc
+    # with the canonical linear free-energy relationship (Sabljic-type):
+    #   log Koc = 0.60 * log Kow + 0.50
+    log_Koc = 0.60 * log_Kow + 0.50
+
+    foc = np.clip(foc, 1e-6, None)
+    log_kd = np.log10(foc) + log_Koc
+    return log_kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard hydrophobic partitioning model for PFAS sorption:
+    #   Kd = foc * Koc   ->   log Kd = log10(foc) + log Koc
+    # Koc estimated from a Karickhoff-type linear free energy relationship
+    # with log Kow, plus a per-CF2 chain-length contribution and a pH term
+    # accounting for reduced sorption of the anionic (dissociated) species.
+
+    MW      = X[:, 0]
+    pKa1    = X[:, 1]
+    C_num   = X[:, 2]
+    F_num   = X[:, 3]
+    F_pct   = X[:, 4]
+    log_S   = X[:, 5]
+    log_Kow = X[:, 6]
+    pH      = X[:, 7]
+    CEC     = X[:, 8]
+    Sand    = X[:, 9]
+    Silt    = X[:, 10]
+    Clay    = X[:, 11]
+    Corg    = X[:, 12]
+    foc     = X[:, 13]
+
+    # organic-carbon partition coefficient (log Koc) from log Kow
+    log_Koc = 0.63 * log_Kow + 1.0
+
+    # additional chain-length (per-CF2) hydrophobicity increment
+    log_Koc = log_Koc + 0.05 * C_num
+
+    # fraction of neutral (protonated) species from Henderson-Hasselbalch;
+    # anion sorbs weaker, so scale Kd by (fraction of sorbing species)
+    f_neutral = 1.0 / (1.0 + 10.0 ** (pH - pKa1))
+    speciation = 0.1 + 0.9 * f_neutral   # anion retains ~10% sorption affinity
+
+    # organic-carbon normalized partitioning
+    foc_safe = np.clip(foc, 1e-6, None)
+    log_Kd = np.log10(foc_safe) + log_Koc + np.log10(speciation)
+
+    return log_Kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    # Organic-carbon normalized partitioning (the canonical Kd = Koc * foc form):
+    #   log Koc = a * log Kow + b   (linear free-energy relationship)
+    #   log Kd  = log Koc + log10(foc)
+    a = 0.62
+    b = 0.90
+
+    log_Koc = a * log_Kow + b
+
+    foc_safe = np.clip(foc, 1e-6, None)
+    log_kd = log_Koc + np.log10(foc_safe)
+
+    return log_kd
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard hydrophobic partitioning model:
+    #   Kd = Koc * foc   ->   log Kd = log Koc + log10(foc)
+    # with a linear free-energy relationship between Koc and Kow.
+    # For PFAS a commonly cited regression is:
+    #   log Koc = 0.63 * log Kow + 1.15   (Nguyen et al.-type LFER)
+    log_Kow = X[:, 6]
+    foc = X[:, 13]
+
+    # Organic-carbon normalized partition coefficient
+    log_Koc = 0.63 * log_Kow + 1.15
+
+    # Guard foc against non-positive values
+    foc = np.clip(foc, 1e-6, None)
+
+    log_Kd = log_Koc + np.log10(foc)
+    return log_Kd

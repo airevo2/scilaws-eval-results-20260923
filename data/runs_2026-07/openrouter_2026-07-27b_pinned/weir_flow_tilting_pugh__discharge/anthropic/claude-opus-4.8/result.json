@@ -1,0 +1,26 @@
+{
+  "task": "weir_flow_tilting_pugh__discharge",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeII",
+  "primary": "engineering ",
+  "formulas": [
+    {
+      "formula": "fenton_2015",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "pugh_2025",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

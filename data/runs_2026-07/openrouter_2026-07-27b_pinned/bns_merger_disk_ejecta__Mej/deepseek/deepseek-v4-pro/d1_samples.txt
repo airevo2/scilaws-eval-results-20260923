@@ -1,0 +1,131 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict dynamical ejecta mass M_ej [M_sun] from binary neutron star parameters.
+    
+    Uses the fit from Dietrich & Ujevic (2017):
+    M_ej = M^b_1 * (a*C_1 + b*q + c) + M^b_2 * (a*C_2 + b*q + c)
+    with a = -0.0719, b = 0.0216, c = 0.0116.
+    """
+    Mb1 = X[:, 2]  # baryonic mass of primary
+    Mb2 = X[:, 3]  # baryonic mass of secondary
+    C1  = X[:, 4]  # compactness of primary
+    C2  = X[:, 5]  # compactness of secondary
+    q   = X[:, 6]  # mass ratio M2/M1
+
+    a = -0.0719
+    b =  0.0216
+    c =  0.0116
+
+    M_ej = Mb1 * (a * C1 + b * q + c) + Mb2 * (a * C2 + b * q + c)
+    return M_ej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict dynamical ejecta mass M_ej [M_sun] using the Krüger & Foucart (2020) fit.
+    Input X columns:
+    0: M1, 1: M2, 2: Mb1, 3: Mb2, 4: C1, 5: C2, 6: q, 7: Lambda_tilde
+    """
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+    q = X[:, 6]
+
+    # Coefficients from Krüger & Foucart (2020), MNRAS 498, 3584
+    a = 8.4e-4
+    b = -1.4e-4
+    c = 3.7e-4
+
+    M_ej = a * ((Mb1 / C1) ** (1.0 / 3.0) + (Mb2 / C2) ** (1.0 / 3.0)) + b * q + c
+    return M_ej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Dietrich & Ujevic (2017) fitting formula for dynamical ejecta mass.
+    X columns: X[:,0]=M1, X[:,1]=M2, X[:,4]=C1, X[:,5]=C2
+    """
+    M1 = X[:, 0]   # primary gravitational mass [M_sun]
+    M2 = X[:, 1]   # secondary gravitational mass [M_sun]
+    C1 = X[:, 4]   # primary compactness
+    C2 = X[:, 5]   # secondary compactness
+
+    # Coeffcients from Dietrich & Ujevic (2017), Table I (all NR data)
+    a = -0.0719
+    b =  0.2116
+    c = -2.42
+
+    # Formula: log10(M_ej_dyn) = a * M1*(1-2*C1)/C1 + b * M2*(1-2*C2)/C2 + c
+    log10_mej = a * M1 * (1.0 - 2.0*C1) / C1 + \
+                b * M2 * (1.0 - 2.0*C2) / C2 + c
+
+    return np.power(10.0, log10_mej)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Compute the dynamical ejecta mass M_ej [M_sun] from a BNS merger.
+    Uses the standard Dietrich & Ujevic (2017) fitting formula.
+    """
+    # baryonic masses of primary and secondary
+    Mb1 = X[:, 2]
+    Mb2 = X[:, 3]
+    # mass ratio q = M2/M1
+    q = X[:, 6]
+
+    M_b = Mb1 + Mb2                # total baryonic mass
+
+    # fitted coefficients (Dietrich & Ujevic 2017)
+    a = 9.0e-4
+    b = 6.0e-4
+    n = 5
+
+    M_ej = M_b * (a * q**n + b * (1.0 / q)**n)
+    return M_ej
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the dynamical ejecta mass M_ej [M_sun] using the standard
+    closed-form fit from Dietrich & Ujevic (2017).
+    
+    Inputs:
+    X[:, 0] = M1   [M_sun]  Primary gravitational mass
+    X[:, 1] = M2   [M_sun]  Secondary gravitational mass
+    X[:, 4] = C1            Primary compactness (dimensionless)
+    
+    Returns:
+    M_ej : 1-D array of dynamical ejecta mass in solar masses.
+    """
+    # Extract necessary columns
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    C1 = X[:, 4]
+
+    # Fitted coefficients from Dietrich & Ujevic (2017), Eq. (16)
+    a = -0.0719
+    b = 0.2116
+    d = -2.42
+    n = -2.905
+
+    # log10 of dynamical ejecta mass
+    log10_Mej = a * (1.0 - 2.0 * C1) * M1 / C1 + b * M2 * (M1 / M2)**n + d
+
+    # Convert to linear solar masses
+    M_ej = np.power(10.0, log10_Mej)
+    return M_ej

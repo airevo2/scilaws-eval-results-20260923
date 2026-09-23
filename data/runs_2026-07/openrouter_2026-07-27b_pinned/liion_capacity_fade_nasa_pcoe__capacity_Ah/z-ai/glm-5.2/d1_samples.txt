@@ -1,0 +1,115 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the discharge capacity Q (Ah) as a function of cycle index k.
+    Uses the canonical power-law capacity fade model:
+    Q(k) = Q_0 - A * k^z
+    where Q_0 is the initial capacity, A is the fade rate, 
+    and z is the empirical exponent (typically ~0.5 for diffusion-limited 
+    processes like SEI layer growth).
+    """
+    k = X[:, 0]
+    
+    # Fitted/typical coefficients for a standard Li-ion cell
+    Q_0 = 1.1   # Initial capacity [Ah]
+    A = 0.015   # Fade rate coefficient [Ah / cycles^z]
+    z = 0.5     # Power-law exponent (sqrt dependence)
+    
+    Q = Q_0 - A * np.power(k, z)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts discharge capacity per cycle Q [Ah] as a function of cycle index k.
+    
+    Uses the canonical empirical power-law capacity fade model:
+    Q(k) = Q0 - A * k^z
+    where:
+    Q0 = Initial capacity [Ah]
+    A  = Capacity fade coefficient
+    z  = Power-law exponent (typically ~0.5 to 1.0 for cycle aging)
+    """
+    k = X[:, 0]
+    
+    # Empirical coefficients (representative of a typical Li-ion 18650 cell)
+    Q0 = 2.0   # Ah
+    A = 0.02   # Ah
+    z = 0.7    # dimensionless
+    
+    Q = Q0 - A * np.power(k, z)
+    
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    # Canonical empirical power-law capacity fade model:
+    # Q(k) = Q_0 - A * k^z
+    # Commonly derived from diffusion-limited side reactions (e.g., SEI layer growth)
+    # where the capacity fade scales with the square root of time/cycles (z = 0.5).
+    Q_0 = 1.1   # Initial capacity [Ah]
+    A = 0.02    # Fade rate coefficient [Ah]
+    z = 0.5     # Empirical exponent (typically 0.5 for parabolic fade)
+    
+    Q = Q_0 - A * np.power(k, z)
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts discharge capacity per cycle (Q) using the empirical power-law 
+    capacity fade model, which is the most commonly cited closed-form 
+    relationship for cycle aging:
+    
+    Q(k) = Q_0 - A * k^z
+    
+    where:
+    - k is the cycle index
+    - Q_0 is the initial capacity
+    - A is the fade rate coefficient
+    - z is the power-law exponent (often ~0.5 for diffusion-limited SEI growth)
+    """
+    k = X[:, 0]
+    
+    # Representative coefficients for a typical commercial lithium-ion cell
+    Q_0 = 1.1   # Initial capacity [Ah]
+    A = 0.05    # Fade rate coefficient
+    z = 0.5     # Power-law exponent
+    
+    Q = Q_0 - A * np.power(k, z)
+    
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts discharge capacity Q (Ah) based on cycle index k.
+    Uses the standard empirical power-law capacity fade model:
+    Q(k) = Q_BOL - A * k^z
+    where Q_BOL is the beginning-of-life capacity, A is the fade coefficient, 
+    and z is the empirical exponent (often ~0.5 for diffusion-limited degradation).
+    """
+    k = X[:, 0]
+    
+    # Empirical constants for a typical Li-ion cell
+    Q_BOL = 1.1   # Beginning of life capacity [Ah]
+    A = 0.005     # Fade rate coefficient
+    z = 0.5       # Power-law exponent
+    
+    Q = Q_BOL - A * np.power(k, z)
+    
+    return Q

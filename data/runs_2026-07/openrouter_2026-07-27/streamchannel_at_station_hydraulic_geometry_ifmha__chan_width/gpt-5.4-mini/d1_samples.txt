@@ -1,0 +1,59 @@
+import numpy as np
+
+def predict(X):
+    Q = np.asarray(X)[:, 0]
+    # Common hydraulic geometry form: w = a * Q^b
+    # Representative alluvial-stream scaling (general-purpose):
+    a = 6.0
+    b = 0.5
+    return a * np.power(Q, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Standard hydraulic geometry form: w = a * Q^b
+    # Representative widely used exponents for channel width at a site are around 0.5
+    # Here we use a commonly cited canonical form with simple dimensional scaling.
+    a = 1.0
+    b = 0.5
+    return a * np.power(Q, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = np.asarray(X)[:, 0]
+    # Common hydraulic geometry width-discharge relation:
+    # w = a * Q^b
+    # Representative canonical coefficients (typical alluvial channel scaling)
+    a = 10.0
+    b = 0.5
+    return a * np.power(Q, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = np.asarray(X)[:, 0]
+    # Common hydraulic geometry form: w = a Q^b
+    # Representative canonical coefficients for channel width-discharge scaling
+    a = 6.3
+    b = 0.5
+    return a * np.power(Q, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = np.asarray(X)[:, 0]
+    # Common hydraulic geometry form: w = a Q^b
+    # Representative widely used discharge-width scaling exponent.
+    a = 10.0
+    b = 0.5
+    return a * np.power(Q, b)

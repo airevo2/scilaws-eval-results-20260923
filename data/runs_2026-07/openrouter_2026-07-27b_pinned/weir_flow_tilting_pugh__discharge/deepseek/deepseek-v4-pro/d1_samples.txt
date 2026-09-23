@@ -1,0 +1,177 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict total volumetric discharge over a sharp-crested weir using the
+    standard Kindsvater-Carter formula (ISO 1438-1, commonly cited form).
+
+    Inputs:
+    X[:, 0] = h_m (h) : upstream head over weir crest [m]
+    X[:, 1] = p_m (p) : weir crest height above channel bed [m]
+    X[:, 2] = b_m (b) : weir crest length (channel width at crest) [m]
+
+    Returns:
+    Q_m3s : total volumetric discharge [m³/s]
+    """
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+
+    # Gravitational acceleration [m/s²]
+    g = 9.81
+
+    # Kindsvater-Carter effective width and head corrections
+    # Effective head [m]
+    k_h = 0.001  # head correction factor [m] (typical value for sharp-crested weirs)
+    h_e = h + k_h
+
+    # Effective width [m]
+    k_b = -0.0009  # width correction factor [m] (typical value)
+    b_e = b + k_b
+
+    # Discharge coefficient C_e (dimensionless) - Rehbock / Kindsvater-Carter form
+    # Commonly cited: C_e = 0.602 + 0.083 * h/p (for h/p <= 2.0, p >= 0.1 m)
+    # With typical limits applied
+    ratio = np.minimum(h / np.maximum(p, 0.001), 2.0)
+    C_e = 0.602 + 0.083 * ratio
+
+    # Volumetric discharge [m³/s]
+    Q = (2.0 / 3.0) * np.sqrt(2.0 * g) * C_e * b_e * h_e ** 1.5
+
+    # Discharge must be non-negative
+    return np.maximum(Q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total volumetric discharge Q [m³/s] over a suppressed sharp-crested weir
+    using the Kindsvater–Carter formula (ISO 1438).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 3)
+        X[:, 0] = h : upstream head over weir crest [m]
+        X[:, 1] = p : weir height [m]
+        X[:, 2] = b : weir crest length (channel width) [m]
+
+    Returns
+    -------
+    Q : np.ndarray, shape (n,)
+        Volumetric discharge [m³/s]
+    """
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+
+    # Gravitational acceleration [m/s²]
+    g = 9.81
+
+    # Effective head (boundary layer correction)
+    k_h = 0.001  # [m]
+    h_e = h + k_h
+
+    # Discharge coefficient for a suppressed rectangular sharp-crested weir
+    C_d = 0.602 + 0.075 * (h / p)
+
+    # Kindsvater–Carter discharge equation
+    Q = (2.0 / 3.0) * np.sqrt(2.0 * g) * C_d * b * h_e ** 1.5
+
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total volumetric discharge Q [m³ s⁻¹] over a tilting sharp-crested weir
+    using the standard Rehbock formula.
+
+    Inputs:
+        X : 2-D numpy array with columns
+            X[:, 0] = h  [m]  upstream head over weir crest
+            X[:, 1] = p  [m]  weir crest height above bed
+            X[:, 2] = b  [m]  crest length (channel width at crest)
+
+    Returns:
+        Q : 1-D numpy array of discharge [m³ s⁻¹]
+    """
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+
+    g = 9.81  # gravitational acceleration [m s⁻²]
+
+    # Rehbock discharge coefficient for sharp-crested rectangular weir
+    C_d = 0.611 + 0.075 * (h / p)
+
+    # Standard weir equation: Q = C_d * (2/3) * sqrt(2g) * b * h^(3/2)
+    Q = C_d * (2.0 / 3.0) * np.sqrt(2.0 * g) * b * np.power(h, 1.5)
+
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict volumetric discharge Q [m³/s] over a sharp-crested weir.
+
+    Input X: 2D numpy array with columns:
+        X[:,0] : h [m] - upstream head over weir
+        X[:,1] : p [m] - weir height (crest above bed)
+        X[:,2] : b [m] - crest length (channel width at crest)
+    Returns: 1D array of Q [m³/s]
+    
+    Uses the Rehbock formula (1929) for fully suppressed, sharp-crested weirs.
+    """
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+    
+    g = 9.81  # gravitational acceleration [m/s²]
+    
+    # Rehbock discharge coefficient
+    # C = 0.605 + 1/(1000*h) + 0.08 * h/p   (h, p in metres)
+    C = 0.605 + 1.0 / (1000.0 * h) + 0.08 * h / p
+    
+    # Discharge: Q = (2/3) * C * sqrt(2g) * b * h^(3/2)
+    Q = (2.0 / 3.0) * C * np.sqrt(2.0 * g) * b * h**1.5
+    
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts total volumetric discharge Q [m³/s] over a sharp-crested weir
+    using the standard Rehbock formula for a suppressed rectangular weir.
+
+    Inputs:
+    X : 2-D numpy array, columns:
+        X[:, 0] = h [m]  - upstream head over weir crest
+        X[:, 1] = p [m]  - weir height
+        X[:, 2] = b [m]  - crest length (channel width at crest)
+
+    Returns:
+    Q : 1-D numpy array of discharge [m³/s]
+    """
+    h = X[:, 0]
+    p = X[:, 1]
+    b = X[:, 2]
+
+    g = 9.81  # gravitational acceleration [m/s²]
+
+    # Rehbock discharge coefficient (h, p in metres)
+    C_d = 0.605 + 0.08 * (h / p) + 1.0 / (1000.0 * h)
+
+    # Sharp-crested weir equation
+    Q = (2.0 / 3.0) * np.sqrt(2.0 * g) * C_d * b * np.power(h, 1.5)
+
+    return Q

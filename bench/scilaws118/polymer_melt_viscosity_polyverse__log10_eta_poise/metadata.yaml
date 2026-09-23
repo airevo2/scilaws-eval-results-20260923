@@ -1,0 +1,147 @@
+task_id: polymer_melt_viscosity_polyverse__log10_eta_poise
+domain: materials_science / polymer_physics
+license: CC-BY-4.0
+
+# Audit 2026-06-02 (Opus 4.8, 逐条审核): KEEP after fixes. Real experimental data
+# (polyVERSE Aug=0; not model-curve). Fixes: (1) predict() in BOTH baselines removed
+# the forbidden `group_id` arg (it CONTRACT-FAILED evaluate.py score → task was
+# un-scoreable; an earlier field-class pass only ran evaluate.py reference and missed
+# it); (2) WLF C1=17.44/C2=51.6 reclassified OTHER->LAW (paper-fitted WLF-1955 defining
+# coefficients) + removed from priors + signatures take them as **LAW kwargs;
+# (3) added context + data_files; removed stray evaluation/ (Setting-2 cruft); added
+# reference/README.md. best_baseline=DWLF unchanged. §9.6: DWLF beats naive 8/9 clusters
+# (gid15 wide-Mw cluster ties; T-only baseline, inherent). See VERDICT.md.
+
+# Type II — cluster = polymer (homopolymer). Each polymer contributes
+# 6–91 rows spanning a temperature sweep at one or more molecular weights
+# and shear rates. The reference formulas (WLF and DWLF) have per-cluster
+# LOCAL_FITTABLE parameters (normalisation intercept, and C1' for DWLF)
+# while the functional form and its constraints are shared across polymers.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot. Science framing only;
+# no column lists, no constants, no formula leakage.
+context: >-
+  The melt viscosity of a molten polymer governs how readily it flows during
+  processing. It decreases strongly as temperature rises and increases with the
+  chain length (molecular weight) of the polymer. Above the glass-transition
+  temperature, the temperature dependence of the viscoelastic relaxation of
+  amorphous polymers is commonly described within a time-temperature
+  superposition framework, in which a shift factor relating the viscosity at a
+  given temperature to its value at a reference temperature varies smoothly and
+  non-linearly with the temperature distance from that reference. Each polymer
+  has its own glass-transition temperature and its own overall viscosity scale,
+  while the qualitative temperature response is shared across amorphous polymers.
+  At sufficiently high molecular weight the zero-shear viscosity rises steeply
+  with chain length once the chains are long enough to entangle.
+
+target:
+  name: log10_eta_poise
+  symbol: "log10(η)"
+  unit: "log10(poise)"
+  description: Base-10 logarithm of polymer melt viscosity measured in poise, from the polyVERSE melt-viscosity dataset (Tran & Ramprasad, Zenodo 2024, CC-BY-4.0). Experimental (Aug=0) homopolymer rows only.
+  range: [-0.7587, 12.7300]
+
+inputs:
+  - name: Temperature_K
+    symbol: T
+    unit: K
+    dtype: float
+    description: Melt temperature in Kelvin.
+    range: [243.15, 533.15]
+  - name: log10_Mw
+    symbol: "log10(Mw)"
+    unit: "log10(g/mol)"
+    dtype: float
+    description: Base-10 logarithm of weight-average molecular weight in g/mol.
+    range: [2.9000, 7.2113]
+  - name: Shear_Rate
+    symbol: "γ̇"
+    unit: "s^-1"
+    dtype: float
+    description: Applied shear rate in reciprocal seconds; 0 for zero-shear (Newtonian-limit) measurements.
+    range: [0.0, 19840.0]
+  - name: Tg_K
+    symbol: Tg
+    unit: K
+    dtype: float
+    description: Glass-transition temperature in Kelvin for the polymer; per-cluster observed covariate (constant within each polymer cluster).
+    range: [183.0, 373.0]
+
+# Dataset — three-file v2 Type II layout (cluster = polymer; cluster holdout).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 276
+n_test_fit: 184
+n_test_test: 181
+n_clusters_train: 10
+n_clusters_test: 9
+n_rows_per_cluster_min: 6
+n_rows_per_cluster_median: 20
+n_rows_per_cluster_max: 91
+# Split updated 2026-05-28: HOLDOUT_MOD changed from 4 to 2 + HOLDOUT_EXTRA to reach K_test=9 (FM-T7 floor).
+
+# Forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# "error" because holdout discipline guarantees set(test_fit.group_id)==set(test_test.group_id).
+unseen_group_strategy: error
+
+# Candidate prior constants — grounded in reference papers.
+# NOTE (2026-06-02 audit): the WLF universal constants C1=17.44, C2=51.6 are
+# classified as LAW_CONSTANTS of the shangguan_2017_wlf baseline (the paper-fitted,
+# frozen, cross-polymer-invariant defining coefficients of the named WLF law), so
+# they are deliberately NOT exposed here — a LAW value must never appear in priors
+# (FM-H1 / C12 leak rule). The remaining priors are non-LAW candidates/distractors.
+priors:
+  - name: Berry_Fox_exponent
+    value: 3.4
+    unit: dimensionless
+    description: Empirical exponent for the molecular-weight dependence of zero-shear melt viscosity above the critical entanglement Mw, eta ∝ Mw^3.4. The experimentally observed value 3.3–3.4 is cited in Yakunin (2005) arXiv:cond-mat/0505399, p. 2 (Introduction).
+    source: Yakunin (2005) arXiv:cond-mat/0505399, Introduction p. 2.
+    _role: candidate
+  - name: R_gas_constant
+    value: 8.314
+    unit: "J/(mol·K)"
+    description: Universal gas constant; enters the Arrhenius activation-energy formula E_a / (R*T) and the DWLF C1'=0.434*E_a/(R*Ts) derivation (Shangguan 2017 PDF p. 5, Eq. 7).
+    source: SI definition.
+    _role: distractor
+
+# === Reference baselines ===
+# Metrics: fit on test_fit (per-cluster), evaluated on test_test (held-out half).
+references:
+  - id: shangguan_2017_wlf
+    label: "Shangguan 2017 WLF — universal LAW constants C1=17.44, C2=51.6 K (WLF 1955)"
+    formula_file: formulas/shangguan_2017_wlf.py
+    reference_pdf: reference/yin_2017_polymers_wlf.pdf
+    # C1=17.44, C2=51.6 K are the Williams-Landel-Ferry (1955) paper-FITTED
+    # universal defining coefficients of the WLF law — frozen and invariant across
+    # all polymers -> LAW_CONSTANTS (the harness passes them to fit()/predict() via
+    # **LAW). Audit 2026-06-02: reclassified OTHER->LAW (paper-fitted defining
+    # coefficients, distinct from an observed/assumed given which stays OTHER).
+    n_law_constants: 2
+    n_other_constants: 0
+    n_local_params: 1
+    measured: {rmse: 1.3142, r2: 0.6608}
+  - id: shangguan_2017_dwlf
+    label: "Shangguan 2017 DWLF — C2'=Ts by construction, C1' LOCAL_FIT"
+    formula_file: formulas/shangguan_2017_dwlf.py
+    reference_pdf: reference/yin_2017_polymers_wlf.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured: {rmse: 1.1832, r2: 0.7251}
+
+# === v2 anti-dump caps ===
+# max_law_constants auto-derived by evaluate.py reference (derive_caps) =
+# max len(LAW_CONSTANTS) over the bank = 2 (WLF C1,C2; DWLF LAW={}).
+caps:
+  max_law_constants: 2
+  max_local_params: 2
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 1.1832

@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Force"
+  symbol: "F"
+  unit: ""
+  description: "Force"
+inputs:
+  - name: "Charge"
+    symbol: "q1"
+    unit: ""
+    description: "Charge"
+  - name: "Charge"
+    symbol: "q2"
+    unit: ""
+    description: "Charge"
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"
+  - name: "Length"
+    symbol: "r"
+    unit: ""
+    description: "Length"

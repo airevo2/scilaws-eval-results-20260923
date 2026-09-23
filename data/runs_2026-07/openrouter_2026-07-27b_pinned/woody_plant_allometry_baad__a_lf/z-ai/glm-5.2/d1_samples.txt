@@ -1,0 +1,111 @@
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    # Extended pipe model: A_L = c * A_S^a * H^b
+    # Where A_L scales positively with sapwood area and negatively with height
+    # due to hydraulic limitations.
+    c = 10.0
+    a = 1.0
+    b = -0.5
+    
+    A_L = c * np.power(A_S, a) * np.power(H, b)
+    return A_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts total whole-plant leaf area (A_L) based on the pipe model theory 
+    with hydraulic limitation (where the leaf area to sapwood area ratio 
+    decreases with plant height).
+    
+    Canonical form:
+    A_L = beta_0 * (A_S ^ beta_1) * (H ^ beta_2)
+    
+    Inputs:
+    X[:, 0] = A_S (sapwood area at breast height) [m2]
+    X[:, 1] = H (total plant height) [m]
+    """
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    # Coefficients based on typical allometric scaling for trees
+    # A_L / A_S is typically on the order of 2000-4000 m2/m2
+    beta_0 = 10000.0
+    beta_1 = 1.0
+    beta_2 = -0.5
+    
+    # Ensure no division by zero or negative powers on zero
+    A_S = np.where(A_S <= 0, 1e-9, A_S)
+    H = np.where(H <= 0, 1e-9, H)
+    
+    A_L = beta_0 * np.power(A_S, beta_1) * np.power(H, beta_2)
+    
+    return A_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    a_s = X[:, 0]
+    h_t = X[:, 1]
+    
+    # Canonical allometric form derived from the pipe model theory, 
+    # where leaf area scales linearly with sapwood area but is constrained 
+    # by hydraulic path length (height).
+    # A_L = a * A_S^b * H^c
+    a = 1000.0
+    b = 1.0
+    c = -0.5
+    
+    return a * np.power(a_s, b) * np.power(h_t, c)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    # Standard allometric relationship relating total leaf area (A_L) 
+    # to sapwood area at breast height (A_S) and total height (H).
+    # Often derived from the pipe model theory extended by hydraulic constraints,
+    # where leaf area scales with sapwood cross-sectional area and plant height.
+    # A_L = c * A_S^a * H^b
+    c = 14.0
+    a = 1.0
+    b = 1.0
+    
+    return c * (A_S ** a) * (H ** b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts total whole-plant leaf area (A_L) based on sapwood cross-sectional 
+    area at breast height (A_S) and total plant height (H).
+    
+    Uses the canonical allometric scaling relationship derived from the pipe model 
+    theory with hydraulic limitation scaling:
+    A_L = beta_0 * A_S^beta_1 * H^beta_2
+    """
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    # Fitted coefficients / typical scaling exponents
+    beta_0 = 1500.0
+    beta_1 = 1.0
+    beta_2 = -0.5
+    
+    A_L = beta_0 * np.power(A_S, beta_1) * np.power(H, beta_2)
+    
+    return A_L

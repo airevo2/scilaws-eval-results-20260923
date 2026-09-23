@@ -1,0 +1,147 @@
+import numpy as np
+
+def predict(X):
+    # Extract temperature in Celsius and convert to Kelvin
+    T_C = X[:, 0]
+    T_K = T_C + 273.15
+    
+    # Constants
+    k = 8.617333e-5  # Boltzmann constant (eV/K)
+    T_ref = 293.15   # Reference temperature (K) [20 °C]
+    
+    # Typical physiological parameters for Sharpe-Schoolfield model
+    r_ref = 1.0      # Performance rate at reference temperature (normalized)
+    E_a = 0.65       # Activation energy (eV)
+    E_h = 2.5        # High-temperature deactivation energy (eV)
+    T_h = 311.15     # Temperature at which enzyme is 50% active (K) [38 °C]
+    
+    # Calculate exponents with clipping to prevent numerical overflow
+    exp_num = -E_a / k * (1.0 / T_K - 1.0 / T_ref)
+    exp_den = E_h / k * (1.0 / T_h - 1.0 / T_K)
+    
+    exp_num = np.clip(exp_num, -700, 700)
+    exp_den = np.clip(exp_den, -700, 700)
+    
+    # Sharpe-Schoolfield equation (high-temperature inactivation)
+    numerator = r_ref * np.exp(exp_num)
+    denominator = 1.0 + np.exp(exp_den)
+    
+    P = numerator / denominator
+    return P
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract temperature in Celsius and convert to Kelvin
+    T_C = X[:, 0]
+    T = T_C + 273.15
+
+    # Boltzmann constant (eV/K)
+    k = 8.617333e-5
+
+    # Standard Sharpe-Schoolfield parameters for metabolic/biological rates
+    E_a = 0.65  # Activation energy (eV)
+    E_h = 2.5  # High-temperature deactivation energy (eV)
+    T_h = 311.15  # Temperature at which enzyme is 50% active (approx 38 °C)
+    T_ref = 293.15  # Reference temperature (20 °C)
+    r_ref = 1.0  # Rate at reference temperature
+
+    # Sharpe-Schoolfield model with high-temperature inactivation
+    numerator = r_ref * np.exp(-(E_a / k) * (1.0 / T - 1.0 / T_ref))
+    denominator = 1.0 + np.exp((E_h / k) * (1.0 / T_h - 1.0 / T))
+
+    P = numerator / denominator
+
+    # Biological rates cannot be negative
+    return np.maximum(P, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract temperature in Celsius and convert to Kelvin
+    T_C = X[:, 0]
+    T_K = T_C + 273.15
+
+    # Standard Sharpe-Schoolfield model parameters (typical physiological values)
+    R = 8.314  # Universal gas constant (J / (mol * K))
+    E_a = 65000.0  # Activation energy (J / mol)
+    E_h = 130000.0  # High-temperature deactivation energy (J / mol)
+    T_h = 308.15  # Half-active temperature at high-end (K) [35 degrees C]
+    T_ref = 293.15  # Reference temperature (K) [20 degrees C]
+    r_ref = 1.0  # Performance rate at reference temperature
+
+    # Clip to avoid division by zero (unlikely given typical environmental range)
+    T_K = np.maximum(T_K, 1.0)
+
+    # Sharpe-Schoolfield formulation (with high-temperature inactivation)
+    numerator = r_ref * np.exp(-E_a / R * (1.0 / T_K - 1.0 / T_ref))
+    denominator = 1.0 + np.exp(E_h / R * (1.0 / T_h - 1.0 / T_K))
+
+    P = numerator / denominator
+
+    # Biological rates are non-negative
+    return np.maximum(P, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract temperature in Celsius and convert to Kelvin
+    T = X[:, 0] + 273.15
+
+    # Boltzmann constant (eV/K)
+    k = 8.617333e-5
+
+    # Standard thermodynamic parameters for the Sharpe-Schoolfield model
+    # describing thermal performance curves (TPC) of biological rates
+    E_a = 0.65  # Activation energy (eV)
+    E_h = 2.5  # High-temperature deactivation energy (eV)
+    T_h = 308.15  # Temperature at which enzyme is 50% inactive (Kelvin, ~35C)
+    T_ref = 293.15  # Reference temperature (Kelvin, ~20C)
+    r_ref = 1.0  # Performance rate at the reference temperature
+
+    # Sharpe-Schoolfield model (with high-temperature inactivation)
+    numerator = r_ref * np.exp(-(E_a / k) * (1.0 / T - 1.0 / T_ref))
+    denominator = 1.0 + np.exp((E_h / k) * (1.0 / T_h - 1.0 / T))
+
+    return numerator / denominator
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract temperature in Celsius and convert to Kelvin
+    T_C = X[:, 0]
+    T_K = T_C + 273.15
+
+    # Sharpe-Schoolfield model parameters (typical physiological values)
+    R = 8.314  # Universal gas constant (J / mol K)
+    E_a = 65000.0  # Activation energy (J / mol)
+    E_d = 150000.0  # Deactivation energy (J / mol)
+    T_half = 310.15  # Temperature at which 50% of enzyme is inactivated (37 °C in K)
+    T_ref = 293.15  # Reference temperature (20 °C in K)
+    P_ref = 1.0  # Performance scale factor at reference temperature
+
+    # Avoid division by zero for unphysical temperatures
+    T_K = np.where(T_K <= 0, 1e-10, T_K)
+
+    # Schoolfield equation with high-temperature inactivation
+    numerator = P_ref * np.exp(-(E_a / R) * (1.0 / T_K - 1.0 / T_ref))
+    denominator = 1.0 + np.exp((E_d / R) * (1.0 / T_half - 1.0 / T_K))
+
+    P = numerator / denominator
+
+    # Set performance to 0 for temperatures below absolute zero (physically impossible but safe)
+    P = np.where(X[:, 0] < -273.15, 0.0, P)
+
+    return P

@@ -1,0 +1,200 @@
+import numpy as np
+
+def predict(X):
+    # Extract wind speed (v) from the first column of X
+    v = X[:, 0]
+    
+    # Standard parameters for a typical multi-megawatt wind turbine (e.g., 2 MW rated)
+    v_in = 3.0       # Cut-in wind speed (m/s)
+    v_rated = 12.0   # Rated wind speed (m/s)
+    v_out = 25.0     # Cut-out wind speed (m/s)
+    P_rated = 2000.0 # Rated electrical power (kW)
+    
+    # Initialize power output array
+    P = np.zeros_like(v)
+    
+    # Define the regions of the standard wind turbine power curve
+    # Region 1: v < v_in -> Power = 0
+    # Region 2: v_in <= v < v_rated -> Power increases cubically
+    idx_curve = (v >= v_in) & (v < v_rated)
+    P[idx_curve] = P_rated * ((v[idx_curve]**3 - v_in**3) / (v_rated**3 - v_in**3))
+    
+    # Region 3: v_rated <= v < v_out -> Power = P_rated
+    idx_rated = (v >= v_rated) & (v < v_out)
+    P[idx_rated] = P_rated
+    
+    # Region 4: v >= v_out -> Power = 0 (Storm shutdown)
+    # Already initialized to 0.0
+    
+    # Ensure no negative power values due to numerical precision near cut-in
+    P = np.maximum(P, 0.0)
+    
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the 10-minute-averaged active electrical power output (P) in kW
+    using a standard piecewise cubic wind turbine power curve model.
+    
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] is the wind speed (v) at hub height in m/s.
+        
+    Returns:
+    np.ndarray
+        1-D array of power output in kW.
+    """
+    v = X[:, 0]
+    
+    # Typical parameters for a standard 2.0 MW (2000 kW) wind turbine
+    v_in = 3.0      # Cut-in wind speed (m/s)
+    v_r = 12.0      # Rated wind speed (m/s)
+    v_out = 25.0    # Cut-out wind speed (m/s)
+    P_rated = 2000.0 # Rated electrical power (kW)
+    
+    # Initialize power output array
+    P = np.zeros_like(v)
+    
+    # Region 2: v_in <= v < v_r (Power increases cubically with wind speed)
+    idx_transition = (v >= v_in) & (v < v_r)
+    P[idx_transition] = P_rated * ((v[idx_transition]**3 - v_in**3) / (v_r**3 - v_in**3))
+    
+    # Region 3: v_r <= v < v_out (Power is capped at rated capacity)
+    idx_rated = (v >= v_r) & (v < v_out)
+    P[idx_rated] = P_rated
+    
+    # Region 1 (v < v_in) and Region 4 (v >= v_out) remain 0.0
+    
+    return P
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the 10-minute-averaged active electrical power output of a wind
+
+    turbine in kW using the standard piecewise cubic power curve model.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] is the wind speed (v) in m/s at hub height.
+
+    Returns:
+    np.ndarray
+        1-D array of active electrical power (P) in kW.
+    """
+    v = X[:, 0]
+
+    # Standard parameters for a typical 2.0 MW wind turbine
+    P_rated = 2000.0  # Rated electrical power (kW)
+    v_cut_in = 3.0  # Cut-in wind speed (m/s)
+    v_rated = 12.0  # Rated wind speed (m/s)
+    v_cut_out = 25.0  # Cut-out wind speed (m/s)
+
+    # Initialize power output array with zeros
+    P = np.zeros_like(v)
+
+    # Region 2: Between cut-in and rated speed (cubic power curve relation)
+    mask_region2 = (v >= v_cut_in) & (v < v_rated)
+    P[mask_region2] = P_rated * (
+        (v[mask_region2] ** 3 - v_cut_in**3) / (v_rated**3 - v_cut_in**3)
+    )
+
+    # Region 3: Between rated and cut-out speed (constant rated power)
+    mask_region3 = (v >= v_rated) & (v <= v_cut_out)
+    P[mask_region3] = P_rated
+
+    # Region 1 (v < v_cut_in) and Region 4 (v > v_cut_out) remain 0
+
+    return P
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the 10-minute-averaged active electrical power output of a wind turbine.
+
+    Parameters:
+    X : ndarray of shape (N, 1)
+        X[:, 0] = wind_speed_mps (v) [m/s]
+
+    Returns:
+    P : ndarray of shape (N,)
+        power_kW [kW]
+    """
+    # Extract wind speed
+    v = X[:, 0]
+
+    # Standard parameters for a canonical 2.0 MW wind turbine
+    v_in = 3.0  # Cut-in wind speed (m/s)
+    v_rated = 12.0  # Rated wind speed (m/s)
+    v_out = 25.0  # Cut-out wind speed (m/s)
+    P_rated = 2000.0  # Rated electrical power (kW)
+
+    # Initialize power array
+    P = np.zeros_like(v)
+
+    # Region 2: Cubic power increase between cut-in and rated speed
+    mask_cubic = (v >= v_in) & (v < v_rated)
+    P[mask_cubic] = P_rated * (
+        (v[mask_cubic] ** 3 - v_in**3) / (v_rated**3 - v_in**3)
+    )
+
+    # Region 3: Constant rated power between rated and cut-out speed
+    mask_rated = (v >= v_rated) & (v < v_out)
+    P[mask_rated] = P_rated
+
+    # Region 1 & 4: Below cut-in and above cut-out, power is 0 (already initialized to 0)
+
+    return P
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the 10-minute-averaged active electrical power output of a
+
+    wind turbine in kW based on the wind speed.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] is the wind_speed_mps (m/s).
+
+    Returns:
+    np.ndarray
+        1-D array of power_kW (kW).
+    """
+    v = X[:, 0]
+
+    # Standard parameters for a typical multi-megawatt (e.g., 2.0 MW) wind turbine
+    P_rated = 2000.0  # Rated power in kW
+    v_in = 3.0  # Cut-in wind speed in m/s
+    v_r = 12.0  # Rated wind speed in m/s
+    v_out = 25.0  # Cut-out wind speed in m/s
+
+    # Initialize power output array
+    P = np.zeros_like(v)
+
+    # Region 2: Cubic power increase between cut-in and rated wind speed
+    mask_transition = (v >= v_in) & (v < v_r)
+    P[mask_transition] = P_rated * (
+        (v[mask_transition] ** 3 - v_in**3) / (v_r**3 - v_in**3)
+    )
+
+    # Region 3: Constant rated power between rated and cut-out wind speed
+    mask_rated = (v >= v_r) & (v < v_out)
+    P[mask_rated] = P_rated
+
+    # Region 1 (v < v_in) and Region 4 (v >= v_out) remain 0.0
+
+    return P

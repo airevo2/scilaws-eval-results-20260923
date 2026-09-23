@@ -1,0 +1,117 @@
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]  # Mandelstam s in GeV^2
+
+    # COMPETE / PDG Regge-type parametrization for pp total cross-section
+    # sigma = Z + B ln^2(s/s0) + Y1 (s/s0)^(-eta1) - Y2 (s/s0)^(-eta2)   [mb]
+    Z    = 35.45     # mb (Pomeron/constant term)
+    B    = 0.308     # mb (coefficient of ln^2)
+    s0   = 28.9      # GeV^2 (energy scale)
+    Y1   = 42.53     # mb (even Reggeon term)
+    eta1 = 0.458
+    Y2   = 33.34     # mb (odd Reggeon term, minus sign for pp)
+    eta2 = 0.545
+
+    x = s / s0
+    sigma = (Z
+             + B * np.log(x)**2
+             + Y1 * x**(-eta1)
+             - Y2 * x**(-eta2))
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    # PDG / COMPETE parametrization for total pp cross-section (in mb)
+    # sigma_tot = Z + B ln^2(s/s0) + Y1*(s1/s)^eta1 - Y2*(s1/s)^eta2
+    Z    = 35.45   # mb
+    B    = 0.308   # mb
+    s0   = 28.94   # GeV^2
+    s1   = 1.0     # GeV^2
+    Y1   = 42.53   # mb
+    Y2   = 33.34   # mb
+    eta1 = 0.458
+    eta2 = 0.545
+
+    sigma = (Z
+             + B * np.log(s / s0)**2
+             + Y1 * (s1 / s)**eta1
+             - Y2 * (s1 / s)**eta2)
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+
+    # COMPETE / PDG parametrization for pp total cross-section:
+    # sigma_tot = Z + B ln^2(s/s0) + Y1 (s1/s)^eta1 - Y2 (s1/s)^eta2
+    Z    = 35.45   # mb
+    B    = 0.308   # mb
+    s0   = 28.9    # GeV^2  (~ (5.38 GeV)^2)
+    Y1   = 42.53   # mb
+    Y2   = 33.34   # mb
+    eta1 = 0.458
+    eta2 = 0.545
+    s1   = 1.0     # GeV^2
+
+    sigma = (Z
+             + B * np.log(s / s0)**2
+             + Y1 * (s1 / s)**eta1
+             - Y2 * (s1 / s)**eta2)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    # COMPETE / PDG parametrization for pp total cross-section (in mb)
+    # sigma = Z + B*ln^2(s/s0) + Y1*(s1/s)^eta1 - Y2*(s1/s)^eta2
+    Z    = 35.45   # mb
+    B    = 0.308   # mb
+    s0   = 28.998  # GeV^2
+    s1   = 1.0     # GeV^2
+    Y1   = 42.53   # mb
+    Y2   = 33.34   # mb
+    eta1 = 0.458
+    eta2 = 0.545
+
+    sigma = (Z
+             + B * np.log(s / s0)**2
+             + Y1 * (s1 / s)**eta1
+             - Y2 * (s1 / s)**eta2)
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]  # Mandelstam s in GeV^2
+
+    # COMPETE / PDG parametrization for the pp total cross-section:
+    # sigma_tot = Z + B ln^2(s/s0) + Y1 (s1/s)^eta1 - Y2 (s1/s)^eta2
+    Z    = 35.45   # mb  (Pomeron / constant term)
+    B    = 0.308   # mb  (coefficient of ln^2 term)
+    s0   = 28.9    # GeV^2 (scale in the ln^2 term)
+    Y1   = 42.53   # mb  (leading Regge term)
+    eta1 = 0.458
+    Y2   = 33.34   # mb  (subleading Regge term)
+    eta2 = 0.545
+    s1   = 1.0     # GeV^2
+
+    sigma = (Z
+             + B * np.log(s / s0) ** 2
+             + Y1 * (s1 / s) ** eta1
+             - Y2 * (s1 / s) ** eta2)
+
+    return sigma

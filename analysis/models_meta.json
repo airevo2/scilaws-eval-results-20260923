@@ -1,0 +1,26 @@
+{
+  "_readme": [
+    "Registry used by analysis/ only. Key = canonical model id (what result.json['model'] becomes after CLEAN).",
+    "  vendor      : for the vendor count / tables",
+    "  short       : x-tick label in figures",
+    "  paper       : name used in paper prose/tables",
+    "  main_exp_id : the model's directory/key name in model_task_scores.json (needed for Fig 5); null if not in the main table",
+    "  openai_ladder_pos : release order within the OpenAI ladder (AI-Feynman figure); null for non-OpenAI",
+    "  aliases     : raw ids that map to this key (OpenRouter slugs etc.)",
+    "ADD A NEW MODEL: one entry. If it is in the main table, fill main_exp_id once the collaborator's scores file has it."
+  ],
+  "gpt-4o-mini":       {"vendor": "OpenAI",    "short": "4o-mini",   "paper": "GPT-4o-mini",       "main_exp_id": "gpt-4o-mini",         "openai_ladder_pos": 1, "aliases": []},
+  "gpt-4o":            {"vendor": "OpenAI",    "short": "4o",        "paper": "GPT-4o",            "main_exp_id": null,                  "openai_ladder_pos": 2, "aliases": []},
+  "gpt-4.1-mini":      {"vendor": "OpenAI",    "short": "4.1-mini",  "paper": "GPT-4.1-mini",      "main_exp_id": null,                  "openai_ladder_pos": 3, "aliases": []},
+  "gpt-4.1":           {"vendor": "OpenAI",    "short": "4.1",       "paper": "GPT-4.1",           "main_exp_id": null,                  "openai_ladder_pos": 4, "aliases": []},
+  "gpt-5-nano":        {"vendor": "OpenAI",    "short": "5-nano",    "paper": "GPT-5-nano",        "main_exp_id": null,                  "openai_ladder_pos": 5, "aliases": []},
+  "gpt-5-mini":        {"vendor": "OpenAI",    "short": "5-mini",    "paper": "GPT-5-mini",        "main_exp_id": "gpt-5-mini",          "openai_ladder_pos": 6, "aliases": []},
+  "gpt-5":             {"vendor": "OpenAI",    "short": "5",         "paper": "GPT-5",             "main_exp_id": null,                  "openai_ladder_pos": 7, "aliases": []},
+  "gpt-5.5":           {"vendor": "OpenAI",    "short": "5.5",       "paper": "GPT-5.5",           "main_exp_id": "gpt-5.5",             "openai_ladder_pos": 8, "aliases": []},
+  "gpt-5.4-mini":      {"vendor": "OpenAI",    "short": "5.4-mini",  "paper": "GPT-5.4-mini",      "main_exp_id": "gpt5.4-mini",         "openai_ladder_pos": null, "aliases": []},
+  "claude-opus-4.8":   {"vendor": "Anthropic", "short": "Opus-4.8",  "paper": "Claude Opus 4.8",   "main_exp_id": "claude-opus-4-8-fg",  "openai_ladder_pos": null, "aliases": ["anthropic/claude-opus-4.8"]},
+  "gemini-3.5-flash":  {"vendor": "Google",    "short": "Gem-3.5",   "paper": "Gemini 3.5 Flash",  "main_exp_id": "gemini-3.5-flash-fg", "openai_ladder_pos": null, "aliases": ["google/gemini-3.5-flash"]},
+  "deepseek-v4-pro":   {"vendor": "DeepSeek",  "short": "DS-V4",     "paper": "DeepSeek-V4 Pro",   "main_exp_id": "deepseek-v4-pro",     "openai_ladder_pos": null, "aliases": ["deepseek/deepseek-v4-pro"]},
+  "glm-5.2":           {"vendor": "Z.ai",      "short": "GLM-5.2",   "paper": "GLM-5.2",           "main_exp_id": "glm-5.2",             "openai_ladder_pos": null, "aliases": ["z-ai/glm-5.2"]},
+  "qwen3.7-max":       {"vendor": "Alibaba",   "short": "Qwen3.7",   "paper": "Qwen3.7-Max",       "main_exp_id": "qwen3.7-max",         "openai_ladder_pos": null, "aliases": ["qwen/qwen3.7-max"]}
+}

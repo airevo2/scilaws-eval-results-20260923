@@ -1,0 +1,129 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of the 1.3 mm continuum flux density (in Jy) at 140 pc
+
+    using the canonical stellar mass-disk luminosity scaling relation.
+
+    Parameters:
+    X : 2-D numpy array
+        - X[:, 0]: log10_M_star (DM97) [dex(M_sun)]
+        - X[:, 1]: log10_M_star_BCAH98 [dex(M_sun)]
+        - X[:, 2]: log10_M_star_SDF00 [dex(M_sun)]
+        - X[:, 3]: is_F_uplim (upper limit flag)
+        - X[:, 4]: log10_age (DM97) [dex(Myr)]
+
+    Returns:
+    1-D numpy array of log10_F_1p3_Jy [dex(Jy)]
+    """
+    # We use the primary stellar mass (DM97) as the predictor.
+    # The canonical scaling relation (e.g., Andrews et al. 2013, Pascucci et al. 2016)
+    # is log10(F_1.3mm / mJy) ~ 1.7 * log10(M_star) + 1.2 at 140 pc.
+    # Converting to Jy (subtracting 3): log10(F_1.3mm / Jy) ~ 1.7 * log10(M_star) - 1.8.
+    log10_M_star = X[:, 0]
+    log10_F_1p3_Jy = 1.7 * log10_M_star - 1.8
+
+    return log10_F_1p3_Jy
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Estimates the log10 of the 1.3 mm continuum flux density (in Jy) at 140 pc
+
+    based on the canonical stellar mass-disk mass scaling relation
+    (e.g., Andrews et al. 2013, Pascucci et al. 2016).
+
+    Inputs:
+    - X[:, 0]: log10_M_star (DM97) [dex(M_sun)]
+    """
+    log10_M_star = X[:, 0]
+
+    # Canonical scaling relation: log10(F_1.3mm / mJy) ~ 1.0 + 1.6 * log10(M_star)
+    # Converting to Jy: log10(F_1.3mm / Jy) = log10(F_1.3mm / mJy) - 3
+    # This yields: log10(F_1.3mm / Jy) ~ -2.0 + 1.6 * log10(M_star)
+    log10_F_1p3_Jy = -2.0 + 1.6 * log10_M_star
+
+    return log10_F_1p3_Jy
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Average the stellar mass estimates from the three PMS models for robustness
+    log10_M_star = (X[:, 0] + X[:, 1] + X[:, 2]) / 3.0
+
+    # Empirical scaling relation for detections: log10(F_1.3mm / Jy) ~ 1.7 * log10(M_star) - 1.8
+    pred_detect = 1.7 * log10_M_star - 1.8
+
+    # For 3-sigma upper limits, the reported flux density is typically determined by the
+    # survey sensitivity limit. In standard 1.3 mm surveys (e.g., Taurus/Lupus),
+    # the 3-sigma upper limit is typically around 1 mJy (i.e., -3.0 dex in Jy).
+    pred_uplim = -3.0 * np.ones_like(log10_M_star)
+
+    # Return the appropriate flux prediction based on the upper limit flag
+    return np.where(X[:, 3] == 1, pred_uplim, pred_detect)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of the 1.3 mm continuum flux density (in Jy) at 140 pc.
+
+    Inputs:
+    - X[:, 0]: log10_M_star (DM97) [dex(M_sun)]
+    - X[:, 1]: log10_M_star_BCAH98 [dex(M_sun)]
+    - X[:, 2]: log10_M_star_SDF00 [dex(M_sun)]
+    - X[:, 3]: is_F_uplim (1 if 3-sigma upper limit, 0 if detection)
+    - X[:, 4]: log10_age (DM97) [dex(Myr)]
+    """
+    # Primary stellar mass from the DM97 evolutionary model
+    log10_M = X[:, 0]
+    # Stellar age from the DM97 evolutionary model
+    log10_t = X[:, 4]
+    # Upper-limit flag
+    is_uplim = X[:, 3]
+
+    # Canonical scaling relation: F_1.3mm proportional to M_star^1.7 and t^-0.2
+    # At 1 M_sun and 1 Myr, the typical 1.3 mm flux is ~40 mJy (log10(F_Jy) ~ -1.4)
+    log10_F_pred = 1.7 * log10_M - 0.2 * log10_t - 1.4
+
+    # For 3-sigma non-detections (upper limits), the reported flux is the sensitivity limit.
+    # A typical 3-sigma ALMA sensitivity limit at 140 pc is ~0.5 mJy (log10(F_Jy) ~ -3.3)
+    log10_F = np.where(is_uplim == 1, -3.3, log10_F_pred)
+
+    return log10_F
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the base-10 logarithm of the 1.3 mm continuum flux density (in Jy)
+
+    at 140 pc using the canonical stellar mass-disk mass scaling relation.
+
+    Inputs:
+    - X[:, 0]: log10_M_star (DM97) [dex(M_sun)]
+    - X[:, 1]: log10_M_star_BCAH98 [dex(M_sun)]
+    - X[:, 2]: log10_M_star_SDF00 [dex(M_sun)]
+    - X[:, 3]: is_F_uplim (0 or 1)
+    - X[:, 4]: log10_age (DM97) [dex(Myr)]
+    """
+    # We use the DM97 stellar mass as the primary predictor (X[:, 0])
+    log10_M_star = X[:, 0]
+
+    # Canonical scaling relation: log10(L_mm) ~ 1.7 * log10(M_star) + 1.3 (with L_mm in mJy at 140 pc)
+    # Convert from mJy to Jy by subtracting 3:
+    # log10(F_1.3mm / Jy) = 1.7 * log10(M_star) - 1.7
+    log10_F_1p3_Jy = 1.7 * log10_M_star - 1.7
+
+    return log10_F_1p3_Jy

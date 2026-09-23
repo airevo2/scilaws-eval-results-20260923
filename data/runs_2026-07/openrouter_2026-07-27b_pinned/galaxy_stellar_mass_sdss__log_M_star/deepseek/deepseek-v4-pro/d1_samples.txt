@@ -1,0 +1,172 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_star / M_sun) using the standard Bell et al. (2003)
+    relation for a Kroupa (2001) IMF.  The relation uses the r-band absolute
+    magnitude (via the input distance modulus) and the (g - r) colour.
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 7)
+        Columns: u, g, r, i, z_mag, redshift, DM
+
+    Returns
+    -------
+    log_M_star : ndarray, shape (n_samples,)
+        log10 of stellar mass in solar masses.
+    """
+    g = X[:, 1]          # SDSS g-band model magnitude (AB)
+    r = X[:, 2]          # SDSS r-band model magnitude (AB)
+    DM = X[:, 6]         # distance modulus (mag)
+
+    g_minus_r = g - r
+    # Absolute r-band magnitude
+    M_r = r - DM
+
+    # Solar absolute r-band AB magnitude (Bell et al. 2003)
+    M_sun_r = 4.64
+
+    # log10(M/L_r) for Kroupa IMF from Bell et al. (2003)
+    log_ML_r = 1.097 * g_minus_r - 0.556
+
+    # log10(L_r / L_sun_r)
+    log_L_r = -0.4 * (M_r - M_sun_r)
+
+    # Total stellar mass
+    log_M_star = log_ML_r + log_L_r
+
+    # Combined constant: 0.4 * M_sun_r - 0.556 = 1.300
+    return log_M_star
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_star / M_sun) using the standard photometric relation
+    from Taylor et al. (2011) for a Chabrier/Kroupa IMF.
+    
+    Inputs:
+        X[:,0] = u       # not used in this canonical relation
+        X[:,1] = g
+        X[:,2] = r       # not used
+        X[:,3] = i
+        X[:,4] = z_mag   # not used
+        X[:,5] = redshift # not used (K-correction ignored for simple closed form)
+        X[:,6] = DM      # distance modulus
+    """
+    g = X[:, 1]
+    i_band = X[:, 3]
+    DM = X[:, 6]
+    # Taylor et al. (2011) eq. (2): log M = 1.15 + 0.70*(g - i) - 0.4*(i_abs - 4.58)
+    # with i_abs = i - DM (ignoring K-correction)
+    log_M_star = 1.15 + 0.70 * (g - i_band) - 0.4 * (i_band - DM - 4.58)
+    return np.asarray(log_M_star)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(stellar mass / M_sun) from SDSS ugriz photometry and distance modulus.
+    Uses the standard Bell et al. (2003) relation for a Kroupa IMF:
+    M_star / L_r = L_r / L_sun * (M/L)_r,
+    where log L_r = -0.4 (M_r - M_sun,r),
+    and log (M/L)_r = a + b * (g - r).
+    """
+    # Unpack columns
+    u = X[:, 0]
+    g = X[:, 1]
+    r = X[:, 2]
+    # i = X[:, 3]   # not needed for this relation
+    # z = X[:, 4]
+    # redshift = X[:, 5]
+    dm = X[:, 6]
+
+    # Solar absolute r-band AB magnitude (Bell et al. 2003, Table 1)
+    M_sun_r = 4.64
+
+    # Absolute r-band magnitude
+    M_r = r - dm
+
+    # log10(L_r / L_sun)
+    log_L_r = -0.4 * (M_r - M_sun_r)
+
+    # Mass-to-light ratio in r-band for Kroupa IMF
+    # Coefficients from Bell et al. (2003), Salpeter values (Table 7) shifted by -0.15 dex
+    a_ml_r = -0.456   # -0.306 - 0.15
+    b_ml_r = 1.097
+    log_ML_r = a_ml_r + b_ml_r * (g - r)
+
+    # Total stellar mass
+    log_Mstar = log_L_r + log_ML_r
+
+    return log_Mstar
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(M_star) from SDSS photometry and distance modulus
+    using the Bell et al. (2003) relation converted to Kroupa IMF.
+    
+    X columns:
+    0: u
+    1: g
+    2: r
+    3: i
+    4: z_mag
+    5: redshift
+    6: DM
+    """
+    # extract needed bands
+    g = X[:, 1]
+    r = X[:, 2]
+    i_band = X[:, 3]
+    DM = X[:, 6]
+
+    # colour
+    g_r = g - r
+
+    # absolute i-band magnitude
+    M_i = i_band - DM
+
+    # solar absolute i-band magnitude (AB system)
+    M_i_sun = 4.53
+
+    # Bell et al. 2003 coefficients for log(M/L_i) vs (g-r), "diet" Salpeter
+    a_diet = -0.152
+    b = 0.518
+
+    # convert to Kroupa IMF (0.15 dex offset)
+    a_kroupa = a_diet - 0.15
+
+    # log Mstar = log(M/L_i) - 0.4 * (M_i - M_i,sun)
+    logM = a_kroupa + b * g_r - 0.4 * (M_i - M_i_sun)
+
+    return logM
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Bell et al. (2003) stellar mass-to-light ratio relation for SDSS r-band,
+    # with Kroupa IMF offset. M_r = apparent r - distance modulus.
+    # log10(M*/Msun) = log10(M/L_r) + log10(L_r/Lsun)
+    # where log10(M/L_r) = -0.456 + 1.097*(g - r)  (Kroupa IMF)
+    # and log10(L_r/Lsun) = -0.4*(M_r - 4.64)    (Sun's r-band AB absolute magnitude = 4.64)
+    M_sun_r = 4.64
+    a_r_kroupa = -0.456
+    b_r = 1.097
+
+    g_minus_r = X[:, 1] - X[:, 2]
+    M_r = X[:, 2] - X[:, 6]  # DM is distance modulus
+
+    log_M_star = a_r_kroupa + b_r * g_minus_r - 0.4 * (M_r - M_sun_r)
+    return log_M_star

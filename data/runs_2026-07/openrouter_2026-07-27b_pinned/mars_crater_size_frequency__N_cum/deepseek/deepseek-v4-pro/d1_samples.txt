@@ -1,0 +1,223 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict cumulative areal density of Mars craters N(>=D) [km^-2]
+    using the standard Neukum production function polynomial for Mars.
+
+    Input X is a 2D numpy array with columns:
+        X[:,0] = D_lower_km (used)
+        X[:,1] = D_upper_km (ignored)
+        X[:,2] = D_geomean_km (ignored)
+    """
+    # Extract D_lower in km
+    D = X[:, 0]
+    
+    # Avoid log10(0) or negative values; clip if necessary (D >= 1.0 in typical range)
+    D = np.maximum(D, 1e-6)
+    x = np.log10(D)
+    
+    # Coefficients for the Mars Neukum production function (Ivanov 2001)
+    # Polynomial: log10(N(>=D)) = sum_{i=0}^{11} a_i * (log10(D))^i
+    # The shape is the same as for the Moon, but a0 is shifted to the Mars value.
+    a = np.array([
+        -3.557,          # a0
+        -3.557528,       # a1
+         0.781027,       # a2
+         1.021521,       # a3
+        -0.156012,       # a4
+        -0.444058,       # a5
+         0.019977,       # a6
+         0.086850,       # a7
+        -0.005874,       # a8
+        -0.006809,       # a9
+         8.25e-4,        # a10
+         5.54e-5         # a11
+    ])
+    
+    # Evaluate polynomial using Horner's method or simply polyval
+    log10_N = np.polyval(a[::-1], x)  # polyval expects highest degree first; a is a0..a11 so reverse
+    
+    # Return N(>=D) in km^-2
+    return 10.0 ** log10_N
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict N_cum (N(>=D)) [km^-2] -- Cumulative areal density of Mars craters
+    using the standard Ivanov (2001) production function polynomial.
+    
+    Parameters
+    ----------
+    X : 2-D numpy array
+        X[:, 0] = D_lower_km [km]
+        (other columns are collinear distractors and are ignored)
+    
+    Returns
+    -------
+    N_cum : 1-D numpy array
+        Cumulative areal density of craters with diameter >= D_lower_km [km^-2]
+    """
+    D = X[:, 0]
+    logD = np.log10(D)
+    
+    # Ivanov (2001) Mars production function coefficients (cumulative)
+    c0 = -3.384
+    c1 = -3.197
+    c2 = -0.415
+    c3 = -0.024
+    
+    logN = c0 + c1 * logD + c2 * logD**2 + c3 * logD**3
+    return 10.0 ** logN
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict cumulative areal density of Mars craters N(>=D) [km^-2]
+    using the standard closed-form Neukum production function scaled from the Moon.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 3)
+        Columns: D_lower_km, D_upper_km, D_geomean_km.  
+        Only D_lower_km (X[:,0]) is used.
+
+    Returns
+    -------
+    N_cum : np.ndarray, shape (n,)
+        Cumulative crater density N(>=D) for each D_lower_km.
+    """
+    D = X[:, 0]
+
+    # Neukum (1983) polynomial coefficients for the cumulative
+    # crater production function of the Moon (D in km, N in km^-2).
+    # log10(N) = sum_{i=0}^{11} a_i * (log10(D))^i
+    moon_coeff = np.array([
+        -3.0876,      # a0
+        -3.557528,    # a1
+         0.781027,    # a2
+         1.021521,    # a3
+        -0.156012,    # a4
+        -0.444058,    # a5
+         0.019977,    # a6
+         0.086850,    # a7
+        -0.005874,    # a8
+        -0.006809,    # a9
+         0.000825,    # a10
+         5.54e-5      # a11
+    ])
+
+    # Canonical scale factor converting lunar diameters to martian
+    # diameters (Ivanov 2001, Hartmann & Neukum 2001).
+    S = 1.38
+
+    # Shift the lunar polynomial to the martian diameter scale:
+    # N_mars(>=D) = N_moon(>= D / S)
+    logD_moon = np.log10(D) - np.log10(S)
+
+    # np.polyval expects coefficients in descending-power order
+    logN = np.polyval(moon_coeff[::-1], logD_moon)
+
+    return 10**logN
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict cumulative areal density of Mars craters N(>=D) [km^-2]
+    using the standard Ivanov (2001) / Neukum production function polynomial.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 3)
+        X[:, 0] = D_lower_km  (used)
+        X[:, 1] = D_upper_km  (ignored)
+        X[:, 2] = D_geomean_km (ignored)
+    
+    Returns
+    -------
+    N_cum : np.ndarray, shape (n_samples,)
+        Cumulative areal density N(>=D) in craters per km^2.
+    """
+    # Extract the only input needed: lower bin edge diameter in km
+    D = X[:, 0]  # D_lower_km
+    
+    # Log10 of diameter
+    logD = np.log10(D)
+    
+    # Ivanov (2001) Mars production function coefficients (11th-degree polynomial)
+    # These are the standard coefficients for the cumulative SFD N(>=D) on Mars.
+    a = np.array([
+        -3.384,   # a0  (constant)
+        -3.197,   # a1
+         1.257,   # a2
+         0.7915,  # a3
+        -0.4861,  # a4
+        -0.3630,  # a5
+         0.1016,  # a6
+         0.0520,  # a7
+        -0.0109,  # a8
+        -0.0033,  # a9
+         0.0005,  # a10
+         0.0001   # a11
+    ])
+    
+    # Compute log10(N) as polynomial in log10(D)
+    logN = np.zeros_like(logD)
+    for i, coeff in enumerate(a):
+        logN += coeff * (logD ** i)
+    
+    # Return N(>=D) in natural units [km^-2]
+    return 10.0 ** logN
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict cumulative areal density N(>=D) [km^-2] of Mars craters
+    using the standard Neukum production function polynomial (Ivanov, 2001).
+
+    Only the first column (D_lower_km) is used; other columns are ignored.
+    """
+    # Extract the lower bin edge (primary input)
+    D = X[:, 0]
+
+    # Coefficients for the Mars production function polynomial
+    # log10(N(>=D)) = sum_{i=0}^{11} a_i * (log10(D))^i
+    a = np.array([
+        -3.384,      # a0
+        -3.197,      # a1
+         1.257,      # a2
+        -0.444,      # a3
+         0.082,      # a4
+        -0.0085,     # a5
+         0.0005,     # a6
+        -1.86e-5,    # a7
+         4.02e-7,    # a8
+        -4.93e-9,    # a9
+         3.17e-11,   # a10
+        -8.56e-14    # a11
+    ])
+
+    # Compute log10(D)
+    logD = np.log10(D)
+
+    # Evaluate the polynomial using Horner's method for stability
+    logN = np.full_like(logD, a[-1])
+    for coeff in a[-2::-1]:
+        logN = logN * logD + coeff
+
+    # Convert back to natural density N(>=D) per km^2
+    N_cum = 10.0 ** logN
+
+    return N_cum

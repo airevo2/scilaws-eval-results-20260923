@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Power"
+  symbol: "Pwr"
+  unit: ""
+  description: "Power"
+inputs:
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Acceleration"
+    symbol: "a"
+    unit: ""
+    description: "Acceleration"
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"

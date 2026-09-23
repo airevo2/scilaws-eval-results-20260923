@@ -1,0 +1,190 @@
+import numpy as np
+
+def predict(X):
+    Pb_d = X[:, 0]
+    e = X[:, 1]
+    
+    # Convert orbital period from days to seconds
+    Pb_s = Pb_d * 86400.0
+    
+    # Assume typical pulsar and companion masses (1.4 solar masses each)
+    m_p = 1.4
+    m_c = 1.4
+    
+    # Solar mass in seconds (G * M_sun / c^3)
+    T_sun = 4.925490947e-6
+    
+    # Eccentricity enhancement factor from Peters & Mathews (1964)
+    f_e = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**(7.0 / 2.0)
+    
+    # GR prediction for the orbital period derivative
+    pbdot = - (192.0 * np.pi / 5.0) * ((2.0 * np.pi * T_sun) / Pb_s)**(5.0 / 3.0) * \
+            (m_p * m_c) / (m_p + m_c)**(1.0 / 3.0) * f_e
+            
+    return pbdot
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard GR closed-form prediction for the orbital period derivative
+    dot_P_b (s/s) using the Peters & Mathews (1964) gravitational-wave
+    inspiral formula.  Because the masses are not supplied as inputs,
+    two typical 1.4 M_sun neutron-star masses are assumed.
+    """
+    Pb_days = X[:, 0]
+    e = X[:, 1]
+
+    # Convert orbital period from days to seconds
+    Pb = Pb_days * 86400.0
+
+    # Solar mass in geometric time units: GM_sun / c^3
+    T_sun = 4.925490947e-6  # s
+
+    # Typical double-neutron-star masses (solar masses)
+    m1 = 1.4
+    m2 = 1.4
+    mass_term = m1 * m2 / (m1 + m2) ** (1.0 / 3.0)
+
+    # Peters & Mathews eccentricity enhancement factor
+    f_e = (
+        1.0
+        + (73.0 / 24.0) * e**2
+        + (37.0 / 96.0) * e**4
+    ) / (1.0 - e**2) ** (7.0 / 2.0)
+
+    # Dimensionless prefactor (192π/5) * (2π T_sun)^{5/3} * mass_term
+    prefactor = (
+        (192.0 * np.pi / 5.0)
+        * (2.0 * np.pi * T_sun) ** (5.0 / 3.0)
+        * mass_term
+    )
+
+    # GR prediction for dot_P_b (s/s); negative for inspiraling systems
+    dot_Pb = -prefactor * Pb ** (-5.0 / 3.0) * f_e
+
+    return dot_Pb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the observed orbital period derivative dot_P_b [s/s] from the
+    Keplerian orbital period P_b [days] and eccentricity e using the
+    general-relativistic quadrupole formula (Peters & Mathews 1964).
+    
+    Canonical double-neutron-star masses of 1.4 M_sun each are assumed,
+    giving a chirp mass of ~1.219 M_sun.
+    """
+    # Inputs
+    Pb_days = X[:, 0]   # orbital period [days]
+    e = X[:, 1]         # eccentricity
+
+    # Convert orbital period to seconds
+    Pb_sec = Pb_days * 86400.0
+
+    # Physical constants (SI)
+    G = 6.67430e-11          # m^3 kg^-1 s^-2
+    c = 299792458.0          # m/s
+    M_sun = 1.98847e30       # kg
+
+    # Canonical DNS masses
+    m1 = 1.4 * M_sun
+    m2 = 1.4 * M_sun
+
+    # Chirp mass
+    Mc = (m1 * m2)**(3.0 / 5.0) / (m1 + m2)**(1.0 / 5.0)
+
+    # GR prefactor: - (192*pi/5) * (2*pi*G*Mc / c^3)^(5/3)
+    prefactor = - (192.0 * np.pi / 5.0) * (2.0 * np.pi * G * Mc / c**3)**(5.0 / 3.0)
+
+    # Eccentricity enhancement factor
+    f_e = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**(7.0 / 2.0)
+
+    # Predicted dot_P_b [s/s]
+    dot_Pb = prefactor * Pb_sec**(-5.0 / 3.0) * f_e
+
+    return dot_Pb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard GR prediction for the orbital period derivative (PBDOT)
+    of a compact binary due to gravitational-wave emission (Peters & Mathews 1964).
+    
+    Inputs:
+        X[:, 0] = Pb (orbital period in days)
+        X[:, 1] = e (eccentricity)
+    
+    Returns:
+        1-D array of PBDOT [s/s] for canonical 1.4 + 1.4 M_sun double neutron stars.
+    """
+    Pb_day = X[:, 0]
+    e = X[:, 1]
+    
+    # Convert orbital period to seconds
+    Pb_sec = Pb_day * 86400.0
+    
+    # GM_sun / c^3 in seconds (IAU nominal value)
+    T_sun = 4.925490947e-6
+    
+    # Canonical neutron star masses (solar masses)
+    m1 = 1.4
+    m2 = 1.4
+    
+    # Chirp mass in solar masses
+    M_chirp = (m1 * m2)**(3.0 / 5.0) / (m1 + m2)**(1.0 / 5.0)
+    
+    # Leading-order GR quadrupole coefficient
+    C = (192.0 * np.pi / 5.0) * (2.0 * np.pi * T_sun * M_chirp)**(5.0 / 3.0)
+    
+    # Eccentricity enhancement factor
+    f_e = (1.0 + (73.0 / 24.0) * e**2 + (37.0 / 96.0) * e**4) / (1.0 - e**2)**(7.0 / 2.0)
+    
+    # GR orbital decay rate (negative for inspiral)
+    PBDOT = -C * Pb_sec**(-5.0 / 3.0) * f_e
+    
+    return PBDOT
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Inputs
+    Pb_day = X[:, 0]  # orbital period in days
+    e = X[:, 1]       # eccentricity
+
+    # Physical constants (SI)
+    G = 6.67430e-11       # m^3 kg^-1 s^-2
+    c = 2.99792458e8      # m s^-1
+    Msun = 1.98847e30     # kg
+
+    # Typical double neutron-star masses (1.4 Msun each)
+    m1 = 1.4 * Msun
+    m2 = 1.4 * Msun
+
+    # Convert period to seconds
+    Pb = Pb_day * 86400.0
+
+    # Peters & Mathews (1963) eccentricity factor
+    e2 = e * e
+    e4 = e2 * e2
+    f_e = (1.0 + (73.0 / 24.0) * e2 + (37.0 / 96.0) * e4) / ((1.0 - e2) ** 3.5)
+
+    # GR coefficient for orbital period decay
+    coeff = ((192.0 * np.pi / 5.0) *
+             ((2.0 * np.pi * G) / (c ** 3)) ** (5.0 / 3.0) *
+             (m1 * m2) / ((m1 + m2) ** (1.0 / 3.0)))
+
+    # Observed (GR) time derivative of the orbital period
+    dot_Pb = -coeff * (Pb ** (-5.0 / 3.0)) * f_e
+
+    return dot_Pb

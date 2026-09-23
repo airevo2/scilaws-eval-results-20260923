@@ -1,0 +1,85 @@
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]       # body mass (kg)
+    S = X[:, 1]       # wing area (m^2)
+    g = 9.81          # gravitational acceleration (m/s^2)
+    rho_0 = 1.225     # sea-level air density (kg/m^3)
+    CL = 0.5          # typical lift coefficient during cruising migratory flight
+    Ue = np.sqrt(2.0 * m * g / (rho_0 * S * CL))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]
+    S = X[:, 1]
+    
+    # Physical constants
+    g = 9.80665       # gravitational acceleration [m/s^2]
+    rho_0 = 1.225     # sea-level air density [kg/m^3]
+    
+    # Typical mean lift coefficient for cruising/migratory flapping flight
+    C_L = 0.6         
+    
+    # Standard closed-form aerodynamic relationship for equivalent airspeed
+    Ue = np.sqrt((2 * m * g) / (rho_0 * S * C_L))
+    
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]        # body mass [kg]
+    S = X[:, 1]        # wing area [m^2]
+    g = 9.81           # gravitational acceleration [m/s^2]
+    rho_0 = 1.225      # sea-level air density [kg/m^3]
+    CL = 0.5           # lift coefficient for migratory cruising flight
+    Ue = np.sqrt(2.0 * g * m / (rho_0 * S * CL))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m = X[:, 0]
+    S = X[:, 1]
+    g = 9.80665
+    rho_0 = 1.225
+    Ue = np.sqrt(2 * m * g / (rho_0 * S))
+    return Ue
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the mean equivalent airspeed corrected to sea-level air density (Ue)
+    during migratory flapping flight using the standard aerodynamic closed-form 
+    scaling relationship.
+    
+    Inputs:
+    X[:, 0] = mass_kg (m)
+    X[:, 1] = wing_area_m2 (S)
+    """
+    m = X[:, 0]
+    S = X[:, 1]
+    
+    # Physical and aerodynamic constants
+    g = 9.80665       # gravitational acceleration [m/s^2]
+    rho_0 = 1.225     # sea-level air density [kg/m^3]
+    
+    # Typical mean lift coefficient for migratory cruising flight
+    # (Empirical radar tracking fits generally correspond to C_L in the range 0.4 - 0.6)
+    C_L = 0.5         
+    
+    # Standard closed-form relationship for equivalent airspeed
+    Ue = np.sqrt((2 * m * g) / (rho_0 * S * C_L))
+    
+    return Ue

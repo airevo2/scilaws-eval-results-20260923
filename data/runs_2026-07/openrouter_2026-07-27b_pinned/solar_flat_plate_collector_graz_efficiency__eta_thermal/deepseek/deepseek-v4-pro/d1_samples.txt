@@ -1,0 +1,170 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict gross-area thermal efficiency using the standard Hottel-Whillier-Bliss (HWB) model.
+
+    eta = eta0 - a1 * (T_in - T_amb) / G
+
+    Input columns:
+        X[:,0] = G       [W/m2]  Global plane-of-array irradiance
+        X[:,1] = T_in    [degC]  Collector inlet fluid temperature
+        X[:,2] = T_amb   [degC]  Ambient air temperature
+        X[:,3] = WS      [m/s]   Wind speed (distractor, not used in the core HWB law)
+    """
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+
+    # Typical flat-plate collector coefficients (gross-area basis)
+    eta0 = 0.75    # optical efficiency (intercept)
+    a1 = 4.0       # linear heat-loss coefficient [W/(m2*K)]
+
+    dT = T_in - T_amb
+
+    # Safe division: avoid division by zero when G is zero or negative
+    eta = eta0 - a1 * np.divide(dT, G, where=G > 0, out=np.zeros_like(G))
+
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict gross-area thermal efficiency eta_thermal using the standard
+    Hottel-Whillier-Bliss (HWB) linear collector model.
+    eta = eta0 - a1 * (T_in - T_amb) / G
+    Wind speed is intentionally ignored as per the core HWB law.
+    """
+    # Extract inputs
+    G = X[:, 0]       # Global plane-of-array irradiance [W/m2]
+    T_in = X[:, 1]    # Collector inlet temperature [deg C]
+    T_amb = X[:, 2]   # Ambient air temperature [deg C]
+    # X[:, 3] is wind speed -- distractor, not used
+
+    # Typical flat-plate collector parameters (fitted constants)
+    eta0 = 0.75   # optical efficiency (F_R * tau * alpha)
+    a1 = 4.0      # overall heat loss coefficient [W/m2K] (F_R * U_L)
+
+    # Reduced temperature difference
+    dT = T_in - T_amb
+
+    # HWB linear efficiency equation
+    eta = eta0 - a1 * dT / G
+
+    # Ensure physically meaningful efficiency range [0, 1]
+    eta = np.clip(eta, 0.0, 1.0)
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict gross-area thermal efficiency eta using the Hottel-Whillier-Bliss (HWB) linear model:
+        eta = eta0 - a1 * (T_in - T_amb) / G
+    Wind speed is a known distractor and is not used.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 4)
+        X[:,0] = G      (W/m2)   global plane-of-array irradiance
+        X[:,1] = T_in   (deg C)  collector inlet fluid temperature
+        X[:,2] = T_amb  (deg C)  ambient air temperature
+        X[:,3] = WS     (m/s)    wind speed (not used)
+    
+    Returns
+    -------
+    eta : np.ndarray, shape (n,)
+        Thermal efficiency, dimensionless (0 to 1).
+    """
+    G = X[:, 0]
+    T_in = X[:, 1]
+    T_amb = X[:, 2]
+    # WS = X[:, 3]  # distractor, intentionally ignored
+
+    # Standard HWB coefficients (typical values for a flat-plate collector)
+    eta0 = 0.75    # optical efficiency (intercept)
+    a1   = 5.0     # overall heat loss coefficient [W/(m2·K)]
+
+    # Reduced temperature difference
+    dT_over_G = (T_in - T_amb) / G
+
+    # Linear HWB efficiency equation
+    eta = eta0 - a1 * dT_over_G
+
+    # Optional: clip to physically meaningful range
+    eta = np.clip(eta, 0.0, 1.0)
+
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict gross-area thermal efficiency (eta) using the standard
+    Hottel-Whillier-Bliss (HWB) linear model:
+        eta = eta0 - a1 * (T_in - T_amb) / G
+    Wind speed is not used (the HWB core equation ignores wind).
+    """
+    # Typical coefficients for a flat-plate collector (dimensionless and W/m²K)
+    ETA0 = 0.75   # intercept (optical efficiency)
+    A1   = 3.0    # first-order heat loss coefficient, W/(m²·K)
+
+    G     = X[:, 0]   # global irradiance on collector plane, W/m²
+    T_in  = X[:, 1]   # inlet fluid temperature, °C
+    T_amb = X[:, 2]   # ambient air temperature, °C
+
+    # Reduced temperature difference (K·m²/W)
+    delta_T_over_G = (T_in - T_amb) / G
+
+    # Thermal efficiency (dimensionless)
+    eta = ETA0 - A1 * delta_T_over_G
+
+    return eta
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts gross-area thermal efficiency of a solar collector array
+    using the linear Hottel-Whillier-Bliss (HWB) equation:
+        eta = eta0 - a1 * (T_in - T_amb) / G
+    Wind speed is a known distractor and is not used.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 4)
+        Columns: G (W/m2), T_in (degC), T_amb (degC), WS (m/s)
+    
+    Returns
+    -------
+    eta : np.ndarray, shape (n_samples,)
+        Predicted thermal efficiency (0 to 1)
+    """
+    # Unpack inputs (wind speed column is ignored)
+    G = X[:, 0]          # Global plane-of-array irradiance [W/m2]
+    T_in = X[:, 1]       # Collector inlet fluid temperature [degC]
+    T_amb = X[:, 2]      # Ambient air temperature [degC]
+
+    # Linear HWB coefficients (typical for a glazed flat-plate collector)
+    eta0 = 0.75          # optical efficiency (intercept)
+    a1 = 4.0             # overall heat loss coefficient based on inlet temp [W/(m2·K)]
+
+    # Reduced temperature difference
+    reduced_T = (T_in - T_amb) / G
+
+    # Efficiency prediction
+    eta = eta0 - a1 * reduced_T
+
+    # Optional: clip to physically meaningful range (0, 1)
+    # eta = np.clip(eta, 0.0, 1.0)
+
+    return eta

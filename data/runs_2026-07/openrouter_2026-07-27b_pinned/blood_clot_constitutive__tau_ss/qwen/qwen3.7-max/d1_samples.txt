@@ -1,0 +1,110 @@
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    
+    # The standard homogeneous simple-shear closed-form relationship for 
+    # an incompressible neo-Hookean solid (commonly used as the baseline 
+    # constitutive approximation for blood clots) is tau_ss = G * gamma.
+    # The reference baselines use a constant effective shear modulus G.
+    G = 1.0  # Baseline shear modulus in kPa
+    
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Homogeneous simple-shear closed form for an incompressible
+    # neo-Hookean (reference) hyperelastic solid:
+    #   tau_ss = G * gamma
+    # where G is the small-strain shear modulus.
+    # The reference baseline does not consume conc_mM or time_min.
+    gamma = X[:, 0]
+    G = 3.0  # kPa  – representative shear modulus for whole-blood thrombus
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    
+    # For an incompressible isotropic hyperelastic material (such as a neo-Hookean 
+    # solid, commonly used for soft tissues and thrombi), the simple-shear Cauchy 
+    # stress tau_12 is exactly linear with respect to the engineering shear strain gamma.
+    # tau_ss = G * gamma
+    # (Note: Normal stresses would be non-linear due to the Poynting effect, 
+    # but the shear component remains linear).
+    
+    G = 1.0  # Global shear modulus (kPa). Baselines use a single constant G.
+    
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    c_fib = X[:, 1]
+    t_mat = X[:, 2]
+
+    # ---------------------------------------------------------------
+    # Standard closed-form for homogeneous simple shear of an
+    # incompressible neo-Hookean (equivalently Mooney-Rivlin)
+    # hyperelastic solid:
+    #
+    #     tau_ss = G * gamma
+    #
+    # For simple shear (F_12 = gamma, all other F_ij = delta_ij):
+    #   B = F F^T  =>  sigma_12 = mu * B_12 = mu * gamma
+    # where mu = G is the ground-state shear modulus.
+    # ---------------------------------------------------------------
+
+    # Reference shear modulus at reference conditions (kPa)
+    G_ref = 1.0
+
+    # Reference concentration and maturation time (midpoints of design)
+    c_ref = 20.0   # mM
+    t_ref = 90.0   # min
+
+    # ---- Modulus scaling from semiflexible-network / clot physics ----
+    # G ~ c^alpha : crosslinked fibrin network scaling
+    #   (MacKintosh / Storm theory and experiments give alpha ~ 2-2.5
+    #    for tightly cross-linked semiflexible networks)
+    alpha = 2.0
+
+    # G ~ t^beta : FXIIIa-mediated cross-linking kinetics
+    #   (alpha-chain cross-linking continues on the time-scale of hours;
+    #    a weak power law captures the gradual stiffening)
+    beta = 0.5
+
+    # Specimen-specific shear modulus
+    G = G_ref * (c_fib / c_ref) ** alpha * (t_mat / t_ref) ** beta
+
+    # Simple-shear Cauchy stress (neo-Hookean closed form)
+    tau_ss = G * gamma
+
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    
+    # Standard homogeneous simple-shear closed-form approximation for Cauchy stress.
+    # For an incompressible neo-Hookean (or Mooney-Rivlin) solid, tau_ss = G * gamma.
+    # The reference baseline uses a constant effective shear modulus G (in kPa),
+    # ignoring the fibrinogen concentration and maturation time dependencies.
+    G = 1.0 
+    
+    tau_ss = G * gamma
+    return tau_ss

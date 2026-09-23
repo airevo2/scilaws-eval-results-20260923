@@ -1,0 +1,143 @@
+task_id: hacks_law_river_length_hydrosheds__main_length_km
+domain: earth_science / hydrology
+license: HydroSHEDS-v1-Derivative
+license_notes: "Distributed under HydroSHEDS V1 custom license (TechDoc v1.4 Appendix
+  A). §7.1 grants free non-commercial and commercial use; §2.1.2 permits distribution
+  of Licensed Materials incorporated into Derivative Works. The benchmark CSV is a
+  materially transformed Derivative Work (filtered: NEXT_DOWN==0, UPLAND_SKM>=100,
+  DIST_UP_KM>=5; column-renamed; aggregated from 9 shapefiles; embedded in a benchmark
+  harness with formulas, metadata, and evaluation scripts). License determination
+  via §2.1.2 Derivative Work + §7.1 general grant + Feist 1991 numeric-facts doctrine.
+  DEC filed 2026-05-25; GM-approved 2026-05-26. See audit/proposed_GM/hacks_law_license_decision_2026-05-25.md."
+
+# Type I — each row is one independent terminal river outlet; no within-basin
+# repeated measures, no nested cluster structure. Both reference formulas are
+# pure global power laws L = c * A^h with paper-published (frozen) constants.
+type: typeI
+has_group_id: false
+
+context: >-
+  In geomorphology and hydrology, each river drainage basin has a main-stem channel running from its headwater divide to its outlet, characterized using a global hydrographic database.
+
+target:
+  name: main_length_km
+  symbol: L
+  unit: km
+  description: Main-stem river length, measured along the longest channel from the drainage divide to the basin outlet.
+  range:
+  - 11.6
+  - 6846.5
+
+inputs:
+- name: upland_area_skm
+  symbol: A
+  unit: km^2
+  dtype: float
+  description: Total upstream drainage area at the outlet (sum of all contributing catchment areas above this point).
+  range:
+  - 100.0
+  - 5912761.0
+- name: catch_area_skm
+  symbol: A_c
+  unit: km^2
+  dtype: float
+  description: Local catchment area of the outlet segment alone (the terminal reach's own contributing area, excluding upstream tributaries).
+  range:
+  - 0.03
+  - 309.27
+- name: segment_length_km
+  symbol: L_s
+  unit: km
+  dtype: float
+  description: Length of the terminal outlet segment alone (the final reach), which is typically a small fraction of the cumulative main-stem length.
+  range:
+  - 0.1
+  - 340.08
+- name: endorheic
+  symbol: e
+  unit: ""
+  dtype: float
+  description: Indicator (0 or 1) for whether the basin terminates at an inland sink (1) or reaches the ocean (0).
+  range:
+  - 0.0
+  - 1.0
+- name: strahler_order
+  symbol: omega
+  unit: ""
+  dtype: float
+  description: Strahler stream order of the outlet segment, an integer measure of branching depth in the channel network (1 = unbranched headwater; higher values denote progressively higher-order trunk channels).
+  range:
+  - 1.0
+  - 10.0
+
+# Type I two-file layout
+data_files:
+  train: data/train.csv    # rows with upland_area_skm <= P80 (P80 = 1087.82 km^2)
+  test:  data/test.csv     # rows with upland_area_skm >  P80 (large-basin OOD tail)
+
+n_train: 28340
+n_test: 7085
+
+# Split axis: upland_area_skm; Tier-3 drainage-area range holdout at the 80th
+# percentile (P80 = 1087.82 km^2; deterministic numeric inequality, no RNG).
+# The OOD probe is power-law scale-extrapolation into the large-basin regime,
+# where Hack's published exponent (0.6) over-predicts and the maximal-basin
+# exponent (0.5) is the better extrapolant. Both reference baselines beat the
+# naive train-mean predictor (test RMSE 380.2 km): dodds_rothman_2000
+# (RMSE 93.20, R2 0.924) and hack_1957 (RMSE 237.90, R2 0.505). Both pooled R2
+# are positive, so no FM-E6 mixed-bank annotation is required.
+
+# Audit history (above priors per audit guide §9):
+#  2026-05-29 audit (逐条审核): (1) removed fabricated baseline mueller_1973
+#    (no PDF on disk; its "granitic Rocky Mountain, h=0.5527" narrative contradicts
+#    the real Mueller 1972/1973 scale-crossover result, confirmed on-disk in
+#    dodds_rothman_2000.txt line 1133). (2) migrated metadata to v2 schema and
+#    removed the stale v1 `baselines:` block that still carried fitted, mutually
+#    identical power laws (c~=1.96, h~=0.533) contradicting the published-constant
+#    formula bank. (3) metric nmse_log -> rmse (nmse_log is unimplemented in the
+#    harness evaluator; 15/16 batch02 tasks use rmse). See VERDICT.md.
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block kept for schema symmetry.
+priors: []
+
+references:
+- id: hack_1957
+  label: Hack 1957 — original Hack's law L = 1.4 A^0.6 (USGS Prof. Paper 294-B, Eq. 3, p. 23), unit-converted to km/km^2 (c=1.27291, h=0.6); northeastern-US calibration.
+  formula_file: formulas/hack_1957.py
+  reference_pdf: reference/hack_1957.pdf
+  n_law_constants: 2    # c, h
+  n_other_constants: 0
+  n_local_params: 0
+  measured:
+    rmse: 237.8967
+    r2: 0.5048
+- id: dodds_rothman_2000
+  label: Dodds & Rothman 2000 — maximal-basin Hack's law L = 3.0 A^0.5 (Annu. Rev. Earth Planet. Sci. 28, Eq. 36 / Fig. 8 caption, p. 23), fit to 37 of the world's largest basins (c_tilde=3.0, h_tilde=0.5).
+  formula_file: formulas/dodds_rothman_2000.py
+  reference_pdf: reference/dodds_rothman_2000.pdf
+  n_law_constants: 2    # c_tilde, h_tilde
+  n_other_constants: 0
+  n_local_params: 0
+  measured:
+    rmse: 93.1996
+    r2: 0.9240
+
+caps:
+  max_law_constants:       2
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: log_mae    # main_length_km spans ~2.8 decades (12 .. 6846); Hack's law
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "models Hack-law allometric scaling of main-stem length with upstream drainage area"
+  - "predicted main-stem length is strictly positive"
+  - "predicted main-stem length is non-decreasing with upstream drainage area"
+  - "predicted main-stem length is at least the terminal segment length"
+
+best_baseline: 0.0988459    # hack_1957 — log_mae (lower is better); regenerated 2026-06-01

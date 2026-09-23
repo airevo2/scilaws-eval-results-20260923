@@ -1,0 +1,108 @@
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    
+    # Chen & Kipping (2017) piecewise power-law mass-radius relation
+    # Transition masses in Earth masses
+    M_TN = 2.04      # Terran-Neptunian boundary
+    M_NJ = 132.0     # Neptunian-Jovian boundary
+    M_JS = 26600.0   # Jovian-Stellar boundary
+    
+    # Power-law exponents per regime
+    a_T = 0.279      # Terran (rocky)
+    a_N = 0.589      # Neptunian (volatile-rich)
+    a_J = -0.044     # Jovian (gas giants / brown dwarfs)
+    a_S = 0.88       # Stellar
+    
+    # Normalization coefficients enforcing continuity at each boundary
+    C_T = 1.0
+    C_N = C_T * M_TN**(a_T - a_N)
+    C_J = C_N * M_NJ**(a_N - a_J)
+    C_S = C_J * M_JS**(a_J - a_S)
+    
+    R = np.where(M <= M_TN, C_T * M**a_T,
+        np.where(M <= M_NJ, C_N * M**a_N,
+            np.where(M <= M_JS, C_J * M**a_J,
+                C_S * M**a_S)))
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    R = M ** 0.27
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    R = np.empty_like(M, dtype=float)
+
+    # Chen & Kipping (2017) "Forecaster" mass-radius relation
+    # Piecewise power laws with continuity enforced at breakpoints
+    # Regimes: Terran, Neptunian, Jovian, Stellar
+
+    # Breakpoints (M_earth)
+    m1 = 2.04      # Terran / Neptunian boundary
+    m2 = 132.0     # Neptunian / Jovian boundary
+    m3 = 26000.0   # Jovian / Stellar boundary (~0.08 M_sun)
+
+    # Power-law exponents
+    a1 = 0.279     # Terran
+    a2 = 0.589     # Neptunian
+    a3 = -0.044    # Jovian
+    a4 = 0.881     # Stellar
+
+    # Normalisation coefficients (C1=1 so R(1 M_earth)=1 R_earth)
+    C1 = 1.0
+    C2 = C1 * m1 ** (a1 - a2)
+    C3 = C2 * m2 ** (a2 - a3)
+    C4 = C3 * m3 ** (a3 - a4)
+
+    mask1 = M < m1
+    mask2 = (M >= m1) & (M < m2)
+    mask3 = (M >= m2) & (M < m3)
+    mask4 = M >= m3
+
+    R[mask1] = C1 * M[mask1] ** a1
+    R[mask2] = C2 * M[mask2] ** a2
+    R[mask3] = C3 * M[mask3] ** a3
+    R[mask4] = C4 * M[mask4] ** a4
+
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    return X[:, 0] ** 0.27
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M = X[:, 0]
+    R = np.empty_like(M, dtype=float)
+    
+    # Piecewise power-law approximation based on the Chen & Kipping (2017) Forecaster model
+    # 1. Terran regime (Rocky planets)
+    mask_terran = M < 2.04
+    R[mask_terran] = M[mask_terran] ** 0.279
+    
+    # 2. Neptunian regime (Volatile-rich / Gas-dominated sub-Jovian)
+    mask_neptunian = (M >= 2.04) & (M < 132.0)
+    R[mask_neptunian] = 0.84 * M[mask_neptunian] ** 0.53
+    
+    # 3. Jovian & Brown Dwarf regime (Degeneracy pressure dominated)
+    mask_jovian = M >= 132.0
+    R[mask_jovian] = 11.2 * (M[mask_jovian] / 132.0) ** -0.04
+    
+    return R

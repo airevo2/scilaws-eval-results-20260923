@@ -1,0 +1,120 @@
+def predict(X):
+    import numpy as np
+    # Standard logit (logistic) dose–response model for Abbott-corrected mortality:
+    # logit(P) = alpha + beta * log10(C)
+    # P = 1 / (1 + exp(-(alpha + beta * log10(C))))
+    log10_C = X[:, 0]
+    alpha = 0.0   # intercept; corresponds to log10(LC50) ≈ 0 (LC50 ≈ 1 ppb)
+    beta = 2.0    # slope typical for susceptible third-instar Culex larvae
+    P = 1.0 / (1.0 + np.exp(-(alpha + beta * log10_C)))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard log-logistic (Hill) dose-response model for Abbott-corrected
+    mortality of Culex larvae exposed to Lysinibacillus sphaericus.
+
+        P = 1 / (1 + exp(-slope * (ln(C) - ln(LC50))))
+
+    Parameters (representative fitted constants):
+      slope : Hill slope (steepness of the dose-response curve)
+      LC50  : concentration (ppb) at which 50 % mortality is observed
+    """
+    slope = 2.0          # Hill slope
+    LC50 = 100.0         # LC50 in ppb (µg/L)
+
+    ln_C = X[:, 1]                       # natural-log concentration
+    ln_LC50 = np.log(LC50)
+    P = 1.0 / (1.0 + np.exp(-slope * (ln_C - ln_LC50)))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Abbott-corrected mortality (P) of third-instar Culex larvae after 48 h
+    exposure to Lysinibacillus sphaericus, modeled with the canonical
+    log-logistic (Hill) dose-response relationship in natural-log form:
+
+        P = 1 / (1 + exp( beta * (ln(LC50) - ln(C)) ))
+
+    Parameters are representative literature values for susceptible Culex
+    quinquefasciatus third-instar larvae exposed to Ls for 48 h.
+    """
+    ln_C = X[:, 1]               # natural log of concentration (ppb)
+
+    LC50 = 50.0                  # ppb, typical 48-h LC50 for susceptible Culex 3rd instar
+    beta = 2.5                   # slope (proportional to Hill coefficient n)
+
+    P = 1.0 / (1.0 + np.exp(beta * (np.log(LC50) - ln_C)))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Abbott-corrected mortality proportion (P) for third-instar
+    Culex mosquito larvae after 48-hour exposure to Lysinibacillus
+    sphaericus using the classic log-probit dose-response model.
+
+    P = Phi(alpha + beta * log10(C))
+
+    where Phi is the standard normal cumulative distribution function.
+    """
+    # Use base-10 log concentration (column 0)
+    log10_conc = X[:, 0]
+
+    # Example fitted coefficients (replace with actual fitted values as needed)
+    alpha = -2.0   # intercept
+    beta = 1.5     # slope (probit per log10 unit)
+
+    # Linear predictor
+    z = alpha + beta * log10_conc
+
+    # Standard normal CDF via Abramowitz & Stegun approximation 7.1.26
+    p = 0.3275911
+    a1 = 0.254829592
+    a2 = -0.284496736
+    a3 = 1.421413741
+    a4 = -1.453152027
+    a5 = 1.061405429
+
+    sign = np.sign(z)
+    z_abs = np.abs(z)
+    t = 1.0 / (1.0 + p * z_abs)
+    erf = 1.0 - (a1 * t + a2 * t**2 + a3 * t**3 +
+                 a4 * t**4 + a5 * t**5) * np.exp(-z_abs**2)
+    erf = erf * sign
+    P = 0.5 * (1.0 + erf)
+
+    # Numerical safety: clip to [0, 1]
+    P = np.clip(P, 0.0, 1.0)
+
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard log-logistic (sigmoid) dose-response model for Abbott-corrected
+    mortality of Culex larvae exposed to Lysinibacillus sphaericus.
+    
+    P = 1 / (1 + exp(-b * (ln(C) - ln(LC50))))
+    
+    where b is the slope and LC50 is the median lethal concentration.
+    """
+    ln_C = X[:, 1]                # natural log of concentration (ppb)
+    b = 2.0                       # slope parameter (typical for Ls vs. Culex)
+    ln_LC50 = np.log(50.0)        # LC50 ≈ 50 ppb for susceptible third-instar Culex
+    P = 1.0 / (1.0 + np.exp(-b * (ln_C - ln_LC50)))
+    return P

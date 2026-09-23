@@ -1,0 +1,143 @@
+import numpy as np
+
+def predict(X):
+    log_p = X[:, 0].astype(float)
+    # X[:, 1] (top_pct) is algebraically redundant: top_pct = 100 * exp(log_p)
+    year = X[:, 2].astype(float)
+    region = X[:, 3]
+
+    # Canonical Pareto interpolation (Piketty-Saez / WID standard):
+    #   S(p) = [alpha/(alpha-1)] * (y_min / mu) * p^((alpha-1)/alpha)
+    #   ln S(p) = const + ((alpha-1)/alpha) * ln(p) + time_trend + region_FE
+
+    alpha = 1.82                    # Pareto parameter for the upper tail
+    b = (alpha - 1.0) / alpha      # slope on ln(p)  ≈ 0.4505
+
+    a  = 0.05                       # intercept (ref: year 2000, global avg)
+    c  = 0.005                      # linear annual trend in log-share
+    t0 = 2000.0                     # reference year
+
+    region_offsets = {
+        'africa':    0.15,
+        'americas':  0.10,
+        'asia':     -0.05,
+        'europe':   -0.25,
+        'oceania':  -0.05,
+    }
+
+    region_eff = np.array([
+        region_offsets.get(str(r).strip().lower(), 0.0) for r in region
+    ])
+
+    ln_S = a + b * log_p + c * (year - t0) + region_eff
+    return ln_S
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_p = X[:, 0]
+    
+    # Standard closed-form relationship for top income shares 
+    # assumes a Pareto distribution for the upper tail.
+    # S(p) = p^(1 - 1/alpha)  =>  ln S(p) = (1 - 1/alpha) * ln p
+    # alpha is the Pareto parameter (typically ~1.5 for top incomes).
+    alpha = 1.5 
+    
+    return (1.0 - 1.0 / alpha) * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the top income share ln S(p) using the 
+    standard Pareto tail distribution closed-form relationship.
+    
+    Inputs:
+    - X[:, 0]: log_p_above (ln p)
+    - X[:, 1]: top_pct (100 * p) -> Redundant, intentionally ignored.
+    - X[:, 2]: year -> Ignored in the pure theoretical closed-form.
+    - X[:, 3]: region -> Ignored in the pure theoretical closed-form.
+    """
+    ln_p = X[:, 0]
+    
+    # Standard Pareto relationship for top income shares: 
+    # S(p) = p^(1 - 1/alpha)
+    # Taking the natural log: ln S(p) = (1 - 1/alpha) * ln p
+    
+    # Using a canonical representative Pareto parameter (alpha ~ 1.5) 
+    # commonly observed in WID top-tail income distributions.
+    alpha = 1.5
+    beta = 1.0 - (1.0 / alpha)
+    
+    ln_S_p = beta * ln_p
+    
+    return ln_S_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_p = X[:, 0]
+    
+    # The standard closed-form relationship for top income shares S(p) 
+    # is derived from the Pareto distribution, which implies a log-log linear form:
+    # ln S(p) = beta_0 + (1 - 1/alpha) * ln p
+    #
+    # X[:, 1] (top_pct) is algebraically redundant and ignored.
+    # X[:, 2] (year) and X[:, 3] (region) would parameterize alpha and beta_0 
+    # in an empirical panel model, but the fundamental closed-form scaling 
+    # relationship with respect to the top fraction p is governed by alpha.
+    
+    # Representative named constants for the structural parameters
+    alpha = 1.5       # Typical Pareto parameter for upper-tail income
+    beta_0 = 0.0      # Intercept (depends on the lower bound of the Pareto tail)
+    
+    beta_1 = 1.0 - (1.0 / alpha)
+    
+    return beta_0 + beta_1 * log_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Pareto top-income share formula (Piketty–Saez–Zucman / WID):
+
+        ln S(p) = (1 − 1/α) · ln p  ≡  b · ln p
+
+    where b = (α−1)/α is the inverted Pareto coefficient.
+    We model b as a linear function of calendar year (trend) and
+    WID macro-region (fixed effects), calibrated to typical WID
+    country-level top-share data across the 1980–2023 window.
+    """
+    log_p  = np.array(X[:, 0], dtype=float)   # ln(p)
+    # X[:, 1] = top_pct  — algebraically redundant with log_p; ignored.
+    year   = np.array(X[:, 2], dtype=float)   # calendar year
+    region = X[:, 3]                          # categorical string
+
+    # --- Inverted-Pareto coefficient model ---
+    b_base = 0.48        # baseline b for Europe at year 2000  (α ≈ 1.92)
+    b_year = -0.002      # annual trend  (rising inequality → lower b)
+
+    region_offsets = {
+        'Africa':   -0.14,   # high inequality  (α ≈ 1.4–1.5)
+        'Americas': -0.10,   # US + Latin America pull up top shares
+        'Asia':     -0.02,   # moderate; fast recent rise absorbed by trend
+        'Europe':    0.00,   # reference category
+        'Oceania':   0.02,   # slightly more equal than Europe avg
+    }
+
+    b = b_base + b_year * (year - 2000.0)
+
+    for i in range(X.shape[0]):
+        r = str(region[i]).strip()
+        b[i] += region_offsets.get(r, 0.0)
+
+    # Pareto identity: ln S(p) = b · ln(p)
+    return b * log_p

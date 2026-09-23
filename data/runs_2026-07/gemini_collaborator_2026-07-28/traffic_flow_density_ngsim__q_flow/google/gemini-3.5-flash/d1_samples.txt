@@ -1,0 +1,122 @@
+import numpy as np
+
+def predict(X):
+    # Extract traffic density k (veh/km/lane)
+    k = X[:, 0]
+    
+    # Greenshields' fundamental diagram parameters
+    # vf: free-flow speed (~100 km/h)
+    # kj: jam density (~140 veh/km/lane)
+    vf = 100.0
+    kj = 140.0
+    
+    # Clip density to [0, kj] to prevent negative flow values at extreme jam densities
+    k_clipped = np.clip(k, 0.0, kj)
+    
+    # Greenshields formula: q = vf * k * (1 - k / kj)
+    q = vf * k_clipped * (1.0 - k_clipped / kj)
+    
+    return q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the per-lane traffic flow rate q (veh/h/lane) from density k.
+
+    Uses the classic modern standard: the Triangular Fundamental Diagram.
+
+    Parameters:
+    - X: 2-D numpy array where X[:, 0] is the density k in veh/km/lane.
+
+    Returns:
+    - 1-D numpy array of flow rate q in veh/h/lane.
+    """
+    # Extract the primary input: density k (veh/km/lane)
+    k = X[:, 0]
+
+    # Parameters calibrated for US freeways (NGSIM US-101 / I-80)
+    vf = 85.0  # Free-flow speed (km/h)
+    w = 18.0  # Backward wave propagation speed (km/h)
+    kj = 260.0  # Jam density (veh/km/lane)
+
+    # Triangular Fundamental Diagram: q = min(vf * k, w * (kj - k))
+    q = np.minimum(vf * k, w * (kj - k))
+
+    # Flow rate cannot be negative
+    q = np.maximum(0.0, q)
+
+    return q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the per-lane traffic flow rate q [veh/h/lane] from the per-lane
+
+    traffic density k [veh/km/lane] using the classic Underwood fundamental
+    diagram model.
+
+    Inputs:
+        X: 2-D numpy array where X[:, 0] is the traffic density k [veh/km/lane]
+
+    Returns:
+        1-D numpy array of the predicted traffic flow rate q [veh/h/lane]
+    """
+    k = X[:, 0]
+
+    # Canonical Underwood model parameters for a typical US freeway:
+    # v_f: Free-flow speed (km/h)
+    # k_c: Critical density at maximum flow (veh/km/lane)
+    v_f = 110.0
+    k_c = 50.0
+
+    # Underwood fundamental diagram: q = k * v_f * exp(-k / k_c)
+    q = k * v_f * np.exp(-k / k_c)
+
+    return q
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract density k (veh/km/lane)
+    k = X[:, 0]
+
+    # Greenshields parameters for a typical US freeway
+    v_f = 100.0  # Free-flow speed (km/h)
+    k_j = 150.0  # Jam density (veh/km/lane)
+
+    # Greenshields fundamental diagram: q = v_f * k * (1 - k / k_j)
+    q = v_f * k * (1.0 - k / k_j)
+
+    # Traffic flow cannot be negative
+    return np.maximum(q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract the primary input: traffic density k [veh/km/lane]
+    k = X[:, 0]
+    
+    # Parameters for the classic Greenshields Fundamental Diagram
+    # vf: Free-flow speed (km/h) - typical for US freeways (approx. 62 mph)
+    # kj: Jam density (veh/km/lane) - typical maximum density
+    v_f = 100.0  
+    k_j = 140.0  
+    
+    # Clip density to [0, jam density] to prevent negative flows
+    k_clipped = np.clip(k, 0.0, k_j)
+    
+    # Greenshields relationship: q = v_f * k * (1 - k / k_j)
+    q = v_f * k_clipped * (1.0 - k_clipped / k_j)
+    
+    return q

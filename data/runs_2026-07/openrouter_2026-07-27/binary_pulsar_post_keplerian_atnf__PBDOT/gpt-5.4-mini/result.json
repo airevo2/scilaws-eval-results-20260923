@@ -1,0 +1,17 @@
+{
+  "task": "binary_pulsar_post_keplerian_atnf__PBDOT",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "peters_1963",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

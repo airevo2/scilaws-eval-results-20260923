@@ -1,0 +1,96 @@
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    # Classical simple-shear Cauchy stress for an incompressible neo-Hookean solid:
+    # tau_ss = G * gamma
+    #
+    # Here conc_mM and time_min are not used in the closed-form baseline.
+    G = 1.0
+    return G * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Homogeneous simple-shear Cauchy stress for an incompressible neo-Hookean solid:
+        tau_ss = mu * gamma
+
+    Here, only the shear amount gamma is used; concentration and maturation time
+    are ignored in this closed-form baseline.
+    """
+    X = np.asarray(X)
+    gamma = X[:, 0]
+
+    # Effective shear modulus (placeholder canonical constant form omitted because
+    # no data were provided; set to 1.0 so the function returns tau_ss ~ gamma).
+    mu = 1.0  # kPa
+
+    return mu * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Simple-shear Cauchy stress for a homogeneous incompressible neo-Hookean solid
+    under standard simple shear: tau_ss = G * gamma.
+
+    Inputs in X are:
+      X[:, 0] = gamma
+      X[:, 1] = conc_mM   (unused in this closed-form baseline)
+      X[:, 2] = time_min  (unused in this closed-form baseline)
+
+    Returns
+    -------
+    np.ndarray
+        Predicted tau_ss [kPa]
+    """
+    gamma = np.asarray(X)[:, 0]
+
+    # Canonical closed-form linear simple-shear relation.
+    # For a generic neo-Hookean material, tau_xy = G * gamma.
+    # Since no specimen-specific modulus data are provided, use a unit modulus
+    # baseline in the released convention.
+    G = 1.0  # kPa
+
+    return G * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X)
+    gamma = X[:, 0]
+    
+    # Standard simple-shear Cauchy stress for a neo-Hookean / linear elastic
+    # homogeneous incompressible closed-form approximation:
+    #   tau_ss = G * gamma
+    # Here the released variables (conc_mM, time_min) are not used in the
+    # simplest canonical form.
+    G = 1.0  # placeholder shear modulus in kPa; replace if a fitted value is available
+    return G * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Simple-shear Cauchy stress for a homogeneous incompressible neo-Hookean solid:
+        tau_ss = mu * gamma
+
+    Here mu is taken as a constant effective shear modulus.
+    The released covariates (conc_mM, time_min) are not used in this closed-form baseline.
+    """
+    X = np.asarray(X)
+    gamma = X[:, 0]
+
+    # Effective shear modulus (kPa); constant baseline approximation
+    mu = 1.0
+
+    return mu * gamma

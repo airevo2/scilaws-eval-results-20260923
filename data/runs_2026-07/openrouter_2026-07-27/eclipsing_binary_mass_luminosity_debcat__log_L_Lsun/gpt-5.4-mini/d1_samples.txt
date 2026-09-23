@@ -1,0 +1,148 @@
+import numpy as np
+
+def predict(X):
+    # Mass-luminosity relation in logarithmic form:
+    # low-mass stars: L ∝ M^4
+    # solar/intermediate mass: L ∝ M^3.5
+    # high-mass stars: L ∝ M
+    logM = X[:, 0]
+    M = 10.0 ** logM
+    logL = np.empty_like(logM)
+
+    # Piecewise classical approximation
+    mask1 = M < 0.43
+    mask2 = (M >= 0.43) & (M < 2.0)
+    mask3 = (M >= 2.0) & (M < 20.0)
+    mask4 = M >= 20.0
+
+    logL[mask1] = np.log10(0.23 * M[mask1] ** 2.3)
+    logL[mask2] = np.log10(M[mask2] ** 4.0)
+    logL[mask3] = np.log10(1.5 * M[mask3] ** 3.5)
+    logL[mask4] = np.log10(3200.0 * M[mask4])
+
+    return logL
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Mass-luminosity relation (piecewise power-law) for main-sequence stars,
+    expressed as log10(L/Lsun) from log10(M/Msun).
+
+    Metallicity is ignored.
+    """
+    logM = np.asarray(X)[:, 0]
+    M = 10.0 ** logM
+
+    L = np.empty_like(M, dtype=float)
+
+    # Standard canonical piecewise mass-luminosity relation
+    m1 = M < 0.43
+    m2 = (M >= 0.43) & (M < 2.0)
+    m3 = (M >= 2.0) & (M < 20.0)
+    m4 = M >= 20.0
+
+    L[m1] = 0.23 * M[m1] ** 2.3
+    L[m2] = M[m2] ** 4.0
+    L[m3] = 1.5 * M[m3] ** 3.5
+    L[m4] = 3200.0 * M[m4]
+
+    return np.log10(L)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mass-luminosity relation: piecewise power law in stellar mass
+    # with a weak metallicity dependence omitted (not part of the standard form).
+    m = 10.0 ** X[:, 0]  # M / Msun
+    logm = X[:, 0]
+
+    # Commonly cited approximate main-sequence scaling:
+    # L/Lsun ~ 0.23 M^2.3   for M < 0.43 Msun
+    # L/Lsun ~ M^4          for 0.43 <= M < 2 Msun
+    # L/Lsun ~ 1.5 M^3.5    for 2 <= M < 20 Msun
+    # L/Lsun ~ 32000 M      for M >= 20 Msun
+    logL = np.empty_like(logm, dtype=float)
+
+    mask1 = m < 0.43
+    mask2 = (m >= 0.43) & (m < 2.0)
+    mask3 = (m >= 2.0) & (m < 20.0)
+    mask4 = m >= 20.0
+
+    logL[mask1] = np.log10(0.23) + 2.3 * logm[mask1]
+    logL[mask2] = 4.0 * logm[mask2]
+    logL[mask3] = np.log10(1.5) + 3.5 * logm[mask3]
+    logL[mask4] = np.log10(32000.0) + 1.0 * logm[mask4]
+
+    return logL
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(L/Lsun) from log10(M/Msun) using the standard mass-luminosity
+    relation as a piecewise power law.
+    """
+    x = np.asarray(X)
+    logM = x[:, 0]
+    M = 10.0 ** logM
+
+    # Piecewise mass-luminosity relation (approximate, commonly cited)
+    L = np.empty_like(M, dtype=float)
+
+    # M < 0.43 Msun: L ~ 0.23 M^2.3
+    m1 = M < 0.43
+    L[m1] = 0.23 * M[m1] ** 2.3
+
+    # 0.43 <= M < 2 Msun: L ~ M^4
+    m2 = (M >= 0.43) & (M < 2.0)
+    L[m2] = M[m2] ** 4.0
+
+    # 2 <= M < 20 Msun: L ~ 1.5 M^3.5
+    m3 = (M >= 2.0) & (M < 20.0)
+    L[m3] = 1.5 * M[m3] ** 3.5
+
+    # M >= 20 Msun: L ~ 32000 M
+    m4 = M >= 20.0
+    L[m4] = 32000.0 * M[m4]
+
+    return np.log10(L)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict bolometric luminosity in log10(L/Lsun) from stellar mass and metallicity.
+    Uses a standard piecewise mass-luminosity relation for main-sequence stars.
+    Metallicity is ignored (distractor input).
+    """
+    m = X[:, 0]  # log10(M/Msun)
+    M = 10.0 ** m
+
+    L = np.empty_like(M, dtype=float)
+
+    # Piecewise mass-luminosity relation (commonly cited approximate form)
+    # L/Lsun ~
+    # 0.23 M^2.3                 for M < 0.43
+    # M^4                        for 0.43 <= M < 2
+    # 1.5 M^3.5                  for 2 <= M < 20
+    # 3200 M                     for M >= 20
+    mask1 = M < 0.43
+    mask2 = (M >= 0.43) & (M < 2.0)
+    mask3 = (M >= 2.0) & (M < 20.0)
+    mask4 = M >= 20.0
+
+    L[mask1] = 0.23 * M[mask1] ** 2.3
+    L[mask2] = M[mask2] ** 4.0
+    L[mask3] = 1.5 * M[mask3] ** 3.5
+    L[mask4] = 3200.0 * M[mask4]
+
+    return np.log10(L)

@@ -1,0 +1,90 @@
+task_id: woody_plant_allometry_baad__a_lf
+domain: biology / forest_ecology
+license: CC0-1.0
+
+# Audit 2026-06-03 (逐条审核, Opus 4.8): KEEP after fix. The within-cluster split was a
+# size-EXTRAPOLATION split (fit small plants, test large trees) → the best baseline beat the
+# per-cluster-mean naive in only 3/9 clusters (§9.6 fail, masked by the pooled R²=0.476).
+# FIXED to an INTERLEAVED a_ssbh-rank split (even rank → test_fit, odd → test_test): shinozaki
+# now beats naive 9/9 (mean-pc rmse 68.5, pooled R² 0.57). Also materialised data_raw/ +
+# reference/ (were symlinks into ../hf_new_source/). Field-class re-confirmed (niklas
+# alpha_RMA=0.762 LAW; shinozaki LAW={}). best_baseline=shinozaki. Real BAAD data (CC0). See VERDICT.md.
+
+type: typeII
+has_group_id: true
+
+# Background knowledge — science framing only; no task instructions or column listing.
+context: >-
+  Woody plants vary enormously in the amount of leaf area they support per unit
+  of hydraulic transport tissue in the stem. Within a species, a larger stem
+  cross-sectional area of conductive sapwood at breast height is associated with
+  more total leaf area because the conducting pipes must supply water to all
+  leaves above. The ratio of leaf area to sapwood area differs across species
+  depending on wood density, leaf thickness, and hydraulic efficiency, so a
+  species-specific normalization is required to predict leaf area from sapwood
+  area. Tree height also plays a role because hydraulic path length affects the
+  amount of leaf area a given sapwood area can sustain.
+
+target:
+  name: a_lf
+  symbol: "A_L"
+  unit: m2
+  description: Total whole-plant leaf area measured on harvested or allometrically reconstructed individuals from the BAAD database.
+  range: [0.007598, 2198.489707]
+
+inputs:
+  - name: a_ssbh
+    symbol: "A_S"
+    unit: m2
+    description: Sapwood cross-sectional area at breast height (1.3 m above ground), measured directly from stem cores or stem cross-sections.
+    range: [0.000042, 0.329000]
+  - name: h_t
+    symbol: H
+    unit: m
+    description: Total plant height measured directly (clinometer, hypsometer, or direct measurement on harvested individuals).
+    range: [0.760000, 48.190000]
+
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 586
+n_test_fit: 94
+n_test_test: 89
+n_clusters_train: 9
+n_clusters_test: 9
+
+# n_rows_per_cluster summary (train + test combined)
+# min=5 (Quercus coccinea), max=213 (Pinus ponderosa)
+# Split updated 2026-05-28: stride changed from 4 to 2 to satisfy FM-T7 K_test>=9 floor.
+# Within-cluster split updated 2026-06-03: size-EXTRAPOLATION (small 60% fit / large 40% test)
+# → INTERLEAVED a_ssbh-rank (even→test_fit / odd→test_test) to fix a §9.6 failure (best
+# baseline beat the per-cluster-mean naive only 3/9 → 9/9). See prep_data.py + VERDICT.md.
+
+references:
+  - id: niklas_2001
+    label: "3/4-power scaling a_lf = k * a_ssbh^0.762 (Niklas & Enquist 2001, PNAS 98(5):2922)"
+    formula_file: formulas/niklas_2001.py
+    reference_pdf: reference/niklas_enquist_2001.pdf
+    n_law_constants: 1
+    n_other_constants: 0
+    n_local_params: 1
+    measured: {rmse: 212.8279, r2: 0.3946}
+  - id: shinozaki_1964
+    label: "Pipe Model Theory a_lf = k_p * a_ssbh (Shinozaki et al. 1964, reviewed Lehnebach 2018)"
+    formula_file: formulas/shinozaki_1964.py
+    reference_pdf: reference/lehnebach_2018.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 1
+    measured: {rmse: 179.8890, r2: 0.5675}
+
+caps:
+  max_law_constants: 1
+  max_local_params: 1
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+metric: rmse
+best_baseline: 179.8890

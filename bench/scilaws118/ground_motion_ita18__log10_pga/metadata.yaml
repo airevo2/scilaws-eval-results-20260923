@@ -1,0 +1,139 @@
+task_id: ground_motion_ita18__log10_pga
+domain: geophysics / seismology
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  In earthquake engineering and seismology, peak ground acceleration quantifies the maximum ground shaking experienced at a recording site during an earthquake.
+
+target:
+  name: log10_pga
+  symbol: "log₁₀(PGA)"
+  unit: "log10(cm/s^2)"
+  description: >-
+    Log base 10 of the RotD50 peak ground acceleration of the horizontal components,
+    in cm/s^2. RotD50 is the 50th percentile over all horizontal azimuths.
+  range: [-2.03, 3.12]
+
+inputs:
+  - name: Mw
+    symbol: "M_w"
+    unit: ""
+    description: Moment magnitude of the earthquake.
+    range: [4.0, 6.9]
+  - name: R_km
+    symbol: R
+    unit: km
+    description: >-
+      Joyner-Boore distance (horizontal distance to the surface projection of the
+      fault rupture) in km; epicentral distance used as fallback when fault geometry
+      is unavailable.
+    range: [0.0, 199.61]
+  - name: depth_km
+    symbol: h
+    unit: km
+    description: Hypocentral depth of the earthquake in km.
+    range: [0.21, 29.0]
+  - name: ec8_A
+    symbol: "C_A"
+    unit: ""
+    description: Binary indicator for EC8 site class A (Vs30 > 800 m/s; rock).
+    categories: [0, 1]
+  - name: ec8_B
+    symbol: "C_B"
+    unit: ""
+    description: Binary indicator for EC8 site class B (Vs30 360-800 m/s; stiff soil).
+    categories: [0, 1]
+  - name: ec8_C
+    symbol: "C_C"
+    unit: ""
+    description: Binary indicator for EC8 site class C (Vs30 180-360 m/s; medium soil).
+    categories: [0, 1]
+  - name: ec8_D
+    symbol: "C_D"
+    unit: ""
+    description: Binary indicator for EC8 site class D (Vs30 < 180 m/s; soft soil).
+    categories: [0, 1]
+  - name: ec8_E
+    symbol: "C_E"
+    unit: ""
+    description: >-
+      Binary indicator for EC8 site class E (5-20 m of C/D-type alluvium overlying
+      stiffer material with Vs30 > 800 m/s).
+    categories: [0, 1]
+  - name: sof_NF
+    symbol: "E_N"
+    unit: ""
+    description: Binary indicator for Normal faulting style-of-faulting.
+    categories: [0, 1]
+  - name: sof_TF
+    symbol: "E_R"
+    unit: ""
+    description: Binary indicator for Reverse (Thrust) faulting style-of-faulting.
+    categories: [0, 1]
+  - name: sof_SS
+    symbol: "E_{SS}"
+    unit: ""
+    description: Binary indicator for Strike-slip faulting style-of-faulting.
+    categories: [0, 1]
+
+# FM-H3 backfill (wave-11, 2026-05-26): empty priors block added for schema symmetry with GOLD.
+priors: []
+
+data_files:
+  train: data/train.csv  # Mw <= 5.7 (small-to-moderate regime, 3449 rows)
+  test:  data/test.csv   # Mw > 5.7 (moderate-to-large OOD, 1204 rows)
+
+n_train: 3449
+n_test: 1204
+
+# Audit-only note (not shown to SR system):
+# Two baselines: Bindi 2011 ITA10 (Italy-calibrated) and Akkar & Bommer 2010
+# (pan-European/Mediterranean). S2-P7 ladder gap filled by AB-2010 addition.
+# Expected RMSE > paper sigma=0.337 due to cross-dataset evaluation (ITA10 on ITA18).
+
+references:
+  - id: akkar_bommer_2010
+    label: "Akkar & Bommer 2010 — Empirical Equations for PGA/PGV/SA in Europe (SRL), Eq. 1, Table 1 PGA row"
+    formula_file: formulas/akkar_bommer_2010.py
+    n_law_constants: 10   # b1..b10 from Table 1 PGA row, pp. 200-201
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.4228
+      r2: 0.6246
+  - id: bindi_2011
+    label: "Bindi et al. 2011 — ITA10 GMPE for PGA (GeoH), Eqs. 1-3, Table 5"
+    formula_file: formulas/bindi_2011.py
+    reference_pdf: reference/bindi_2011.pdf
+    n_law_constants: 14   # e1,c1,c2,h,c3,b1,b2,sB,sC,sD,sE,fN,fR,fSS
+    n_other_constants: 3  # Mref, Mh, Rref
+    n_local_params: 0
+    measured:
+      rmse: 0.3346
+      r2: 0.7649
+
+caps:
+  max_law_constants: 14
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include EC8 site-class amplification or deamplification"
+  - "include earthquake source-size scaling through moment magnitude"
+  - "include source-to-site geometric spreading attenuation with near-source saturation and magnitude-dependent spreading"
+  - "include style-of-faulting effects on shaking"
+  - "predicted log10_pga is nondecreasing with Mw when distance, depth, site class, and faulting style are fixed"
+  - "predicted log10_pga is nonincreasing with R_km when magnitude, depth, site class, and faulting style are fixed"
+  - "predicted log10_pga remains finite at R_km = 0 for finite earthquake and site inputs"
+
+best_baseline: 0.334563    # bindi_2011 — rmse (lower is better); regenerated 2026-05-30

@@ -1,0 +1,204 @@
+task_id: galaxy_mass_metallicity_sdss__oh
+domain: astronomy / extragalactic
+license: Public Domain
+
+# Type I — each galaxy is an independent row; no cluster structure.
+# All baselines (Tremonti 2004, Mannucci 2010, Andrews & Martini 2013,
+# Curti 2020) fit one global curve to all SDSS star-forming galaxies;
+# no per-cluster refitting. LOCAL_FITTABLE = {} in all formula modules.
+type: typeI
+has_group_id: false
+
+context: >-
+  In extragalactic astronomy, star-forming galaxies contain an interstellar medium whose chemical composition, or metallicity, reflects the enrichment of gas by successive generations of stars.
+
+target:
+  name: oh
+  symbol: 12 + log(O/H)
+  unit: dex
+  description: Gas-phase oxygen abundance of the galaxy's interstellar medium, expressed as 12 plus the base-10 logarithm of the number-density ratio of oxygen to hydrogen atoms.
+  range: [7.67, 9.4666]
+
+inputs:
+  - name: log_Mstar
+    symbol: log₁₀ M★
+    unit: log(M_sun)
+    description: Base-10 logarithm of the galaxy's total stellar mass in solar masses.
+    range: [8.50, 11.50]
+  - name: log_SFR
+    symbol: log₁₀ SFR
+    unit: log(M_sun/yr)
+    description: Base-10 logarithm of the galaxy's total star-formation rate in solar masses per year.
+    range: [-4.01, 3.88]
+
+data_files:
+  train: data/train.csv   # deterministic mass-stratified representative split (~80%)
+  test:  data/test.csv    # deterministic mass-stratified representative split (~20%)
+
+n_train: 155923
+n_test:  38981
+
+# === Audit RE-SPLIT, 2026-05-29 (claude-opus) ===
+# The prior split was a high-mass-OOD hold-out (train log_Mstar<10.5, test >=10.5).
+# It was DEGENERATE: the high-mass plateau has collapsed metallicity variance
+# (test oh std ~0.10 dex), so ALL 7 baselines scored R2<0 — none beat the naive
+# mean (§9.6 violation). Per the audit guide §7, an all-negative-R2 / constant-wins
+# split is a degenerate-split artifact and should be re-split (the papers fit on the
+# full SDSS sample / use CV → a representative split is the authority, not a held-out
+# OOD). Two coupled fixes (see prep_data.py):
+#   (1) restrict to log_Mstar in [8.5, 11.5] — the MPA-JHU-reliable, baseline-valid
+#       MZR domain (below 8.5 the dwarf metallicities are unreliable AND the published
+#       MZR polynomials, esp. Mannucci 4th-order, diverge under low-mass extrapolation);
+#   (2) deterministic mass-stratified representative split (sort by log_Mstar, every
+#       5th galaxy rank%5==2 -> test).
+# Result: the SDSS-strong-line baselines recover R2 ~ 0.40-0.58 (Mannucci MZR best,
+# R2=0.576); the direct-method baselines (Andrews 2013, Curti 2020) keep a documented
+# ~0.28 dex C9 calibration offset and stay negative (mixed bank, §9.14). Metric now
+# discriminates (R2 from +0.58 down to -0.51).
+
+priors:
+  # FM C12 fix (2026-05-26): removed andrews_Z_asm=8.798 (Andrews 2013 LAW_CONSTANTS
+  # Z_asm) and curti_Z0=8.793 (Curti 2020 LAW_CONSTANTS Z0) — both are paper-specific
+  # empirical fit parameters (asymptotic plateau values from regression fits to SDSS
+  # galaxy stacks / direct-method metallicities), not upstream physical constants.
+  # Keeping solar_oxygen_abundance=8.69 as the upstream physical anchor: the asymptotic
+  # metallicities (8.79-8.80) reflect solar metallicity plus a systematic calibration
+  # offset; 8.69 is the Asplund 2009 AGSS09 solar value that sets the physical scale.
+  # Added MZR_knee_mass_logM as a structurally-motivated candidate (the saturation mass
+  # scale is a physical parameter constrained by baryon physics, not a free fit number).
+  # Retained MZR_intrinsic_scatter and mannucci_FMR_scatter as distractors (astrophysical
+  # scatter values — real but not consumed by any of the formula's LAW/OTHER constants).
+  - name: MZR_turnover_logM_tremonti
+    value: 10.5
+    unit: log(M_sun)
+    description: >-
+      Approximate stellar mass at which the Tremonti 2004 MZR flattens (upper calibrated
+      range, log M_* ~ 10.5 M_sun). Sets the physical scale for the saturation knee — a
+      structurally important parameter in any asymptotic MZR formula.
+    source: "Tremonti et al. 2004, Fig. 6 and §5, PDF pp. 7-8; also Andrews & Martini 2013 Table 4 fit range upper bound."
+    _role: candidate
+  - name: MZR_intrinsic_scatter
+    value: 0.1
+    unit: dex
+    description: >-
+      Typical 1-sigma intrinsic scatter around the SDSS mass-metallicity relation (not
+      consumed by any shipped formula; reflects the irreducible astrophysical scatter
+      from star-formation history variation at fixed stellar mass).
+    source: "Tremonti et al. 2004 §5 PDF p. 7; Mannucci et al. 2010 §3 PDF p. 4."
+    _role: distractor
+  - name: mannucci_FMR_scatter
+    value: 0.05
+    unit: dex
+    description: >-
+      Residual 1-sigma scatter around the Fundamental Metallicity Relation (Mannucci 2010
+      FMR). Approximately half the MZR scatter; not consumed by any shipped formula.
+    source: "Mannucci et al. 2010, §4 PDF p. 5."
+    _role: distractor
+
+# Sanity-gate note (post RE-SPLIT 2026-05-29): with the representative split this is a
+# proper mixed bank. 4 SDSS-strong-line baselines beat the naive mean —
+# mannucci_2010_mzr R2=0.576 (anchor), tremonti_2004 0.561, mannucci_2010_fmr_eq4 0.505,
+# mannucci_2010_fmr 0.398. 3 direct-method baselines stay negative — andrews_2013
+# R2=-0.274, curti_2020 -0.260, curti_2020_fmr -0.513 — because they were calibrated on
+# direct-method (Te-based) metallicities, systematically ~0.28 dex below the MPA-JHU
+# Bayesian strong-line OH values in this dataset (known C9 calibration-method mismatch;
+# documented in the literature). §9.6 is satisfied (>=1 baseline beats naive); the
+# negative rungs are the legitimate §9.14 mixed-bank (correct MZR shape, offset level).
+
+references:
+  - id: tremonti_2004
+    label: Tremonti 2004 — quadratic polynomial MZR (Eq. 3, p. 7)
+    formula_file: formulas/tremonti_2004.py
+    reference_pdf: reference/tremonti_2004.pdf
+    n_law_constants:   3   # a0, a1, a2
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.1434
+      r2: 0.5615
+  - id: mannucci_2010_mzr
+    label: Mannucci 2010 — 4th-order polynomial MZR (Eq. 1, pp. 4-5)
+    formula_file: formulas/mannucci_2010_mzr.py
+    reference_pdf: reference/mannucci_2010.pdf
+    n_law_constants:   5   # c0, c1, c2, c3, c4
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.1410
+      r2: 0.5762
+    # Best baseline (anchor) on the representative split: SDSS-strong-line MZR matches the MPA-JHU OH calibration.
+  - id: mannucci_2010_fmr
+    label: Mannucci 2010 — 2D FMR polynomial using log SFR (Eq. 2, p. 5)
+    formula_file: formulas/mannucci_2010_fmr.py
+    reference_pdf: reference/mannucci_2010.pdf
+    n_law_constants:   6   # f0, f1, f2, f3, f4, f5
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.1681
+      r2: 0.3982
+    # 2D FMR (uses M* and SFR); positive R² on the representative split.
+  - id: andrews_2013
+    label: Andrews & Martini 2013 — asymptotic logarithmic MZR (Eq. 5, Table 4)
+    formula_file: formulas/andrews_2013.py
+    reference_pdf: reference/andrews_2013.pdf
+    n_law_constants:   3   # Z_asm, log_M_TO, gamma
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.2445
+      r2: -0.2740
+    # C9 method mismatch (§9.14 mixed-bank): direct-method (Te-based) calibration ~0.28 dex below the MPA-JHU strong-line OH target → negative R² (correct shape, offset level).
+  - id: curti_2020
+    label: Curti 2020 — 4-parameter asymptotic MZR (Eq. 2, Table 4, p. 7)
+    formula_file: formulas/curti_2020.py
+    reference_pdf: reference/curti_2020.pdf
+    n_law_constants:   4   # Z0, log_M0, gamma, beta
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.2431
+      r2: -0.2595
+    # C9 method mismatch (§9.14 mixed-bank): same direct-method ~0.28 dex offset as andrews_2013.
+  - id: mannucci_2010_fmr_eq4
+    label: Mannucci 2010 — 1D FMR projection in mu_0.32, uses log_SFR (Eq. 4, p. 9)
+    formula_file: formulas/mannucci_2010_fmr_eq4.py
+    reference_pdf: reference/mannucci_2010.pdf
+    n_law_constants:   6   # alpha, g0, g1, g2, g3, g4 (alpha = FMR projection coeff, Eq. 3)
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.1524
+      r2: 0.5053
+    # 1D FMR projection in mu_0.32 (alpha=0.32); positive R² on the representative split.
+  - id: curti_2020_fmr
+    label: Curti 2020 — SFR-dependent FMR (Eq. 5, Table 6 total-SFR row, p. 17)
+    formula_file: formulas/curti_2020_fmr.py
+    reference_pdf: reference/curti_2020.pdf
+    n_law_constants:   5   # Z0, m0, m1, gamma, beta
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.2665
+      r2: -0.5134
+    # C9 method mismatch (§9.14 mixed-bank): direct-method offset, SFR-dependent FMR.
+
+caps:
+  max_law_constants:       6
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+reference_baseline_id: mannucci_2010_mzr   # lowest RMSE / highest R² on the representative split
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes high-stellar-mass chemical saturation or flattening of the mass-metallicity relation"
+  - "includes stellar-mass-driven metal enrichment/retention that raises gas-phase oxygen abundance with increasing stellar mass"
+  - "predicted oh is non-increasing with log_SFR at fixed log_Mstar over the star-forming-galaxy domain"
+
+best_baseline: 0.141033    # mannucci_2010_mzr — rmse (lower is better); regenerated 2026-05-30

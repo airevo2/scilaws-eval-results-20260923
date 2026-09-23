@@ -1,0 +1,129 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract VPD (D) in kPa from the first column of X
+    D = X[:, 0]
+
+    # Reference canopy conductance at D = 1 kPa (cm3 cm-2 h-1 kPa-1)
+    Gc_ref = 50.0
+
+    # Sensitivity parameter (m), typically ~0.5 to 0.6 of Gc_ref
+    m = 25.0
+
+    # Calculate Gc using the canonical log-linear relationship
+    # We clip D to be at least 0.3 kPa as specified by the input range
+    D_clipped = np.maximum(D, 0.3)
+    Gc = Gc_ref - m * np.log(D_clipped)
+
+    # Ensure Gc remains non-negative
+    Gc = np.maximum(Gc, 0.0)
+
+    return Gc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = vpd (D) [kPa]
+    D = X[:, 0]
+
+    # Canonical parameters for sapwood-area-normalised canopy conductance
+    # Gc_ref: reference conductance at D = 1 kPa (typical value ~ 30 cm3 cm-2 h-1 kPa-1)
+    Gc_ref = 30.0
+
+    # m: sensitivity parameter, mathematically and empirically shown to be
+    # approximately 0.6 * Gc_ref for a wide range of temperate tree species (Oren et al., 1999)
+    m = 0.6 * Gc_ref
+
+    # Avoid log of values <= 0 by clipping D to a minimum of 0.1 kPa
+    D_safe = np.maximum(D, 0.1)
+
+    # Log-linear decline model
+    Gc = Gc_ref - m * np.log(D_safe)
+
+    # Ensure Gc does not drop below a realistic minimum residual conductance
+    Gc = np.maximum(Gc, 0.1)
+
+    return Gc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract VPD (D) from the first column of X
+    D = X[:, 0]
+
+    # Ensure D is within a safe range to avoid numerical issues,
+    # given the minimum value of VPD is 0.3 kPa.
+    D_clipped = np.clip(D, 0.3, None)
+
+    # Reference canopy conductance at VPD = 1 kPa (Gc_ref)
+    # and the sensitivity parameter (m).
+    # According to Oren et al. (1999), m/Gc_ref is typically around 0.6.
+    # We use typical values for trees: Gc_ref = 30.0 and m = 18.0.
+    Gc_ref = 30.0
+    m = 18.0
+
+    # Log-linear relationship: Gc = Gc_ref - m * ln(D)
+    Gc = Gc_ref - m * np.log(D_clipped)
+
+    return Gc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = vpd (D) [kPa]
+    D = X[:, 0]
+
+    # Reference canopy conductance at D = 1 kPa (Gc_ref)
+    # Typical value for sapwood-area-normalised canopy conductance proxy is ~30.0 cm3 cm-2 h-1 kPa-1
+    Gc_ref = 30.0
+
+    # Stomatal sensitivity to VPD (m).
+    # According to Oren et al. (1999), m is typically ~0.6 * Gc_ref for stomatal regulation.
+    m = 0.6 * Gc_ref
+
+    # Ensure D is within the valid range >= 0.3 kPa to avoid log of negative/zero values
+    D_safe = np.maximum(D, 0.3)
+
+    # Calculate Gc using the log-linear relationship: Gc = Gc_ref - m * ln(D)
+    Gc = Gc_ref - m * np.log(D_safe)
+
+    # Ensure the proxy does not yield unphysical negative values
+    Gc = np.maximum(Gc, 0.1)
+
+    return Gc
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is VPD (D) in kPa
+    D = X[:, 0]
+
+    # Reference canopy conductance at VPD = 1 kPa (Gc_ref)
+    # Typical value for sapwood-area-normalized canopy conductance is around 20.0 cm3 cm-2 h-1 kPa-1
+    Gc_ref = 20.0
+
+    # Stomatal sensitivity to VPD (m)
+    # Oren et al. (1999) showed that m is theoretically and empirically ~0.6 * Gc_ref
+    m = 0.6 * Gc_ref
+
+    # Log-linear decline of canopy conductance with VPD
+    Gc = Gc_ref - m * np.log(D)
+
+    # Apply a biological minimum conductance boundary (e.g., 5% of Gc_ref)
+    # to prevent negative or unrealistically low conductance at very high VPD.
+    Gc = np.maximum(Gc, 0.05 * Gc_ref)
+
+    return Gc

@@ -1,0 +1,228 @@
+import numpy as np
+
+def predict(X):
+    # Extract relevant inputs
+    VPD = X[:, 1]       # Vapour pressure deficit [kPa]
+    Rnet = X[:, 5]      # Net radiation [W m^-2]
+    Qg = X[:, 6]        # Soil heat flux [W m^-2]
+    LAI = X[:, 7]       # Leaf area index [m^2 m^-2]
+    Ga = X[:, 9]        # Aerodynamic conductance [m s^-1]
+    delta = X[:, 10]    # Slope of saturation vapour pressure curve [kPa K^-1]
+    
+    # Standard physical constants
+    gamma = 0.066       # Psychrometric constant [kPa K^-1] (approx. at standard pressure)
+    rho_cp = 1200.0     # Volumetric heat capacity of air [J m^-3 K^-1]
+    
+    # Available energy
+    A = Rnet - Qg
+    
+    # Surface conductance (Gs) parameterization (simplified Jarvis-Stewart type)
+    # Scales with LAI and inversely with VPD
+    gs_max = 0.012      # Maximum stomatal conductance per unit LAI [m s^-1]
+    Gs = (gs_max * LAI) / (1.0 + 0.4 * VPD)
+    Gs = np.maximum(Gs, 1e-3)  # Prevent division by zero or negative conductance
+    
+    # Penman-Monteith equation (standard closed-form relationship for LE)
+    LE = (delta * A + rho_cp * VPD * Ga) / (delta + gamma * (1.0 + Ga / Gs))
+    
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Latent heat flux (LE) via the Penman-Monteith equation with a
+    Jarvis-Stewart canopy conductance parameterisation.  The PM
+    formulation satisfies the surface energy balance (LE + H = Rn - G)
+    by construction, so applying a Bowen-ratio-preserving closure
+    correction returns the same LE — i.e. this is the energy-balance-
+    consistent LE.
+    """
+    # ---- unpack inputs ------------------------------------------------
+    SWdown = X[:, 0]    # W m-2
+    VPD    = X[:, 1]    # kPa
+    Tair   = X[:, 2]    # K
+    RH     = X[:, 3]    # fraction
+    Wind   = X[:, 4]    # m s-1
+    Rnet   = X[:, 5]    # W m-2
+    G      = X[:, 6]    # W m-2
+    LAI    = X[:, 7]    # m2 m-2
+    LWdown = X[:, 8]    # W m-2
+    Ga     = X[:, 9]    # m s-1
+    delta  = X[:, 10]   # kPa K-1
+    th_FC  = X[:, 11]   # m3 m-3
+    th_WP  = X[:, 12]   # m3 m-3
+
+    # ---- physical constants -------------------------------------------
+    c_p   = 1005.0              # J kg-1 K-1  specific heat of dry air
+    P_atm = 101.3               # kPa         standard atmospheric pressure
+    R_d   = 287.058             # J kg-1 K-1  gas constant for dry air
+    gamma = 0.665e-3 * P_atm    # kPa K-1     psychrometric constant (~0.0674)
+
+    # ---- derived quantities -------------------------------------------
+    rho_a = (P_atm * 1e3) / (R_d * Tair)   # kg m-3  air density
+
+    A = Rnet - G                             # W m-2  available energy
+
+    # ---- Jarvis-Stewart canopy conductance  Gc [m s-1] ---------------
+    gs_max = 0.01               # m s-1 per unit LAI (max stomatal cond.)
+    K_sw   = 150.0              # W m-2  half-saturation for light response
+
+    # light response
+    f_l = np.clip(SWdown / (SWdown + K_sw), 0.0, 1.0)
+
+    # VPD response  (exponential decay)
+    f_d = np.exp(-0.6 * VPD)
+
+    # temperature response  (parabolic, optimum 25 °C)
+    T_opt = 298.15              # K
+    f_t = np.clip(1.0 - 0.0016 * (Tair - T_opt) ** 2, 0.0, 1.0)
+
+    # soil-moisture stress  (no actual theta available → assume unstressed)
+    f_s = np.ones_like(A)
+
+    Gc = np.maximum(gs_max * LAI * f_l * f_d * f_t * f_s, 1e-6)
+
+    # ---- Penman-Monteith equation  [W m-2] ---------------------------
+    numerator   = delta * A + rho_a * c_p * VPD * Ga
+    denominator = delta + gamma * (1.0 + Ga / Gc)
+
+    LE = numerator / denominator
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract relevant inputs
+    VPD = X[:, 1]       # Vapour pressure deficit [kPa]
+    Tair = X[:, 2]      # Air temperature [K]
+    Rnet = X[:, 5]      # Net radiation [W m^-2]
+    Qg = X[:, 6]        # Soil heat flux [W m^-2]
+    LAI = X[:, 7]       # Leaf area index [m^2 m^-2]
+    Ga = X[:, 9]        # Aerodynamic conductance [m s^-1]
+    delta = X[:, 10]    # Slope of saturation vapour pressure curve [kPa K^-1]
+    
+    # Constants
+    gamma = 0.0665      # Psychrometric constant [kPa K^-1] (approx. at standard pressure)
+    cp = 1005.0         # Specific heat capacity of dry air [J kg^-1 K^-1]
+    
+    # Air density [kg m^-3] using ideal gas law (assuming standard pressure ~101325 Pa)
+    rho = 101325.0 / (287.05 * Tair)
+    
+    # Available energy [W m^-2]
+    A = Rnet - Qg
+    
+    # Bulk surface conductance [m s^-1]
+    # Simplified parameterization scaling with LAI (assuming unstressed canopy, g_s_leaf ~ 0.01 m/s)
+    Gs = 0.01 * np.maximum(LAI, 0.1)
+    
+    # Penman-Monteith equation for Latent Heat Flux [W m^-2]
+    LE = (delta * A + rho * cp * VPD * Ga) / (delta + gamma * (1.0 + Ga / Gs))
+    
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    VPD = X[:, 1]
+    Tair = X[:, 2]
+    Rn = X[:, 5]
+    G = X[:, 6]
+    LAI = X[:, 7]
+    Ga = X[:, 9]
+    delta = X[:, 10]
+    
+    # Physical constants
+    P = 101.325       # Standard atmospheric pressure (kPa)
+    cp = 1005.0       # Specific heat capacity of dry air (J kg^-1 K^-1)
+    epsilon = 0.622   # Ratio of molecular weight of water vapor to dry air
+    Rd = 287.05       # Specific gas constant for dry air (J kg^-1 K^-1)
+    
+    # Latent heat of vaporization (J kg^-1), temperature-dependent
+    lam = 2.501e6 - 2361.0 * (Tair - 273.15)
+    
+    # Psychrometric constant (kPa K^-1)
+    gamma = (cp * P) / (epsilon * lam)
+    
+    # Air density (kg m^-3)
+    rho_a = (P * 1000.0) / (Rd * Tair)
+    
+    # Bulk surface (canopy) conductance (m s^-1)
+    # Standard simple parameterization based on Leaf Area Index (LAI)
+    gs_leaf = 0.01    # Maximum stomatal conductance per unit LAI (m s^-1)
+    Gs = np.maximum(1e-4, gs_leaf * LAI)
+    
+    # Penman-Monteith equation for Latent Heat Flux (W m^-2)
+    numerator = delta * (Rn - G) + rho_a * cp * VPD * Ga
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+    
+    LE = numerator / denominator
+    
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    SWdown = X[:, 0]
+    VPD = X[:, 1]
+    Tair = X[:, 2]
+    RH = X[:, 3]
+    Wind = X[:, 4]
+    Rn = X[:, 5]
+    G = X[:, 6]
+    LAI = X[:, 7]
+    LWdown = X[:, 8]
+    Ga = X[:, 9]
+    delta = X[:, 10]
+    # theta_FC (X[:, 11]) and theta_WP (X[:, 12]) are PFT metadata 
+    # and not directly used in this standard bulk parameterization without current soil moisture.
+    
+    # Physical constants
+    P = 101.3          # Standard atmospheric pressure [kPa]
+    cp = 1005.0        # Specific heat of dry air [J kg^-1 K^-1]
+    R_spec = 287.05    # Specific gas constant for dry air [J kg^-1 K^-1]
+    epsilon = 0.622    # Ratio of molecular weights of water vapor to dry air
+    
+    # Temperature in Celsius
+    T_C = Tair - 273.15
+    
+    # Air density [kg m^-3]
+    rho_a = (P * 1000.0) / (R_spec * Tair)
+    
+    # Latent heat of vaporization [J kg^-1]
+    lam = 2.501e6 - 2370.0 * T_C
+    
+    # Psychrometric constant [kPa K^-1]
+    gamma = (cp * P) / (epsilon * lam)
+    
+    # Surface conductance parameterization [m s^-1]
+    # Using a standard empirical Jarvis-type formulation for vegetated surfaces
+    gs_max = 0.012     # Maximum stomatal conductance per unit LAI [m s^-1]
+    f_VPD = np.exp(-0.15 * VPD)
+    f_SW = SWdown / (SWdown + 200.0)
+    
+    # Ensure LAI has a minimum value to avoid zero conductance for bare soil/sparse canopies
+    LAI_eff = np.maximum(LAI, 0.1)
+    
+    Gs = gs_max * LAI_eff * f_VPD * f_SW
+    # Bound Gs to prevent division by zero during nighttime or extremely dry conditions
+    Gs = np.maximum(Gs, 1e-4)
+    
+    # Penman-Monteith equation for Latent Heat Flux (LE) [W m^-2]
+    numerator = delta * (Rn - G) + rho_a * cp * VPD * Ga
+    denominator = delta + gamma * (1.0 + Ga / Gs)
+    
+    LE = numerator / denominator
+    
+    return LE

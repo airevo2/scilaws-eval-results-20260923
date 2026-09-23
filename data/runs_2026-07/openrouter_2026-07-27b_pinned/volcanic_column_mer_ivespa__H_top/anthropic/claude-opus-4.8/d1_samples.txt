@@ -1,0 +1,53 @@
+import numpy as np
+
+def predict(X):
+    # Classic buoyant plume scaling (Mastin et al., 2009):
+    # H = 2.00 * MER^0.241, with H in km above vent and MER in kg/s.
+    MER = X[:, 0]
+    H_top = 2.00 * np.power(MER, 0.241)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classic buoyant-plume scaling (Mastin et al., 2009):
+    # H (km, above vent) = 2.00 * MER^0.241, with MER in kg/s
+    MER = np.asarray(X[:, 0], dtype=float)
+    H_top = 2.00 * np.power(MER, 0.241)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classic buoyant-plume scaling (Sparks et al. 1997; Mastin et al. 2009):
+    # H (km above vent) = 0.304 * MER^0.241  (with MER in kg/s)
+    # Equivalent to Mastin's H = 2.00 * V^0.241 with V in m^3/s DRE (rho~2500 kg/m3).
+    MER = X[:, 0]
+    H_top = 0.304 * np.power(MER, 0.241)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classic buoyant plume scaling (Mastin et al., 2009):
+    # H = 2.00 * MER^0.241  (H in km above vent, MER in kg/s)
+    MER = X[:, 0]
+    H_top = 2.00 * np.power(MER, 0.241)
+    return H_top
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classic buoyant-plume scaling (Morton et al. 1956; Wilson & Walker 1987;
+    # Mastin et al. 2009): H = 0.304 * MER^0.241  (H in km, MER in kg/s)
+    MER = X[:, 0]
+    H_top = 0.304 * MER**0.241
+    return H_top

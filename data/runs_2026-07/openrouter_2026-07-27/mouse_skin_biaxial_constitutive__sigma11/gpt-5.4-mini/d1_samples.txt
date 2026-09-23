@@ -1,0 +1,139 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard incompressible isotropic neo-Hookean Cauchy stress in the 1-direction
+    under planar biaxial stretch, using the common plane-stress elimination of the
+    thickness stretch.
+
+    σ11 = μ (λ11^2 - λ3^2)
+    with incompressibility and σ33 = 0 => λ3 = 1 / (λ11 * λ22)
+
+    Since no material parameter is provided, this returns the normalized form
+    with μ = 1.0.
+    """
+    lam11 = X[:, 0]
+    lam22 = X[:, 1]
+
+    lam33 = 1.0 / (lam11 * lam22)
+    sigma11 = lam11**2 - lam33**2
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Arruda-Boyce / inverse-Langevin-style incompressible isotropic hyperelastic form
+    # Using the standard 5-chain series approximation for the Cauchy stress in principal directions.
+    lam1 = X[:, 0]
+    lam2 = X[:, 1]
+    lam3 = 1.0 / (lam1 * lam2)  # incompressibility
+
+    # Effective chain stretch
+    lam_bar_sq = (lam1**2 + lam2**2 + lam3**2) / 3.0
+    lam_bar = np.sqrt(lam_bar_sq)
+
+    # Material parameter: shear modulus-like scale (kept as 1.0 here since no data were provided)
+    mu = 1.0
+
+    # Locking parameter N -> infinity limit gives neo-Hookean; standard 5-chain series uses finite N.
+    # With no fitting data, use a generic moderate chain extensibility representative form.
+    N = 5.0
+    beta = np.sqrt(3.0 * N)
+
+    # Derivative of the 5-chain strain-energy density with respect to I1_bar
+    # Series form commonly used in biomechanics.
+    x = lam_bar / beta
+    # Avoid numerical issues near the singularity by clipping
+    x = np.clip(x, 1e-12, 0.999999)
+    invL = 1.0 / x - x / 3.0 + (x**3) / 45.0 + (2.0 * x**5) / 945.0
+    # dW/dI1_bar = mu/2 * [1 + 3/(5N) + ...] approximated through the 5-chain model
+    # Use a standard closed-form stress expression from the series-expanded Arruda-Boyce model.
+    coeff = mu * (
+        1.0
+        + (1.0 / (5.0 * N)) * (lam_bar_sq)
+        + (11.0 / (175.0 * N**2)) * (lam_bar_sq**2)
+        + (19.0 / (875.0 * N**3)) * (lam_bar_sq**3)
+        + (519.0 / (67375.0 * N**4)) * (lam_bar_sq**4)
+    )
+
+    # Cauchy stress in direction 1 with zero transverse stress condition eliminated via pressure
+    sigma11 = coeff * (lam1**2 - lam3**2)
+
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Cauchy stress sigma11 [MPa] for a planar soft-tissue specimen
+    using a standard incompressible isotropic neo-Hookean biaxial form.
+
+    Parameters
+    ----------
+    X : array_like, shape (n, 2)
+        X[:, 0] = lambda11
+        X[:, 1] = lambda22
+
+    Returns
+    -------
+    sigma11 : ndarray, shape (n,)
+        Predicted Cauchy stress in the first principal direction [MPa].
+    """
+    lam11 = np.asarray(X)[:, 0]
+    lam22 = np.asarray(X)[:, 1]
+
+    # Incompressibility: lambda33 = 1 / (lam11 * lam22)
+    # Plane-stress neo-Hookean Cauchy stress:
+    # sigma_ii = mu * (lambda_i^2 - lambda_3^2)
+    # Here returned in sigma11; mu is left as a canonical unit shear modulus.
+    mu = 1.0  # MPa
+    lam33 = 1.0 / (lam11 * lam22)
+
+    sigma11 = mu * (lam11**2 - lam33**2)
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Planar, incompressible, isotropic neo-Hookean membrane under biaxial stretch.
+    # For principal stretch λ11 = λ1, λ22 = λ2, with thickness stretch λ3 = 1/(λ1 λ2),
+    # the Cauchy stress in direction 1 is:
+    # σ11 = μ * (λ1^2 - λ3^2) = μ * (λ11^2 - 1/(λ11^2 * λ22^2))
+    #
+    # Since no material parameters are provided, return the normalized form with μ = 1 MPa.
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+    
+    mu = 1.0  # MPa
+    sigma11 = mu * (lambda11**2 - 1.0 / (lambda11**2 * lambda22**2))
+    return sigma11
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard isotropic incompressible neo-Hookean plane-stress Cauchy stress form
+    # using the principal stretches directly.
+    #
+    # For an incompressible neo-Hookean material under biaxial loading:
+    #   σ11 - σ33 = μ (λ11^2 - λ33^2)
+    # With plane stress σ33 = 0 and incompressibility λ33 = 1/(λ11 λ22),
+    # giving:
+    #   σ11 = μ * (λ11^2 - 1/(λ11^2 λ22^2))
+    #
+    # Since no material parameters are provided, we use a unit shear modulus
+    # as the canonical closed-form relationship.
+    
+    lam11 = X[:, 0]
+    lam22 = X[:, 1]
+    mu = 1.0  # MPa, canonical placeholder
+    sigma11 = mu * (lam11**2 - 1.0 / (lam11**2 * lam22**2))
+    return sigma11

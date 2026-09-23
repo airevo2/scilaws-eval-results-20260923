@@ -1,0 +1,129 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the fluorometric enzyme activity rate (v) in soil using the
+
+    canonical Michaelis-Menten kinetic model.
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the substrate concentration (S) [uM].
+
+    Outputs:
+    - v: 1-D numpy array of enzyme activity rate [nmol g^-1 h^-1].
+    """
+    # Extract substrate concentration (S)
+    S = X[:, 0]
+
+    # Standard representative Michaelis-Menten parameters for soil enzymes
+    # (e.g., BG, AP, LAP) under typical assay conditions:
+    # Vmax: Maximum enzyme activity rate (typical range: 100 - 1000 nmol g^-1 h^-1)
+    # Km: Michaelis constant / half-saturation constant (typical range: 30 - 150 uM)
+    V_max = 350.0  # nmol g^-1 h^-1
+    K_m = 100.0  # uM
+
+    # Michaelis-Menten equation
+    v = (V_max * S) / (K_m + S)
+
+    return v
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract substrate concentration (S) in uM
+    S = X[:, 0]
+
+    # Standard Michaelis-Menten kinetic parameters for soil enzymes
+    # Vmax: Maximum enzyme activity rate (nmol g^-1 h^-1)
+    # Km: Michaelis constant (uM)
+    Vmax = 250.0
+    Km = 75.0
+
+    # Michaelis-Menten equation
+    v = (Vmax * S) / (Km + S)
+
+    return v
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the fluorometric enzyme activity rate (v) in soil using the
+
+    classical Michaelis-Menten kinetic model.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where X[:, 0] is the substrate concentration (S) in uM.
+
+    Returns:
+    np.ndarray
+        1-D array of enzyme activity rate (v) in nmol g^-1 h^-1.
+    """
+    S = X[:, 0]
+
+    # Representative Michaelis-Menten parameters for typical soil hydrolytic enzymes
+    # Vmax (maximum potential activity rate) in nmol g^-1 h^-1
+    # Km (half-saturation constant) in uM
+    Vmax = 350.0
+    Km = 120.0
+
+    # Michaelis-Menten relationship
+    v = (Vmax * S) / (Km + S)
+
+    return v
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the fluorometric enzyme activity rate (v) in soil using the
+
+    canonical Michaelis-Menten kinetic model.
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the substrate concentration (S) [uM].
+
+    Outputs:
+    - v: 1-D numpy array of enzyme activity rate [nmol g^-1 h^-1].
+    """
+    # Extract substrate concentration (S)
+    S = X[:, 0]
+
+    # Standard representative Michaelis-Menten parameters for soil enzymes
+    # Vmax (maximum potential activity) is typically in the range of 100 - 1000 nmol g^-1 h^-1
+    # Km (half-saturation constant) is typically in the range of 50 - 200 uM
+    Vmax = 300.0  # nmol g^-1 h^-1
+    Km = 150.0  # uM
+
+    # Michaelis-Menten equation
+    v = (Vmax * S) / (Km + S)
+
+    return v
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract substrate concentration (S) in uM
+    S = X[:, 0]
+
+    # Standard representative Michaelis-Menten kinetic parameters for soil enzymes:
+    # Vmax (maximum velocity) in nmol g^-1 h^-1
+    # Km (half-saturation constant) in uM
+    Vmax = 250.0
+    Km = 75.0
+
+    # Michaelis-Menten equation
+    v = (Vmax * S) / (Km + S)
+
+    return v

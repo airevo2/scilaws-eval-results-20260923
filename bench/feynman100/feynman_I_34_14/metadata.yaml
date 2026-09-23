@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Frequency"
+  symbol: "omega"
+  unit: ""
+  description: "Frequency"
+inputs:
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Frequency"
+    symbol: "omega_0"
+    unit: ""
+    description: "Frequency"

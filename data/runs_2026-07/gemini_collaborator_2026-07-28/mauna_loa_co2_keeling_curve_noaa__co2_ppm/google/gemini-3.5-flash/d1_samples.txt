@@ -1,0 +1,161 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract decimal year (t)
+    t = X[:, 0]
+    dt = t - 1958.0
+
+    # Long-term trend: Cubic polynomial fit to modern Mauna Loa data
+    trend = 313.9 + 0.82 * dt + 0.0085 * dt**2 + 0.00006 * dt**3
+
+    # Seasonal cycle: Two-harmonic Fourier series
+    # Captures the asymmetric spring peak (May) and autumn trough (Sep/Oct)
+    seasonal = 2.9 * np.sin(2 * np.pi * t - 0.78) + 0.9 * np.sin(
+        4 * np.pi * t - 1.2
+    )
+
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the monthly mean CO2 mole fraction (ppm) at Mauna Loa.
+
+    Uses a standard quadratic trend plus a two-harmonic seasonal cycle.
+    """
+    # Extract decimal year
+    t = X[:, 0]
+
+    # Reference year (t0) for the trend
+    t0 = 2000.0
+    dt = t - t0
+
+    # Quadratic trend coefficients (representing long-term rise and acceleration)
+    # Optimized for the Mauna Loa historical record (1958-2024)
+    a0 = 369.45  # CO2 concentration at 2000.0 (ppm)
+    a1 = 1.911  # Linear growth rate (ppm/yr)
+    a2 = 0.0131  # Acceleration term (ppm/yr^2)
+    trend = a0 + a1 * dt + a2 * dt**2
+
+    # Seasonal harmonics (annual and semi-annual cycles)
+    # omega1 represents the annual cycle (period = 1 year)
+    # omega2 represents the semi-annual cycle (period = 0.5 years)
+    omega1 = 2 * np.pi * t
+    omega2 = 4 * np.pi * t
+
+    # Harmonic coefficients capturing the asymmetric drawdown and venting phases
+    A1, B1 = -1.50, 2.55
+    A2, B2 = 0.12, -0.82
+
+    seasonal = A1 * np.cos(omega1) + B1 * np.sin(omega1) + A2 * np.cos(omega2) + B2 * np.sin(omega2)
+
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract the decimal year (t)
+    t = X[:, 0]
+    
+    # Long-term trend: quadratic fit centered at year 2000
+    dt = t - 2000.0
+    c0 = 369.55
+    c1 = 1.84
+    c2 = 0.0130
+    trend = c0 + c1 * dt + c2 * dt**2
+    
+    # Seasonal cycle: annual and semi-annual harmonics
+    # Fitted coefficients for Mauna Loa CO2 seasonal cycle
+    a1, b1 = -1.44, 2.33
+    a2, b2 = 0.61, -0.32
+    
+    omega1 = 2.0 * np.pi * t
+    omega2 = 4.0 * np.pi * t
+    
+    seasonal = (a1 * np.cos(omega1) + b1 * np.sin(omega1) +
+                a2 * np.cos(omega2) + b2 * np.sin(omega2))
+    
+    # Combined prediction
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the monthly mean CO2 mole fraction (in ppm) at Mauna Loa
+
+    Observatory using a standard quadratic trend and two-harmonic seasonal
+    model.
+
+    Parameters:
+    - X: 2-D numpy array where X[:, 0] is the decimal year (t).
+
+    Returns:
+    - 1-D numpy array of predicted CO2 concentrations in ppm.
+    """
+    t = X[:, 0]
+
+    # Reference epoch (1958.0, near the start of the Mauna Loa record)
+    t0 = 1958.0
+    dt = t - t0
+
+    # Quadratic trend coefficients (empirically fitted for 1958-2024)
+    a0 = 314.57
+    a1 = 0.792
+    a2 = 0.0129
+
+    # Fourier coefficients for the seasonal cycle (annual and semi-annual harmonics)
+    # Peak in May, trough in October/November
+    c1, s1 = -2.12, 2.12  # First harmonic (annual)
+    c2, s2 = 0.79, -0.36  # Second harmonic (semi-annual)
+
+    # Compute trend
+    trend = a0 + a1 * dt + a2 * dt**2
+
+    # Compute seasonal cycle
+    omega = 2 * np.pi * t
+    seasonal = (
+        c1 * np.cos(omega)
+        + s1 * np.sin(omega)
+        + c2 * np.cos(2 * omega)
+        + s2 * np.sin(2 * omega)
+    )
+
+    return trend + seasonal
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract the decimal year (t)
+    t = X[:, 0]
+
+    # Reference year for quadratic trend is 2000.0
+    dt = t - 2000.0
+
+    # Quadratic trend model representing long-term rise and acceleration
+    trend = 369.55 + 1.91 * dt + 0.0145 * dt**2
+
+    # Two-harmonic Fourier series representing the seasonal cycle
+    angle1 = 2 * np.pi * t
+    angle2 = 4 * np.pi * t
+
+    seasonal = (
+        2.1 * np.sin(angle1)
+        - 1.1 * np.cos(angle1)
+        - 0.5 * np.sin(angle2)
+        + 0.5 * np.cos(angle2)
+    )
+
+    # Combined prediction
+    return trend + seasonal

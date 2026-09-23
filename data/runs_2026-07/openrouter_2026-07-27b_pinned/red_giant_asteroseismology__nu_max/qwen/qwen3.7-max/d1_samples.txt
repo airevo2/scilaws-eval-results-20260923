@@ -1,0 +1,130 @@
+import numpy as np
+
+def predict(X):
+    delta_nu = X[:, 0]
+    Teff = X[:, 1]
+    
+    # Solar reference values (commonly cited canonical values)
+    nu_max_sun = 3090.0   # uHz
+    delta_nu_sun = 135.1  # uHz
+    Teff_sun = 5777.0     # K
+    
+    # Standard asteroseismic scaling relation for nu_max.
+    # By combining the scaling relations for nu_max and delta_nu and 
+    # assuming a typical red-giant mass of M ~ 1 M_sun, we eliminate 
+    # the radius and mass terms to express nu_max directly in terms 
+    # of delta_nu and Teff.
+    # nu_max ~ g / sqrt(Teff) ~ M^(1/3) * delta_nu^(4/3) * Teff^(-1/2)
+    nu_max = nu_max_sun * (delta_nu / delta_nu_sun)**(4.0 / 3.0) * (Teff / Teff_sun)**(-0.5)
+    
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta_nu = X[:, 0]
+    Teff = X[:, 1]
+    FeH = X[:, 2]
+    phase = X[:, 3]
+    
+    # Solar reference values
+    nu_max_sun = 3090.0   # muHz
+    delta_nu_sun = 135.1  # muHz
+    Teff_sun = 5777.0     # K
+    
+    # Evolutionary phase mass priors (M / M_sun)
+    # Phase 0: unclassified, Phase 1: RGB, Phase 2: RC/HeB
+    M = np.ones_like(phase, dtype=float)
+    M[phase == 2] = 1.2   # Red clump stars typically have slightly higher masses
+    
+    # Asteroseismic scaling relations:
+    # delta_nu / delta_nu_sun = (M)^0.5 * (R)^-1.5  =>  R = M^(1/3) * (delta_nu / delta_nu_sun)^(-2/3)
+    R_ratio = (M ** (1.0 / 3.0)) * (delta_nu / delta_nu_sun) ** (-2.0 / 3.0)
+    
+    # Surface gravity ratio: g / g_sun = M * R^-2
+    g_ratio = M * (R_ratio ** -2.0)
+    
+    # nu_max scaling relation: nu_max ~ g * Teff^-0.5
+    # Including a minor empirical metallicity correction term (often ~0.0 to 0.1 dex)
+    beta_FeH = 0.0 
+    
+    nu_max = nu_max_sun * g_ratio * (Teff / Teff_sun) ** -0.5 * (10.0 ** (beta_FeH * FeH))
+    
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta_nu = X[:, 0]
+    Teff = X[:, 1]
+    
+    # Solar reference values
+    nu_max_sun = 3090.0    # muHz
+    delta_nu_sun = 135.1   # muHz
+    Teff_sun = 5777.0      # K
+    
+    # Standard asteroseismic scaling relation for nu_max, eliminating M and R 
+    # by assuming a roughly constant mass (M ~ 1 Msun) for the evolved giant sample,
+    # which yields the canonical exponents 4/3 for delta_nu and -1/2 for Teff.
+    nu_max = nu_max_sun * (delta_nu / delta_nu_sun)**(4.0 / 3.0) * (Teff / Teff_sun)**(-0.5)
+    
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta_nu = X[:, 0]
+    Teff = X[:, 1]
+    
+    # Solar reference values commonly used in asteroseismology (e.g., Huber+2011, Yu+2018)
+    nu_max_sun = 3090.0    # μHz
+    delta_nu_sun = 135.1   # μHz
+    Teff_sun = 5777.0      # K
+    
+    # Standard scaling relation for nu_max expressed in terms of delta_nu and Teff.
+    # Derived by combining the nu_max and delta_nu scaling relations and assuming 
+    # M ~ 1 M_sun, which is the standard approximation for Kepler red giant samples.
+    # nu_max / nu_max_sun = (M/M_sun)^(1/3) * (delta_nu / delta_nu_sun)^(4/3) * (Teff / Teff_sun)^(-1/2)
+    nu_max = nu_max_sun * (delta_nu / delta_nu_sun)**(4.0 / 3.0) * (Teff / Teff_sun)**(-0.5)
+    
+    return nu_max
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta_nu = X[:, 0]
+    Teff = X[:, 1]
+    FeH = X[:, 2]
+    phase = X[:, 3]
+
+    # Solar reference values (standard in Kepler asteroseismology)
+    nu_max_sun = 3090.0   # μHz
+    delta_nu_sun = 135.1  # μHz
+    Teff_sun = 5777.0     # K
+
+    # Estimate stellar mass from evolutionary phase and metallicity.
+    # Phase 1 (RGB): typical ~1.1 M_sun; Phase 2 (HeB/RC): typical ~1.3 M_sun
+    # Metal-rich giants are younger and therefore somewhat more massive.
+    M = np.where(phase == 2, 1.3, np.where(phase == 1, 1.1, 1.0))
+    M = np.clip(M + 0.1 * FeH, 0.7, 2.5)
+
+    # Combined asteroseismic scaling relation for nu_max.
+    # Derived from the two canonical scaling relations:
+    #   nu_max / nu_max_sun = (M/M_sun)(R/R_sun)^{-2}(Teff/Teff_sun)^{-1/2}
+    #   delta_nu / delta_nu_sun = (M/M_sun)^{1/2}(R/R_sun)^{-3/2}
+    # Eliminating R/R_sun yields:
+    #   nu_max / nu_max_sun = (M/M_sun)^{1/3} (delta_nu/delta_nu_sun)^{4/3} (Teff/Teff_sun)^{-1/2}
+    nu_max = (nu_max_sun
+              * (delta_nu / delta_nu_sun) ** (4.0 / 3.0)
+              * (Teff / Teff_sun) ** (-0.5)
+              * M ** (1.0 / 3.0))
+
+    return nu_max

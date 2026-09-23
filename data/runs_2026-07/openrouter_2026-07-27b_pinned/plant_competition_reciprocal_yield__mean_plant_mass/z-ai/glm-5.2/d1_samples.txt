@@ -1,0 +1,66 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts mean oven-dry mass per surviving plant (w) based on plant density (N).
+    Uses the canonical self-thinning rule (Yoda's -3/2 power law).
+    """
+    N = X[:, 0]
+    # Parameter 'a' absorbs the constant scalar converting plants/pot to plants/m^2
+    a = 1.0  # fitted coefficient (can be adjusted)
+    
+    w = a * np.power(N, -1.5)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Yoda's -3/2 power rule (self-thinning rule)
+    # w = a * N^(-1.5)
+    a = 100.0  # scale parameter (absorbs the pot area to m^2 conversion scalar)
+    b = -1.5   # self-thinning exponent
+    w = a * np.power(N, b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts mean oven-dry mass per surviving plant (w) based on plant density (N).
+    Uses the canonical self-thinning rule (Yoda's -3/2 power law): w = a * N^(-b)
+    """
+    N = X[:, 0]
+    a = 100.0  # constant intercept (absorbs pot area and scalar factors)
+    b = 1.5    # self-thinning exponent (3/2 power rule)
+    
+    w = a * np.power(N, -b)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    # Yoda self-thinning rule (competition-density effect):
+    #   w = a * N^(-3/2)
+    # Exponent -1.5 is the canonical self-thinning slope; a is a
+    # species/community-level constant absorbed from pot-area scaling.
+    a = 50.0
+    w = a * np.power(N, -1.5)
+    return w
+
+=====
+
+import numpy as np
+
+def predict(X):
+    N = X[:, 0]
+    a = 100.0  # per-cluster parameter (absorbs the pot area scalar)
+    w = a * np.power(N, -1.5)
+    return w

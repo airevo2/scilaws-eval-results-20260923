@@ -1,0 +1,79 @@
+import numpy as np
+
+def predict(X):
+    A_s = X[:, 0]  # Lake surface area in km^2
+    Z_max = X[:, 1]  # Lake maximum depth in m
+    
+    # Gorham & Boyce (1989) canonical empirical scaling for thermocline depth
+    # z_t ∝ A_s^0.5
+    z_t = 2.82 * np.sqrt(A_s)
+    
+    # Z_max provides a physical upper bound on thermocline depth
+    z_t = np.minimum(z_t, Z_max)
+    
+    return z_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+    # Gorham & Boyce (1989) empirical relationship: thermocline depth scales 
+    # with the fourth root of lake surface area (proxy for fetch).
+    z_t = 3.1 * np.power(A_s, 0.25)
+    # Enforce physical upper bound provided by maximum depth
+    return np.minimum(z_t, Z_max)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_s = X[:, 0]      # lake surface area [km^2]
+    Z_max = X[:, 1]    # lake maximum depth [m]
+    # Standard empirical scaling of summer thermocline depth with lake area,
+    # physically capped by the maximum lake depth.
+    z_t = np.minimum(2.5 * np.sqrt(A_s), Z_max)
+    return z_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+    
+    # Canonical empirical form where thermocline depth scales with lake area 
+    # (a proxy for wind fetch) raised to the 1/4 power.
+    # Coefficient ~8.85 reflects standard scaling when A_s is in km^2.
+    z_t = 8.85 * np.power(A_s, 0.25)
+    
+    # Apply the physical upper bound: thermocline depth cannot exceed maximum depth
+    z_t = np.minimum(z_t, Z_max)
+    
+    return z_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_s = X[:, 0]
+    Z_max = X[:, 1]
+    
+    # Canonical multiple regression power-law form for thermocline depth 
+    # (e.g., Gorham & Boyce, 1989) using lake surface area and maximum depth.
+    # log10(z_t) = c0 + c1*log10(A_s) + c2*log10(Z_max)
+    c0 = -0.21
+    c1 = 0.42
+    c2 = 0.32
+    
+    z_t = 10**(c0 + c1 * np.log10(A_s) + c2 * np.log10(Z_max))
+    
+    # Enforce the physical upper bound provided by maximum depth
+    z_t = np.minimum(z_t, Z_max)
+    
+    return z_t

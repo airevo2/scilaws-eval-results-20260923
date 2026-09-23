@@ -1,0 +1,146 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry total aboveground biomass (kg) for individual tropical trees.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 3)
+        Columns: 
+            X[:,0] = wood density (rho) in g/cm^3
+            X[:,1] = diameter at breast height (D) in cm
+            X[:,2] = total tree height (H) in m
+
+    Returns
+    -------
+    agb_kg : np.ndarray, shape (n,)
+        Predicted aboveground biomass in kg, based on Chave et al. (2005)
+        pantropical allometric equation for moist forests:
+        AGB = 0.0673 * (rho * D^2 * H)^0.976
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+
+    agb_kg = 0.0673 * (rho * D**2 * H) ** 0.976
+    return agb_kg
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry total aboveground biomass (AGB) in kg for tropical trees
+    using the Chave et al. (2014) pantropical allometric equation (Model 4).
+    
+    Inputs:
+    X[:, 0] = wood_density (rho) [g/cm^3]
+    X[:, 1] = diameter_cm (D) [cm]
+    X[:, 2] = height_m (H) [m]
+    
+    Returns:
+    agb_kg [kg], 1-D array
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    
+    # Chave et al. (2014) Global Change Biology, Model 4
+    # AGB = exp(-2.023977 + 0.932 * ln(rho * D^2 * H))
+    # Equivalent to: AGB = exp(-2.023977) * (rho * D^2 * H)^0.932
+    
+    agb_kg = np.exp(-2.023977) * (rho * D**2 * H)**0.932
+    
+    return agb_kg
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry total aboveground biomass (AGB) in kg for tropical trees
+    using the Chave et al. (2014) pantropical allometric model (Model 4).
+
+    Parameters:
+    X : 2-D numpy array
+        X[:,0] = wood_density (rho) [g/cm^3]
+        X[:,1] = diameter_cm (D) [cm]
+        X[:,2] = height_m (H) [m]
+
+    Returns:
+    1-D numpy array of AGB [kg]
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    agb = 0.0673 * (rho * D**2 * H) ** 0.976
+    return agb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry total aboveground biomass (AGB) in kg for individual tropical trees
+    using the pantropical allometric equation of Chave et al. (2014).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 3)
+        Column 0: wood_density (rho) in g/cm^3
+        Column 1: diameter_cm (D) in cm
+        Column 2: height_m (H) in m
+
+    Returns
+    -------
+    agb_kg : np.ndarray, shape (n,)
+        Aboveground biomass in kg.
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    # Chave et al. (2014) pantropical model with height
+    agb = 0.0673 * (rho * D**2 * H)**0.976
+    return agb
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts oven-dry total aboveground biomass (kg) for individual tropical trees
+    using the pantropical allometric equation from Chave et al. (2014) that includes
+    wood density, trunk diameter, and tree height.
+
+    Reference:
+    Chave et al. (2014) Global Change Biology, 20, 3177-3190.
+    Recommended simplified model when environmental stress (E) is unknown:
+    AGB = 0.0673 * (rho * D^2 * H)^0.976
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 3)
+        X[:, 0] = wood_density (rho) in g/cm^3
+        X[:, 1] = diameter_cm (D) in cm
+        X[:, 2] = height_m (H) in m
+
+    Returns
+    -------
+    agb_kg : np.ndarray, shape (n_samples,)
+        Aboveground biomass in kg.
+    """
+    rho = X[:, 0]
+    D = X[:, 1]
+    H = X[:, 2]
+    
+    # Coefficients from Chave et al. (2014) simplified pantropical equation
+    a = 0.0673
+    b = 0.976
+    
+    agb_kg = a * (rho * D**2 * H)**b
+    return agb_kg

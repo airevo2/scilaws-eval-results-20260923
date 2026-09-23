@@ -1,0 +1,79 @@
+import numpy as np
+
+def predict(X):
+    theta = np.deg2rad(X[:, 0])  # convert to radians
+    # Von Mises tuning curve (standard model for orientation tuning)
+    # R(theta) = R0 + Rmax * exp(kappa * (cos(2*(theta - theta_pref)) - 1))
+    R0 = 0.1          # baseline response [au]
+    Rmax = 1.0        # peak response amplitude above baseline [au]
+    kappa = 2.0       # concentration (tuning width) parameter
+    theta_pref = np.deg2rad(90.0)  # preferred orientation [rad]
+
+    R = R0 + Rmax * np.exp(kappa * (np.cos(2.0 * (theta - theta_pref)) - 1.0))
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = np.deg2rad(X[:, 0])
+    # Von Mises tuning curve (orientation: period 180 deg -> factor 2)
+    R_pref = 1.0      # peak response amplitude (au)
+    R_base = 0.1      # baseline offset (au)
+    kappa = 2.0       # concentration (tuning width)
+    theta_pref = np.deg2rad(45.0)  # preferred orientation
+    R = R_base + R_pref * np.exp(kappa * (np.cos(2.0 * (theta - theta_pref)) - 1.0))
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = np.deg2rad(X[:, 0])  # convert to radians
+    
+    # Standard von Mises tuning curve for orientation selectivity
+    # R(theta) = R0 + Rmax * exp(kappa * (cos(2*(theta - theta_pref)) - 1))
+    # Factor of 2 accounts for 180-degree periodicity of orientation
+    
+    R0 = 0.1          # baseline response
+    Rmax = 1.0        # peak response amplitude
+    kappa = 2.0       # concentration (tuning sharpness)
+    theta_pref = np.deg2rad(90.0)  # preferred orientation
+    
+    R = R0 + Rmax * np.exp(kappa * (np.cos(2 * (theta - theta_pref)) - 1))
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = X[:, 0] * np.pi / 180.0  # convert to radians
+    
+    # Von Mises tuning curve (standard model for orientation tuning)
+    # Orientation is pi-periodic, so use 2*theta
+    R0 = 0.5      # baseline response
+    Rmax = 1.0    # response amplitude
+    kappa = 2.0   # concentration (tuning width)
+    theta_pref = 90.0 * np.pi / 180.0  # preferred orientation
+    
+    R = R0 + Rmax * np.exp(kappa * (np.cos(2 * (theta - theta_pref)) - 1))
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = np.deg2rad(X[:, 0])
+    # Von Mises tuning curve (orientation: period 180 deg -> factor 2)
+    R_pref = 1.0      # baseline offset (au)
+    A = 1.0           # response amplitude (au)
+    kappa = 2.0       # concentration (tuning width)
+    theta_pref = np.deg2rad(90.0)  # preferred orientation
+    R = R_pref + A * np.exp(kappa * (np.cos(2.0 * (theta - theta_pref)) - 1.0))
+    return R

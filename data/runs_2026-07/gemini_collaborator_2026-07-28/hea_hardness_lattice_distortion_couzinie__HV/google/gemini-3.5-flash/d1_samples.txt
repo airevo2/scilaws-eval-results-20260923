@@ -1,0 +1,161 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the room-temperature Vickers hardness (HV) [kgf/mm²] of a refractory 
+    or complex-concentrated high-entropy alloy using an empirical physical-metallurgy 
+    relation based on lattice distortion (delta), valence electron concentration (VEC), 
+    and enthalpy of mixing (dHmix).
+    
+    Parameters:
+    X : ndarray of shape (N, 3)
+        X[:, 0] = delta (%)
+        X[:, 1] = VEC
+        X[:, 2] = dHmix (kJ/mol)
+        
+    Returns:
+    ndarray of shape (N,)
+        Predicted Vickers hardness (HV) in kgf/mm².
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Empirical model capturing:
+    # 1. Solid solution strengthening proportional to lattice distortion (delta)
+    # 2. Hardening due to intermetallic/ordered phase formation at highly negative dHmix
+    # 3. d-band filling effects controlled by VEC in the refractory BCC regime
+    HV = 180.5 + 55.4 * delta - 22.1 * dHmix + 35.2 * VEC
+    
+    return HV
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the room-temperature Vickers hardness (HV) [kgf/mm²] of a refractory
+    or complex-concentrated high-entropy alloy based on empirical physical metallurgy
+    parameters.
+
+    Inputs:
+        X: 2-D numpy array of shape (N, 3)
+            X[:, 0] = delta (δ) [%] — Yang-Zhang atomic-size mismatch parameter
+            X[:, 1] = VEC — Valence electron concentration
+            X[:, 2] = dHmix (ΔH_mix) [kJ/mol] — Enthalpy of mixing
+
+    Returns:
+        1-D numpy array of predicted HV values.
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Semi-empirical physical model for RHEA/CCA hardness:
+    # 1. Base hardness of the BCC/FCC matrix, scaling with VEC.
+    # 2. Solid-solution strengthening component, scaling with lattice distortion (delta).
+    # 3. Chemical/ordering contribution (more negative dHmix increases hardness via strong bonding/ordering).
+    HV = 185.0 + 42.5 * delta + 48.0 * (VEC - 4.0) ** 2 - 10.5 * dHmix
+
+    return HV
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the room-temperature Vickers hardness (HV) [kgf/mm²] of a
+
+    refractory or complex-concentrated high-entropy alloy using an empirical
+    multilinear regression model calibrated on experimental databases.
+
+    Parameters:
+    - X : np.ndarray of shape (N, 3)
+        - X[:, 0] : delta (δ) [%] — Atomic-size mismatch parameter
+        - X[:, 1] : VEC — Valence electron concentration
+        - X[:, 2] : dHmix (ΔH_mix) [kJ/mol] — Enthalpy of mixing
+
+    Returns:
+    - np.ndarray of shape (N,)
+        - Predicted Vickers hardness (HV) [kgf/mm²]
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Empirical relationship for RHEAs/CCAs where hardness is driven by:
+    # 1. Solid-solution strengthening from lattice distortion (delta)
+    # 2. Intrinsic bonding strength of the constituent elements (related to VEC)
+    # 3. Short-range ordering / local bonding stability (related to negative dHmix)
+    HV = -110.5 + 32.1 * delta + 85.3 * VEC - 5.8 * dHmix
+
+    return HV
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the room-temperature Vickers hardness (HV) [kgf/mm²] of a
+
+    refractory or complex-concentrated high-entropy alloy based on
+    atomic-size mismatch, valence electron concentration, and mixing enthalpy.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = delta (δ) [%] (atomic-size mismatch parameter)
+        - X[:, 1] = VEC (valence electron concentration)
+        - X[:, 2] = dHmix (ΔH_mix) [kJ/mol] (Miedema enthalpy of mixing)
+
+    Returns:
+    - 1-D numpy array of predicted HV values.
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Semi-empirical physical relationship:
+    # - Hardness increases with lattice distortion (delta) via solid-solution strengthening.
+    # - Hardness increases with VEC in the refractory BCC regime (VEC 4.2 to 6.5).
+    # - Hardness increases with more negative dHmix due to stronger interatomic bonding.
+    HV = -300.0 + 40.0 * delta + 110.0 * VEC - 8.0 * dHmix
+
+    # Enforce a physical lower bound for metallic alloys
+    return np.maximum(HV, 100.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the room-temperature Vickers hardness (HV) [kgf/mm²] of a refractory
+    or complex-concentrated high-entropy alloy using a semi-empirical relationship
+    based on lattice distortion (delta), valence electron concentration (VEC),
+    and the enthalpy of mixing (dHmix).
+
+    Inputs:
+    - X: 2-D numpy array of shape (N, 3)
+         X[:, 0] = delta (atomic-size mismatch) [%]
+         X[:, 1] = VEC (valence electron concentration)
+         X[:, 2] = dHmix (enthalpy of mixing) [kJ/mol]
+
+    Returns:
+    - 1-D numpy array of predicted HV values.
+    """
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Semi-empirical model capturing:
+    # 1. Solid-solution strengthening scaling with lattice distortion (delta)
+    # 2. Peierls barrier/crystal structure effect via VEC (BCC at low VEC is harder than FCC at high VEC)
+    # 3. Short-range ordering/bond-strength enhancement from negative enthalpy of mixing (dHmix)
+    HV = 22.0 * delta + 28.0 * (VEC - 8.0) ** 2 - 8.0 * dHmix + 110.0
+
+    return HV

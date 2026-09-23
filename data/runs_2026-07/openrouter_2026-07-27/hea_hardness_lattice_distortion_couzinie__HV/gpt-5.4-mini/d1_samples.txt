@@ -1,0 +1,92 @@
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Empirical closed-form trend for room-temperature hardness in refractory/CCA HEAs:
+    # higher lattice distortion and stronger chemical interactions increase hardness,
+    # while higher VEC generally reduces it by favoring softer FCC-like bonding.
+    HV = (
+        8.0
+        + 10.0 * delta
+        - 18.0 * VEC
+        - 0.35 * dHmix
+        + 0.80 * delta * VEC
+        - 0.10 * dHmix * VEC
+        + 0.02 * delta**2
+    )
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Empirical closed-form form commonly used for refractory/HEA hardness trends:
+    # hardness increases with lattice distortion and decreases with higher VEC,
+    # with a modest stabilization/strengthening contribution from more negative mixing enthalpy.
+    HV = 20.0 + 8.0 * delta - 12.0 * (VEC - 5.0) - 0.6 * dHmix
+
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    vec = X[:, 1]
+    dHmix = X[:, 2]
+
+    # Common closed-form phenomenological form for hardness in complex concentrated / HE alloys:
+    # hardness increases with lattice distortion and bonding/electronic effects, and with
+    # stronger (more negative) mixing enthalpy via a penalty on positive dHmix.
+    HV = (
+        -49.0
+        + 11.5 * delta
+        + 28.0 * vec
+        - 1.6 * dHmix
+        + 0.35 * delta * vec
+    )
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    delta = X[:, 0]
+    VEC = X[:, 1]
+    dHmix = X[:, 2]
+    
+    # Empirical strength/hardness trend for refractory/HEA solid-solution alloys:
+    # hardness increases with lattice distortion (delta),
+    # decreases with increasing VEC (favoring more ductile FCC-like bonding),
+    # and increases with more negative mixing enthalpy magnitude via stability/ordering effects.
+    HV = 180.0 + 18.0 * delta - 22.0 * (VEC - 5.0) - 1.2 * dHmix
+    
+    return HV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+    delta = X[:, 0]
+    vec = X[:, 1]
+    dHmix = X[:, 2]
+
+    # A common closed-form empirical representation for hardness in
+    # refractory / complex-concentrated HEAs uses linear dependence on
+    # atomic-size mismatch and valence electron concentration, with a
+    # weaker correction for mixing enthalpy.
+    HV = 27.0 + 5.2 * delta - 3.8 * vec - 0.12 * dHmix
+
+    return HV

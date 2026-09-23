@@ -1,0 +1,98 @@
+task_id: coral_reef_fish_growth_wicquart__length_mm
+primary: biology
+domain: biology / fish growth
+type: typeII
+has_group_id: true
+n_clusters_train: 36
+n_clusters_test: 9
+n_rows_per_cluster_min: 63
+n_rows_per_cluster_median: 161
+n_rows_per_cluster_max: 381
+unseen_group_strategy: error
+data_files:
+  train:     data/train.csv        # 36 train species, all ages (no group_id)
+  test_fit:  data/test_fit.csv     # 9 test species, even age-rank (interleaved) -> submission.fit()
+  test_test: data/test_test.csv    # 9 test species, odd age-rank (interleaved) -> held out, scored
+n_train: 4286
+n_test_fit: 814
+n_test_test: 810
+# Type II forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# Cluster-disjoint split (test_fit/test_test share same 9 species); harness currently ignores field.
+
+context: >
+  Pacific coral reef fish grow following the Von Bertalanffy Growth Function (VBGF):
+  total length increases rapidly in juvenile stages and asymptotically approaches a
+  species-specific maximum length (L_inf) as fish age. Growth rates differ substantially
+  across species — small planktivores may reach near-asymptotic size in 2-3 years, while
+  large piscivores continue growing for decades. The Brody growth coefficient K controls
+  the rate of approach to L_inf; t0 is the hypothetical age at zero length. Individual
+  back-calculated lengths at each past age were derived from otolith microstructure
+  measurements using the Modified Fry back-calculation model, providing dense individual-level
+  growth trajectories across 45 coral reef fish species from French Polynesia.
+
+target:
+  name: Li_sp_m
+  description: >
+    Back-calculated total length (mm) at age, estimated as the individual-level
+    posterior mean from a species-level Bayesian hierarchical back-calculation model
+    applied to otolith radius measurements. NOT the direct VBGF model output; the
+    VBGF is fit to these back-calculated lengths (see data_raw/README.md).
+  units: mm
+  range: [1.45, 949.66]
+
+inputs:
+  - name: Agei
+    description: Age at otolith increment i (years since hatching; age 0 = hatching).
+    units: years
+    range: [0.0, 30.0]
+
+metric: rmse
+
+references:
+  - id: ricker_1975
+    label: "Ricker 1975 — Von Bertalanffy Growth Function (VBGF), per-species L_inf/K/t0"
+    formula_file: formulas/ricker_1975.py
+    reference_pdf: reference/ricker_1975_dfo_bulletin191.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3
+    measured: {rmse: 25.4090, r2: 0.8984}
+
+best_baseline: 25.4090
+
+caps:
+  max_law_constants: 0
+  max_local_params: 3
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+train_test_split: >
+  Cluster holdout (cluster = species): 36 train species, 9 test species.
+  Holdout: alphabetical stride-5 (every 5th species, offset 4). Within each test
+  species, rows are sorted by (Agei, ID) and AGE-INTERLEAVED by local-rank parity:
+  even rank -> test_fit (for per-species L_inf/K/t0 fitting), odd rank -> test_test
+  (scored). Both halves span the full observed age range, so the score tests the
+  VBGF FORM (interpolation), as the Type II design intends.
+  train.csv: 4286 rows (36 clusters). test_fit.csv: 814 rows (9 clusters).
+  test_test.csv: 810 rows (9 clusters).
+
+auditor_notes: >
+  2026-06-02 audit (FM-T-P-axis fix): the within-cluster split was changed from an
+  age-EXTRAPOLATION split (youngest 80% of ages -> test_fit, oldest 20% -> test_test)
+  to an AGE-INTERLEAVED split (even/odd age-rank). Under the old extrapolation split the
+  reference VBGF scored WORSE than the per-cluster mean in all 9 test clusters
+  (per-cluster R2 in [-7.0, -0.9]) — a §9.6 failure, because the harness selects and
+  scores by MEAN PER-CLUSTER rmse, not the pooled R2 the earlier note cited (a
+  constant-mean predictor would have beaten the reference VBGF). After the interleaved
+  fix the VBGF beats the per-cluster-mean naive in 9/9 test clusters (per-cluster R2 in
+  [0.745, 0.934]; mean per-cluster rmse 20.83; pooled R2 0.898). The task now tests
+  recovery of the VBGF FORM with per-species L_inf/K/t0 re-fit on a representative half
+  of each species' ages.
+
+priors: []
+
+license: CC-BY-4.0
+citation: >
+  Morat et al. (2020). Individual back-calculated size-at-age based on otoliths
+  from Pacific coral reef fish species. Scientific Data, 7, 370.
+  Dataset: figshare deposit 12156159.v5. License: CC-BY-4.0.

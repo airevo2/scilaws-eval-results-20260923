@@ -1,0 +1,102 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Log Reduction Value (LRV) using the Chick-Watson kinetic model.
+    Assuming the coefficient of dilution (n) = 1, the model simplifies to:
+    LRV = k * C * t = k * CT
+    where k is the inactivation rate constant.
+    """
+    CT = X[:, 0]
+    k = 0.01  # Example fitted inactivation rate constant
+    LRV = k * CT
+    LRV = np.maximum(0.0, LRV)  # Ensure LRV is always non-negative
+    return LRV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Chick-Watson kinetic model for microbial inactivation.
+    Standard form: LRV = k * C^n * t
+    Given that the input is CT (product of concentration C and time t), 
+    this implies the commonly assumed first-order case where n = 1.
+    Thus, LRV = k * CT
+    """
+    k = 0.05  # typical inactivation rate constant (L/mg/min), fitted coefficient
+    CT = X[:, 0]
+    LRV = k * CT
+    # Ensure LRV is always non-negative
+    return np.maximum(LRV, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Log10 microbial reduction (LRV) using the Chick-Watson model.
+    Assuming the concentration exponent n = 1, the model simplifies to:
+    LRV = k * CT
+    where k is the disinfection rate constant.
+    """
+    # Empirical rate constant (typical for common disinfectants like chlorine)
+    k = 0.05 
+    
+    CT = X[:, 0]
+    LRV = k * CT
+    return np.maximum(0, LRV)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Log10 microbial reduction (LRV) using the Chick-Watson kinetic model.
+    For a first-order concentration exponent (n=1), the model simplifies to:
+    LRV = k * CT
+    where k is the inactivation rate constant.
+    """
+    CT = X[:, 0]
+    k = 0.05  # Inactivation rate constant (L/mg-min) - chosen as a representative typical value
+    
+    # Chick-Watson model
+    LRV = k * CT
+    
+    # Ensure LRV is non-negative as per physical constraint
+    LRV = np.maximum(0.0, LRV)
+    
+    return LRV
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Log10 microbial reduction (LRV) based on the Chick-Watson model.
+    
+    The Chick-Watson kinetic model is given by:
+    log10(N0/N) = k * C^n * t
+    
+    where N0 is the initial microbial count, N is the surviving count, 
+    C is the disinfectant concentration, t is the contact time, 
+    k is the inactivation rate constant, and n is the dilution coefficient.
+    
+    Given only CT (C * t) as input, we assume the commonly cited case where n = 1,
+    reducing the equation to:
+    LRV = k * CT
+    """
+    # Extract CT (Disinfection dose)
+    CT = X[:, 0]
+    
+    # Inactivation rate constant (k) - typical generic fitted coefficient
+    k = 0.05 
+    
+    # Chick-Watson model with n=1
+    LRV = k * CT
+    
+    return LRV

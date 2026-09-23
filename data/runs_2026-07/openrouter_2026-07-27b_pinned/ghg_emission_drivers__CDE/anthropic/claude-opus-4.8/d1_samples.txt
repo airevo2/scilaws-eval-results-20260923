@@ -1,0 +1,204 @@
+import numpy as np
+
+def predict(X):
+    # STIRPAT / Kaya-identity based multiplicative model:
+    #   I = a * P^b * A^c * (AP)^d * (DP)^e * (UR)^f * exp(g*AT)
+    # Emissions scale ~ population * affluence (GDP per capita),
+    # modulated by demographic, density, urbanization and climate factors.
+    A  = X[:, 0]   # GDP per capita (USD)
+    P  = X[:, 1]   # total population (persons)
+    AP = X[:, 2]   # active-population share (%)
+    DP = X[:, 3]   # population density (per km2)
+    UR = X[:, 4]   # urbanization (%)
+    AT = X[:, 5]   # annual mean temperature (deg C)
+
+    # log-linear STIRPAT coefficients (commonly cited elasticities)
+    ln_a = -9.0     # scale constant
+    b_P  = 1.00     # population elasticity ~ 1 (Kaya)
+    c_A  = 0.90     # affluence elasticity (near 1, slightly < 1)
+    d_AP = 0.50     # working-age share effect
+    e_DP = -0.05    # density (compactness reduces per-capita energy use)
+    f_UR = 0.30     # urbanization effect
+    g_AT = -0.02    # temperature (warmer -> less heating demand)
+
+    lnI = (ln_a
+           + b_P  * np.log(P)
+           + c_A  * np.log(A)
+           + d_AP * np.log(AP)
+           + e_DP * np.log(DP)
+           + f_UR * np.log(UR)
+           + g_AT * AT)
+
+    return np.exp(lnI)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT model (Impact = a * P^b * A^c * T^d ...), an extension of the
+    # Kaya identity for CO2 emissions. Impact I = CO2 emissions.
+    #
+    # Multiplicative form:
+    #   I_CO2 = alpha * P^b1 * A^b2 * AP^b3 * DP^b4 * UR^b5 * exp(b6*AT)
+    #
+    # Population and affluence are the dominant drivers (Kaya identity),
+    # with unit elasticity roughly for population and ~1 for GDP per capita.
+
+    A  = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P  = X[:, 1]   # Total population
+    AP = X[:, 2]   # Active population share (%)
+    DP = X[:, 3]   # Population density (per km2)
+    UR = X[:, 4]   # Urbanization (%)
+    AT = X[:, 5]   # Annual mean temperature (deg C)
+
+    # Fitted STIRPAT elasticities (log-log regression style)
+    ln_alpha = -3.0     # scaling constant
+    b1 = 1.00           # population elasticity (~unit)
+    b2 = 0.85           # affluence (GDP/cap) elasticity
+    b3 = 0.50           # working-age share elasticity
+    b4 = -0.05          # population density (efficiency of compactness)
+    b5 = 0.20           # urbanization elasticity
+    b6 = -0.010         # temperature (warmer -> slightly less heating energy)
+
+    ln_I = (ln_alpha
+            + b1 * np.log(P)
+            + b2 * np.log(A)
+            + b3 * np.log(AP)
+            + b4 * np.log(DP)
+            + b5 * np.log(UR)
+            + b6 * AT)
+
+    return np.exp(ln_I)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT / Kaya-identity based multiplicative model:
+    #   I = a * P^b * A^c * (AP)^d * (DP)^e * (UR)^f * exp(g*AT)
+    # I (impact) = CO2 emissions [kg CO2]
+    #
+    # Rationale (Kaya): CO2 = Population * (GDP/capita) * (energy & carbon intensity),
+    # with intensity modulated by demographic, urbanization and climate factors.
+    # Population and affluence elasticities near unity are the classic STIRPAT result.
+
+    A  = X[:, 0]   # GDP per capita (constant 2015 USD)
+    P  = X[:, 1]   # total population
+    AP = X[:, 2]   # active-population share [%]
+    DP = X[:, 3]   # population density [/km2]
+    UR = X[:, 4]   # urbanization [%]
+    AT = X[:, 5]   # annual mean temperature [C]
+
+    # Fitted STIRPAT coefficients (order-of-magnitude canonical values)
+    a = 0.5        # scale constant (kg CO2 per capita baseline factor)
+    b = 1.00       # population elasticity
+    c = 0.85       # affluence (GDP/capita) elasticity
+    d = 0.50       # working-age share elasticity
+    e = -0.05      # density elasticity (denser -> slightly lower per-capita)
+    f = 0.30       # urbanization elasticity
+    g = -0.015     # temperature effect (warmer -> less heating demand)
+
+    lnI = (np.log(a)
+           + b * np.log(P)
+           + c * np.log(A)
+           + d * np.log(AP)
+           + e * np.log(DP)
+           + f * np.log(UR)
+           + g * AT)
+
+    return np.exp(lnI)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT model (Stochastic Impacts by Regression on Population,
+    # Affluence, and Technology): I = a * P^b * A^c * ... 
+    # Estimated in log-linear form:
+    #   ln(I) = ln(a) + b*ln(P) + c*ln(A) + d*ln(AP) + e*ln(DP)
+    #           + f*ln(UR) + g*ln(AT_shift)
+    #
+    # I  = CO2 emissions [kg CO2]
+    # P  = total population
+    # A  = GDP per capita (affluence)
+    # AP = active/working-age population share
+    # DP = population density
+    # UR = urbanization rate
+    # AT = annual mean temperature
+
+    A  = X[:, 0]
+    P  = X[:, 1]
+    AP = X[:, 2]
+    DP = X[:, 3]
+    UR = X[:, 4]
+    AT = X[:, 5]
+
+    # Canonical STIRPAT elasticities (commonly cited magnitudes)
+    ln_a = -1.5     # scaling constant
+    b    = 1.00     # population elasticity (~unit elasticity)
+    c    = 0.95     # affluence elasticity
+    d    = 0.50     # working-age share
+    e    = 0.05     # population density
+    f    = 0.30     # urbanization
+    g    = -0.10    # temperature (heating/cooling demand)
+
+    # shift temperature to keep it positive for the log transform
+    AT_shift = AT + 20.0
+
+    ln_I = (ln_a
+            + b * np.log(P)
+            + c * np.log(A)
+            + d * np.log(AP)
+            + e * np.log(DP)
+            + f * np.log(UR)
+            + g * np.log(AT_shift))
+
+    # convert from tonnes-scale fit to kg CO2
+    I_CO2 = np.exp(ln_I) * 1.0e3
+
+    return I_CO2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # STIRPAT model (stochastic extension of IPAT identity):
+    #   I = a * P^b * A^c * (other factors)^...
+    # Here I = CO2 emissions, P = population, A = affluence (GDP per capita),
+    # plus multiplicative modifiers for population structure, density,
+    # urbanization and temperature.
+    #
+    # ln(I) = ln(a) + b*ln(P) + c*ln(A) + d*ln(AP) + e*ln(DP) + f*ln(UR) + g*T
+    #
+    # Canonical STIRPAT elasticities: population and affluence elasticities
+    # near unity, urbanization positive, etc.
+
+    A  = X[:, 0]   # GDP per capita (USD)
+    P  = X[:, 1]   # population
+    AP = X[:, 2]   # active population share (%)
+    DP = X[:, 3]   # population density
+    UR = X[:, 4]   # urbanization (%)
+    AT = X[:, 5]   # annual mean temperature (deg C)
+
+    # Fitted (canonical) coefficients
+    ln_a = -9.0      # scaling constant (kg CO2 per capita baseline)
+    b    =  1.00     # population elasticity (~unity)
+    c    =  0.90     # affluence elasticity
+    d    =  0.50     # working-age share elasticity
+    e    =  0.05     # density elasticity
+    f    =  0.20     # urbanization elasticity
+    g    = -0.010    # temperature effect (heating demand falls with warmth)
+
+    ln_I = (ln_a
+            + b * np.log(P)
+            + c * np.log(A)
+            + d * np.log(AP)
+            + e * np.log(DP)
+            + f * np.log(UR)
+            + g * AT)
+
+    return np.exp(ln_I)

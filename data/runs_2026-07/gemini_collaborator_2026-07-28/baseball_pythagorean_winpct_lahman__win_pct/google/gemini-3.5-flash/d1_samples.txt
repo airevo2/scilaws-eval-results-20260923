@@ -1,0 +1,107 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the season win percentage (W%) using the Pythagorean expectation.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        X[:, 0] = R (Runs Scored)
+        X[:, 1] = RA (Runs Allowed)
+
+    Returns:
+    - 1-D numpy array of predicted win percentages.
+    """
+    R = X[:, 0]
+    RA = X[:, 1]
+
+    # The standard empirically derived exponent for baseball is 1.83
+    exponent = 1.83
+
+    R_exp = np.power(R, exponent)
+    RA_exp = np.power(RA, exponent)
+
+    win_pct = R_exp / (R_exp + RA_exp)
+
+    return win_pct
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is Runs Scored (R)
+    # X[:, 1] is Runs Allowed (RA)
+    R = X[:, 0]
+    RA = X[:, 1]
+
+    # The classic Pythagorean expectation formula for baseball.
+    # The exponent 1.83 is the standard historically adopted for MLB.
+    exponent = 1.83
+
+    win_pct = (R**exponent) / (R**exponent + RA**exponent)
+
+    return win_pct
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = Runs Scored (R)
+    # X[:, 1] = Runs Allowed (RA)
+    R = X[:, 0]
+    RA = X[:, 1]
+
+    # Bill James' Pythagorean Expectation formula.
+    # While the classic exponent is 2, the modern standard and most commonly cited
+    # empirically fitted exponent for baseball is 1.83.
+    exponent = 1.83
+
+    return (R**exponent) / (R**exponent + RA**exponent)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the season win percentage (W%) using the Pythagorean expectation.
+
+    Inputs:
+    - X: a 2-D numpy array where:
+        - X[:, 0] = R (Runs Scored)
+        - X[:, 1] = RA (Runs Allowed)
+
+    Returns:
+    - A 1-D numpy array of predicted win percentages.
+    """
+    R = X[:, 0]
+    RA = X[:, 1]
+
+    # The standard empirically derived exponent for baseball is 1.83
+    exponent = 1.83
+
+    # Pythagorean Expectation formula
+    win_pct = (R**exponent) / (R**exponent + RA**exponent)
+
+    return win_pct
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = Runs Scored (R)
+    # X[:, 1] = Runs Allowed (RA)
+    R = X[:, 0]
+    RA = X[:, 1]
+
+    # The Pythagorean Expectation formula for baseball win percentage.
+    # The exponent 1.83 is the standard empirically fitted value for MLB.
+    exponent = 1.83
+
+    return (R**exponent) / (R**exponent + RA**exponent)

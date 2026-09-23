@@ -1,0 +1,83 @@
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    # Canonical Mincer Earnings Function coefficients (typical empirical estimates for annual USD wages)
+    beta_0 = 9.60     # Intercept (ln of base annual wage)
+    beta_1 = 0.09     # Return to schooling (approx. 9% per year)
+    beta_2 = 0.04     # Return to experience (approx. 4% per year)
+    beta_3 = -0.0008  # Experience squared (concavity of the experience-earnings profile)
+    
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x ** 2)
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    # Standard Mincer Earnings Function (typical US empirical estimates for annual wage)
+    beta_0 = 9.00     # Intercept (base log annual earnings)
+    beta_1 = 0.10     # Average marginal return to schooling
+    beta_2 = 0.04     # Marginal return to potential experience
+    beta_3 = -0.0007  # Experience depreciation (concavity)
+    
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x ** 2)
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    # Representative coefficients for the Mincer earnings function 
+    # (modern US inflation-adjusted annual wage and salary income)
+    beta_0 = 9.80     # Intercept
+    beta_1 = 0.09     # Return to schooling (~9% per year)
+    beta_2 = 0.04     # Linear return to experience
+    beta_3 = -0.0007  # Quadratic experience term (concavity)
+    
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x ** 2)
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    s = X[:, 0]
+    x = X[:, 1]
+    
+    # Canonical Mincer earnings function: ln(Y) = b0 + b1*s + b2*x + b3*x^2
+    # Coefficients are representative estimates for modern ACS data
+    b0 = 10.50   # Intercept (base log annual wage)
+    b1 = 0.10    # Average return to an additional year of schooling
+    b2 = 0.03    # Initial return to an additional year of experience
+    b3 = -0.0005 # Diminishing returns/depreciation of experience
+    
+    ln_Y = b0 + b1 * s + b2 * x + b3 * (x ** 2)
+    return ln_Y
+
+=====
+
+def predict(X):
+    import numpy as np
+    s = X[:, 0]  # years of schooling
+    x = X[:, 1]  # potential work experience
+
+    # Standard Mincer (1974) log-earnings equation
+    beta_0 = 4.65      # intercept
+    beta_1 = 0.10      # return to schooling (~10% per year)
+    beta_2 = 0.04      # linear return to experience
+    beta_3 = -0.0006   # concavity of experience-earnings profile
+
+    ln_Y = beta_0 + beta_1 * s + beta_2 * x + beta_3 * x**2
+    return ln_Y

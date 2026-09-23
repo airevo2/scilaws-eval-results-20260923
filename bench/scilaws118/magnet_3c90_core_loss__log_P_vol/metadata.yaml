@@ -1,0 +1,119 @@
+task_id: magnet_3c90_core_loss__log_P_vol
+domain: materials_and_energy / power_magnetics
+license: MIT     # Princeton MagNet code + pretest dataset, https://github.com/PrincetonUniversity/Magnet
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Soft ferrite magnetic cores are the energy-storage elements in switched-mode power converters, studied in power electronics and magnetic materials engineering.
+
+target:
+  name: log_P_vol
+  symbol: log10(P_vol)
+  unit: log10(kW/m^3)
+  description: Base-10 logarithm of the volumetric core loss in kW per cubic metre, computed as the area of the measured B-H hysteresis loop times the excitation frequency, normalised by the core volume.
+  range: [-0.2559, 3.3165]
+
+inputs:
+  - name: f_Hz
+    symbol: f
+    unit: Hz
+    description: Excitation frequency of the sinusoidal/triangular/trapezoidal flux waveform.
+    range: [49950.0, 446690.0]
+  - name: B_peak_T
+    symbol: B
+    unit: T
+    description: Peak flux density max|B(t)| of the excitation waveform.
+    range: [0.0107, 0.2815]
+  - name: T_C
+    symbol: T
+    unit: degC
+    description: Ambient temperature during measurement (Princeton MagNet pretest uses 25, 50, 70, 90 degC set-points).
+    categories: [25.0, 50.0, 70.0, 90.0]
+  - name: waveform_id
+    symbol: w
+    description: Excitation waveform shape — 0 = sinusoidal, 1 = triangular, 2 = trapezoidal.
+    categories: [0, 1, 2]
+
+# Dataset — Type I, two-file flat layout.  Source: Princeton MagNet
+# Challenge 1 pretest dataset, Ferroxcube 3C90 ferrite subset; 4213
+# measurements split 70%/15% train/test by (f, B, T) tuple in the v1
+# sibling task's prep_data.py (seed=42, 15% val window discarded for
+# the v2 two-file layout).
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 3444
+n_test:   769
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: bertotti_hysteresis_exponent
+    value: 2.0
+    unit: dimensionless
+    description: Geometric B-exponent in Bertotti's hysteresis-loss term (∝ f·B²).
+    source: Bertotti (1988) loss-separation theorem — derived from the geometry of B-H loop area integration assuming a fixed loop shape.  A candidate value for the BETA exponent; the empirical Steinmetz fit for 3C90 finds BETA ~ 2.42, above the geometric 2.0.
+    _role: candidate
+  - name: steinmetz_frequency_exponent_typical_ferrite
+    value: 1.6
+    unit: dimensionless
+    description: A typical Steinmetz alpha for a soft NiZn or MnZn ferrite in the kHz-MHz band.
+    source: Power-electronics textbook value (e.g. Kazimierczuk "High-Frequency Magnetic Components" Table 13.4).  A candidate value for the ALPHA exponent; the 3C90 fit gives ALPHA ~ 1.72.
+    _role: candidate
+  - name: copper_resistivity_room_temperature
+    value: 1.68e-08
+    unit: ohm·m
+    description: Electrical resistivity of pure copper at 25°C.
+    source: NIST handbook.  Domain-adjacent (relevant to winding losses, not core losses) — not used by either core-loss baseline.  A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: bertotti_1988
+    label: Bertotti (1988) loss-separation theorem — P = k_h·f·B² + k_e·f²·B² (Type I, frozen)
+    formula_file: formulas/bertotti_1988.py
+    reference_pdf: reference/magnet_challenge_open_access.pdf
+    n_law_constants: 2         # K_H, K_E
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.3540, r2: 0.7844}
+  - id: steinmetz_1892
+    label: Steinmetz (1892) empirical power law — P = k · f^α · B^β (Type I, frozen)
+    formula_file: formulas/steinmetz_1892.py
+    reference_pdf: reference/magnet_challenge_open_access.pdf
+    n_law_constants: 3         # LOG_K, ALPHA, BETA
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.2090, r2: 0.9248}
+  - id: steinmetz_temperature_extended
+    label: Steinmetz with linear-in-T correction (K-form) — log P = log_k₀ + γT + α log f + β log B (Type I, frozen)
+    formula_file: formulas/steinmetz_temperature_extended.py
+    reference_pdf: reference/magnet_challenge_open_access.pdf
+    n_law_constants: 4         # LOG_K0, ALPHA, BETA, GAMMA
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.1826, r2: 0.9426}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        4
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted log_P_vol rises faster-than-linearly with excitation frequency f_Hz, with a material-specific steepness reflecting the combination of a static hysteresis loss (~linear in f) and a more steeply rising dynamic eddy-current loss (e.g. a two-term k_h*f + k_e*f^2 form, or a single power law f^alpha with alpha non-integer and above 1)"
+  - "predicted log_P_vol rises with peak flux density B_peak_T via a super-quadratic power law (B-exponent above the geometric 2), steepening as the core is driven toward saturation and the B-H loop fattens"
+  - "the loss coefficient carries a temperature dependence so that predicted log_P_vol changes with T_C at fixed f_Hz, B_peak_T, and waveform_id (for 3C90 the coefficient first decreases by ~20-40% across 0-100 degC before rising again near the Curie point)"
+  - "the implied linear core loss P_vol = 10^(log_P_vol) is strictly positive throughout the measurement domain and vanishes as either drive is removed (P_vol -> 0 as f_Hz -> 0 at fixed B, and as B_peak_T -> 0 at fixed f): no dissipation without excitation or flux swing"
+
+# === Scoring ===
+metric: rmse              # RMS error on log_P_vol (log10 units)
+best_baseline: 0.1826     # steinmetz_temperature_extended

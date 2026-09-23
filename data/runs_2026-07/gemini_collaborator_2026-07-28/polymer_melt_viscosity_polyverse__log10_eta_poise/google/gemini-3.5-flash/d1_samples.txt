@@ -1,0 +1,217 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract input features
+    T = X[:, 0]  # Temperature in Kelvin
+    log10_Mw = X[:, 1]  # log10(Mw) in g/mol
+    shear_rate = X[:, 2]  # Shear rate in s^-1
+    Tg = X[:, 3]  # Glass transition temperature in Kelvin
+
+    # 1. Molecular weight dependence with entanglement crossover
+    # Entanglement molecular weight Mc typically around 10^4 g/mol
+    log10_Mc = 4.0
+    mw_term = np.where(
+        log10_Mw < log10_Mc,
+        (log10_Mw - log10_Mc),  # Rouse regime: slope ~ 1
+        3.4 * (log10_Mw - log10_Mc),  # Entangled regime: slope ~ 3.4
+    )
+
+    # 2. Temperature dependence via the Williams-Landel-Ferry (WLF) equation
+    # Universal WLF constants referenced to Tg
+    C1 = 17.44
+    C2 = 51.6
+    # Clip dT to prevent singularity or unphysical behavior below Tg
+    dT = np.maximum(T - Tg, -45.0)
+    wlf_term = (C1 * dT) / (C2 + dT)
+
+    # Base zero-shear viscosity at Tg for Mc is approximately 13.0 log10(poise)
+    log10_eta0 = 13.0 + mw_term - wlf_term
+
+    # 3. Shear-thinning behavior via the Cross model
+    # Relaxation time lambda ~ eta0 / G, where G is the plateau modulus (~10^6 dyn/cm^2)
+    log10_G = 6.0
+    log10_lambda = log10_eta0 - log10_G
+    lambda_shear = np.maximum(10**log10_lambda * shear_rate, 0.0)
+
+    # Typical power-law index for pseudoplastic behavior
+    n = 0.7
+    log10_eta = log10_eta0 - np.log10(1.0 + lambda_shear**n)
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs
+    T = X[:, 0]  # Temperature in Kelvin
+    log10_Mw = X[:, 1]  # log10 of weight-average molecular weight
+    gamma_dot = X[:, 2]  # Shear rate in s^-1
+    Tg = X[:, 3]  # Glass transition temperature in Kelvin
+
+    # 1. Zero-shear viscosity (log10_eta_0) using WLF and Mw dependence
+    # For entangled polymers, eta_0 scales with Mw^3.4.
+    # WLF equation: log10(eta(T)/eta(Tg)) = -C1 * (T - Tg) / (C2 + T - Tg)
+    # Universal WLF constants: C1 = 17.44, C2 = 51.6 K
+    dT = T - Tg
+    dT_safe = np.maximum(dT, -45.0)  # Avoid singularity near C2 + dT = 0
+
+    C1 = 17.44
+    C2 = 51.6
+    log10_eta_0 = -4.0 + 3.4 * log10_Mw - (C1 * dT_safe) / (C2 + dT_safe)
+
+    # 2. Shear thinning using the Cross model
+    # eta = eta_0 / (1 + (lambda * gamma_dot)^n)
+    # Relaxation time lambda is approximated as eta_0 / G, where plateau modulus G ~ 10^6 dyn/cm^2 (Poise/s)
+    log10_lambda = log10_eta_0 - 6.0
+    lambd = np.power(10.0, np.clip(log10_lambda, -15.0, 15.0))
+
+    # Cross model parameters (typical power-law index n = 0.75)
+    n = 0.75
+    val = lambd * gamma_dot
+    cross_term = np.log10(1.0 + np.power(val, n))
+
+    log10_eta = log10_eta_0 - cross_term
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    T = X[:, 0]  # Melt temperature (K)
+    log10_Mw = X[:, 1]  # log10(Mw) (g/mol)
+    shear_rate = X[:, 2]  # Shear rate (s^-1)
+    Tg = X[:, 3]  # Glass transition temperature (K)
+
+    # 1. Molecular weight dependence with crossover at Mc (approx 10^4 g/mol)
+    log10_Mc = 4.0
+    log10_Mw_eff = np.where(
+        log10_Mw > log10_Mc, 3.4 * (log10_Mw - log10_Mc) + log10_Mc, log10_Mw
+    )
+
+    # 2. Temperature dependence using the Williams-Landel-Ferry (WLF) equation
+    # Baseline constant is calibrated so that viscosity at Tg is ~10^13 Poise.
+    constant = 5.6
+    dT = np.maximum(T - Tg, 0.1)  # Ensure physical stability near/below Tg
+    C1 = 17.44
+    C2 = 51.6
+    log10_aT = -C1 * dT / (C2 + dT)
+
+    log10_eta0 = constant + log10_Mw_eff + log10_aT
+
+    # 3. Non-Newtonian shear-thinning behavior using the Cross model
+    # Relaxation time lambda scales with zero-shear viscosity eta0.
+    # G is the plateau modulus, typically around 10^5.5 Pa (or Poise-equivalent scale).
+    log10_lambda = log10_eta0 - 5.5
+    lambda_val = 10**log10_lambda
+    lambda_shear = np.clip(lambda_val * shear_rate, 1e-20, 1e20)
+
+    # Flow index n is typically ~0.3, so pseudoplasticity index (1-n) is ~0.7
+    pseudoplasticity = 0.7
+    log10_eta = log10_eta0 - np.log10(1.0 + lambda_shear**pseudoplasticity)
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract features
+    T = X[:, 0]
+    log10_Mw = X[:, 1]
+    shear_rate = X[:, 2]
+    Tg = X[:, 3]
+
+    # Temperature difference above Tg (clipped to avoid non-physical or negative values)
+    dT = np.maximum(T - Tg, 5.0)
+
+    # Molecular weight dependence with entanglement crossover (Berry-Fox relation)
+    # Mc (critical entanglement molecular weight) typically occurs around 10^3.8 g/mol
+    log10_Mc = 3.8
+    f_Mw = log10_Mw + 2.4 * np.maximum(0.0, log10_Mw - log10_Mc)
+
+    # Temperature dependence via the Williams-Landel-Ferry (WLF) equation
+    C1 = 17.44
+    C2 = 51.6
+    wlf = -(C1 * dT) / (C2 + dT)
+
+    # Zero-shear viscosity log10(eta0) [poise]
+    # 7.62 is an empirically calibrated scaling factor for typical homopolymer melts
+    log10_eta0 = 7.62 + f_Mw + wlf
+
+    # Shear-thinning behavior via the Cross model
+    # Relaxation time lambda scales with zero-shear viscosity: lambda ~ eta0 / G_N^0
+    # where G_N^0 (plateau modulus) is typically ~10^6 dyn/cm^2 (10^5 Pa)
+    log10_lambda = log10_eta0 - 6.0
+    log10_lambda = np.clip(log10_lambda, -15.0, 15.0)
+    lam = 10**log10_lambda
+
+    # Cross model exponent (pseudoplastic index, typically 0.7 - 0.8)
+    n = 0.75
+    shear_term = (lam * shear_rate) ** n
+
+    # Final viscosity calculation
+    log10_eta = log10_eta0 - np.log10(1.0 + shear_term)
+
+    return log10_eta
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract inputs
+    T = X[:, 0]  # Temperature in K
+    log10_Mw = X[:, 1]  # log10(Mw)
+    shear_rate = X[:, 2]  # Shear rate in s^-1
+    Tg = X[:, 3]  # Glass transition temperature in K
+
+    # 1. Molecular weight dependence
+    # Mw_c is the critical entanglement molecular weight, typically ~ 10^4 g/mol.
+    # Below Mw_c, viscosity scales with Mw^1. Above Mw_c, it scales with Mw^3.4.
+    log10_Mc = 4.0
+    f_Mw = log10_Mw + 2.4 * np.log10(1.0 + 10 ** (log10_Mw - log10_Mc))
+
+    # 2. Temperature dependence via the Williams-Landel-Ferry (WLF) / VFT equation
+    # Using standard universal-like WLF constants: C1 = 17.44, C2 = 51.6 K
+    # log10(eta0) = C0 + f(Mw) + (C1 * C2) / (C2 + T - Tg) - C1
+    C2 = 51.6
+    B = 17.44 * C2  # ~ 900.0
+    C0 = -9.1  # Fitted offset to align with typical melt viscosity magnitudes
+
+    # Robust handling for temperatures close to or below Tg
+    dT = np.maximum(T - Tg, -C2 + 10.0)
+    log10_eta0 = C0 + f_Mw + B / (C2 + dT)
+
+    # 3. Shear rate dependence via the Cross model
+    # Relaxation time lambda is proportional to zero-shear viscosity: lambda = eta0 / G_N0
+    # G_N0 is the plateau modulus, typically ~ 10^6 dyn/cm^2 in CGS (poise) units.
+    log10_lambda = log10_eta0 - 6.0
+
+    # Cross model power index m (typically around 0.6 to 0.8 for polymer melts)
+    m = 0.7
+
+    log10_eta = np.copy(log10_eta0)
+    mask = shear_rate > 0
+    if np.any(mask):
+        # Compute in log-space to prevent underflow/overflow
+        log10_lambda_shear = log10_lambda[mask] + np.log10(shear_rate[mask])
+        exponent = m * log10_lambda_shear
+
+        # Stable evaluation of log10(1 + 10^exponent)
+        log10_term = np.where(
+            exponent > 15.0, exponent, np.log10(1.0 + 10**exponent)
+        )
+        log10_eta[mask] = log10_eta0[mask] - log10_term
+
+    return log10_eta

@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Pressure"
+  symbol: "pr"
+  unit: ""
+  description: "Pressure"
+inputs:
+  - name: "Dimensionless"
+    symbol: "n"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"
+  - name: "volume"
+    symbol: "V"
+    unit: ""
+    description: "volume"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"

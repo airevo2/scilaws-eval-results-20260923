@@ -1,0 +1,148 @@
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Lee-Carter model: ln M(x,t) = a_x + b_x * k_t
+    # Using parametric approximations for the Lee-Carter parameters a_x, b_x, and k_t
+    # a_x: general age pattern of mortality (U-shaped)
+    a_x = -4.0 + 0.02 * x - 0.0005 * x**2 + 0.0001 * x**3
+    
+    # b_x: age-specific sensitivity to time trends
+    b_x = 0.02 + 0.001 * x
+    
+    # k_t: time-varying index of mortality level
+    k_t = -0.01 * (t - 1900)
+    
+    log_m_full = a_x + b_x * k_t
+    return log_m_full
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]  # Calendar year is accepted as an input, but the canonical Heligman-Pollard 
+                 # closed-form model is static and does not explicitly parameterize time without 
+                 # time-varying coefficients.
+    
+    # Heligman-Pollard (1980) model parameters for the central death rate M(x)
+    # These constants represent a typical human mortality pattern.
+    A = 0.0005  # Level of infant mortality
+    B = 0.01    # Location of infant mortality curve
+    C = 0.10    # Shape of infant mortality decline
+    D = 0.0005  # Level of the accident hump
+    E = 10.0    # Spread of the accident hump
+    F = 25.0    # Location of the accident hump
+    G = 0.0002  # Level of senescent mortality (Gompertz baseline)
+    H = 1.10    # Rate of increase of senescent mortality (Gompertz)
+    
+    # The accident hump term uses ln(x). For x=0, we use x+1 to avoid log(0).
+    ln_x = np.log(x + 1)
+    
+    # Heligman-Pollard formula for M(x)
+    m_x = A**((x + B)**C) + D * np.exp(-E * (ln_x - np.log(F))**2) + G * H**x
+    
+    # Ensure strictly positive values before taking the natural log
+    m_x = np.maximum(m_x, 1e-15)
+    
+    return np.log(m_x)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Lee-Carter model: ln M(x,t) = a(x) + b(x) * k(t)
+    # a(x) represents the general shape of mortality by age
+    # b(x) represents the age-specific sensitivity to time changes
+    # k(t) represents the time-varying index of mortality level
+    
+    # Using generic continuous approximations for the components
+    a_x = -4.0 + 0.05 * x + 0.0002 * x**3  # Base mortality shape (infant, adult, old-age)
+    b_x = 0.01 + 0.0001 * x                 # Age-specific response to time trend
+    k_t = -0.5 * (t - 1900)                 # Time trend (generally declining over time)
+    
+    return a_x + b_x * k_t
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # Heligman-Pollard model for mortality over the full age range.
+    # The standard form models the odds of death: q_x / (1 - q_x) = A^((x+B)^C) + D*exp(-E*(ln(x)-ln(F))^2) + G*H^x
+    # For single-year ages, the central death rate M(x,t) is approximately q_x / (1 - q_x).
+    # To incorporate the calendar year (t), the parameters are modeled as linear functions of time 
+    # to reflect the general demographic transition (declining mortality over time).
+    # Coefficients are illustrative as no fitting data is provided.
+    
+    t_norm = (t - 1900.0) / 100.0
+    
+    A = np.maximum(0.0005 * (1.0 - 0.5 * t_norm), 1e-7)
+    B = 0.08
+    C = 0.1
+    D = np.maximum(0.0005 * (1.0 - 0.6 * t_norm), 1e-7)
+    E = 10.0
+    F = 25.0
+    G = np.maximum(0.00005 * (1.0 - 0.4 * t_norm), 1e-8)
+    H = 1.1
+    
+    # Avoid log(0) for infant mortality (x=0)
+    x_safe = np.where(x <= 0, 1e-6, x)
+    
+    term1 = A ** ((x + B) ** C)
+    term2 = D * np.exp(-E * (np.log(x_safe) - np.log(F)) ** 2)
+    term3 = G * H ** x
+    
+    m = term1 + term2 + term3
+    m = np.maximum(m, 1e-12) # Prevent log(0)
+    
+    return np.log(m)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of the central period death rate ln M(x,t) 
+    using the Lee-Carter model, the standard closed-form relationship in demography.
+    
+    Model: ln M(x, t) = a(x) + b(x) * k(t)
+    
+    Since no data is provided, generic representative coefficients for a 
+    typical human population (Total sex) are used.
+    """
+    x = X[:, 0]
+    t = X[:, 1]
+    
+    # a(x): Average log mortality over time (age-specific baseline)
+    # High infant mortality, drops to a minimum around age 10, then increases roughly linearly
+    a_x = np.where(x == 0, -4.5,
+          np.where(x < 10, -4.5 - 0.5 * x,
+          np.where(x < 30, -9.5 + 0.12 * (x - 10),
+          -7.1 + 0.08 * (x - 30))))
+    
+    # b(x): Age-specific sensitivity to the time trend
+    # High at young and old ages, lowest in the mid-life ages
+    b_x = np.where(x < 5, 0.10,
+          np.where(x < 40, 0.02,
+          0.02 + 0.001 * (x - 40)))
+    
+    # k(t): Time trend, generally declining over time
+    # Normalized to 0 at the start of the typical range (1751)
+    k_t = (1751 - t) * 0.015
+    
+    # Lee-Carter closed-form relationship
+    log_m_full = a_x + b_x * k_t
+    
+    return log_m_full

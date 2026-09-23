@@ -1,0 +1,156 @@
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+    T = X[:, 3]
+    p = X[:, 4]
+    # q_v, z_g, dz_RH are not used in the standard Xu-Randall (1996) diagnostic scheme
+
+    # Total condensate mixing ratio (liquid + ice)
+    q_t = q_c + q_i
+
+    # Saturation specific humidity with respect to liquid water (Tetens formula)
+    # T in K, p in Pa, e_s in Pa
+    e_s = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))
+    # Guard against e_s >= p
+    e_s = np.clip(e_s, 0.0, p * 0.999)
+    q_s = 0.622 * e_s / (p - 0.378 * e_s)
+
+    # Critical relative humidity (standard constant from Xu-Randall)
+    RH_crit = 0.7
+
+    # Initialize cloud cover
+    C = np.zeros_like(RH)
+    mask = RH > RH_crit
+
+    # Condensate term: sqrt( q_t / (q_t + q_s) )
+    denom = q_t + q_s
+    cond_term = np.sqrt(np.where(denom > 0, q_t / denom, 0.0))
+
+    # Relative humidity term: 1 - exp( -((RH - RH_crit)/(1 - RH_crit))^2 )
+    rh_term = 1.0 - np.exp(-((RH - RH_crit) / (1.0 - RH_crit))**2)
+
+    # Combine terms where RH exceeds the critical threshold
+    C[mask] = cond_term[mask] * rh_term[mask]
+
+    # Ensure physical bounds [0, 1]
+    C = np.clip(C, 0.0, 1.0)
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Xu and Randall (1996) diagnostic cloud-fraction scheme.
+    
+    C = (q_c + q_i)^a * [1 - exp(-gamma * (RH - RH_crit)^b)]   for RH > RH_crit
+    C = 0                                                      otherwise
+    
+    with standard constants:
+        a = 0.25
+        b = 0.5
+        gamma = 1000.0
+        RH_crit = 0.7
+    """
+    # Inputs
+    q_c = X[:, 0]      # cloud liquid water mixing ratio [kg/kg]
+    q_i = X[:, 1]      # cloud ice mixing ratio        [kg/kg]
+    RH  = X[:, 2]      # relative humidity             [0, 1]
+
+    # Scheme constants
+    a        = 0.25
+    b        = 0.5
+    gamma    = 1000.0
+    RH_crit  = 0.7
+
+    # Total condensate (non-negative)
+    q_tot = np.maximum(q_c + q_i, 0.0)
+
+    # Initialize cloud fraction
+    C = np.zeros_like(RH)
+
+    # Apply scheme where RH exceeds the critical threshold
+    mask = RH > RH_crit
+    if np.any(mask):
+        C[mask] = (q_tot[mask]**a) * (
+            1.0 - np.exp(-gamma * (RH[mask] - RH_crit)**b)
+        )
+
+    # Enforce physical bounds
+    C = np.clip(C, 0.0, 1.0)
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Sundqvist et al. (1989) sub-grid cloud area fraction parameterization
+    RH = np.clip(X[:, 2], 0.0, 1.0)
+    RH_c = 0.7
+    x = (RH - RH_c) / (1.0 - RH_c)
+    C = np.where(RH > RH_c, 1.0 - np.sqrt(np.maximum(0.0, 1.0 - x)), 0.0)
+    C = np.clip(C, 0.0, 1.0)
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    q_c = X[:, 0]  # Cloud liquid water mixing ratio
+    q_i = X[:, 1]  # Cloud ice mixing ratio
+    RH = X[:, 2]   # Relative humidity
+    
+    # Total cloud condensate
+    q_t = q_c + q_i
+    
+    # Xu and Randall (1996) parameters
+    RH_c = 0.7
+    C_c = 5.0e-4
+    a = 0.25
+    b = 2.0
+    
+    # Initialize cloud cover
+    C = np.zeros_like(q_t)
+    
+    # Apply Xu and Randall (1996) scheme where RH > RH_c and condensate exists
+    mask = (RH > RH_c) & (q_t > 0)
+    
+    rh_term = 1.0 - np.exp(-((RH[mask] - RH_c) / (1.0 - RH_c))**b)
+    qc_term = (q_t[mask] / (q_t[mask] + C_c))**a
+    
+    C[mask] = qc_term * rh_term
+    
+    # Clip to [0, 1] to handle any numerical edge cases
+    return np.clip(C, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Sundqvist et al. (1989) diagnostic cloud-fraction parameterization.
+    
+    C = 1 - sqrt( max(0, (1 - RH) / (1 - RH_crit)) )
+    
+    with a critical relative humidity RH_crit = 0.7.  The expression is
+    clipped to the physical range [0, 1].
+    """
+    RH = X[:, 2]
+    RH_crit = 0.7
+    
+    # Avoid negative values under the square root when RH > 1
+    arg = np.maximum(0.0, (1.0 - RH) / (1.0 - RH_crit))
+    C = 1.0 - np.sqrt(arg)
+    
+    # Clip to physical bounds
+    C = np.clip(C, 0.0, 1.0)
+    return C

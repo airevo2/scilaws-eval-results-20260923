@@ -1,0 +1,74 @@
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    
+    # Standard allometric power-law relationship for tree height and diameter
+    # H = a * D^b
+    # Coefficients represent typical pantropical averages (e.g., Feldpausch et al., 2011)
+    a = 1.35
+    b = 0.55
+    
+    H = a * (D ** b)
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    lnD = np.log(D)
+    # Chave et al. (2014) pantropical height-diameter allometry (baseline, E=0)
+    lnH = 0.893 + 0.731 * lnD - 0.0461 * (lnD ** 2)
+    H = np.exp(lnH)
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Chave et al. (2014) pantropical height-diameter allometry
+    # Log-quadratic model fitted on a pantropical direct-harvest dataset
+    # (Omitting the environmental stress term E as it is not provided)
+    a = 0.893
+    b = 0.731
+    c = -0.034
+    
+    ln_H = a + b * np.log(D) + c * (np.log(D) ** 2)
+    H = np.exp(ln_H)
+    
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    
+    # Standard power-law allometric equation (H = a * D^b)
+    # Canonical form most commonly cited in forest ecology
+    a = 1.45
+    b = 0.55
+    
+    H = a * np.power(D, b)
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    lnD = np.log(D)
+    # Chave et al. (2014) pantropical height-diameter allometry
+    # ln(H) = a + b*ln(D) + c*ln(D)^2   (E=0 for generic pantropical)
+    a = 0.893
+    b = 0.760
+    c = -0.0340
+    lnH = a + b * lnD + c * lnD**2
+    H = np.exp(lnH)
+    return H

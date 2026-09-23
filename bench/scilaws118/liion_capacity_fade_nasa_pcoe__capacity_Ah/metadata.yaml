@@ -1,0 +1,102 @@
+task_id: liion_capacity_fade_nasa_pcoe__capacity_Ah
+domain: materials_and_energy / electrochemistry
+license: NASA-Public   # NASA PCoE Battery Dataset, public-domain
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task concerns lithium-ion 18650 battery cells, which lose usable charge storage capacity over repeated charge-discharge cycling, a topic in electrochemical energy storage and battery engineering.
+
+target:
+  name: capacity_Ah
+  symbol: Q
+  unit: Ah
+  description: Discharge capacity per cycle (time-integrated absolute current over a full discharge event).
+  range: [1.1538, 2.0353]
+
+inputs:
+  - name: cycle_index
+    symbol: k
+    unit: ""
+    description: Per-cell discharge cycle counter, starting from 1; an integer index of how many full charge–discharge cycles the cell has completed.
+    range: [1, 168]
+
+# Dataset — Type I, two-file flat layout.  Source: NASA PCoE Battery
+# Dataset (Saha & Goebel 2007), 4 18650 NMC Li-ion cells (B0005,
+# B0006, B0007, B0018) all cycled at 24°C ambient temperature.  636
+# rows total pooled across cells.  T_ambient_C is dropped from the
+# released inputs because it is constant (24°C) and carries no signal.
+# cell_id is dropped because Type I treats the pool as one homogeneous
+# law-discovery population.  Split: cycle-extrapolation OOD — train =
+# middle 60% by cycle index (cycles 32-128), test = extremes (bottom
+# 20%: cycles 1-31 near-pristine + top 20%: cycles 128-168 degraded).
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 382
+n_test:  254
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: parabolic_growth_exponent
+    value: 0.5
+    unit: dimensionless
+    description: Parabolic growth exponent for diffusion-limited film thickness.
+    source: Standard kinetic-theory result (Tammann 1920, Wagner 1933) — diffusion-limited growth of an oxide / SEI layer scales as sqrt(t) because the rate-limiting step is diffusion through an increasingly thick layer.  A candidate value for the cycle-fade exponent in the Pinson form (Q ~ Q0 - α·k^0.5).
+    _role: candidate
+  - name: standard_li_18650_nominal_capacity
+    value: 2.0
+    unit: Ah
+    description: Nominal capacity of a typical Li-ion 18650 cell.
+    source: NASA PCoE B0005-B0007 cell datasheets; the manufacturer-rated capacity for these specific 18650 cells.  A candidate value for the Q0 initial-capacity constant.
+    _role: candidate
+  - name: lead_acid_capacity_fade_rate_typical
+    value: 0.005
+    unit: Ah/cycle
+    description: A typical linear capacity-fade rate for lead-acid batteries.
+    source: Wrong chemistry — lead-acid batteries fade approximately linearly with cycles, fundamentally different from Li-ion's sqrt-time SEI mechanism.  A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+references:
+  - id: pinson_2013
+    label: Pinson-Bazant (2013) sqrt-time SEI capacity-fade (Type I, frozen LAW_CONSTANTS)
+    formula_file: formulas/pinson_2013.py
+    reference_pdf: reference/pinson_2013.pdf
+    n_law_constants: 3         # Q0, ALPHA, BETA
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.1145, r2: 0.8121}
+  - id: he_2011
+    label: He et al. (2011) double-exponential capacity-fade (Type I, frozen LAW_CONSTANTS)
+    formula_file: formulas/he_2011.py
+    reference_pdf: reference/he_2011.pdf
+    n_law_constants: 4         # A, B, C, D
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {rmse: 0.1207, r2: 0.7912}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        4
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes irreversible capacity loss from SEI/side-reaction consumption of cyclable lithium over cycles"
+  - "predicted capacity is defined for every positive cycle_index in the task domain"
+  - "predicted capacity stays positive over the cycling domain"
+  - "predicted capacity does not exceed the fresh-cell capacity for the cell"
+  - "predicted capacity is non-increasing as cycle_index increases"
+
+# === Scoring ===
+metric: rmse              # RMS error on capacity_Ah
+best_baseline: 0.1145     # pinson_2013

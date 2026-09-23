@@ -1,0 +1,110 @@
+import numpy as np
+
+def predict(X):
+    # Mincer earnings equation: log_wage = β0 + β1 * SCHL_years + β2 * exp + β3 * exp^2
+    # Typical coefficients from labor economics literature
+    beta_0 = 6.2      # intercept
+    beta_1 = 0.10     # return to schooling (approx 10% per year)
+    beta_2 = 0.04     # linear experience term
+    beta_3 = -0.0007  # quadratic experience term (diminishing returns)
+    
+    s = X[:, 0]  # years of schooling
+    x = X[:, 1]  # years of potential experience
+    
+    log_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x ** 2)
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard Mincer earnings equation coefficients (typical for US data)
+    INTERCEPT = 9.5      # base log wage
+    B_SCHL = 0.08        # return to schooling (per year)
+    B_EXP = 0.04         # linear return to experience
+    B_EXP_SQ = -0.0007   # quadratic penalty on experience
+
+    s = X[:, 0]   # schooling years
+    x = X[:, 1]   # potential experience years
+
+    log_wage = INTERCEPT + B_SCHL * s + B_EXP * x + B_EXP_SQ * (x ** 2)
+    return log_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log wage (ln Y) using the standard Mincer earnings equation.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] : years of completed schooling (s)
+        X[:, 1] : potential years of work experience (x)
+    
+    Returns
+    -------
+    ln_wage : np.ndarray, shape (n,)
+        Natural logarithm of annual wage and salary income.
+    """
+    s = X[:, 0]   # schooling
+    x = X[:, 1]   # experience
+
+    # Canonical Mincer coefficients (typical values from labor economics)
+    beta_0 = 0.5       # intercept
+    beta_1 = 0.10      # return to schooling
+    beta_2 = 0.05      # return to experience (linear)
+    beta_3 = -0.001    # return to experience (quadratic)
+
+    ln_wage = beta_0 + beta_1 * s + beta_2 * x + beta_3 * (x ** 2)
+    return ln_wage
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Mincer earnings function (standard quadratic experience form)
+    # Typical coefficients from labor economics literature
+    BETA0 = 7.0      # intercept
+    BETA1 = 0.08     # return to schooling
+    BETA2 = 0.04     # linear experience
+    BETA3 = -0.0007  # quadratic experience
+
+    s = X[:, 0]   # years of schooling
+    x = X[:, 1]   # potential experience
+
+    ln_Y = BETA0 + BETA1 * s + BETA2 * x + BETA3 * (x ** 2)
+    return ln_Y
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log_wage (ln Y) using the standard Mincer earnings equation.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        Column 0: SCHL_years (s) - years of schooling
+        Column 1: exp (x)       - potential years of experience
+    
+    Returns
+    -------
+    np.ndarray, shape (n,)
+        Predicted ln(annual wage and salary income)
+    """
+    s = X[:, 0]
+    x = X[:, 1]
+    # Mincer equation: ln(wage) = beta0 + beta1*s + beta2*x + beta3*x^2
+    beta0 = 9.0        # intercept
+    beta1 = 0.07       # return to schooling
+    beta2 = 0.05       # linear return to experience
+    beta3 = -0.001     # quadratic experience term (concavity)
+
+    return beta0 + beta1 * s + beta2 * x + beta3 * x**2

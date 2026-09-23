@@ -1,0 +1,109 @@
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+
+    # Standard log-linear gravity model with intervening opportunities
+    # Combines Zipf/ gravity distance-decay with Stouffer's intervening-opportunities theory
+    # log10(T_ij + 1) = b0 + α·log10(m_i) + β·log10(m_j) + γ·log10(d_ij) + δ·log10(s_ij + 1)
+
+    INTERCEPT = 0.0    # scale constant
+    ALPHA     = 0.7    # origin (resident-workers) elasticity
+    BETA      = 0.7    # destination (jobs) elasticity
+    GAMMA     = -2.0   # distance-decay exponent (inverse-square)
+    DELTA     = -0.4   # intervening-opportunities elasticity
+
+    return (INTERCEPT
+            + ALPHA * np.log10(m_i)
+            + BETA  * np.log10(m_j)
+            + GAMMA * np.log10(d_ij)
+            + DELTA * np.log10(s_ij + 1))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    # s_ij = X[:, 3] (Intervening opportunities, typically used in competing destinations or radiation models, 
+    # but omitted here in favor of the most commonly cited standard closed-form Gravity Model)
+    
+    # Standard Gravity Model: T_ij = G * (m_i * m_j) / d_ij^gamma
+    # Using canonical literal values G=1, gamma=2 (Newtonian analogy)
+    T_ij = (m_i * m_j) / (d_ij**2)
+    
+    return np.log10(T_ij + 1)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    s_ij = X[:, 3]
+
+    # Radiation model (Simini et al., Nature 2012)
+    # Transition probability: p_ij = m_i * m_j / ((m_i + s_ij)(m_i + s_ij + m_j))
+    # Expected flow: T_ij = m_i * p_ij
+    T_ij = (m_i**2 * m_j) / ((m_i + s_ij) * (m_i + s_ij + m_j))
+
+    return np.log10(T_ij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+    
+    # Standard log-linear spatial interaction (gravity) model 
+    # incorporating distance decay and intervening opportunities.
+    # Fitted coefficients are defined as named constants.
+    beta0 = 0.0   # Intercept
+    beta1 = 1.0   # Elasticity for origin resident workers
+    beta2 = 1.0   # Elasticity for destination jobs
+    beta3 = -2.0  # Distance decay parameter
+    beta4 = -1.0  # Intervening opportunities (competing destinations) parameter
+    
+    log10_Tij = (beta0 
+                 + beta1 * np.log10(m_i) 
+                 + beta2 * np.log10(m_j) 
+                 + beta3 * np.log10(d_ij) 
+                 + beta4 * np.log10(s_ij + 1))
+    
+    return log10_Tij
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+
+    # Standard log-linear gravity model with intervening opportunities
+    # T_ij = K * m_i^alpha * m_j^beta * d_ij^(-gamma) * (s_ij + 1)^(-delta)
+    alpha = 1.0       # origin mass elasticity (production)
+    beta  = 1.0       # destination mass elasticity (attraction)
+    gamma = 2.0       # distance-decay exponent (inverse-square law)
+    delta = 0.5       # intervening-opportunities elasticity (competition)
+    log10_K = -2.0    # intercept / calibration constant (log10 scale)
+
+    log10_Tij_plus1 = (log10_K
+                       + alpha * np.log10(m_i)
+                       + beta  * np.log10(m_j)
+                       - gamma * np.log10(d_ij)
+                       - delta * np.log10(s_ij + 1))
+
+    return log10_Tij_plus1

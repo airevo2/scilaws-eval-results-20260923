@@ -1,0 +1,17 @@
+{
+  "task": "stomatal_conductance_sapfluxnet__gc",
+  "model": "qwen/qwen3.7-max",
+  "type": "typeII",
+  "primary": "biology ",
+  "formulas": [
+    {
+      "formula": "oren_1999",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

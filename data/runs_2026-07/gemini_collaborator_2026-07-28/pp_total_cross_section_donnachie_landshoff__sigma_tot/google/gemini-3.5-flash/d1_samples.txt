@@ -1,0 +1,148 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = s (Mandelstam s in GeV^2)
+    s = X[:, 0]
+
+    # Standard PDG (COMPETE collaboration) fit parameters for pp collisions
+    H = 0.272  # in mb
+    s0 = 16.0  # in GeV^2
+    beta = 34.41  # in mb
+    Y1 = 13.07  # in mb
+    Y2 = 7.39  # in mb
+    eta1 = 0.4473
+    eta2 = 0.5486
+
+    # Total cross-section formula:
+    # sigma_tot = H * ln^2(s / s0) + beta + Y1 * s^(-eta1) - Y2 * s^(-eta2)
+    term_froissart = H * (np.log(s / s0)) ** 2
+    term_reggeon1 = Y1 * (s**-eta1)
+    term_reggeon2 = -Y2 * (s**-eta2)
+
+    sigma_tot = term_froissart + beta + term_reggeon1 + term_reggeon2
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the Mandelstam s in GeV^2
+    s = X[:, 0]
+
+    # COMPASS / Particle Data Group (PDG) fit parameters for pp total cross-section:
+    # sigma_tot = Z + B * ln^2(s / s_0) + Y_1 * (s_1 / s)^eta_1 - Y_2 * (s_1 / s)^eta_2
+    # with s_1 = 1.0 GeV^2
+
+    Z = 35.45  # mb
+    B = 0.307  # mb
+    s_0 = 28.9  # GeV^2 (corresponding to sqrt(s_0) ~ 5.38 GeV)
+    Y1 = 42.53  # mb
+    Y2 = 33.34  # mb
+    eta1 = 0.458
+    eta2 = 0.545
+
+    log_term = np.log(s / s_0)
+    sigma = (
+        Z
+        + B * (log_term**2)
+        + Y1 * (1.0 / s) ** eta1
+        - Y2 * (1.0 / s) ** eta2
+    )
+
+    return sigma
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Mandelstam s from the first column of X
+    s = X[:, 0]
+
+    # COMPETE / PDG parameterization constants for pp total cross-section
+    # sigma_tot = Z + B * ln^2(s / s0) + Y1 * (s / s1)^-eta1 - Y2 * (s / s1)^-eta2
+    # Note: The minus sign in front of the Y2 term is specific to proton-proton (pp) collisions,
+    # while a plus sign would be used for proton-antiproton (p-bar p) collisions.
+    Z = 35.45  # mb
+    B = 0.272  # mb
+    s0 = 24.38  # GeV^2
+    s1 = 1.0  # GeV^2
+    Y1 = 42.53  # mb
+    eta1 = 0.447
+    Y2 = 33.34  # mb
+    eta2 = 0.545
+
+    # Compute the components of the cross-section
+    log_term = np.log(s / s0)
+    sigma = (
+        Z
+        + B * (log_term**2)
+        + Y1 * (s / s1) ** (-eta1)
+        - Y2 * (s / s1) ** (-eta2)
+    )
+
+    return sigma
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Mandelstam s from the first column of X
+    s = X[:, 0]
+
+    # Standard COMPASS / PDG (Particle Data Group) fit parameters for pp total cross-section
+    # sigma_tot = Z + B * ln^2(s/s0) + Y1 * (s1/s)^eta1 - Y2 * (s1/s)^eta2
+    Z = 35.45  # Constant term in mb
+    B = 0.272  # Froissart-bound-associated coefficient in mb
+    Y1 = 42.53  # Reggeon contribution coefficient 1 in mb
+    Y2 = 33.34  # Reggeon contribution coefficient 2 in mb
+    eta1 = 0.447  # Regge exponent 1
+    eta2 = 0.548  # Regge exponent 2
+
+    s0 = 15.972  # Scale parameter (2*m_p + M)^2 in GeV^2, with M = 2.120 GeV
+    s1 = 1.0  # Scale parameter in GeV^2
+
+    # Calculate the components of the total cross-section
+    term_log = B * np.log(s / s0) ** 2
+    term_regge1 = Y1 * (s1 / s) ** eta1
+    term_regge2 = Y2 * (s1 / s) ** eta2
+
+    # Total hadronic cross-section for pp collisions
+    sigma_tot = Z + term_log + term_regge1 - term_regge2
+
+    return sigma_tot
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Mandelstam s from the first column of X
+    s = X[:, 0]
+
+    # PDG (Particle Data Group) standard fit parameters for pp total cross-section
+    H = 0.2720  # mb
+    B = 34.41  # mb
+    s_0 = 33.9  # GeV²
+    s_1 = 1.0  # GeV²
+    Y_1 = 13.07  # mb
+    Y_2 = 7.39  # mb
+    eta_1 = 0.4473
+    eta_2 = 0.5486
+
+    # Calculate the components of the total cross-section
+    term_froissart = H * (np.log(s / s_0) ** 2)
+    term_reggeon1 = Y_1 * (s_1 / s) ** eta_1
+    term_reggeon2 = Y_2 * (s_1 / s) ** eta_2
+
+    # For pp collisions, the Y_2 reggeon term is subtracted
+    sigma_tot = term_froissart + B + term_reggeon1 - term_reggeon2
+
+    return sigma_tot

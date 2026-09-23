@@ -1,0 +1,62 @@
+import numpy as np
+
+def predict(X):
+    # Canonical scaling relation: Delta_nu ~ alpha * nu_max^beta
+    # (Stello et al. 2009 / Huber et al. 2011 style)
+    # Delta_nu_sun ~ 135.1 uHz, nu_max_sun ~ 3090 uHz
+    nu_max = X[:, 0]
+    alpha = 0.267
+    beta = 0.760
+    delta_nu = alpha * np.power(nu_max, beta)
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical scaling relation: delta_nu ~ nu_max^0.77 (Stello et al. 2009)
+    # Delta_nu_sun = 135.1 uHz, nu_max_sun = 3090 uHz (Huber et al. 2011)
+    nu_max = X[:, 0]
+    alpha = 0.267
+    beta = 0.77
+    delta_nu = alpha * np.power(nu_max, beta)
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard scaling relation: delta_nu ~ alpha * nu_max^beta
+    # Canonical values (Stello et al. 2009): alpha ~ 0.263, beta ~ 0.772
+    nu_max = X[:, 0]
+    alpha = 0.263
+    beta = 0.772
+    delta_nu = alpha * np.power(nu_max, beta)
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    # Canonical scaling relation: delta_nu = alpha * nu_max^beta
+    # Commonly cited values (e.g., Stello+2009, Huber+2011): alpha ~ 0.263, beta ~ 0.772
+    alpha = 0.263
+    beta = 0.772
+    delta_nu = alpha * np.power(nu_max, beta)
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    # Canonical delta_nu - nu_max scaling relation (Stello et al. 2009):
+    # delta_nu = alpha * nu_max^beta
+    alpha = 0.263
+    beta = 0.772
+    return alpha * np.power(nu_max, beta)

@@ -1,0 +1,107 @@
+import numpy as np
+
+def predict(X):
+    # Extract per-lane density (veh/km/lane)
+    k = X[:, 0]
+    
+    # Greenshields fundamental diagram parameters
+    v_f = 100.0  # free-flow speed [km/h]
+    k_j = 140.0  # jam density [veh/km/lane]
+    
+    # q = v_f * k * (1 - k / k_j)
+    q = v_f * k * (1.0 - k / k_j)
+    
+    # Flow cannot be negative (handles any k > k_j edge cases)
+    return np.maximum(q, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract per-lane density (k) [veh/km/lane]
+    k = X[:, 0]
+    
+    # Canonical triangular (Newell-Daganzo) fundamental diagram parameters
+    v_f = 100.0  # Free-flow speed [km/h]
+    w = 20.0     # Backward congestion wave speed [km/h]
+    k_j = 210.0  # Jam density [veh/km/lane]
+    
+    # Flow on the free-flow branch: q = v_f * k
+    q_free = v_f * k
+    
+    # Flow on the congested branch: q = w * (k_j - k)
+    q_cong = w * (k_j - k)
+    
+    # The fundamental diagram is the minimum of the two branches, floored at 0
+    q = np.minimum(q_free, q_cong)
+    q = np.maximum(q, 0.0)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    
+    # Standard triangular fundamental diagram parameters for a US freeway
+    v_f = 100.0      # Free-flow speed [km/h]
+    k_c = 25.0       # Critical density [veh/km/lane]
+    k_j = 150.0      # Jam density [veh/km/lane]
+    
+    q_c = v_f * k_c               # Capacity [veh/h/lane]
+    w = q_c / (k_j - k_c)         # Backward wave speed [km/h]
+    
+    # Triangular fundamental diagram: q = min(v_f * k, w * (k_j - k))
+    q = np.minimum(v_f * k, w * (k_j - k))
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts per-lane traffic flow rate q using the Greenshields fundamental diagram.
+    q = v_f * k * (1 - k / k_j)
+    """
+    k = X[:, 0]
+    
+    # Typical parameter values for US freeways
+    v_f = 100.0  # free-flow speed [km/h] (~62 mph)
+    k_j = 140.0  # jam density [veh/km/lane]
+    
+    # Greenshields model
+    q = v_f * k * (1.0 - k / k_j)
+    
+    # Flow rate cannot be negative
+    q = np.maximum(q, 0.0)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    
+    # Standard triangular fundamental diagram parameters for a US freeway
+    v_f = 100.0  # free flow speed [km/h]
+    w = 20.0     # backward wave speed [km/h]
+    k_j = 150.0  # jam density [veh/km/lane]
+    
+    # Critical density and capacity derived from the triangular FD
+    k_c = (w * k_j) / (v_f + w)
+    q_cap = v_f * k_c
+    
+    # Triangular FD: q = min(v_f * k, q_cap, w * (k_j - k))
+    q = np.minimum(np.minimum(v_f * k, q_cap), w * (k_j - k))
+    
+    # Ensure non-negative flow (in case observed density exceeds jam density)
+    q = np.maximum(q, 0.0)
+    
+    return q

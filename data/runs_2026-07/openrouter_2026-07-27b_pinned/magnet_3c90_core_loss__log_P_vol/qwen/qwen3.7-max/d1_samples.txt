@@ -1,0 +1,177 @@
+import numpy as np
+
+def predict(X):
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+    
+    # Canonical Steinmetz Equation in log-log space: log10(P_vol) = log10(K) + alpha*log10(f) + beta*log10(B)
+    # Parameters are typical for MnZn power ferrites (e.g., N87/3C90) with P_vol in kW/m^3
+    log10_K = -2.32
+    alpha = 1.46
+    beta = 2.75
+    
+    # Empirical correction terms for temperature and waveform shape 
+    # (common in generalized log-linear baselines for the MagNet dataset)
+    gamma_T = -0.002  # Temperature coefficient (reflecting the typical loss valley near 90-100 degC)
+    gamma_w = 0.05    # Waveform categorical offset (non-sinusoidal penalty)
+    
+    # Compute log10(P_vol)
+    log_P_vol = log10_K + alpha * np.log10(f) + beta * np.log10(B) + gamma_T * (T - 25.0) + gamma_w * w
+    
+    return log_P_vol
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(P_vol) using the Steinmetz equation with temperature
+    and waveform corrections.
+
+    Standard closed-form: P_vol = k * f^alpha * B^beta * CT(T) * Cw(w)
+
+    Coefficients are representative of a typical MnZn power ferrite
+    (e.g. 3C90 / N87 class) with P_vol in kW/m^3, f in Hz, B in T.
+    """
+    f = X[:, 0]   # frequency [Hz]
+    B = X[:, 1]   # peak flux density [T]
+    T = X[:, 2]   # temperature [degC]
+    w = X[:, 3]   # waveform id (0=sin, 1=tri, 2=trap)
+
+    # --- Steinmetz equation parameters ---
+    k     = 1.0e-3   # prefactor  [kW/m^3]
+    alpha = 1.50     # frequency exponent
+    beta  = 2.50     # flux-density exponent
+
+    P_vol = k * np.power(f, alpha) * np.power(B, beta)
+
+    # --- Parabolic temperature correction (minimum loss ~ 85 degC) ---
+    # CT = 1 + c1*(T - T_ref) + c2*(T - T_ref)^2
+    T_ref = 25.0
+    c1 = -7.9e-3
+    c2 =  6.6e-5
+    dT = T - T_ref
+    CT = 1.0 + c1 * dT + c2 * dT ** 2
+    P_vol = P_vol * CT
+
+    # --- Waveform shape correction factor ---
+    # Relative to sinusoidal baseline
+    Cw = np.where(w == 0, 1.00,
+         np.where(w == 1, 1.05,   # triangular
+                           1.02))  # trapezoidal
+    P_vol = P_vol * Cw
+
+    return np.log10(np.clip(P_vol, 1e-30, None))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    f = X[:, 0]
+    B = X[:, 1]
+    T = X[:, 2]
+    w = X[:, 3]
+    
+    # Standard Steinmetz Equation (SE) in log10 space
+    # P_vol [kW/m^3] = k * f^alpha * B^beta
+    # log10(P_vol) = log10(k) + alpha * log10(f) + beta * log10(B)
+    
+    # Typical empirical coefficients for MnZn power ferrites (e.g., N87 / 3C90)
+    log10_k = -3.0
+    alpha = 1.5
+    beta = 2.5
+    
+    log_P = log10_k + alpha * np.log10(f) + beta * np.log10(B)
+    
+    # Temperature dependence correction
+    # Ferrite core losses typically exhibit a parabolic temperature dependence 
+    # with a minimum (T_min) usually between 80°C and 100°C.
+    T_min = 85.0
+    c_T = 0.00005
+    log_P += c_T * (T - T_min)**2
+    
+    # Waveform shape correction
+    # Non-sinusoidal waveforms (triangular, trapezoidal) alter the hysteresis 
+    # loop shape and eddy current contributions. We apply a log-space offset.
+    # 0 = sinusoidal, 1 = triangular, 2 = trapezoidal
+    w_corr = np.zeros_like(w, dtype=float)
+    w_corr[w == 1] = -0.05  # Triangular correction
+    w_corr[w == 2] = -0.02  # Trapezoidal correction
+    log_P += w_corr
+    
+    return log_P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Extended Steinmetz equation for volumetric core loss.
+    
+    P_vol = k * f^alpha * B^beta * c_T(T) * c_w(w)
+    
+    In log10 form:
+    log10(P_vol) = log10(k) + alpha*log10(f) + beta*log10(B) 
+                   + log10(c_T) + log10(c_w)
+    """
+    f = X[:, 0]   # frequency [Hz]
+    B = X[:, 1]   # peak flux density [T]
+    T = X[:, 2]   # temperature [degC]
+    w = X[:, 3]   # waveform id: 0=sin, 1=tri, 2=trap
+
+    # --- Steinmetz parameters (typical MnZn power ferrite, e.g. 3C90/N87 class) ---
+    # k in kW/m^3 with f in Hz and B in T
+    log10_k = -2.245
+    alpha   = 1.46    # frequency exponent
+    beta    = 2.75    # flux-density exponent
+
+    # --- Temperature correction factor (quadratic, reference 90 degC) ---
+    # c_T(T) = 1 + p1*(T - T_ref) + p2*(T - T_ref)^2
+    # Captures the broad loss minimum near 80-100 degC for MnZn ferrites.
+    T_ref = 90.0
+    dT = T - T_ref
+    p1 = 5.81e-3
+    p2 = 2.08e-4
+    c_T = 1.0 + p1 * dT + p2 * dT ** 2
+
+    # --- Waveform correction factors (from iGSE analysis) ---
+    # Sinusoidal is the Steinmetz reference (factor = 1).
+    # Triangular: P_tri/P_sin ~ (2/pi)^alpha / I_alpha ~ 0.92
+    # Trapezoidal: intermediate, ~0.98 (duty-cycle averaged)
+    log10_cw = np.where(w == 0, 0.0,
+               np.where(w == 1, -0.037,   # log10(0.918)
+                         -0.009))          # log10(0.980)
+
+    # --- Assemble log10(P_vol) ---
+    log10_P = (log10_k
+               + alpha * np.log10(f)
+               + beta  * np.log10(B)
+               + np.log10(c_T)
+               + log10_cw)
+
+    return log10_P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    f_Hz = X[:, 0]
+    B_peak_T = X[:, 1]
+    
+    # Standard Steinmetz Equation (SE): P_vol = k * f^alpha * B^beta
+    # Coefficients are representative for typical power ferrites (e.g., 3C90, N87) 
+    # scaled for P_vol in kW/m^3. Temperature and waveform dependencies 
+    # (like MSE or iGSE) are omitted in favor of the most commonly cited canonical form.
+    k = 3.2e-3
+    alpha = 1.5
+    beta = 2.5
+    
+    P_vol = k * (f_Hz ** alpha) * (B_peak_T ** beta)
+    
+    return np.log10(P_vol)

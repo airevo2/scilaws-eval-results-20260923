@@ -1,0 +1,53 @@
+import numpy as np
+
+def predict(X):
+    D = np.asarray(X)[:, 0].astype(float)
+    # Common pantropical height-diameter relationship (Chave et al.-style)
+    H = 1.3 + np.exp(-1.239 + 1.934 * np.log(D) - 0.03776 * (np.log(D) ** 2))
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0].astype(float)
+    # Common pantropical height-diameter allometry (Chave et al.-style asymptotic form)
+    H = 1.3 + np.exp(-2.977 + 0.554 * np.log(D) + 0.016 * (np.log(D) ** 2))
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = np.asarray(X)[:, 0].astype(float)
+    # Common asymptotic height-diameter form (often used as a generic closed-form
+    # when only DBH is available); coefficients are representative rather than fitted.
+    a = 1.3
+    b = 60.0
+    c = 0.55
+    return a + b * (1.0 - np.exp(-c * D))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0].astype(float)  # DBH in cm
+    # Common pantropical tree height-diameter allometry (Chave et al.-style asymptotic form)
+    H = 1.3 + np.exp(1.3 + 0.6 * np.log(D) - 0.012 * (np.log(D) ** 2))
+    return H
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = np.asarray(X)[:, 0]
+    # Canonical pantropical tree height-diameter relationship (Chave et al.-style)
+    # H = 1.3 + a * (1 - exp(-b * D))^c
+    a = 60.0
+    b = 0.06
+    c = 1.0
+    return 1.3 + a * (1.0 - np.exp(-b * D)) ** c

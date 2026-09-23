@@ -1,0 +1,105 @@
+import numpy as np
+
+def predict(X):
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    
+    # Standard Period-Luminosity-Metallicity (PLZ) relation for Classical Cepheids
+    # in the Gaia Wesenheit band (representative of Gaia DR3 calibrations).
+    alpha = -3.31   # Period slope
+    beta  = -0.23   # Metallicity slope
+    gamma = -2.55   # Zero-point
+    
+    M_W = alpha * log_P + beta * feh + gamma
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    
+    # Canonical Period-Luminosity-Metallicity (PLZ) relation for
+    # Classical Cepheids in the Gaia Wesenheit magnitude system.
+    # Form: M_W = a*(log P - 1) + gamma*[Fe/H] + zp
+    # Coefficients from Riess et al. / SH0ES calibrations
+    # (e.g., Riess et al. 2019, 2021; Breuval et al. 2024)
+    a = -3.31        # period slope  [mag / dex(log P)]
+    gamma = -0.20    # metallicity slope [mag / dex]
+    zp = -5.93       # zero-point at log P = 1, [Fe/H] = 0 [mag]
+    
+    M_W = a * (log_P - 1.0) + gamma * feh + zp
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Period-Luminosity-Metallicity (PLZ) relation for Classical Cepheids
+    in the Absolute Gaia Wesenheit magnitude (M_W).
+
+    Canonical form:
+        M_W = alpha * (log P - 1) + beta * [Fe/H] + gamma
+
+    where the period pivot is 10 days (log P = 1).
+    Coefficients representative of recent Gaia-based calibrations
+    (e.g., Ripepi et al. 2022; Breuval et al. 2021).
+    """
+    log_P = X[:, 0]
+    feh   = X[:, 1]
+
+    # PLZ coefficients
+    alpha = -3.30   # period slope
+    beta  = -0.20   # metallicity slope
+    gamma = -5.90   # zero-point at log P = 1, [Fe/H] = 0
+
+    M_W = alpha * (log_P - 1.0) + beta * feh + gamma
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_P = X[:, 0]
+    feh = X[:, 1]
+    
+    # Classical Cepheid PLZ relation in Gaia Wesenheit magnitude
+    # M_W = alpha * (log P - 1) + beta * [Fe/H] + gamma
+    # Canonical coefficients (e.g., Gaia DR3 / Riess et al. calibrations)
+    alpha = -3.326   # period slope
+    beta  = -0.227   # metallicity slope
+    gamma = -5.898   # zero-point (at log P = 1, [Fe/H] = 0)
+    
+    M_W = alpha * (log_P - 1.0) + beta * feh + gamma
+    return M_W
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict absolute Gaia Wesenheit magnitude M_W for Classical Cepheids
+    using the Period-Luminosity-Metallicity (PLZ) relation.
+    
+    M_W = alpha * (log_P - 1.0) + beta * [Fe/H] + gamma
+    
+    Canonical form referenced to log P_0 = 1.0 (P = 10 days).
+    Coefficients representative of Gaia DR3 calibrations
+    (e.g., Ripepi et al. 2022; Breuval et al. 2024).
+    """
+    log_P = X[:, 0]
+    feh   = X[:, 1]
+
+    # PLZ coefficients for Gaia Wesenheit: W_G = G - 1.90*(BP - RP)
+    alpha = -3.31   # slope in log P
+    beta  = -0.23   # metallicity dependence [mag/dex]
+    gamma = -5.90   # zero-point at log P = 1.0 and [Fe/H] = 0
+
+    M_W = alpha * (log_P - 1.0) + beta * feh + gamma
+    return M_W

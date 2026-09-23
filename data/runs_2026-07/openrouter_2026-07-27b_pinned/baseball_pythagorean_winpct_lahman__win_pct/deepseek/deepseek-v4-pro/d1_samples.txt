@@ -1,0 +1,109 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict season win percentage using the Pythagorean expectation (exponent = 2).
+
+    Parameters
+    ----------
+    X : np.ndarray
+        2-D array with shape (n_samples, 2).
+        X[:, 0] = RS (runs scored)
+        X[:, 1] = RA (runs allowed)
+
+    Returns
+    -------
+    np.ndarray
+        1-D array of predicted win percentages W / (W + L).
+    """
+    RS = X[:, 0]
+    RA = X[:, 1]
+    # Pythagorean win percentage with exponent 2
+    win_pct = RS**2 / (RS**2 + RA**2)
+    return win_pct
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict season win percentage using the Pythagorean expectation (Bill James).
+    X[:, 0] = RS (runs scored)
+    X[:, 1] = RA (runs allowed)
+    Returns a 1-D array of win percentages (W% = RS^2 / (RS^2 + RA^2)).
+    """
+    RS = X[:, 0]
+    RA = X[:, 1]
+    win_pct = RS**2 / (RS**2 + RA**2)
+    return win_pct
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict season win percentage using the Pythagorean expectation.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] = RS (runs scored)
+        X[:, 1] = RA (runs allowed)
+    
+    Returns
+    -------
+    win_pct : np.ndarray, shape (n,)
+        Predicted win percentage W/(W+L).
+    """
+    RS = X[:, 0]
+    RA = X[:, 1]
+    return RS**2 / (RS**2 + RA**2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict season win percentage using Bill James' Pythagorean expectation.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] = RS (runs scored)
+        X[:, 1] = RA (runs allowed)
+    
+    Returns
+    -------
+    win_pct : np.ndarray, shape (n,)
+        Predicted win percentage = RS^2 / (RS^2 + RA^2)
+    """
+    rs = X[:, 0]
+    ra = X[:, 1]
+    return rs**2 / (rs**2 + ra**2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts season win percentage using the Pythagorean expectation (exponent 2).
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 2)
+        X[:, 0] = RS (runs scored)
+        X[:, 1] = RA (runs allowed)
+    
+    Returns
+    -------
+    win_pct : np.ndarray, shape (n,)
+        Predicted win percentage W / (W + L)
+    """
+    RS = X[:, 0]
+    RA = X[:, 1]
+    win_pct = RS**2 / (RS**2 + RA**2)
+    return win_pct

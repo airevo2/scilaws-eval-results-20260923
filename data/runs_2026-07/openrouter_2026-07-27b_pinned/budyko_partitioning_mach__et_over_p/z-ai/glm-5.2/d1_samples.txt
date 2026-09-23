@@ -1,0 +1,70 @@
+import numpy as np
+
+def predict(X):
+    """
+    Long-term mean annual actual evapotranspiration ratio (E/P) from the
+    Budyko (1974) water-energy balance framework:
+        E/P = [ φ * tanh(1/φ) * (1 - exp(-φ)) ]^(1/2)
+    where φ = PET/P is the climate aridity index (X[:, 0]).
+    """
+    phi = X[:, 0]
+    # Guard against phi == 0 to avoid division warnings
+    phi = np.where(phi == 0, 1e-12, phi)
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    return et_over_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract the aridity index (PET/P)
+    phi = X[:, 0]
+    
+    # Original Budyko (1974) curve: E/P = [ phi * tanh(1/phi) * (1 - exp(-phi)) ]^0.5
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    
+    # Enforce physical bounds [0, 1]
+    return np.clip(et_over_p, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    phi = X[:, 0]  # climate aridity index (PET/P)
+    # Budyko (1974) long-term water-energy balance curve:
+    # E/P = [ phi * tanh(1/phi) * (1 - exp(-phi)) ]^(1/2)
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    # Enforce physical bounds [0, 1]
+    return np.clip(et_over_p, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract the climate aridity index (phi = PET / P)
+    phi = X[:, 0]
+    
+    # Budyko (1974) closed-form relationship for the long-term evapotranspiration ratio (E/P)
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    
+    return et_over_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract the climate aridity index (Ep / P)
+    phi = X[:, 0]
+    
+    # Budyko (1974) curve: E/P = [φ * tanh(1/φ) * (1 - exp(-φ))]^(1/2)
+    # This is the geometric mean of the Schreiber (1904) and Ol'dekop (1911) equations.
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    
+    # Ensure bounds are strictly [0, 1] for numerical safety
+    et_over_p = np.clip(et_over_p, 0.0, 1.0)
+    
+    return et_over_p

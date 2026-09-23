@@ -1,0 +1,78 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    return Q0 / (1.0 + t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard groundwater-recession (Boussinesq / Maillet-type) exponential form:
+        Q(t) = Q0 * exp(-alpha * t)
+
+    where alpha is the recession constant. Since no data/calibration are provided,
+    a unit recession constant is used here as a generic closed-form placeholder.
+    """
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    alpha = 1.0
+    return Q0 * np.exp(-alpha * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard exponential recession form:
+        Q(t) = Q0 * exp(-k t)
+
+    where k is the recession constant.
+    Since no dataset-specific fitted k is provided, a commonly used generic
+    value is included as a placeholder constant.
+    """
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    
+    # Generic recession constant (day^-1); in practice this is basin-specific.
+    k = 0.1
+    
+    return Q0 * np.exp(-k * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0].astype(float)
+    Q0 = X[:, 1].astype(float)
+    
+    # Classical single-reservoir groundwater recession:
+    # dQ/dt = -a Q  ->  Q(t) = Q0 * exp(-a t)
+    # A standard simple closed-form form with a canonical decay constant is
+    # represented here as a generic exponential recession with unitless scale
+    # absorbed into the event-level initial condition.
+    a = 0.1
+    return Q0 * np.exp(-a * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard recession-curve form: exponential decline from initial discharge.
+    
+    Q(t) = Q0 * exp(-a * t)
+    
+    where a is a recession constant (chosen here as a common generic value).
+    """
+    t = X[:, 0]
+    Q0 = X[:, 1]
+    
+    a = 0.1  # generic recession constant per day
+    return Q0 * np.exp(-a * t)

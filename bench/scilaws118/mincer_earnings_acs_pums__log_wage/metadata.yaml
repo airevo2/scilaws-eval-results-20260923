@@ -1,0 +1,119 @@
+task_id: mincer_earnings_acs_pums__log_wage
+domain: social_science / labor_economics
+license: Public-Domain-US-Gov
+
+type: typeI
+has_group_id: false
+
+context: >-
+  This task comes from labor economics, using survey microdata on the annual wage and salary income of individual workers in the US civilian workforce.
+
+target:
+  name: log_wage
+  symbol: "ln Y"
+  unit: ln(USD)
+  description: Natural logarithm of inflation-adjusted annual wage and salary income reported by the worker.
+  range: [1.396, 13.493]
+
+inputs:
+  - name: SCHL_years
+    symbol: "s"
+    unit: years
+    description: Years of completed formal schooling, recoded from the ACS educational attainment categorical variable.
+    values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 22]
+  - name: exp
+    symbol: "x"
+    unit: years
+    description: Potential years of post-schooling work experience, calculated as age minus years of schooling minus 6.
+    range: [0, 58]
+
+data_files:
+  train: data/train.csv  # representative split (see prep_data.py): 53,333 workers
+  test:  data/test.csv   # representative split: 26,667 workers, all career stages
+
+n_train: 53287
+n_test:  26713
+
+# Audit re-split 2026-05-29 (not shown to SR system): split changed from
+# OOD-on-experience (test exp>30) to a deterministic REPRESENTATIVE split
+# (prep_data.py: pool the frozen sample, sort by exp, every 3rd row -> test).
+# Rationale: the Mincer earnings function is a population cross-section regression,
+# not a law with a physical extrapolation axis; the old OOD split collapsed
+# discrimination (the canonical quadratic LOST to a plain linear model, R^2 0.04),
+# a perverse SR incentive. On the representative split the complexity ladder is
+# monotone and correct: naive 0.7413 > linear 0.6695 > quadratic 0.6674 (R^2 0.189)
+# > quartic 0.6657 (R^2 0.193, best). Recovering the quadratic-in-experience term
+# (the central SR target) is now properly rewarded. The fabricated ben_porath_1967
+# baseline (sqrt-exp form, no source PDF, unregistered ghost) was dropped.
+
+# Priors (field-classification re-audit 2026-05-30): the Mincer coefficients were
+# reclassified OTHER->LAW (defining coefficients, fit on train; data_spec §0.2.4
+# superseded). The four priors are 1990/1960 Census Table-2 (PDF p.156) cohort
+# values — DISTRACTORS that differ from every train-fit LAW value (LAW ∩ priors = ∅,
+# verified 2026-05-30), so no leak. Distractor role unchanged.
+priors:
+  - name: schooling_return_1990
+    value: 0.1292
+    unit: per year
+    description: Schooling coefficient (rho_s) from OLS on 1990 Census white men.
+    source: "Heckman, Lochner & Todd (2005), Table 2, PDF p. 156."
+    _role: distractor
+  - name: experience_linear_1990
+    value: 0.1301
+    unit: per year
+    description: Linear-experience coefficient (beta_0) from OLS on 1990 Census white men.
+    source: "Heckman, Lochner & Todd (2005), Table 2, PDF p. 156."
+    _role: distractor
+  - name: experience_squared_1990
+    value: -0.0023
+    unit: per year squared
+    description: Quadratic-experience coefficient (beta_1) from OLS on 1990 Census white men.
+    source: "Heckman, Lochner & Todd (2005), Table 2, PDF p. 156."
+    _role: distractor
+  - name: schooling_return_1960
+    value: 0.1152
+    unit: per year
+    description: Schooling coefficient from OLS on 1960 Census white men — a lower-premium era.
+    source: "Heckman, Lochner & Todd (2005), Table 2, PDF p. 156."
+    _role: distractor
+
+references:
+  - id: heckman_2005
+    label: "Heckman, Lochner & Todd (2005) — Mincer quadratic-in-experience earnings function, Eq. (1)"
+    formula_file: formulas/heckman_2005.py
+    reference_pdf: reference/heckman_2003.pdf
+    n_law_constants: 4    # alpha, rho_s, beta_0, beta_1 — Mincer defining coefficients (fit on train)
+    n_other_constants: 0  # no given constant (x^2 exponent is structural, inline)
+    n_local_params: 0
+    measured:
+      rmse: 0.6719
+      r2: 0.1894
+  - id: murphy_welch_1990
+    label: "Murphy & Welch (1990) — quartic-in-experience Mincer extension, J. Labor Econ. 8(2)"
+    formula_file: formulas/murphy_welch_1990.py
+    reference_pdf: reference/heckman_2003.pdf   # quartic form cited at PDF p. 23 (heckman_2003.txt line 976)
+    n_law_constants: 6    # alpha, rho_s, beta_0..beta_3 — quartic Mincer defining coefficients (fit on train)
+    n_other_constants: 0  # no given constant (x^2/x^3/x^4 exponents structural, inline)
+    n_local_params: 0
+    measured:
+      rmse: 0.6695
+      r2: 0.1934
+
+caps:
+  max_law_constants: 6
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a positive earnings return to additional years of formal schooling"
+  - "earnings rise with work experience early in the career (positive initial experience slope)"
+  - "the experience-earnings profile is concave (single-peaked / hump-shaped), so returns to experience diminish and eventually reverse, flattening or declining around an interior peak in the later career"
+
+best_baseline: 0.6695    # murphy_welch_1990 — rmse (lower is better); regenerated after triple-grouped split (no train/test row overlap)

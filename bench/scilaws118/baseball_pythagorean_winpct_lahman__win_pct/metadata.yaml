@@ -1,0 +1,119 @@
+task_id: baseball_pythagorean_winpct_lahman__win_pct
+domain: social_science / sports_analytics
+license: CC-BY-SA-3.0
+
+# Type I — each franchise-season is an independent row; the Pythagorean
+# formula uses a single universal exponent (no per-team or per-season refit).
+type: typeI
+has_group_id: false
+
+context: >-
+  This task is drawn from Major League Baseball, where each team plays a full season of games and scores and allows runs.
+
+target:
+  name: win_pct
+  symbol: "W%"
+  unit: ""
+  description: Season win percentage — fraction of decided games won, W / (W + L).
+  range: [0.12, 0.90]
+
+inputs:
+  - name: R
+    symbol: RS
+    unit: runs
+    description: Season total runs scored by the team.
+    range: [219, 1220]
+  - name: RA
+    symbol: RA
+    unit: runs
+    description: Season total runs allowed by the team.
+    range: [209, 1252]
+
+data_files:
+  train: data/train.csv   # seasons 1872-1989 (historical era)
+  test:  data/test.csv    # seasons 1990-2021 (modern expansion era, OOD probe)
+
+n_train: 2012
+n_test:  938
+
+# Optional audit note (not shown to SR system):
+# Temporal split: train = yearID <= 1989, test = yearID >= 1990.
+# The test set spans the modern high-scoring era (steroids era peak ~5.4 R/G
+# in 1996-2000 and pitcher-dominant era ~4.0 R/G in the 2010s) — the formula
+# claims universality across eras, which this OOD split tests.
+# The training set includes low-scoring deadball era seasons (~3.5 R/G in
+# the 1900s-1910s) plus moderate mid-century play.
+
+# Audit history:
+#   C12 2026-05-26: removed priors gamma_james=2.0 and gamma_miller_ls=1.79 (numerical leak
+#     with james_1980/miller_2007 LAW['gamma']; pure empirical regression exponents, no
+#     upstream physical constant). Replaced with sports-analytics distractors below.
+#   H1  2026-05-26: removed prior gamma_miller_ml=1.74 (semantic leak — same physical quantity
+#     as LAW gamma, just a different point estimate of the Pythagorean exponent).
+#   2026-05-28: removed davenport_2014 baseline (unsourced LAW a=1.50; σ-of-log10 form gives
+#     effective γ≈0.65 vs Davenport-Woolner 1999 published γ≈1.83 in direct-Pythagorean form;
+#     no PDF on disk; half-integrated wiring).
+# Final priors: 3 distractors, 0 candidates.
+priors:
+  - name: games_per_season_modern
+    value: 162.0
+    unit: games
+    description: Number of regular-season games per team in the modern MLB schedule (since 1961 AL / 1962 NL). Not consumed by the Pythagorean formula, which is scale-invariant in R and RA.
+    source: Historical MLB schedule; not used directly in the Pythagorean formula (formula is scale-invariant in R, RA).
+    _role: distractor
+  - name: innings_per_game
+    value: 9.0
+    unit: innings
+    description: Standard number of innings in a baseball game. A structural game-rule constant unrelated to the run-ratio power law.
+    source: Official Baseball Rules, Rule 9.03(a); MLB Official Rules (any edition).
+    _role: distractor
+  - name: batting_avg_lg_typical
+    value: 0.260
+    unit: ""
+    description: Approximate long-run MLB league batting average, used in offensive-efficiency models (sabermetrics). Not a parameter of the Pythagorean run-ratio formula.
+    source: Thorn & Palmer (1984), The Hidden Game of Baseball, p. 64; historical MLB statistics (Retrosheet).
+    _role: distractor
+
+references:
+  - id: james_1980
+    label: "James (1980) — original Pythagorean formula, gamma = 2"
+    formula_file: formulas/james_1980.py
+    reference_pdf: reference/miller_2007.pdf
+    n_law_constants: 1
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.0258
+      r2: 0.8723
+  - id: miller_2007
+    label: "Miller (2007) — Pythagorean formula, gamma = 1.79 (least-squares)"
+    formula_file: formulas/miller_2007.py
+    reference_pdf: reference/miller_2007.pdf
+    n_law_constants: 1
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 0.0254
+      r2: 0.8768
+
+caps:
+  max_law_constants:        1
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "base expected winning percentage on the relative run-scoring balance between runs scored and runs allowed"
+  - "predicted win_pct stays within [0, 1]"
+  - "predicted win_pct does not decrease when R increases with RA fixed"
+  - "predicted win_pct does not increase when RA increases with R fixed"
+  - "predicted win_pct is above 0.5 when R exceeds RA and below 0.5 when R is less than RA"
+  - "swapping R and RA maps the prediction to its complement about 0.5"
+
+best_baseline: 0.0253675    # miller_2007 — rmse (lower is better); regenerated 2026-05-30

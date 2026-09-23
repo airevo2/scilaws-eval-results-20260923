@@ -1,0 +1,140 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict sigma22 (Cauchy stress in the second principal direction) for planar mouse skin
+    under biaxial loading using a standard incompressible isotropic hyperelastic constitutive form.
+
+    Here, a common canonical closed-form choice is the neo-Hookean Cauchy stress relation
+    for principal directions:
+        sigma_i = -p + mu * lambda_i^2
+
+    For an unconstrained planar specimen in biaxial loading, the pressure-like multiplier p
+    is generally not directly determined from stretches alone; therefore, the most common
+    stretch-only closed form used as a simple baseline is the deviatoric part in the second
+    direction:
+        sigma22 ~ mu * (lambda22^2 - 1 / (lambda11^2 * lambda22^2))
+
+    This reflects incompressibility via lambda33 = 1/(lambda11*lambda22).
+    A representative shear modulus for soft skin is used as a nominal constant.
+    """
+    X = np.asarray(X)
+    lam11 = X[:, 0]
+    lam22 = X[:, 1]
+
+    mu = 0.1  # MPa, nominal soft-tissue shear modulus
+
+    lam33 = 1.0 / (lam11 * lam22)
+    sigma22 = mu * (lam22**2 - lam33**2)
+
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sigma22 (Cauchy stress in the second principal direction) for planar skin under biaxial loading.
+
+    Standard phenomenological choice: a nonlinear exponential hyperelastic form
+    with a sum of isotropic matrix and fiber-like stretch contributions.
+    Since no parameter data are provided, this returns a canonical closed-form
+    constitutive expression with illustrative constants set to unity.
+
+    Parameters
+    ----------
+    X : (n, 2) array-like
+        X[:, 0] = lambda11
+        X[:, 1] = lambda22
+
+    Returns
+    -------
+    sigma22 : (n,) ndarray
+        Predicted Cauchy stress in MPa.
+    """
+    X = np.asarray(X, dtype=float)
+    l1 = X[:, 0]
+    l2 = X[:, 1]
+
+    # Incompressibility assumption for planar biaxial loading: lambda3 = 1/(lambda1*lambda2)
+    l3 = 1.0 / (l1 * l2)
+
+    # Canonical exponential hyperelastic form (qualitative, parameter-free placeholder):
+    # sigma_22 = (lambda2^2 - lambda3^2) * [c0 + c1 * (exp(c2*(lambda2^2-1)^2) - 1)]
+    c0 = 1.0
+    c1 = 1.0
+    c2 = 1.0
+
+    E2 = (l2**2 - 1.0)**2
+    sigma22 = (l2**2 - l3**2) * (c0 + c1 * (np.exp(c2 * E2) - 1.0))
+
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Quasi-incompressible planar biaxial Cauchy stress in the 2-direction
+    # using the standard neo-Hookean form for incompressible isotropic tissue:
+    # sigma_ii = mu * (lambda_i^2 - lambda_3^2) - p, with traction-free thickness
+    # eliminating the pressure term in favor of in-plane stretches.
+    #
+    # For a planar specimen with principal stretches lambda11, lambda22 and
+    # incompressibility lambda33 = 1/(lambda11*lambda22), the in-plane Cauchy
+    # stress difference can be represented by:
+    # sigma22 = mu * (lambda22**2 - lambda33**2)
+    #
+    # Since no material parameter is provided, use the canonical normalized form
+    # with mu = 1.
+    lam11 = X[:, 0]
+    lam22 = X[:, 1]
+    lam33 = 1.0 / (lam11 * lam22)
+    sigma22 = lam22**2 - lam33**2
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict Cauchy stress sigma22 [MPa] in biaxial mouse-skin loading
+    using the canonical incompressible neo-Hookean plane-stress form:
+        sigma22 = mu * (lambda22**2 - lambda33**2)
+    with incompressibility and traction-free thickness direction:
+        lambda33 = 1 / (lambda11 * lambda22)
+    This yields:
+        sigma22 = mu * (lambda22**2 - 1/(lambda11**2 * lambda22**2))
+    Here, only the standard closed-form structure is provided; the material
+    parameter mu is set to 1.0 MPa as a nominal constant.
+    """
+    X = np.asarray(X)
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    mu = 1.0  # MPa, nominal shear modulus
+    sigma22 = mu * (lambda22**2 - 1.0 / (lambda11**2 * lambda22**2))
+    return sigma22
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Common closed-form constitutive approximation for soft tissue biaxial response:
+    # exponential (Fung-type) strain-energy-derived Cauchy stress in the 2-direction.
+    # Here we use a simple isotropic neo-Hookean-style closed form as a standard baseline
+    # when no fitted tissue-specific parameters are provided.
+    #
+    # sigma_22 = mu * (lambda_22^2 - lambda_22^{-2} * lambda_11^{-2})
+    #
+    # Since no data / fitted coefficients are given, use a nominal shear modulus in MPa.
+    mu = 0.1  # MPa, nominal placeholder modulus
+
+    lam11 = X[:, 0]
+    lam22 = X[:, 1]
+
+    sigma22 = mu * (lam22**2 - 1.0 / (lam22**2 * lam11**2))
+    return sigma22

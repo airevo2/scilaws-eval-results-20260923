@@ -1,0 +1,140 @@
+task_id: intertemporal_discount__p_ll
+domain: social_science / decision
+license: CC-BY-NC-SA-4.0
+
+# Type II — cluster = study (ITC Database `paper` identifier).
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  This task is from behavioral economics and the psychology of intertemporal choice, where a subject chooses between a smaller reward available sooner and a larger reward available later.
+
+target:
+  name: p_ll
+  symbol: P(LL)
+  unit: ""
+  description: Probability of choosing the larger-later option, aggregated as the choice rate over a bin of trials with similar amount ratio and delay.
+  range: [0.0, 1.0]
+
+inputs:
+  - name: log_amount_ratio
+    symbol: ln(V_LL/V_SS)
+    unit: ""
+    description: Natural log of the larger-later to smaller-sooner reward-amount ratio (bin mean).
+    range: [0.0022, 4.2338]
+  - name: ss_time_days
+    symbol: t_SS
+    unit: days
+    description: Delay of the smaller-sooner option (bin mean).
+    range: [0.0, 139.679]
+  - name: ll_time_days
+    symbol: t_LL
+    unit: days
+    description: Delay of the larger-later option (bin mean).
+    range: [1.4186, 9125.0]
+  - name: delay_diff_days
+    symbol: Δt
+    unit: days
+    description: Larger-later minus smaller-sooner delay (bin mean).
+    range: [1.4186, 9125.0]
+  - name: ss_value
+    symbol: V_SS
+    unit: currency
+    description: Reward amount of the smaller-sooner option, in the study's local currency (bin mean).
+    range: [0.7182, 18774.9425]
+  - name: ll_value
+    symbol: V_LL
+    unit: currency
+    description: Reward amount of the larger-later option, in the study's local currency (bin mean).
+    range: [5.0, 20502.7586]
+
+# Dataset — three-file v2 Type II layout, cluster holdout (leave-study-out)
+# plus an interleaved within-test-cluster split. 1,172k+ raw trial-level
+# binary choices (ITC Database) are aggregated: within each study the
+# trials are split into a 4x4 grid of quantile bins on (log_amount_ratio,
+# ll_time_days); each bin with >=8 trials becomes one row whose target is
+# the bin choice RATE and whose features are the bin means. Studies with
+# >=10 surviving bins are kept (66 studies); they split 44 train / 22 test.
+# For each test study, fit() sees its even-position bins (test_fit) and
+# predict() is scored on the odd-position bins (test_test).
+#
+# Why aggregate: a single binary human choice is ~a coin flip near
+# indifference, so an RMSE on raw {0,1} labels is Bernoulli-noise-
+# dominated and cannot tell competing discount functions apart (the v1
+# per-trial task scored exponential and hyperbolic baselines at an
+# identical rmse 0.477). Averaging trials into a per-bin rate collapses
+# that noise, so the discount-function structure becomes measurable.
+data_files:
+  train:     data/train.csv        # 44 train studies, all bins
+  test_fit:  data/test_fit.csv     # 22 test studies, even-position bins
+  test_test: data/test_test.csv    # 22 test studies, odd-position bins
+n_train:       680
+n_test_fit:    171
+n_test_test:   169
+n_clusters_train: 44
+n_clusters_test:  22
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: quasi_hyperbolic_present_bias_beta
+    value: 0.7
+    unit: dimensionless
+    description: Present-bias factor beta in quasi-hyperbolic (beta-delta) discounting — the extra weight penalty applied to any delayed reward.
+    source: Laibson (1997) and subsequent calibrations report beta in ~0.6–0.8. The reference baselines re-estimate beta per study, so this is a guide value, not a frozen constant.
+    _role: candidate
+  - name: annual_market_interest_rate
+    value: 0.05
+    unit: per year
+    description: A typical market interest rate, sometimes assumed to anchor "rational" time discounting.
+    source: Frederick, Loewenstein & O'Donoghue (2002) document that empirically elicited discount rates are far higher than and unrelated to market interest rates — the discount functions of this task do not use it. A distractor.
+    _role: distractor
+
+# === Reference baselines ===
+# Two competing discount-function families, each passed through a
+# logistic choice rule. Mazur (1987) hyperbolic SV = V/(1+k*t) and
+# Laibson (1997) quasi-hyperbolic SV = V*beta*delta^t (with the immediate
+# reward keeping full value). Laibson's beta = 1 nests pure exponential
+# discounting; the two forms are non-nested alternatives.
+references:
+  - id: mazur_1987
+    label: Mazur (1987) hyperbolic discounting + logistic choice (nonlinear LS)
+    formula_file: formulas/mazur_1987.py
+    reference_pdf: reference/frederick_2002.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # k, sigma
+    measured: {rmse: 0.1053, r2: 0.3117}   # mean per-cluster
+  - id: laibson_1997
+    label: Laibson (1997) quasi-hyperbolic (beta-delta) discounting + logistic choice (nonlinear LS)
+    formula_file: formulas/laibson_1997.py
+    reference_pdf: reference/laibson1997.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # beta, delta, sigma
+    measured: {rmse: 0.1256, r2: 0.1984}   # mean per-cluster
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         3
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse              # RMS error on the choice rate p_ll
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "bases larger-later choice probability on the discounted subjective-value advantage of the larger-later option over the smaller-sooner option"
+  - "discounts each reward's subjective value according to its own delay before comparing options"
+  - "predicted larger-later choice probability stays within [0, 1]"
+  - "predicted larger-later choice probability does not decrease when the larger-later reward amount increases holding delays and the smaller-sooner amount fixed"
+  - "predicted larger-later choice probability does not increase when the smaller-sooner reward amount increases holding delays and the larger-later amount fixed"
+  - "predicted larger-later choice probability does not increase when the larger-later delay increases holding reward amounts and the smaller-sooner delay fixed"
+  - "predicted larger-later choice probability does not decrease when the smaller-sooner delay increases holding reward amounts and the larger-later delay fixed"
+
+best_baseline: 0.1053     # mazur_1987, mean per-cluster rmse

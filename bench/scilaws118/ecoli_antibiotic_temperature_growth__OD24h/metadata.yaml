@@ -1,0 +1,132 @@
+task_id: ecoli_antibiotic_temperature_growth__OD24h
+domain: biology
+license: CC0-1.0
+
+# Type II — cluster = antibiotic background (drug1name, drug2name pair).
+# Each of the 79 clusters is one experimental condition: E. coli BW25113 grown
+# in LB broth at 7 temperatures (22, 25, 30, 37, 41, 44, 46 degC) with a fixed
+# sub-lethal antibiotic concentration.  The reference formula (modified Briere,
+# Cruz-Loya 2021) has 5 per-cluster LOCAL_FITTABLE parameters (g_max, T_min,
+# T_max, alpha, s); the functional form is universal across all 79 conditions.
+type: typeII
+has_group_id: true
+
+context: >-
+  The thermal response curve of bacterial growth is unimodal in temperature:
+  too cold, enzymes are slow; too hot, proteins denature. For Escherichia coli
+  the optimum lies near 37 degC under drug-free conditions. Antibiotics perturb
+  this curve by imposing additional cellular damage that interacts with
+  heat-induced damage (heat-similar drugs such as aminoglycosides like TOB, GEN,
+  STR) or cold-induced damage (cold-similar drugs such as macrolides like ERY,
+  CLI), shifting the optimal temperature downward or upward respectively. The
+  modified Briere model (Cruz-Loya 2021) captures this behaviour with five
+  per-condition parameters: the peak growth g_max, the thermal limits T_min and
+  T_max, the relative position of the optimum alpha, and the sharpness exponent
+  s. Because the data are raw plate-reader OD600 readings collected after 24 h
+  of incubation, the target is a direct experimental observable with
+  well-understood measurement noise.
+
+target:
+  name: OD24h
+  symbol: OD600(24h)
+  unit: OD600 (dimensionless)
+  description: >-
+    Optical density at 600 nm after 24 h of incubation. Measured by plate
+    reader on E. coli BW25113 in LB broth at the given temperature T under
+    the fixed sub-lethal antibiotic background defined by the cluster.
+    Non-negative by construction; near-zero values indicate complete growth
+    arrest (PDF p. 13, Cruz-Loya 2021).
+  range: [0.001, 0.872]
+
+inputs:
+  - name: T
+    symbol: T
+    unit: degC
+    description: >-
+      Incubation temperature in degrees Celsius. Takes 7 discrete values:
+      22, 25, 30, 37, 41, 44, 46 degC (PDF p. 13, Cruz-Loya 2021).
+    range: [22.0, 46.0]
+    values: [22.0, 25.0, 30.0, 37.0, 41.0, 44.0, 46.0]
+
+# Dataset — three-file v2 Type II layout, cluster (antibiotic background) holdout.
+# 79 antibiotic backgrounds (drug1name, drug2name pairs); group_id = lex-sorted
+# index 0..78 (sort by drug1name, drug2name).
+# Cluster holdout: group_id % 5 == 0 -> test (16 clusters: 0, 5, 10, ..., 75).
+# Within each test cluster: rows sorted by (T, original row order), assigned by
+# local cumcount mod 2: even -> test_fit, odd -> test_test.
+# Both halves span all 7 T levels (interleaved replicates at each T).
+# Each test cluster contributes 14 rows to test_fit and 14 rows to test_test
+# (7 T levels × 2 replicates each half; one cluster GEN+NTR has 27 rows total,
+# giving 14/13 split — all GEN+NTR rows are in train).
+#
+# v2 Type II schema rule (data_spec §4.1):
+#   train.csv:     OD24h, T                    (NO group_id)
+#   test_fit.csv:  OD24h, T, group_id          (group_id LAST)
+#   test_test.csv: OD24h, T, group_id          (group_id LAST)
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 1763
+n_test_fit: 224
+n_test_test: 224
+n_clusters_train: 63
+n_clusters_test: 16
+n_rows_per_cluster_min: 14
+n_rows_per_cluster_median: 14
+n_rows_per_cluster_max: 14
+
+# Forward-compat: unseen_group_strategy = error (default) because
+# set(test_fit.group_id) == set(test_test.group_id) with no unseen groups.
+unseen_group_strategy: error
+
+# No candidate prior constants: all structural parameters are per-cluster
+# LOCAL_FITTABLE values; no fixed universal constants appear in the modified
+# Briere formula (Cruz-Loya 2021, PDF pp. 13-14).  All 5 parameters vary
+# per antibiotic background.
+priors: []
+
+# === Reference baselines ===
+# F=1 after Regoes 2004 exclusion: Regoes 2004 predicts net growth RATE (psi)
+# as a function of antibiotic CONCENTRATION — not OD24h vs T. Antibiotic
+# concentration is not an input column in this dataset. Cruz-Loya 2021
+# (modified Briere) is the sole applicable baseline.
+references:
+  - id: cruz_loya_2021
+    label: Cruz-Loya et al. 2021 — modified Briere TRC (PDF pp. 13-14)
+    formula_file: formulas/cruz_loya_2021.py
+    reference_pdf: reference/cruz_loya_2021_msystems.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 5
+    measured: {rmse: 0.0661, r2: 0.8849}
+
+# === v2 anti-dump caps (derived from reference bank) ===
+caps:
+  max_law_constants: 0
+  max_local_params: 5
+  max_init_size_per_param: 5
+  fit_timeout_seconds: 10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.0661
+
+# === Auditor notes ===
+auditor_notes: >-
+  FM-T3 (T_min boundary) — documented acceptable: 12/16 test clusters
+  have T_min fitting to the lower bound of -10 degC.  Root cause: the
+  modified Briere is under-identified for T_min when OD at the lowest
+  observed temperature (22 degC) is near-zero (~0.001-0.007 for most
+  antibiotic conditions) — any T_min in [-10, 21.5] degC produces
+  indistinguishable residuals.  This is a data limitation (7 discrete T
+  levels, all above the growth minimum), not a numerical bug.  Prediction
+  quality at observed T levels is unaffected: pooled R2 = 0.885, RMSE =
+  0.066.  The Cruz-Loya 2021 Bayesian framework handles this via a
+  HalfNormal prior on T_min (constrained near 0-20 degC; supplemental
+  material); our LS fit uses a physically-motivated lower bound of -10 degC
+  (liquid water, no growth below 0 degC).  Not a benchmark-blocking defect.
+  The s parameter was also found to require an upper bound of 200 (vs the
+  original 20): empirical survey of all 79 conditions shows s up to ~150
+  for sharply-transitioning conditions; multi-start initialization over
+  s in [1, 3, 8, 20, 50] was added to resolve the original FM-T3 on s.

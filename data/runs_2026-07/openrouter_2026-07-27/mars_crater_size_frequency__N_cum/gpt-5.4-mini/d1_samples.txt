@@ -1,0 +1,78 @@
+import numpy as np
+
+def predict(X):
+    """
+    Cumulative areal density of Mars craters N(>=D) [km^-2]
+    as a function of lower diameter threshold D (km).
+
+    Canonical approximation: power law in log-log space
+        N(>=D) = A * D^(-b)
+
+    with commonly used Mars crater-population exponents near b ~ 2.
+    """
+    D = np.asarray(X)[:, 0]
+    A = 5.0e-3
+    b = 2.0
+    return A * np.power(D, -b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Cumulative Mars crater areal density N(>=D) [km^-2] as a function of
+    lower bin edge diameter D (km).
+
+    Canonical cumulative Martian crater SFD:
+        N(>=D) = 2.68e-3 * D^(-1.83)
+
+    Parameters
+    ----------
+    X : array_like, shape (n_samples, 3)
+        X[:, 0] = D_lower_km
+        X[:, 1], X[:, 2] are distractors / redundant
+
+    Returns
+    -------
+    np.ndarray, shape (n_samples,)
+        Cumulative areal density N(>=D) in km^-2
+    """
+    D = np.asarray(X)[:, 0]
+    return 2.68e-3 * np.power(D, -1.83)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Commonly used Mars crater cumulative size-frequency relation:
+    # N(>=D) = 1.1e-3 * D^(-2)
+    return 1.1e-3 * np.power(D, -2.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = np.asarray(X)[:, 0]  # D_lower_km in km
+    # Standard Mars cumulative crater SFD form: N(>=D) = a * D^b
+    # Commonly cited terrestrial/Mars-like Hartmann-style cumulative fit:
+    # N(>=D) ≈ 5.44e-14 * D^-1.83  [km^-2]
+    return 5.44e-14 * np.power(D, -1.83)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = np.asarray(X)[:, 0]
+
+    # Simple Mars crater cumulative size-frequency distribution:
+    # N(>=D) ≈ k * D^(-b)
+    # Commonly used near-power-law closed form for Mars crater counts.
+    k = 2.0e-3
+    b = 2.0
+
+    return k * np.power(D, -b)

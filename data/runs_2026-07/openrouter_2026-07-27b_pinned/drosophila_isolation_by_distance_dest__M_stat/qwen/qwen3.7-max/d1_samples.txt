@@ -1,0 +1,93 @@
+import numpy as np
+
+def predict(X):
+    intercept = 0.0
+    slope = 1.0
+    M_stat = intercept + slope * X[:, 0]
+    return M_stat
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Rousset's (1997) isolation-by-distance model.
+    Under the 2-D stepping-stone / continuous habitat model:
+        M = F_ST / (1 - F_ST) = a + b * ln(d)
+    where b ≈ 1 / (4πDσ²) = 1 / Nb  (Nb = Wright's neighbourhood size)
+    and a is an intercept absorbing the local-scale constant.
+    """
+    ln_d = X[:, 0]          # ln(distance_km), d clipped to >= 1 km
+
+    # Canonical IBD regression coefficients (representative values)
+    a = -0.01               # intercept
+    b =  0.015              # slope  ≈ 1 / Nb
+
+    M = a + b * ln_d
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts Rousset's linearised differentiation statistic (M) based on 
+    Isolation By Distance (IBD) in a 2-dimensional habitat.
+    
+    According to Rousset (1997), M = F_ST / (1 - F_ST) is linearly related 
+    to the natural logarithm of the geographic distance between populations.
+    
+    Parameters:
+    X : numpy.ndarray
+        2D array where:
+        X[:, 0] = log_distance_km (ln(d))
+        X[:, 1] = distance_km (d)
+        
+    Returns:
+    numpy.ndarray
+        1D array of predicted M values.
+    """
+    # Empirical intercept and slope (exact values depend on the specific 
+    # dataset's population density and dispersal variance, represented 
+    # here as named constants for the canonical linear form).
+    intercept = 0.0
+    slope = 0.1 
+    
+    log_distance = X[:, 0]
+    
+    # Canonical 2D IBD relationship: M = a + b * ln(d)
+    M_stat = intercept + slope * log_distance
+    
+    return M_stat
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_distance_km = X[:, 0]
+    
+    # Rousset's (1997) 2D Isolation By Distance model:
+    # M = F_ST / (1 - F_ST) = a + b * ln(d)
+    # where b is theoretically 1 / (4 * pi * D * sigma^2)
+    
+    a = 0.0  # Intercept constant
+    b = 1.0  # Slope constant
+    
+    M = a + b * log_distance_km
+    return M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Rousset's (1997) 2D isolation by distance model:
+    # F_ST / (1 - F_ST) is linearly related to the natural logarithm of distance.
+    intercept = 0.0
+    slope = 1.0
+    
+    M_stat = intercept + slope * X[:, 0]
+    return M_stat

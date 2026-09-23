@@ -1,0 +1,120 @@
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Solar angular velocity (approximate Carrington rotation rate)
+    Omega_sun = 2.7e-6  # rad/s
+    # 1 Astronomical Unit in kilometers
+    AU_to_km = 1.496e8  # km
+    
+    # Convert heliocentric distance to km
+    r_km = r_AU * AU_to_km
+    
+    # Parker spiral model for the azimuthal component
+    # B_phi = - B_r * (Omega_sun * r) / v_sw
+    # (Assuming r >> r_sun, so r - r_sun ≈ r)
+    B_phi = -B_r * (Omega_sun * r_km) / v_sw
+    
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Solar sidereal rotation rate (approx 25.38 days period)
+    Omega_sun = 2 * np.pi / (25.38 * 24 * 3600)  # rad/s
+    
+    # 1 AU in km
+    AU_to_km = 1.495978707e8
+    
+    # Convert r to km
+    r_km = r_AU * AU_to_km
+    
+    # Parker spiral model: B_phi = -B_r * (Omega * r) / v_sw
+    # (Assuming r >> r_sun, so r - r_sun ≈ r)
+    B_phi = -B_r * (Omega_sun * r_km) / v_sw
+    
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Solar angular rotation speed (Carrington rate, ~2.7e-6 rad/s)
+    Omega = 2.7e-6
+    # 1 AU in km
+    AU_to_km = 1.496e8
+    
+    # Parker spiral relation: B_phi = - B_r * (Omega * r) / v_sw
+    # where r is in km and v_sw is in km/s
+    B_phi = - B_r * (Omega * r_AU * AU_to_km) / v_sw
+    
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Parker spiral closed-form prediction for the azimuthal IMF component.
+    
+    B_phi = - B_r * (Omega * r / v_sw)
+    
+    Omega : solar sidereal rotation rate (~2.7e-6 rad/s)
+    r     : heliocentric distance [km]
+    v_sw  : solar wind speed [km/s]
+    B_r   : radial IMF component [nT]
+    """
+    # Constants
+    Omega = 2.7e-6          # rad/s
+    AU_to_km = 1.496e8      # km per AU
+
+    # Inputs
+    B_r = X[:, 0]           # nT
+    v_sw = X[:, 1]          # km/s
+    r_AU = X[:, 2]          # AU
+
+    # Convert r to km for unit consistency with v_sw
+    r_km = r_AU * AU_to_km
+
+    # Parker spiral azimuthal component (positive prograde)
+    B_phi = - B_r * (Omega * r_km / v_sw)
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Solar angular rotation rate (approximate average, in rad/s)
+    Omega = 2.7e-6 
+    
+    # Convert AU to km
+    AU_to_km = 1.496e8
+    r_km = r_AU * AU_to_km
+    
+    # Parker spiral relationship for the azimuthal component
+    # B_phi is positive in the prograde direction, hence the negative sign
+    # because an outward (positive) B_r trails in the retrograde (negative) direction
+    B_phi = - B_r * (Omega * r_km) / v_sw
+    
+    return B_phi

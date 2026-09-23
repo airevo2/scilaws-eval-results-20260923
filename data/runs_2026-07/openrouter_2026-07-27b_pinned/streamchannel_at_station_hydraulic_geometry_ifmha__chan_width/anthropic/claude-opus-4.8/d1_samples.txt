@@ -1,0 +1,57 @@
+import numpy as np
+
+def predict(X):
+    # Hydraulic geometry (Leopold & Maddock, 1953): w = a * Q^b
+    # Commonly cited at-a-station/downstream values: a ~ 1.5, b ~ 0.5 (width in ft, Q in cfs)
+    Q = np.asarray(X[:, 0], dtype=float)
+    a = 1.5
+    b = 0.5
+    return a * np.power(Q, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hydraulic geometry (Leopold & Maddock, 1953): w = a * Q^b
+    # Commonly cited at-a-station/downstream values: a ~ 1.5, b ~ 0.5
+    Q = np.asarray(X[:, 0], dtype=float)
+    a = 1.5
+    b = 0.5
+    return a * np.power(np.clip(Q, 1e-6, None), b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hydraulic geometry (Leopold & Maddock, 1953): w = a * Q^b
+    # Commonly cited at-a-station / downstream values: a ~ 7, b ~ 0.5
+    Q = X[:, 0]
+    a = 7.0
+    b = 0.5
+    return a * np.power(Q, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hydraulic geometry (Leopold & Maddock, 1953): w = a * Q^b
+    # Commonly cited at-a-station/downstream exponent b ~ 0.5, coefficient a ~ 1.5 (ft, cfs)
+    Q = np.asarray(X[:, 0], dtype=float)
+    a = 1.5
+    b = 0.5
+    return a * np.power(Q, b)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Hydraulic geometry (Leopold & Maddock, 1953): w = a * Q^b
+    # Commonly cited at-a-station/downstream values: a ≈ 2.0-4.0, b ≈ 0.5
+    Q = X[:, 0]
+    a = 2.0
+    b = 0.5
+    return a * np.power(Q, b)

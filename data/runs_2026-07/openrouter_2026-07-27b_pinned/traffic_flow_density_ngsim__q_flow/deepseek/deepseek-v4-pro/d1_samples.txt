@@ -1,0 +1,154 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts per-lane traffic flow rate q [veh/h/lane] using a triangular (Newell)
+    fundamental diagram.  Only density k = X[:, 0] is used.
+    
+    Parameters
+    ----------
+    X : np.ndarray
+        Shape (n, 5) with columns:
+        0: k_veh_km_lane
+        1,2,3,4: distractor inputs (ignored)
+    
+    Returns
+    -------
+    q : np.ndarray
+        Predicted flow [veh/h/lane]
+    """
+    k = X[:, 0]
+    
+    # Triangular FD parameters (typical US freeway per-lane)
+    vf = 100.0          # free-flow speed [km/h]
+    w  = 20.0           # backward wave speed [km/h]
+    kj = 200.0          # jam density [veh/km/lane]
+    # Critical density implied by vf, w, kj
+    kc = kj * w / (vf + w)   # ≈ 33.33 veh/km/lane
+    qm = vf * kc             # ≈ 3333 veh/h/lane (per-lane capacity)
+    
+    # Piecewise definition: q = vf*k for k <= kc; q = w*(kj - k) for k > kc
+    q = np.where(k <= kc, vf * k, w * (kj - k))
+    
+    # Clamp to non-negative flow (k > kj could produce small negatives)
+    q = np.maximum(q, 0.0)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-lane flow rate q (veh/h/lane) from per-lane density k (veh/km/lane)
+    using a triangular fundamental diagram (Newell-type FD).
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 5)
+        Input columns:
+        X[:,0] = k (density)
+        X[:,1:] = distractors (ignored)
+
+    Returns
+    -------
+    q : np.ndarray, shape (n,)
+        Flow rate in veh/h/lane.
+    """
+    # Triangular FD parameters (typical US freeway values)
+    VF = 110.0          # free-flow speed [km/h]
+    KJ = 200.0          # jam density [veh/km/lane]
+    QMAX = 3500.0       # capacity [veh/h/lane]
+    
+    KCRIT = QMAX / VF   # critical density at capacity
+    W = QMAX / (KJ - KCRIT)  # backward wave speed [km/h]
+    
+    k = X[:, 0]
+    # q = min(VF * k, W * (KJ - k)), then floor at 0 for k > KJ
+    q = np.maximum(0.0, np.minimum(VF * k, W * (KJ - k)))
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Only the first column, k (veh/km/lane), is used for the closed-form FD.
+    k = X[:, 0]
+
+    # Canonical triangular (Newell) fundamental diagram parameters
+    # v_f : free-flow speed (km/h)
+    # w   : backward wave speed (km/h)
+    # k_j : jam density (veh/km/lane)
+    VF = 100.0      # typical free-flow speed for US freeways (≈ 65 mph)
+    W = 10.0        # typical backward wave speed (~ 10 km/h)
+    KJ = 250.0      # typical jam density (bumper-to-bumper spacing ≈ 4 m/veh)
+
+    # Triangular FD: q = min(v_f * k,  w * (k_j - k))
+    # Flow cannot be negative; density beyond jam yields zero flow.
+    q = np.minimum(VF * k, W * (KJ - k))
+    q = np.clip(q, 0.0, None)
+
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-lane traffic flow rate q (veh/h/lane) from per-lane density k (veh/km/lane)
+    using a triangular fundamental diagram (Newell-Daganzo).
+    
+    Parameters:
+    X : 2-D numpy array, where X[:, 0] = k (veh/km/lane)
+    
+    Returns:
+    q : 1-D numpy array of flow rate (veh/h/lane)
+    """
+    k = X[:, 0]
+    
+    # Triangular fundamental diagram parameters
+    v_f = 100.0      # free-flow speed (km/h)
+    k_c = 25.0       # critical density (veh/km/lane)
+    k_j = 125.0      # jam density (veh/km/lane)
+    w = 25.0         # backward wave speed (km/h)
+    q_max = v_f * k_c  # capacity = 2500 veh/h/lane
+    
+    # Triangular FD: q = min(v_f * k, q_max, w * (k_j - k))
+    # For k <= k_c: q = v_f * k
+    # For k > k_c:  q = w * (k_j - k)
+    q = np.where(k <= k_c, v_f * k, w * (k_j - k))
+    
+    # Ensure non-negative flow
+    q = np.maximum(q, 0.0)
+    
+    return q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-lane traffic flow rate q [veh/h/lane] using the classic
+    Greenshields fundamental diagram: q = vf * k * (1 - k / kj)
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 5)
+        Input features. Only X[:, 0] (density k) is used.
+    
+    Returns
+    -------
+    q : np.ndarray, shape (n_samples,)
+        Predicted flow rate.
+    """
+    # Free-flow speed (km/h) and jam density (veh/km/lane)
+    vf = 105.0
+    kj = 150.0
+    
+    k = X[:, 0]  # density in veh/km/lane
+    q = vf * k * (1.0 - k / kj)
+    return q

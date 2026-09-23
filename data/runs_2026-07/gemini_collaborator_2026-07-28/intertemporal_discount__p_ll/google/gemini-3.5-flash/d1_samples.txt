@@ -1,0 +1,183 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = log_amount_ratio (ln(V_LL/V_SS))
+    # X[:, 1] = ss_time_days (t_SS)
+    # X[:, 2] = ll_time_days (t_LL)
+    # X[:, 3] = delay_diff_days (Δt)
+    # X[:, 4] = ss_value (V_SS)
+    # X[:, 5] = ll_value (V_LL)
+
+    # Standard Hyperbolic Discounting Model parameters
+    # k: Median daily discount rate (standard literature estimate ~ 0.01 to 0.05)
+    # beta: Softmax temperature parameter for log-transformed subjective values
+    k = 0.02
+    beta = 2.0
+
+    # Extract required inputs
+    log_amount_ratio = X[:, 0]
+    t_SS = X[:, 1]
+    t_LL = X[:, 2]
+
+    # Subjective value (SV) in log-space to ensure scale-invariance of the beta parameter:
+    # ln(SV) = ln(V) - ln(1 + k * t)
+    # Therefore: ln(SV_LL) - ln(SV_SS) = ln(V_LL / V_SS) - ln((1 + k * t_LL) / (1 + k * t_SS))
+    log_sv_ratio = log_amount_ratio - np.log((1.0 + k * t_LL) / (1.0 + k * t_SS))
+
+    # Logistic (softmax) choice probability
+    p_ll = 1.0 / (1.0 + np.exp(-beta * log_sv_ratio))
+
+    return p_ll
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = log_amount_ratio (ln(V_LL/V_SS))
+    # X[:, 1] = ss_time_days (t_SS)
+    # X[:, 2] = ll_time_days (t_LL)
+    # X[:, 3] = delay_diff_days (Δt)
+    # X[:, 4] = ss_value (V_SS)
+    # X[:, 5] = ll_value (V_LL)
+
+    log_amount_ratio = X[:, 0]
+    t_SS = X[:, 1]
+    t_LL = X[:, 2]
+
+    # Standard hyperbolic discounting parameter (k) and choice sensitivity (beta)
+    # k ~ 0.01 to 0.05 is standard in daily discounting studies.
+    k = 0.02
+    beta = 2.0
+
+    # Subjective value (SV) in log-utility scale:
+    # ln(SV) = ln(V) - ln(1 + k * t)
+    # Diff = ln(SV_LL) - ln(SV_SS) = ln(V_LL/V_SS) - ln(1 + k * t_LL) + ln(1 + k * t_SS)
+    sv_diff = (
+        log_amount_ratio - np.log(1.0 + k * t_LL) + np.log(1.0 + k * t_SS)
+    )
+
+    # Probability of choosing LL using a logistic (softmax) choice rule
+    p_ll = 1.0 / (1.0 + np.exp(-beta * sv_diff))
+
+    return p_ll
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = log_amount_ratio (ln(V_LL/V_SS))
+    # X[:, 1] = ss_time_days (t_SS)
+    # X[:, 2] = ll_time_days (t_LL)
+
+    log_amount_ratio = X[:, 0]
+    t_SS = X[:, 1]
+    t_LL = X[:, 2]
+
+    # Standard hyperbolic discounting parameter (daily discount rate)
+    k = 0.01
+    # Standard choice sensitivity (softmax precision parameter)
+    beta = 2.0
+
+    # Calculate log of the ratio of discount factors: ln((1 + k*t_LL) / (1 + k*t_SS))
+    log_discount_ratio = np.log(1.0 + k * t_LL) - np.log(1.0 + k * t_SS)
+
+    # Log-odds of choosing the larger-later option based on discounted utility difference
+    logit = beta * (log_amount_ratio - log_discount_ratio)
+
+    # Sigmoid function to obtain the probability P(LL)
+    p_ll = 1.0 / (1.0 + np.exp(-logit))
+
+    return p_ll
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts the probability of choosing the larger-later (LL) option using the
+    canonical hyperbolic discounting model with a logistic (softmax) choice rule
+    applied to the difference in log-discounted values.
+
+    Inputs:
+    X : 2-D numpy array where:
+        X[:, 0] = log_amount_ratio (ln(V_LL/V_SS))
+        X[:, 1] = ss_time_days (t_SS)
+        X[:, 2] = ll_time_days (t_LL)
+        X[:, 3] = delay_diff_days (Δt)
+        X[:, 4] = ss_value (V_SS)
+        X[:, 5] = ll_value (V_LL)
+
+    Returns:
+    1-D numpy array of probabilities P(LL).
+    """
+    log_amount_ratio = X[:, 0]
+    t_SS = X[:, 1]
+    t_LL = X[:, 2]
+
+    # Standard representative parameters from intertemporal choice literature
+    k = 0.02  # Daily discount rate
+    beta = 2.0  # Softmax inverse temperature (decision sensitivity)
+
+    # Difference in log-discounted values:
+    # ln(V_LL_discounted) - ln(V_SS_discounted)
+    # = ln(V_LL) - ln(1 + k * t_LL) - [ln(V_SS) - ln(1 + k * t_SS)]
+    # = ln(V_LL/V_SS) - ln(1 + k * t_LL) + ln(1 + k * t_SS)
+    log_discounted_value_diff = (
+        log_amount_ratio - np.log(1.0 + k * t_LL) + np.log(1.0 + k * t_SS)
+    )
+
+    # Logistic choice rule
+    p_ll = 1.0 / (1.0 + np.exp(-beta * log_discounted_value_diff))
+
+    return p_ll
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the probability of choosing the larger-later option (P(LL))
+
+    using the standard hyperbolic discounting model with a logistic choice rule.
+
+    Parameters:
+    X : 2-D numpy array where:
+        - X[:, 0] = log_amount_ratio (ln(V_LL/V_SS))
+        - X[:, 1] = ss_time_days (t_SS)
+        - X[:, 2] = ll_time_days (t_LL)
+        - X[:, 3] = delay_diff_days (dt)
+        - X[:, 4] = ss_value (V_SS)
+        - X[:, 5] = ll_value (V_LL)
+
+    Returns:
+    1-D numpy array of probabilities P(LL).
+    """
+    log_amount_ratio = X[:, 0]
+    t_SS = X[:, 1]
+    t_LL = X[:, 2]
+
+    # Standard representative parameters for hyperbolic discounting
+    k = 0.015  # Daily discounting rate (typical range 0.005 to 0.05)
+    beta = 2.0  # Choice sensitivity parameter (inverse temperature)
+
+    # Subjective value (SV) of an option is V / (1 + k * t).
+    # In log terms, ln(SV_LL / SV_SS) = ln(V_LL / V_SS) - ln(1 + k * t_LL) + ln(1 + k * t_SS)
+    log_sv_ratio = (
+        log_amount_ratio - np.log(1.0 + k * t_LL) + np.log(1.0 + k * t_SS)
+    )
+
+    # Choice probability using the logistic softmax function
+    p_ll = 1.0 / (1.0 + np.exp(-beta * log_sv_ratio))
+
+    return p_ll

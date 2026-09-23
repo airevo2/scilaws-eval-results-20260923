@@ -1,0 +1,91 @@
+import numpy as np
+
+def predict(X):
+    """
+    Period life expectancy at birth (total sex) as a logistic function
+    of calendar year, capturing the mortality transition from pre-industrial
+    levels to the modern asymptote (canonical bounded-growth form used in
+    demographic projections, e.g., UN WPP methodology).
+
+    Parameters of the logistic curve:
+        e_min  = 33.0   — pre-transition floor (years)
+        e_max  = 87.0   — upper asymptote (years)
+        t0     = 1935.0 — inflection year of the transition
+        k      = 0.027  — rate parameter (per year)
+    """
+    t = X[:, 0]
+    e_min = 33.0
+    e_max = 87.0
+    t0 = 1935.0
+    k = 0.027
+    e0 = e_min + (e_max - e_min) / (1.0 + np.exp(-k * (t - t0)))
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0]
+    
+    # Logistic growth model capturing the epidemiological transition
+    # Parameters approximate the long-run trend for typical HMD national life tables (e.g., Sweden 1751-2024)
+    e0_min = 30.0   # Pre-transition baseline life expectancy
+    e0_max = 85.0   # Asymptotic maximum life expectancy
+    k = 0.03        # Growth rate of the transition
+    t_mid = 1910.0  # Midpoint of the mortality transition
+    
+    e0 = e0_min + (e0_max - e0_min) / (1.0 + np.exp(-k * (t - t_mid)))
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Period life expectancy at birth (total sex) estimated via the
+    Oeppen–Vaupel (2002) best-practice linear trend:
+        e0 ≈ 45.0 + 0.25 * (year - 1840)
+    i.e., the frontier life expectancy rises ~2.5 years per decade.
+    """
+    year = X[:, 0]
+    e0 = 45.0 + 0.25 * (year - 1840.0)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts period life expectancy at birth (e0) based on the calendar year.
+    Uses the canonical Oeppen & Vaupel (2002) "best-practice" linear trend,
+    which observed that maximum life expectancy increases by 2.5 years per 
+    decade (0.25 years per year) from 1840 onwards.
+    """
+    t = X[:, 0]
+    e0 = 0.25 * t - 415.0
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Period life expectancy at birth (e0) as a linear function of calendar year.
+    
+    Based on the Oeppen & Vaupel (2002) "Broken Limits to Life Expectancy" 
+    best-practice linear trend: ~2.43 years gained per decade.
+    
+    e0(t) = 45.0 + 0.243 * (t - 1840)
+    """
+    t = X[:, 0]
+    # Oeppen-Vaupel (2002) best-practice line coefficients
+    slope = 0.243        # years of e0 gained per calendar year (~2.43 per decade)
+    intercept = 45.0     # e0 at reference year
+    t_ref = 1840.0       # reference year (start of best-practice record)
+    
+    e0 = intercept + slope * (t - t_ref)
+    return e0

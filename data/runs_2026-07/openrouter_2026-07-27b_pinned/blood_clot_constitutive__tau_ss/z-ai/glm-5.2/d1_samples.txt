@@ -1,0 +1,80 @@
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    # conc_mM = X[:, 1]
+    # time_min = X[:, 2]
+    
+    # Homogeneous simple-shear closed form for an incompressible neo-Hookean solid:
+    # tau_ss = G * gamma
+    # A representative baseline shear modulus G for whole-blood thrombus is on the order of ~1 kPa.
+    G = 1.0  # kPa
+    
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    # Homogeneous simple-shear Cauchy stress for an incompressible neo-Hookean solid:
+    #   tau_ss = G * gamma
+    # G is the small-strain shear modulus [kPa]; a representative value for in-vitro
+    # whole-blood thrombus is ~1 kPa.  The baseline does not consume conc_mM or time_min.
+    G = 1.0
+    tau_ss = G * gamma
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    # A single global shear modulus G [kPa] representative of the specimen cohort
+    G = 1.0 
+    
+    # Homogeneous simple-shear closed form for an incompressible neo-Hookean solid
+    tau_ss = G * gamma
+    
+    return tau_ss
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the simple-shear Cauchy stress (tau_ss) on a whole-blood thrombus 
+    specimen using the standard homogeneous simple-shear closed-form approximation.
+    
+    The baseline constitutive relationship assumes a linear elastic / incompressible 
+    Neo-Hookean response under simple shear, where the shear stress is directly 
+    proportional to the engineering shear strain gamma:
+        tau_ss = G * gamma
+    
+    Here, G represents the global shear modulus of the material. The reference 
+    baseline treats G as a single fitted constant across all specimens (ignoring 
+    conc_mM and time_min), though a richer formula could replace G with a function 
+    of the fibrinogen concentration and maturation time.
+    """
+    gamma = X[:, 0]
+    G = 1.0  # kPa, representative fitted global shear modulus for the baseline
+    
+    return G * gamma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    gamma = X[:, 0]
+    # Homogeneous simple-shear closed form for an incompressible neo-Hookean solid.
+    # This is the most commonly cited hyperelastic baseline; the single global
+    # shear modulus G is the only fitted parameter (here set to a representative
+    # constant; in the richer SR setting it would be replaced by f(conc_mM, time_min)).
+    G = 1.0  # [kPa]
+    tau_ss = G * gamma
+    return tau_ss

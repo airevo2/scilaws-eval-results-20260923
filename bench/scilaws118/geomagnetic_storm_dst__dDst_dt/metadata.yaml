@@ -1,0 +1,211 @@
+task_id: geomagnetic_storm_dst__dDst_dt
+domain: physics / space_physics
+license: CC-BY-NC-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  In space-weather physics, the geomagnetic Dst index measures the globally averaged horizontal magnetic perturbation at Earth's surface produced by the magnetospheric ring current during geomagnetic storms.
+
+target:
+  name: dDst_dt
+  symbol: "dDst/dt"
+  unit: nT/hr
+  description: >-
+    Hourly tendency of the Dst geomagnetic index, computed as the central
+    finite difference of the hourly Dst series: (Dst[i+1] - Dst[i-1]) / 2.
+    Negative during storm main phase (ring-current intensification);
+    positive during recovery.
+  range: [-133.0, 62.5]
+
+inputs:
+  - name: Dst
+    symbol: "Dst"
+    unit: nT
+    description: >-
+      Disturbance storm-time index measuring the globally averaged
+      horizontal magnetic perturbation at low latitudes; negative values
+      indicate ring-current intensification.
+    range: [-422.0, 77.0]
+  - name: Ey
+    symbol: "E_y"
+    unit: mV/m
+    description: >-
+      Dawn-to-dusk component of the solar wind convective electric field
+      at L1, the primary driver of ring-current injection.
+    range: [-35.94, 47.11]
+  - name: P_dyn
+    symbol: "P_dyn"
+    unit: nPa
+    description: >-
+      Solar wind dynamic pressure at L1, contributing to the magnetopause
+      current correction of the Dst index.
+    range: [0.03, 71.04]
+  - name: V_sw
+    symbol: "V_sw"
+    unit: km/s
+    description: Solar wind bulk flow speed at L1.
+    range: [228.0, 1189.0]
+  - name: Bz_GSM
+    symbol: "B_z"
+    unit: nT
+    description: >-
+      North-south component of the interplanetary magnetic field in
+      geocentric solar magnetospheric coordinates; negative (southward)
+      values drive dayside reconnection.
+    range: [-57.8, 41.6]
+  - name: n_sw
+    symbol: "n_sw"
+    unit: cm^-3
+    description: Solar wind proton number density at L1.
+    range: [0.1, 137.2]
+  - name: B_mag
+    symbol: "|B|"
+    unit: nT
+    description: Magnitude of the interplanetary magnetic field at L1.
+    range: [0.4, 62.0]
+  - name: T_sw
+    symbol: "T_sw"
+    unit: K
+    description: Solar wind proton temperature at L1.
+    range: [3299.0, 897673.0]
+
+data_files:
+  train: data/train.csv   # years 1995-2021 Mar; temporal OOD split
+  test:  data/test.csv    # 2021 May-Sep; held-out evaluation window per Markidis 2025 §3.3
+
+n_train: 230087
+n_test: 3672
+
+# Audit notes:
+# (1) Target dDst_dt is the central finite difference of hourly Dst (real
+#     measurement); it is NOT the closed-form formula output. Burton and O'Brien
+#     predict dDst*/dt (pressure-corrected), applied here to raw Dst inputs —
+#     standard domain practice (Markidis 2025 §3, PDF p. 7).
+# (2) The test split replicates the Markidis 2025 evaluation window (May–Sep 2021),
+#     a temporal OOD probe from the 26-year training window (1995–Mar 2021).
+# (3) NEGATIVE_POOLED_R2 for burton_1975 (R²=-1.13) is a documented C9 epoch
+#     mismatch: Burton 1975 coefficients were calibrated on 7 storms from
+#     1967-1968 data using eV/cm³ pressure units. The modern nPa restatement
+#     (b=0.20) is the community convention but the original coefficients were
+#     not fitted to post-2000 OMNI data. This is a legitimate §9.18 hard-OOD
+#     probe for the foundational model; the modern baselines (obrien_2000,
+#     markidis_2025) both have positive pooled R².
+# (4) Input sentinel-fill handling: parse_omni.py linearly interpolates OMNI2
+#     sentinel/fill values (disclosed in data_raw/README.md §5). The interpolated
+#     fraction is small (<=2.3% of any input: P_dyn/n_sw ~2.3%, T_sw ~2.2%, all
+#     others <0.4%). The Dst series (the target source) has ZERO fills, so the
+#     target dDst_dt and the Dst input are never interpolated.
+
+# FM C12 (priors-leakage) history:
+#   2026-05-26: Five priors that exactly matched LAW_CONSTANTS values were REMOVED
+#     (vbs_injection_threshold=0.5, obrien_tau_amp=2.4, obrien_tau_exp_num=9.74,
+#     burton_pressure_offset=20.0, obrien_pressure_coef=7.26 — all EMPIRICAL_FIT
+#     regression coefficients from O'Brien 2000 / Burton 1975). Four distractors
+#     (below) were added; all four verified NOT to match any LAW_CONSTANTS value
+#     across obrien_2000.py / burton_1975.py / markidis_2025.py.
+#   2026-05-29 (audit): the priors block ships 4 distractors and 0 candidates.
+#     A prior previously described as a "kept candidate" (burton_decay_rate_si =
+#     3.6e-5 s^-1) is correctly NOT shipped: 3.6e-5 s^-1 = 0.1296 hr^-1 is exactly
+#     burton_1975's a_hr ring-current decay constant (1/tau) in SI units — the
+#     SAME physical quantity as a LAW_CONSTANT, i.e. an H1 leak. No clean candidate
+#     exists for this task (the physically relevant constants ARE the LAW_CONSTANTS),
+#     so the all-distractor block is intentional, not an omission. See VERDICT.md.
+#   Leak re-check is against LAW_CONSTANTS only (priors<->OTHER_CONSTANTS overlap
+#   is normal design, not a leak); all three formulas have OTHER_CONSTANTS = {}.
+priors:
+  - name: solar_wind_speed_typical_km_s
+    value: 400.0
+    unit: km/s
+    description: >-
+      Typical quiet-time solar wind bulk speed at 1 AU (~400 km/s).
+      Characterises the solar wind environment but does NOT appear in the
+      dDst/dt formula; the Dst model depends on the electric field Ey
+      and dynamic pressure, not V_sw directly.
+    source: "Schwenn 2006 Living Rev. Sol. Phys. 3:2 (community reference value)"
+    _role: distractor
+  - name: Earth_magnetic_dipole_moment_A_m2
+    value: 8.0e22
+    unit: A*m^2
+    description: >-
+      Earth's geomagnetic dipole moment (~8e22 A·m²). Provides the geomagnetic
+      context (ring-current injection scales with the magnetopause standoff
+      distance which depends on the dipole moment), but does NOT appear in the
+      Burton/O'Brien dDst/dt formula.
+    source: "Finlay et al. 2010, Geophys. J. Int. 183:1216 (IGRF-11 reference value)"
+    _role: distractor
+  - name: proton_charge_C
+    value: 1.602176634e-19
+    unit: C
+    description: >-
+      CODATA 2018 exact value of the elementary (proton) charge. Enters plasma
+      physics formulas for solar-wind pressure and particle energy, but does NOT
+      appear in the empirical dDst/dt models (Burton 1975, O'Brien 2000,
+      Markidis 2025).
+    source: "CODATA 2018 (SI defining constant, exact)"
+    _role: distractor
+  - name: kp_index_quiet
+    value: 1.0
+    unit: dimensionless
+    description: >-
+      Reference Kp value for geomagnetically quiet conditions (Kp ≤ 1).
+      Kp is a different geomagnetic activity index (planetary K-index,
+      3-hourly, 0-9 scale); it is NOT used in the Dst dDst/dt formula,
+      which is driven by solar-wind Ey and P_dyn instead.
+    source: "Menvielle & Berthelier 1991 Rev. Geophys. 29:415 (Kp index definition)"
+    _role: distractor
+
+references:
+  - id: obrien_2000
+    label: "O'Brien & McPherron 2000 — AK2 model (Eq. 1 + Table 1, PDF p. 1-2)"
+    formula_file: formulas/obrien_2000.py
+    reference_pdf: reference/obrien_2000.pdf
+    n_law_constants: 7
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 2.5337
+      r2: 0.1918
+  - id: burton_1975
+    label: "Burton et al. 1975 — BMR model (Eq. 4 + final prescription, PDF p. 4206-4208)"
+    formula_file: formulas/burton_1975.py
+    reference_pdf: reference/burton_1975.pdf
+    n_law_constants: 5
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 4.1097
+      r2: -1.1263
+  - id: markidis_2025
+    label: "Markidis et al. 2025 — DDM#1 PySR model (Table 3, PDF p. 9)"
+    formula_file: formulas/markidis_2025.py
+    reference_pdf: reference/markidis_2025.pdf
+    n_law_constants: 4
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 2.4720
+      r2: 0.2307
+
+caps:
+  max_law_constants:       7
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes recovery or decay driven by the existing ring-current depletion encoded in Dst"
+  - "includes solar-wind dynamic-pressure effects from magnetopause-current compression"
+  - "includes southward solar-wind convective-electric-field driving of ring-current injection"
+  - "predicted dDst_dt is positive for strongly negative Dst when southward solar-wind driving is absent"
+  - "predicted dDst_dt is negative for sufficiently strong southward solar-wind driving when Dst is near quiet time"
+  - "predicted dDst_dt does not decrease as Dst becomes more negative under fixed solar-wind conditions"
+
+best_baseline: 2.47197    # markidis_2025 — rmse (lower is better); regenerated 2026-05-30

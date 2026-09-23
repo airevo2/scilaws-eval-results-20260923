@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Voltage"
+  symbol: "Volt"
+  unit: ""
+  description: "Voltage"
+inputs:
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Electric permitivity"
+    symbol: "epsilon"
+    unit: ""
+    description: "Electric permitivity"
+  - name: "Length"
+    symbol: "r"
+    unit: ""
+    description: "Length"

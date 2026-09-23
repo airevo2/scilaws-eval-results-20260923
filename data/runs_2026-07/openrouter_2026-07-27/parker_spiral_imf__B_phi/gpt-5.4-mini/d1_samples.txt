@@ -1,0 +1,96 @@
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r = X[:, 2]
+    
+    # Parker spiral relation:
+    # B_phi = - (Omega_sun * r / v_sw) * B_r
+    # with prograde azimuthal direction taken as positive.
+    Omega_sun = 2.86533e-6  # rad/s, sidereal solar rotation rate (commonly used)
+    AU_m = 1.495978707e11   # m
+    
+    v_m_s = v_sw * 1e3
+    return -(Omega_sun * r * AU_m / v_m_s) * B_r
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r = X[:, 2]
+    
+    # Parker spiral relation: B_phi = - (Omega_sun * r / v_sw) * B_r
+    # with the sign convention that B_phi is positive in the prograde direction.
+    Omega_sun = 2.86533e-6  # rad/s, sidereal solar rotation rate
+    
+    AU_m = 1.495978707e11   # m
+    km_to_m = 1.0e3
+    
+    return -(Omega_sun * (r * AU_m) / (v_sw * km_to_m)) * B_r
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily mean azimuthal IMF component B_phi [nT] at L1.
+
+    Standard Parker spiral relationship:
+        B_phi = - (Omega_sun * r / v_sw) * B_r
+
+    where Omega_sun is the solar sidereal rotation rate.
+    """
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+
+    # Solar sidereal angular rotation rate [rad/s]
+    Omega_sun = 2.86533e-6
+
+    # 1 AU [km]
+    AU_km = 1.495978707e8
+
+    # Convert r from AU to km and apply the Parker spiral relation
+    r_km = r_AU * AU_km
+    return -(Omega_sun * r_km / v_sw) * B_r
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Parker spiral / frozen-in solar wind relation:
+    # B_phi = - (Omega_sun * r / v_sw) * B_r
+    # where Omega_sun is the solar sidereal angular rotation rate.
+    Omega_sun = 2.86533e-6  # rad/s
+    AU = 1.495978707e8      # km
+
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+
+    return -(Omega_sun * (r_AU * AU) / v_sw) * B_r
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Parker spiral relation for the azimuthal IMF component:
+    # B_phi = - (Omega_sun * r / v_sw) * B_r
+    # Using a standard solar rotation rate Omega_sun ≈ 2.86533e-6 rad/s
+    # and r in AU, v_sw in km/s, with r converted to km.
+    Omega_sun = 2.86533e-6  # rad/s
+    AU_km = 1.495978707e8    # km
+    
+    B_phi = -(Omega_sun * (r_AU * AU_km) / v_sw) * B_r
+    return B_phi

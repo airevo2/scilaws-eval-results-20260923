@@ -1,0 +1,73 @@
+import numpy as np
+
+def predict(X):
+    t = X[:, 0].astype(float)
+    # Canonical logistic growth form for biomass/OD over time
+    # OD(t) = K / (1 + exp(-r * (t - t0)))
+    K = 1.0      # carrying capacity / asymptotic OD
+    r = 1.0      # growth-rate parameter
+    t0 = 0.0     # inflection time
+    return K / (1.0 + np.exp(-r * (t - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0].astype(float)
+    # Standard logistic growth curve for OD600 over time
+    # OD(t) = ODmax / (1 + exp(-k * (t - t0)))
+    ODmax = 1.0   # asymptotic carrying level (dimensionless OD)
+    k = 1.0       # growth-rate-like slope parameter (1/h)
+    t0 = 10.0     # inflection time (h)
+    return ODmax / (1.0 + np.exp(-k * (t - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = np.asarray(X)[:, 0]
+
+    # Standard closed-form microbial growth curve:
+    # Logistic model: OD(t) = K / (1 + exp(-r * (t - t0)))
+    # Here we use generic parameter values consistent with E. coli batch growth
+    # in plate-reader OD600 units.
+    K = 1.2     # carrying-capacity-like plateau OD600
+    r = 0.9     # growth-rate scale (1/h)
+    t0 = 8.0    # inflection time (h)
+
+    return K / (1.0 + np.exp(-r * (t - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0].astype(float)
+
+    # Standard closed-form biomass growth curve: logistic function
+    # OD(t) = K / (1 + exp(-r * (t - t0)))
+    K = 1.0      # carrying capacity / maximal OD
+    r = 1.0      # growth-rate parameter
+    t0 = 10.0    # inflection time (hours)
+
+    return K / (1.0 + np.exp(-r * (t - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    t = X[:, 0].astype(float)
+
+    # Canonical closed-form growth curve: logistic model
+    # OD(t) = K / (1 + ((K - OD0) / OD0) * exp(-r * t))
+    #
+    # Since no calibration data were provided, use a generic E. coli-like
+    # parameterization that yields a plausible sigmoidal OD trajectory.
+    OD0 = 0.03   # initial OD600
+    K = 1.2      # carrying capacity / plateau OD600
+    r = 0.9      # specific growth rate (1/h)
+
+    return K / (1.0 + ((K - OD0) / OD0) * np.exp(-r * t))

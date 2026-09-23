@@ -1,0 +1,189 @@
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    
+    # Standard Vogel-Fulcher-Tammann (VFT) equation for silicate melt viscosity:
+    # log10(η) = A + B / (T - C)
+    # where A, B, and C are composition-dependent parameters.
+    
+    # Base parameters for a generic silicate melt
+    A_intercept = -4.31
+    B_intercept = 5000.0
+    C_intercept = 500.0
+    
+    # Linear coefficients for the 12 oxide components:
+    # [sio2, tio2, al2o3, feo, fe2o3, mno, mgo, cao, na2o, k2o, p2o5, h2o]
+    A_coef = np.zeros(12)
+    B_coef = np.array([10.0, 20.0, 15.0, -5.0, -5.0, -5.0, -10.0, -15.0, -20.0, -15.0, 5.0, -30.0])
+    C_coef = np.array([2.0, 4.0, 3.0, -1.0, -1.0, -1.0, -2.0, -3.0, -4.0, -3.0, 1.0, -6.0])
+    
+    # Calculate composition-dependent VFT parameters
+    A = A_intercept + np.dot(X[:, 1:], A_coef)
+    B = B_intercept + np.dot(X[:, 1:], B_coef)
+    C = C_intercept + np.dot(X[:, 1:], C_coef)
+    
+    # Ensure T - C is strictly positive to avoid division by zero
+    T_diff = T - C
+    T_diff = np.where(T_diff <= 1.0, 1.0, T_diff)
+    
+    # Calculate log10 viscosity
+    log_viscosity = A + B / T_diff
+    
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+def predict(X):
+    X = np.asarray(X, dtype=float)
+    T = X[:, 0]
+    comp = X[:, 1:13].copy()
+
+    # Normalize composition to 100 mol%
+    comp_sum = np.sum(comp, axis=1, keepdims=True)
+    comp_sum = np.where(comp_sum == 0, 1.0, comp_sum)
+    comp = comp / comp_sum * 100.0
+
+    sio2  = comp[:, 0]
+    tio2  = comp[:, 1]
+    al2o3 = comp[:, 2]
+    feo   = comp[:, 3]
+    fe2o3 = comp[:, 4]
+    mno   = comp[:, 5]
+    mgo   = comp[:, 6]
+    cao   = comp[:, 7]
+    na2o  = comp[:, 8]
+    k2o   = comp[:, 9]
+    p2o5  = comp[:, 10]
+    h2o   = comp[:, 11]
+
+    # GRD model coefficients (Giordano, Russell & Dingwell, 2008)
+    # VFT form: log10(eta) = A + B / (T - C)
+    A = (-4.31
+         + 0.0   * sio2
+         - 0.06  * tio2
+         + 0.01  * al2o3
+         + 0.02  * feo
+         + 0.04  * fe2o3
+         + 0.0   * mno
+         + 0.01  * mgo
+         + 0.02  * cao
+         - 0.03  * na2o
+         - 0.02  * k2o
+         + 0.0   * p2o5
+         - 0.04  * h2o)
+
+    B = (78.1  * sio2
+         + 138.2 * tio2
+         + 67.1  * al2o3
+         + 34.2  * feo
+         + 27.5  * fe2o3
+         + 38.9  * mno
+         + 41.8  * mgo
+         + 40.3  * cao
+         + 22.6  * na2o
+         + 12.4  * k2o
+         + 53.7  * p2o5
+         - 26.4  * h2o)
+
+    C = (6.01  * sio2
+         + 11.36 * tio2
+         + 7.25  * al2o3
+         + 4.53  * feo
+         + 3.81  * fe2o3
+         + 5.12  * mno
+         + 5.57  * mgo
+         + 5.28  * cao
+         + 3.14  * na2o
+         + 2.21  * k2o
+         + 6.89  * p2o5
+         - 4.28  * h2o)
+
+    denom = T - C
+    denom = np.where(denom < 1.0, 1.0, denom)
+    log_viscosity = A + B / denom
+
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+    
+    # Giordano, Russell, and Dingwell (2008) GRD model
+    A = -4.31
+    B = (159.5 + 6.21 * sio2 - 2.03 * tio2 - 4.04 * al2o3 + 
+         1.37 * feo - 2.07 * fe2o3 - 1.21 * mno + 5.21 * mgo + 
+         5.36 * cao + 4.92 * na2o + 7.55 * k2o - 9.01 * p2o5 + 
+         9.93 * h2o)
+         
+    C = (210.4 + 9.47 * sio2 - 2.21 * tio2 - 4.72 * al2o3 + 
+         0.12 * feo - 3.35 * fe2o3 - 2.36 * mno + 14.78 * mgo + 
+         9.82 * cao + 4.79 * na2o + 13.62 * k2o - 14.58 * p2o5 + 
+         31.40 * h2o)
+    
+    log_viscosity = A + B / (T - C)
+    
+    return log_viscosity
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    T = X[:, 0]
+    sio2 = X[:, 1]
+    tio2 = X[:, 2]
+    al2o3 = X[:, 3]
+    feo = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno = X[:, 6]
+    mgo = X[:, 7]
+    cao = X[:, 8]
+    na2o = X[:, 9]
+    k2o = X[:, 10]
+    p2o5 = X[:, 11]
+    h2o = X[:, 12]
+    
+    # Giordano, Russell, and Dingwell (2008) VFT model parameterization
+    # log10(η) = A + B / (T - C)
+    # where A, B, and C depend on structural components:
+    # SM = network formers (SiO2 + Al2O3)
+    # FM = field strength modifiers (FeO + Fe2O3 + MnO + MgO + CaO)
+    # NKM = alkali modifiers (Na2O + K2O)
+    
+    SM = sio2 + al2o3
+    FM = feo + fe2o3 + mno + mgo + cao
+    NKM = na2o + k2o
+    
+    A = -4.31 * np.ones_like(T)
+    B = 5809.19 + 445.92 * SM + 12.32 * FM - 601.32 * NKM - 810.93 * h2o
+    C = 623.13 - 26.24 * SM - 31.14 * FM + 68.17 * NKM + 118.41 * h2o
+    
+    # Avoid division by zero or negative denominator
+    denom = T - C
+    denom = np.where(denom <= 1e-6, 1e-6, denom)
+    
+    log_eta = A + B / denom
+    return log_eta

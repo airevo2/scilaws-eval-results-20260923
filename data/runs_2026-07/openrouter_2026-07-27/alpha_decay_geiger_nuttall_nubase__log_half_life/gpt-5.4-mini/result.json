@@ -1,0 +1,17 @@
+{
+  "task": "alpha_decay_geiger_nuttall_nubase__log_half_life",
+  "model": "gpt-5.4-mini",
+  "type": "typeII",
+  "primary": "physics ",
+  "formulas": [
+    {
+      "formula": "qi_2014",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

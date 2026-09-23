@@ -1,0 +1,28 @@
+type: typeI
+domain: physics
+target:
+  name: "Spectral radiance"
+  symbol: "L_rad"
+  unit: ""
+  description: "Spectral radiance"
+inputs:
+  - name: "Frequency"
+    symbol: "omega"
+    unit: ""
+    description: "Frequency"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"

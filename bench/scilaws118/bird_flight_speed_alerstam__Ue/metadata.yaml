@@ -1,0 +1,136 @@
+task_id: bird_flight_speed_alerstam__Ue
+domain: biology / avian_ecology
+license: CC-BY-2.5
+
+# Type I — each species is an independent row; no cluster structure.
+# The lift-equilibrium formula applies universally with a single global C_L.
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no column listing, no constants.
+context: >-
+  This task concerns the cruising airspeed of migratory birds in flapping flight, a topic in flight biomechanics and animal ecology.
+
+target:
+  name: Ue_ms
+  symbol: Ue
+  unit: m/s
+  description: Mean equivalent airspeed corrected to sea-level air density, measured by tracking radar during migratory flapping flight.
+  range: [6.70, 23.60]
+
+inputs:
+  - name: mass_kg
+    symbol: m
+    unit: kg
+    description: Mean total body mass of the species.
+    range: [0.009, 10.597]
+  - name: wing_area_m2
+    symbol: S
+    unit: m^2
+    description: Mean projected wing area of the species (both wings plus body between wings).
+    range: [0.0073, 0.8824]
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv   # small birds: mass_kg < 0.5 kg; OOD split on body mass axis
+  test:  data/test.csv    # large birds: mass_kg >= 0.5 kg; extrapolation to heavier species
+
+n_train: 69
+n_test: 62
+
+# NOTE (audit only — not shown to SR system):
+# The reference formula (lift-equilibrium with global C_L=0.4195) is expected to
+# achieve negative R2 on the test set and RMSE exceeding target std. This is the
+# paper's main scientific finding: empirical scaling deviates from the theoretical
+# aerodynamic prediction, especially for large birds (test set). The baseline is a
+# legitimate hard OOD probe (data_spec section 9.18). The task documents how well
+# SR can recover the correct physical structure even when the formula systematically
+# under-performs the naive mean on large birds.
+
+# FM C12 (priors-leakage) fix — 2026-05-26
+# Per AUDIT_CHECKLIST.md §C12 (v0.6) and audit/PRIORS_LEAKAGE_AUDIT_2026-05-26.md.
+#
+# Pre-fix: LEAKAGE — g_gravity=9.81 matches OTHER_CONSTANTS["g"]=9.81 in
+# alerstam_2007.py; rho_0_sea_level=1.225 matches OTHER_CONSTANTS["rho_0"]=1.225.
+#
+# Classification: BOTH are BUILDING_BLOCK universal physical constants — NOT
+# paper-specific empirical fit coefficients. g=9.81 m/s² is the BIPM/ISO 80000
+# standard gravitational acceleration (exact definition); rho_0=1.225 kg/m³ is
+# the ICAO Standard Atmosphere (ISO 2533:1975) sea-level air density. Both are
+# upstream physical definitions that any SR formula about aerodynamic lift MUST
+# use — they are genuine candidate building blocks for the LLM, not answer hints.
+# Strategy A: RETAIN both as candidates; improve descriptions to make the
+# BUILDING_BLOCK nature explicit. No structural change to the priors list.
+#
+# Post-fix: CLEAN — g and rho_0 are universal physical standards, not fit results;
+# their presence does not collapse the SR task (the SR system still needs to
+# discover the functional form Ue = sqrt(2*m*g/(rho_0*S*C_L))).
+
+# Optional priors — grounded from reference papers and aerodynamic literature
+priors:
+  - name: g_gravity
+    value: 9.81
+    unit: m/s^2
+    description: Standard gravitational acceleration — BIPM/ISO 80000 definition (exact). A universal physical constant that enters the aerodynamic lift-equilibrium formula via the weight force W = m*g. This is a physical building block, not a fit coefficient from the Alerstam (2007) study.
+    source: CODATA/BIPM; ISO 80000-3; used as OTHER_CONSTANTS["g"] in alerstam_2007.py.
+    _role: candidate
+  - name: rho_0_sea_level
+    value: 1.225
+    unit: kg/m^3
+    description: "ISA sea-level air density — ICAO Standard Atmosphere (ISO 2533:1975) reference value. Defines the equivalent airspeed (Ue): true airspeed corrected to sea-level air density. A universal atmospheric reference constant, not a fit coefficient from Alerstam (2007)."
+    source: ICAO Standard Atmosphere ISO 2533:1975; stated in Alerstam 2007 Methods p. 6 (reference [14]) for the Ue definition.
+    _role: candidate
+  - name: exponent_Q_theoretical
+    value: 0.5
+    unit: dimensionless
+    description: Theoretical exponent for Ue vs wing loading Q under dynamical similarity (Ue ~ Q^0.5); the paper's main scientific claim is that the EMPIRICAL exponent is ~0.31, not this theoretical value.
+    source: Alerstam 2007 Introduction, page 1; this is the predicted exponent the paper tests.
+    _role: distractor
+  - name: exponent_mass_theoretical
+    value: 0.1667
+    unit: dimensionless
+    description: Theoretical exponent for Ue vs body mass under geometrical similarity (Ue ~ m^{1/6}); the paper finds the empirical exponent departs significantly from this theoretical prediction for large birds.
+    source: Alerstam 2007 Introduction, page 1; one-sixth (= 1/6).
+    _role: distractor
+
+# Reference-baseline bank
+references:
+  - id: alerstam_2007
+    label: "Alerstam et al. 2007 — lift-equilibrium formula (Eq. 1, PLoS Biology)"
+    formula_file: formulas/alerstam_2007.py
+    reference_pdf: reference/alerstam_2007.pdf
+    n_law_constants: 0     # no paper-tabulated constants
+    n_other_constants: 3   # C_L (dataset-derived), g, rho_0
+    n_local_params: 0
+    measured:
+      rmse: 3.9601
+      r2: -0.2406
+  - id: alerstam_2007_empirical
+    label: "Alerstam et al. 2007 — empirical RMA power law (Table 1, Fig. 1 caption)"
+    formula_file: formulas/alerstam_2007_empirical.py
+    reference_pdf: reference/alerstam_2007.pdf
+    n_law_constants: 2     # a=4.3, c=0.31
+    n_other_constants: 1   # g=9.81
+    n_local_params: 0
+    measured:
+      rmse: 2.6361
+      r2: 0.4503
+
+caps:
+  max_law_constants: 2
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include body weight as a driver that increases equivalent cruising speed"
+  - "include wing area as a lift surface that lowers equivalent cruising speed at fixed body mass"
+  - "predicted equivalent airspeed is strictly positive"
+
+best_baseline: 2.63609    # alerstam_2007_empirical — rmse (lower is better); regenerated 2026-05-30

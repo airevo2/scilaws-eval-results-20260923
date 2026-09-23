@@ -1,0 +1,116 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily daytime canopy conductance proxy (Gc) using the
+    Oren et al. (1999) log-linear stomatal conductance model:
+        Gc = Gc_ref - m * ln(D)
+    
+    Parameters (default mid-range values for temperate broadleaf trees):
+        Gc_ref : reference canopy conductance at D = 1 kPa
+        m      : stomatal sensitivity to VPD (slope of Gc vs ln(D))
+    """
+    D = X[:, 0]  # daytime mean VPD [kPa]
+    
+    # Oren et al. (1999) canonical parameters
+    Gc_ref = 40.0   # [cm3 cm-2 h-1 kPa-1]  (reference conductance at D = 1 kPa)
+    m      = 20.0   # [cm3 cm-2 h-1 kPa-1]  (m / Gc_ref ≈ 0.5, consistent with
+                     #  the widely reported ratio across many species)
+    
+    Gc = Gc_ref - m * np.log(D)
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    
+    # Reference canopy conductance at D = 1 kPa (cm3 cm-2 h-1 kPa-1)
+    Gc_ref = 0.30 
+    
+    # Sensitivity of canopy conductance to VPD (slope of log-linear decline)
+    m = 0.15      
+    
+    # Log-linear decline model (Oren et al., 1999)
+    Gc = Gc_ref - m * np.log(D)
+    
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily daytime canopy conductance proxy (Gc) using the
+    log-linear stomatal conductance model of Oren et al. (1999):
+    
+        Gc = Gc_ref - m * ln(D)
+    
+    Parameters
+    ----------
+    X : 2-D numpy array
+        X[:, 0] = vpd (D) [kPa], daily daytime mean vapour pressure deficit
+    
+    Returns
+    -------
+    Gc : 1-D numpy array
+        Canopy conductance proxy [cm3 cm-2 h-1 kPa-1]
+    """
+    D = X[:, 0]  # VPD [kPa]
+
+    # Reference canopy conductance at D = 1 kPa
+    Gc_ref = 50.0  # cm3 cm-2 h-1 kPa-1
+
+    # Stomatal sensitivity to VPD (slope of Gc vs ln(D))
+    # m / Gc_ref ~ 0.5 is typical for many tree species (Oren et al. 1999)
+    m = 25.0  # cm3 cm-2 h-1 kPa-1
+
+    Gc = Gc_ref - m * np.log(D)
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Canopy conductance proxy (Gc) as a log-linear function of VPD.
+    
+    Based on the Oren et al. (1999) stomatal conductance model:
+        Gc = Gc_ref - m * ln(D)
+    
+    where Gc_ref is the reference canopy conductance at D = 1 kPa,
+    and m is the stomatal sensitivity to VPD.
+    
+    The ratio m / Gc_ref ≈ 0.5 is the canonical result across many
+    tree species (Oren et al. 1999, Plant Cell Environ.).
+    """
+    D = X[:, 0]  # VPD [kPa], daytime mean where VPD >= 0.3 kPa
+
+    # Reference canopy conductance at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    Gc_ref = 20.0
+
+    # Stomatal sensitivity to VPD [cm3 cm-2 h-1 kPa-1]
+    # Canonical ratio m / Gc_ref ~ 0.5 (Oren et al. 1999)
+    m = 10.0
+
+    Gc = Gc_ref - m * np.log(D)
+
+    return Gc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    D = X[:, 0]
+    # Oren et al. (1999) log-linear stomatal conductance model:
+    # Gc = Gc_ref - m * ln(D)
+    # where m / Gc_ref ~ 0.6 (canonical stomatal sensitivity ratio)
+    Gc_ref = 5.0   # reference canopy conductance proxy at D = 1 kPa [cm3 cm-2 h-1 kPa-1]
+    m = 3.0        # stomatal sensitivity to ln(VPD) [cm3 cm-2 h-1 kPa-1]
+    Gc = Gc_ref - m * np.log(D)
+    return np.maximum(Gc, 0.0)

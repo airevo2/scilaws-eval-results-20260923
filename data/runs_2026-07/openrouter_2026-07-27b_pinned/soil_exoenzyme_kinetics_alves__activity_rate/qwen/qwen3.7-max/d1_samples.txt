@@ -1,0 +1,60 @@
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    Vmax = 100.0  # Maximum enzyme activity rate (nmol g^-1 h^-1)
+    Km = 50.0     # Half-saturation constant (uM)
+    v = (Vmax * S) / (Km + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    Vmax = 100.0  # nmol g^-1 h^-1, maximum enzyme activity rate
+    Km = 200.0    # uM, Michaelis constant (half-saturation concentration)
+    v = Vmax * S / (Km + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    Vmax = 100.0  # Representative Vmax (nmol g^-1 h^-1)
+    Km = 100.0    # Representative Km (uM)
+    v = (Vmax * S) / (Km + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Michaelis-Menten enzyme kinetics:
+        v = Vmax * S / (Km + S)
+    
+    Parameters (representative soil enzyme values):
+        Vmax = 200.0 nmol g^-1 h^-1  (maximum activity rate)
+        Km   = 150.0 uM              (half-saturation constant)
+    """
+    S = X[:, 0]          # substrate concentration [uM]
+    Vmax = 200.0         # nmol g^-1 h^-1
+    Km = 150.0           # uM
+    v = Vmax * S / (Km + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    Vmax = 150.0  # Maximum enzyme activity rate (nmol g^-1 h^-1)
+    Km = 100.0    # Michaelis constant / half-saturation concentration (uM)
+    v = (Vmax * S) / (Km + S)
+    return v

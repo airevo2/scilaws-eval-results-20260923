@@ -1,0 +1,149 @@
+task_id: solar_sunspot_silso__ssn
+domain: astronomy / solar physics
+license: CC-BY-NC-4.0
+
+# Type II — cluster = solar cycle number. The Hathaway-Wilson-Reichmann
+# formula explicitly fits (A, t0, b) per cycle; c = 0.8 is global.
+type: typeII
+has_group_id: true
+
+# Background knowledge — science framing only, no column listing, no constants.
+context: >-
+  The sunspot number is the primary index of solar magnetic activity in solar physics, tracing the Sun's cycle of magnetic activity.
+
+target:
+  name: ssn
+  symbol: R_I
+  unit: ""
+  description: Monthly mean total International Sunspot Number (ISN v2.0 scale), a dimensionless composite count of sunspot groups and individual spots averaged over all network observers.
+  range: [0.0, 398.2]
+
+inputs:
+  - name: t_year
+    symbol: t
+    unit: yr
+    description: Decimal year at the midpoint of the calendar month, e.g. 1818.542 for July 1818.
+    range: [1749.041667, 2026.208333]
+  - name: year
+    symbol: t_yr
+    unit: yr
+    description: Integer calendar year of the observation.
+    range: [1749, 2026]
+  - name: month
+    symbol: m
+    unit: ""
+    description: Calendar month of the observation (1 = January, 12 = December).
+    categories: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+# Dataset — three-file v2 Type II layout.
+# Train/test boundary: cycles 0-21 in train; cycles 22-25 (1986-2026) in test.
+# Within each test cycle, the first 60% of time-ordered monthly rows go to
+# test_fit (rising phase + peak); the last 40% go to test_test (decline phase).
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 2852
+n_test_fit: 287
+n_test_test: 188
+n_clusters_train: 22
+n_clusters_test: 4
+
+# Priors: FM C12 fix (2026-05-26) — c_asymmetry=0.8 was leaking
+# (LAW_CONSTANTS["c"]=0.8 in hathaway_2015.py); b_avg_months=56 and
+# A_avg_ssn=195 are also LAW-adjacent average-cycle paper values.
+# All three are EMPIRICAL_FIT cycle-shape parameters with no upstream
+# universal anchor — removed per playbook §6.
+# Added distractors (relabeled candidate->distractor, audit 2026-05-29):
+# physical solar constants (solar_luminosity, solar_rotation_period) — not used
+# by any formula and unrelated to the cycle-shape constant c. This task's only
+# LAW constant (c=0.8) would itself leak if offered, so NO non-leaking candidate
+# prior exists; all five priors are therefore distractors.
+# Distractors kept: Waldmeier relation parameters are from the same paper
+# but govern a different (rise-time vs amplitude) equation and are not
+# used by any shipped formula.
+priors:
+  - name: solar_luminosity_W
+    value: 3.828e26
+    unit: W
+    description: IAU 2015 nominal solar luminosity L_sun — sets the energy scale for solar magnetic activity; not used in the sunspot cycle-shape formulas.
+    source: IAU 2015 Resolution B3 (nominal solar constants).
+    _role: distractor
+  - name: solar_rotation_period_days
+    value: 25.38
+    unit: days
+    description: Sidereal rotation period of the solar equator in days — sets the magnetic buoyancy timescale underlying cycle generation; not a free parameter in the shipped formulas.
+    source: Carrington (1863); standard solar value cited in Hathaway (2015) §2.1.
+    _role: distractor
+  - name: waldmeier_offset
+    value: 35.0
+    unit: months
+    description: Intercept of the Waldmeier rise-time–amplitude relation (Eq. 7); rise time ≈ 35 + 1800/amplitude.
+    source: Hathaway (2015), Eq. 7, PDF p. 41.
+    _role: distractor
+  - name: waldmeier_slope
+    value: 1800.0
+    unit: months * SSN
+    description: Slope coefficient in the Waldmeier rise-time–amplitude relation (Eq. 7).
+    source: Hathaway (2015), Eq. 7, PDF p. 41.
+    _role: distractor
+  - name: schwabe_cycle_period_yr
+    value: 11.0
+    unit: yr
+    description: Approximate mean Schwabe cycle period in years — background framing value; individual cycles range 9-14 yr; not a constant in any shipped formula.
+    source: Hathaway (2015), §1, PDF p. 1.
+    _role: distractor
+
+references:
+  - id: hathaway_2015
+    label: "Hathaway (2015) HWR cycle-shape formula — F(t) = A((t-t0)/b)^3 [exp(((t-t0)/b)^2) - c]^{-1}"
+    formula_file: formulas/hathaway_2015.py
+    reference_pdf: reference/hathaway_2015.pdf
+    n_law_constants: 1       # c = 0.8
+    n_other_constants: 0
+    n_local_params: 3        # A, t0, b
+    measured:
+      rmse: 28.0104
+      r2: 0.6385
+  - id: volobuev_2009
+    label: "Volobuev (2009) cycle-shape formula — x_k(t) = ((t-T0_k)/Ts_k)^2 * exp(-((t-T0_k)/Td_k)^2)"
+    formula_file: formulas/volobuev_2009.py
+    reference_pdf: reference/penza_2024.pdf  # OA secondary source; Penza 2024 Eq.3 gives the Volobuev (2009) form verbatim (verified in penza_2024.txt L545/555/559)
+    citation_chain: "primary Volobuev (2009) Sol. Phys. 258:319 (paywalled); form recovered verbatim from Penza et al. (2024) arXiv:2409.12648v1 Eq. 3 — now on disk at reference/penza_2024.pdf"
+    n_law_constants: 0       # form-as-claim per data_spec §5.2
+    n_other_constants: 0
+    n_local_params: 3        # T0, Ts, Td
+    measured:
+      rmse: 34.5666
+      r2: 0.4495
+
+# NOTE (auditor): cycle 25 is an ongoing cycle whose peak occurred in 2024-2025 —
+# the test_test window (2024-2026) covers the actual maximum of the cycle, which
+# could not be seen in test_fit (2019-2023, only the rising phase). The per-cycle
+# R2 for cycle 25 is -2.69 with RMSE 61, which is a legitimate hard OOD probe:
+# predicting the peak amplitude and shape of an incomplete ongoing cycle is
+# genuinely harder than predicting the decline of a completed cycle. This is
+# documented as an intentional aspect of the benchmark design (data_spec §9.18).
+# The pooled RMSE (28) and R2 (0.64) remain reasonable over all four test cycles.
+
+caps:
+  max_law_constants:       1
+  max_local_params:        3
+  max_init_size_per_param: 3
+  fit_timeout_seconds:     10
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "models each cycle as an asymmetric single-peaked activity pulse with a faster rise than decline, using an explicit asymmetry control — either a fixed asymmetry constant or separate rise and decay timescale parameters — so the rise/decline imbalance is set independently of the cycle amplitude"
+  - "includes a steep power-law (cubic or quadratic) factor in elapsed time since cycle start that drives the post-minimum rise of activity toward the peak"
+  - "includes a super-exponential, Gaussian-type term in elapsed time that drives the post-peak decline of activity (whether as a multiplicative Gaussian or a growing exponential in the denominator)"
+  - "represents the cycle as a localized unimodal pulse anchored at a cycle-start time near solar minimum: the predicted activity vanishes at the start, rises to a single maximum, and returns toward the near-zero quiet-Sun baseline away from the peak (no spurious secondary peaks, not unbounded or persistently elevated)"
+  - "predicted monthly mean sunspot number is non-negative"
+
+best_baseline: 26.5842    # hathaway_2015 — mean per-cluster rmse (lower is better); regenerated 2026-05-30

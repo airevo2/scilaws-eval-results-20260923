@@ -1,0 +1,107 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict the large frequency separation Δν for red-giant p-modes.
+    
+    Uses the standard asteroseismic scaling relations under the
+    constant-mass approximation (appropriate for red giants where the
+    radius varies much more than the mass).  Eliminating M and R between
+    the ν_max and Δν scalings gives:
+    
+        Δν ≈ Δν_⊙ (ν_max / ν_max_⊙)^{3/4} (T_eff / T_eff_⊙)^{3/8}
+    
+    Solar reference values are adopted as:
+        Δν_⊙ = 135.1 μHz
+        ν_max_⊙ = 3100.0 μHz
+        T_eff_⊙ = 5777.0 K
+    """
+    # Solar constants
+    DELTA_NU_SUN = 135.1   # μHz
+    NU_MAX_SUN = 3100.0    # μHz
+    TEFF_SUN = 5777.0      # K
+    
+    nu_max = X[:, 0]
+    teff = X[:, 1]
+    
+    delta_nu = DELTA_NU_SUN * (nu_max / NU_MAX_SUN)**0.75 * (teff / TEFF_SUN)**0.375
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the large frequency separation (delta_nu) for red giants.
+    Uses the standard empirical power-law relation between delta_nu and nu_max 
+    (e.g., Mosser et al. 2010, Stello et al. 2009).
+    """
+    nu_max = X[:, 0]
+    
+    # Standard empirical relation for red giants: delta_nu = 0.27 * nu_max^0.74
+    delta_nu = 0.27 * np.power(nu_max, 0.74)
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    nu_max = X[:, 0]
+    
+    # Standard asteroseismic scaling relation (Kjeldsen & Bedding 1995; Huber et al. 2011)
+    delta_nu_sun = 135.1  # uHz
+    nu_max_sun = 3090.0   # uHz
+    exponent = 0.757      # commonly cited empirical exponent for red giants
+    
+    delta_nu = delta_nu_sun * (nu_max / nu_max_sun)**exponent
+    
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the large frequency separation Δν [μHz] for red-giant oscillations.
+    
+    Uses the standard empirical red-giant scaling relation
+        Δν = a * ν_max^b
+    with a = 0.266 and b = 0.757 (Mosser et al. 2010; Huber et al. 2010),
+    which is the most commonly cited closed-form relation between Δν and ν_max.
+    """
+    nu_max = X[:, 0]
+    delta_nu = 0.266 * np.power(nu_max, 0.757)
+    return delta_nu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard asteroseismic scaling relation for the large frequency separation
+    (Δν) of red-giant stars (e.g., Yu+2018, Mosser+2013).
+    
+    Δν = Δν_⊙ (ν_max / ν_max_⊙)^{3/4} (T_eff / T_eff_⊙)^{-3/8}
+    
+    Solar reference values:
+        Δν_⊙   = 135.1 μHz
+        ν_max_⊙ = 3090.0 μHz
+        T_eff_⊙ = 5777.0 K
+    
+    [Fe/H] and evolutionary phase are not part of the canonical closed-form
+    scaling relation and are therefore ignored.
+    """
+    nu_max = X[:, 0]
+    teff = X[:, 1]
+    
+    delta_nu_sun = 135.1   # uHz
+    nu_max_sun = 3090.0    # uHz
+    teff_sun = 5777.0      # K
+    
+    delta_nu = delta_nu_sun * (nu_max / nu_max_sun)**0.75 * (teff / teff_sun)**(-0.375)
+    return delta_nu

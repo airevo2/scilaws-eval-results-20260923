@@ -1,0 +1,180 @@
+task_id: disinfection_kinetics_chick_watson__log_reduction
+domain: engineering / water_treatment
+license: CC-BY-4.0
+
+# Type II — cluster = (disinfectant type) x (organism). Each cluster represents
+# a distinct (disinfectant x organism) pair from the Mofidi (2025) database; the
+# inactivation rate constant k (and dose exponent m) must be refit per cluster.
+type: typeII
+has_group_id: true
+
+context: >-
+  Chemical disinfectants inactivate microorganisms according to a dose-response
+  relationship first formalised by Chick (1908) and Watson (1908). The key
+  observation is that the log10 reduction in viable microbial count increases
+  with the disinfection dose, measured as CT — the product of disinfectant
+  concentration (mg/L) and contact time (min). The rate of inactivation varies
+  substantially across (disinfectant, organism) pairs: ozone inactivates bacteria
+  at much lower doses than chloramine, and fast-growing vegetative cells are
+  generally more susceptible than spore-forming or mycobacterial species. Within
+  a given (disinfectant, organism) pair, log reduction typically rises as a
+  power-law function of the CT dose, making the log-log curve approximately
+  linear. This structured per-cluster behaviour is the target of symbolic
+  regression here.
+
+target:
+  name: log_reduction
+  symbol: "LRV"
+  unit: ""
+  description: Log10 microbial reduction — log10(N0/N), where N0 is the initial and N is the surviving viable count. Always non-negative; measured by plate-count assay (FM-A1 raw measurement).
+  range: [0.0, 8.24]
+
+inputs:
+  - name: CT
+    symbol: "CT"
+    unit: mg/L*min
+    description: Disinfection dose — product of disinfectant residual concentration (mg/L) and contact time (min). The primary predictor of microbial inactivation in the Chick-Watson kinetic model.
+    range: [0.006, 307330.0]
+
+# Dataset — three-file v2 Type II layout.
+# Cluster holdout: 8 test clusters (disinfectant-stratified every-4th); entirely
+# absent from train.csv. Within-cluster split: CT-sorted ALTERNATING rows (even
+# rank -> test_fit, odd rank -> test_test), so both windows span the full
+# within-cluster CT range (interpolation, NOT a high-dose extrapolation). A
+# candidate test cluster whose test_test target is constant (zero variance —
+# unscoreable, the per-cluster mean is trivially perfect) is demoted to train;
+# one cluster (NH2Cl__Salm, all test_test rows pinned at the LRV=2.0 censoring
+# ceiling) was demoted this way. See prep_data.py for the deterministic rule.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 3750
+n_test_fit: 129
+n_test_test: 125
+n_clusters_train: 37
+n_clusters_test: 8
+n_rows_per_cluster_min: 6
+n_rows_per_cluster_median: 38
+n_rows_per_cluster_max: 574
+
+# Audit note (S2-T7): 2/8 test clusters (gid=4 Cl2__Pseud, gid=6 NH2Cl__Leg-P) show
+# the CWH m parameter hitting its lower bound (m=0.001) during fitting, with a
+# negative log-log Pearson r on test_fit (-0.29, -0.43), i.e. LRV does not rise
+# monotonically with CT. This reflects genuine data heterogeneity in the Mofidi
+# (2025) multi-paper compilation: rows from different papers at different
+# experimental conditions (temperature, pH, water matrix) within the same
+# (disinfectant, organism) cluster can show non-monotonic LRV-CT behaviour, which
+# a CT-only power law cannot capture. This is an inherent limitation of CT-aggregation
+# databases (the genuine Chick-Watson law needs C and t separately; the Mofidi DB
+# reports only CT for most rows). It is documented, not a fixable split artefact —
+# the within-cluster split is already interpolating (CT-alternating), and clusters
+# are never selected by how well the law fits them (that would be circular). CWH
+# achieves pooled R2=0.4471, pooled RMSE=1.4113 < global target std 1.4494, so the
+# Stage-3 metric_sanity BEST_WORSE_THAN_MEAN flag does not fire. Retained as a
+# legitimate but WEAK Type II task with documented heterogeneity (see auditor_notes
+# for the mean-per-cluster vs naive picture).
+#
+# Forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# batch02 standard cluster-disjoint split makes this field unreachable at evaluation time;
+# harness evaluate.py currently ignores it. Emitted for forward-compat.
+unseen_group_strategy: error
+
+# Priors — grounded in Peleg (2021) and the Chick-Watson literature.
+# No universal numeric value of k is published in any reference; only the
+# functional form is invariant. The structural exponent 1 (linear in t at
+# fixed C) is the sole universal constant in the Chick law.
+# Distractors: the dilution coefficient n (Watson 1908) and Weibull exponent m.
+priors:
+  - name: chick_watson_n_linear
+    value: 1.0
+    unit: ""
+    description: Dilution coefficient n = 1 in LRV = k*C^n*t, the Chick (1908) linear-in-C special case and the CT-dose interpretation (LRV = k*CT).
+    source: Peleg (2021) PDF p. 2 — "the original Chick model where m = n = 1"; Chick (1908) PDF p. 5.
+    _role: candidate
+  - name: cwh_exponent_m_one
+    value: 1.0
+    unit: ""
+    description: Hom time exponent m = 1, recovering the Chick-Watson linear time model from the Chick-Watson-Hom generalisation LRV = k*CT^m.
+    source: Peleg (2021) PDF p. 2 — "the original Chick-Watson is just a special case of the CWH model where m = 1".
+    _role: candidate
+  - name: typical_chlorine_k_esch
+    value: 0.04
+    unit: (mg/L*min)^-1
+    description: Approximate Chick-Watson k for E. coli inactivation by free chlorine — illustrative order-of-magnitude from disinfection engineering literature (not a universal constant).
+    source: Haas and Kara (1984) as cited in Peleg (2021) PDF pp. 1-2; approximate value only.
+    _role: distractor
+  - name: log10_e
+    value: 0.4343
+    unit: ""
+    description: log10(e) = 1/ln(10) — conversion factor between natural and base-10 logarithms; relevant when k values from ln-based literature are converted to log10 convention.
+    source: Peleg (2021) PDF p. 2 — "Using the natural logarithm in the equations will only affect the numerical value of k".
+    _role: distractor
+
+# Reference-baseline bank
+references:
+  - id: peleg_2021_cw
+    label: "Peleg (2021) Chick-Watson (n=1, CT-dose): LRV = k * CT"
+    formula_file: formulas/peleg_2021_cw.py
+    reference_pdf: reference/peleg_2021.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 1
+    measured:
+      rmse: 3.0758
+      r2: -1.6261
+  - id: peleg_2021_cwh
+    label: "Peleg (2021) Chick-Watson-Hom (CT-dose): LRV = k * CT^m"
+    formula_file: formulas/peleg_2021_cwh.py
+    reference_pdf: reference/peleg_2021.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured:
+      rmse: 1.4113
+      r2: 0.4471
+
+caps:
+  max_law_constants: 0
+  max_local_params: 2
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+metric: rmse
+best_baseline: 1.4113
+
+# E6 mixed-bank annotation (S3-P8 §9.14): the bank holds one negative-R² baseline
+# (peleg_2021_cw, pooled R²=-1.63) and one positive-R² baseline (peleg_2021_cwh,
+# pooled R²=0.45). peleg_2021_cw is the restricted m=1 special case of CWH
+# (LRV = k*CT vs LRV = k*CT^m); most clusters have m << 1, so the fixed-m=1 model
+# overpredicts LRV — expected OOD degradation, not a defect. Reference: Peleg (2021)
+# PDF p. 2 -- "the original Chick-Watson is just a special case of the CWH model
+# where m = 1."
+#
+# §9.6 (best baseline beats the per-cluster mean) — HONEST mean-per-cluster reading
+# (the harness `_best_reference`/`compute_numeric_score` score by MEAN PER-CLUSTER
+# rmse, NOT pooled R²; pooled is not the §9.6 basis): the best baseline cwh has
+# mean-per-cluster RMSE ~0.96. It beats the REALISTIC naive (predict the per-cluster
+# mean of test_fit; mean-pc RMSE ~1.13) in 7/8 clusters and in aggregate. Against
+# the stricter ORACLE naive (per-cluster test_test std; mean-pc ~0.89 — only a hint,
+# since it needs the held-out labels) cwh wins 5/8 and marginally loses in aggregate,
+# the loss concentrated in the 2 non-monotonic clusters (gid4, gid6) noted above.
+# This is a WEAK but legitimate Type II task: the form is genuine and PDF-grounded,
+# the within-cluster split is already interpolating, and the residual weakness is
+# real multi-paper data heterogeneity that cannot be removed without circularly
+# selecting clusters by law fit. Kept per the weak-fit-is-not-discard policy.
+auditor_notes: >-
+  E6 mixed-bank: peleg_2021_cw (pooled R²=-1.63) is the restricted m=1 special case
+  of peleg_2021_cwh (pooled R²=0.45); its negative pooled R² is expected OOD
+  degradation per §9.14, not a defect. §9.6 judged on MEAN PER-CLUSTER rmse (the
+  harness basis), NOT pooled: best baseline cwh mean-pc RMSE ~0.96 beats the
+  realistic per-cluster-mean naive (~1.13) in 7/8 clusters and in aggregate; against
+  the stricter oracle naive (test_test std ~0.89) it wins 5/8 and marginally loses in
+  aggregate, the loss confined to 2 non-monotonic clusters (gid4 Cl2__Pseud, gid6
+  NH2Cl__Leg-P, m at lower bound) from Mofidi multi-paper heterogeneity. metric_sanity
+  BEST_WORSE_THAN_MEAN does NOT fire (cwh pooled RMSE 1.4113 < global target std
+  1.4494). One degenerate test cluster (NH2Cl__Salm, constant test_test target at the
+  LRV=2.0 censoring ceiling) was demoted to train as unscoreable. WEAK but legitimate
+  Type II; kept per weak-fit-is-not-discard (not gameable — clusters never selected by
+  law fit).

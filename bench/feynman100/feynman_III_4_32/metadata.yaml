@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Dimensionless"
+  symbol: "n"
+  unit: ""
+  description: "Dimensionless"
+inputs:
+  - name: "Angular momentum"
+    symbol: "h"
+    unit: ""
+    description: "Angular momentum"
+  - name: "Frequency"
+    symbol: "omega"
+    unit: ""
+    description: "Frequency"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Temperature"
+    symbol: "T"
+    unit: ""
+    description: "Temperature"

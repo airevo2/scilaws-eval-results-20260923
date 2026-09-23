@@ -1,0 +1,144 @@
+import numpy as np
+
+def predict(X):
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+    
+    # O'Brien and McPherron (2000) / Burton et al. (1975) empirical relationship
+    # The rate of change of the pressure-corrected Dst index (Dst*) is driven 
+    # by the solar wind electric field (Ey) and decays with a characteristic time (tau).
+    # Dst* = Dst - b * sqrt(P_dyn) + c
+    # dDst*/dt = a * Ey - Dst* / tau
+    
+    a = -3.6      # Injection rate coefficient [nT / (mV/m * hr)]
+    tau = 7.7     # Ring current decay time [hr]
+    b = 7.26      # Magnetopause current correction coefficient [nT / nPa^0.5]
+    c = 11.0      # Quiet-time offset correction [nT]
+    
+    # Calculate pressure-corrected Dst*
+    Dst_star = Dst - b * np.sqrt(np.maximum(P_dyn, 0.0)) + c
+    
+    # Calculate tendency (ignoring the dP_dyn/dt term as it requires temporal derivatives not present in X)
+    dDst_dt = a * Ey - Dst_star / tau
+    
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Dst   = X[:, 0]   # nT
+    Ey    = X[:, 1]   # mV/m
+    P_dyn = X[:, 2]   # nPa
+
+    # ---------------------------------------------------------
+    # Burton et al. (1975) / O'Brien & McPherron (2000) model
+    # Canonical equation:  dDst*/dt = Q(Ey) - Dst*/tau
+    # with pressure-corrected index  Dst* = Dst - b*sqrt(P_dyn) + c
+    # ---------------------------------------------------------
+
+    # Model parameters
+    a    = 4.4     # injection coefficient  [nT / (hr · mV/m)]
+    Ey_c = 0.5     # convection electric-field threshold [mV/m]
+    b    = 7.26    # magnetopause pressure-correction factor [nT / nPa^0.5]
+    c    = 11.0    # quiet-time Dst offset [nT]
+    tau  = 7.7     # ring-current exponential decay time [hr]
+
+    # Pressure-corrected Dst
+    Dst_star = Dst - b * np.sqrt(P_dyn) + c
+
+    # Ring-current injection (source) term — active only above threshold
+    Q = -a * np.maximum(Ey - Ey_c, 0.0)
+
+    # Hourly Dst tendency  [nT / hr]
+    dDst_dt = Q - Dst_star / tau
+
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    
+    # Burton et al. (1975) canonical empirical parameters
+    a = -1.6       # Injection coefficient [nT/hr per mV/m]
+    E0 = 0.5       # Threshold electric field [mV/m]
+    tau = 7.7      # Decay time constant [hr]
+    
+    # Ring current injection (driven by dawn-to-dusk electric field)
+    injection = a * np.maximum(Ey - E0, 0.0)
+    
+    # Ring current decay (proportional to current Dst)
+    decay = -Dst / tau
+    
+    # Hourly tendency of Dst
+    dDst_dt = injection + decay
+    
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+    
+    # Canonical constants based on Burton et al. (1975) / O'Brien & McPherron (2000)
+    a = 5.0       # Ring current injection rate coefficient [nT/hr per mV/m]
+    E_c = 0.5     # Threshold electric field for injection [mV/m]
+    tau = 10.0    # Ring current exponential decay time [hr]
+    c_p = 15.8    # Magnetopause current pressure correction [nT / sqrt(nPa)]
+    c_0 = 0.0     # Quiet-time baseline offset [nT/hr]
+    
+    # Pressure-corrected Dst index (Dst*)
+    Dst_star = Dst - c_p * np.sqrt(np.maximum(P_dyn, 0.0))
+    
+    # Ring current injection term (driven by dawn-to-dusk electric field, Ey)
+    # Positive Ey corresponds to southward IMF, driving reconnection and injection
+    Q = -a * np.maximum(Ey - E_c, 0.0)
+    
+    # Ring current decay term (positive during recovery when Dst* < 0)
+    decay = -Dst_star / tau
+    
+    # Total hourly tendency
+    dDst_dt = Q + decay + c_0
+    
+    return dDst_dt
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Dst = X[:, 0]
+    Ey = X[:, 1]
+    P_dyn = X[:, 2]
+    
+    # O'Brien and McPherron (2000) coefficients for the Burton equation
+    b = 7.26          # Pressure correction coefficient [nT / sqrt(nPa)]
+    c = 11.0          # Pressure correction offset [nT]
+    tau = 8.5         # Ring current decay time [hours]
+    Ey_thresh = 0.5   # Convective electric field threshold [mV/m]
+    a = -4.4          # Injection rate coefficient [nT/hr per mV/m]
+    
+    # Magnetopause current correction to isolate the ring current component (Dst*)
+    Dst_star = Dst - b * np.sqrt(np.maximum(P_dyn, 0.0)) + c
+    
+    # Solar wind energy injection rate into the ring current
+    Q = np.zeros_like(Ey)
+    mask = Ey > Ey_thresh
+    Q[mask] = a * (Ey[mask] - Ey_thresh)
+    
+    # Hourly tendency of Dst (dDst*/dt approximation)
+    # Note: The d(sqrt(P_dyn))/dt term is omitted as it requires temporal derivatives 
+    # not available in the instantaneous single-step input array X.
+    dDst_dt = Q - Dst_star / tau
+    
+    return dDst_dt

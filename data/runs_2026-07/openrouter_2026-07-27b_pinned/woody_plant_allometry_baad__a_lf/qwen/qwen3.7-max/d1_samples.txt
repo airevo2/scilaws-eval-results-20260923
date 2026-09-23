@@ -1,0 +1,94 @@
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    # Standard multivariate allometric power-law relationship
+    # Based on the Pipe Model Theory, A_L is primarily proportional to A_S
+    beta_0 = 1.0  # Allometric intercept / coefficient
+    beta_1 = 1.0  # Scaling exponent for sapwood area
+    beta_2 = 0.0  # Scaling exponent for height
+    
+    A_L = beta_0 * (A_S ** beta_1) * (H ** beta_2)
+    
+    return A_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]  # Sapwood cross-sectional area at breast height [m2]
+    H = X[:, 1]    # Total plant height [m]
+    
+    # Extended pipe model (Shinozaki et al. 1964; power-law allometric form)
+    # A_L = beta_0 * A_S^beta_1 * H^beta_2
+    beta_0 = 1500.0   # Leaf area : sapwood area ratio at H = 1 m [m2 m-2]
+    beta_1 = 1.0      # Pipe-model exponent (unity per theory)
+    beta_2 = -0.15    # Height correction (hydraulic limitation effect)
+    
+    A_L = beta_0 * (A_S ** beta_1) * (H ** beta_2)
+    return A_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]  # Sapwood cross-sectional area at breast height [m2]
+    H = X[:, 1]    # Total plant height [m]
+    
+    # Standard allometric power-law model:
+    #   A_L = a * A_S^b * H^c
+    # Combines the pipe model theory (Shinozaki et al., 1964; A_L ~ A_S)
+    # with an allometric height correction for hydraulic/crown scaling.
+    #
+    # Coefficients derived from canonical BAAD-style log-log regression:
+    #   log(A_L) = beta_0 + beta_1 * log(A_S) + beta_2 * log(H)
+    beta_0 = 7.10   # log-intercept (natural log)
+    beta_1 = 0.85   # sapwood area scaling exponent (near pipe-model value of 1)
+    beta_2 = 0.20   # height scaling exponent
+    
+    A_L = np.exp(beta_0) * (A_S ** beta_1) * (H ** beta_2)
+    return A_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]
+    H = X[:, 1]
+    
+    # Standard allometric power-law relationship: A_L = b0 * A_S^b1 * H^b2
+    # Coefficients are represented as named constants (typical log-log linear model equivalent)
+    b0 = 1.0  
+    b1 = 1.0  
+    b2 = 0.0  
+    
+    A_L = b0 * (A_S ** b1) * (H ** b2)
+    return A_L
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A_S = X[:, 0]  # Sapwood cross-sectional area at breast height [m2]
+    H = X[:, 1]    # Total plant height [m]
+    
+    # Pipe model (Shinozaki et al., 1964) with allometric height correction.
+    # A_L = beta_0 * A_S^beta_1 * H^beta_2
+    # beta_1 = 1.0 reflects the pipe model (leaf area proportional to sapwood area).
+    # beta_2 = 0.5 captures the residual positive scaling of the leaf-area-to-
+    #          sapwood-area ratio with tree height observed across woody plants.
+    # beta_0 = 1000 is calibrated so that A_L/A_S ~ 1000*sqrt(H) falls within
+    #          the typical Huber-value inverse range (2000-8000 m2/m2) for
+    #          common tree heights.
+    beta_0 = 1000.0
+    beta_1 = 1.0
+    beta_2 = 0.5
+    
+    A_L = beta_0 * (A_S ** beta_1) * (H ** beta_2)
+    return A_L

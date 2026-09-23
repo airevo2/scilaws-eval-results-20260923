@@ -1,0 +1,166 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict total electron-impact single-ionization cross section (in 1e-16 cm^2)
+    using the standard semi-empirical Lotz formula, with parameters for atomic hydrogen.
+
+    Input:
+        X : 2-D numpy array, X[:, 0] = electron energy in eV (range ~10–8000 eV)
+    Returns:
+        1-D array of sigma in units of 1e-16 cm^2
+    """
+    E = X[:, 0]
+
+    # Physical constants (hydrogen target)
+    I = 13.6           # ionization potential [eV]
+    N = 1.0            # number of equivalent electrons
+    # Lotz coefficients (Lotz, 1967)
+    a = 450.0          # 4.5e-14 cm^2 eV^2 converted to 1e-16 cm^2
+    b = 0.7
+    c = 0.5
+
+    t = E / I
+    sigma = np.zeros_like(E)
+
+    # Cross section is zero below threshold
+    mask = E > I
+    t_mask = t[mask]
+
+    # Lotz formula: sigma = a * N * ln(t) / (E * I) * (1 - b * exp(-c*(t-1)))
+    sigma[mask] = a * N * np.log(t_mask) / (E[mask] * I) * (
+        1.0 - b * np.exp(-c * (t_mask - 1.0))
+    )
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total electron-impact single-ionization cross-section
+    in units of 10^-16 cm^2 using the standard Lotz semi-empirical formula.
+
+    sigma(E) = A * q * ln(E / I) / (E * I)   for E > I
+               0                              otherwise
+
+    where A = 4.5e-14 cm^2 eV^2 = 450 in units of 10^-16 cm^2 eV^2.
+    Constants below are chosen for atomic hydrogen (I=13.6 eV, q=1).
+    """
+    # Named constants
+    I = 13.598          # ionization potential [eV] (hydrogen)
+    A = 4.5e-14 * 1e16  # Lotz coefficient in [10^-16 cm^2 eV^2]
+    q = 1               # number of equivalent electrons in the outer shell
+
+    E = X[:, 0]         # incident electron energy [eV]
+
+    sigma = np.zeros_like(E)
+    above_threshold = E > I
+    E_above = E[above_threshold]
+    sigma[above_threshold] = A * q * np.log(E_above / I) / (E_above * I)
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total electron-impact single-ionization cross-section
+    in units of 1e-16 cm^2 using the Binary-Encounter-Bethe (BEB) model.
+    
+    The BEB model (Kim & Rudd, 1994) is the most widely cited closed-form
+    relationship for this quantity. The parameters below are illustrative
+    constants for a generic target; in practice they are fitted to
+    experimental data or taken from atomic structure calculations.
+    """
+    # Incident electron kinetic energy in eV
+    E = X[:, 0]
+
+    # --- Fitted / physical constants ---
+    B = 15.6        # Binding energy of the orbital (eV)
+    U = 20.0        # Average kinetic energy of the bound electron (eV)
+    N = 2.0         # Occupation number of the orbital
+    R = 13.605693   # Rydberg energy (eV)
+    a0 = 5.291772e-9 # Bohr radius (cm)
+    # -----------------------------------
+
+    # Scaling factor S = 4π a0^2 N (R/B)^2  (units: cm^2)
+    S = 4.0 * np.pi * a0**2 * N * (R / B)**2
+
+    # Reduced variables
+    t = E / B
+    u = U / B
+
+    # Initialize output
+    sigma = np.zeros_like(E)
+
+    # Ionization only possible when t > 1 (E > B)
+    valid = t > 1.0
+    t_v = t[valid]
+    ln_t = np.log(t_v)
+
+    # BEB formula for cross section (cm^2)
+    term1 = (ln_t / 2.0) * (1.0 - 1.0 / t_v**2)
+    term2 = 1.0 - 1.0 / t_v - ln_t / (t_v + 1.0)
+    sigma[valid] = S / (t_v + u + 1.0) * (term1 + term2)
+
+    # Convert to 10^-16 cm^2
+    sigma_1e16_cm2 = sigma * 1e16
+    return sigma_1e16_cm2
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total electron-impact single-ionization cross-section in units of 1e-16 cm^2.
+    Uses the standard Lotz formula for a hydrogen-like target (I = 13.6 eV).
+    """
+    E = X[:, 0].astype(np.float64)  # electron energy in eV
+    I = 13.6  # ionization potential in eV
+    coeff = 450.0  # 4.5e-14 cm^2 * 1e16 (conversion to 1e-16 cm^2) * eV^2
+
+    sigma = np.zeros_like(E)
+    mask = E > I
+    E_m = E[mask]
+    ratio = E_m / I
+    ln_ratio = np.log(ratio)
+    bracket = 1.0 - 0.7 * np.exp(-(ratio - 1.0) / 2.0)
+    sigma[mask] = coeff * ln_ratio / (E_m * I) * bracket
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict total electron-impact single-ionization cross-section
+    using the Lotz semi-empirical formula.
+
+    sigma(E) = A * N / (E * I) * ln(E / I)   for E > I
+    sigma(E) = 0                              for E <= I
+
+    sigma in units of 1e-16 cm^2
+    E (electron kinetic energy) in eV
+    A = 4.5e-14 cm^2 eV^2 = 450.0 in 1e-16 cm^2 eV^2
+    I = ionization potential (eV), N = effective number of electrons.
+    Here typical values for a generic atom/molecule are used.
+    """
+    # Extract electron energy column
+    E = X[:, 0]
+
+    # Constants (can be changed to fit a specific target)
+    A = 450.0   # 4.5e-14 cm^2 eV^2 in units of 1e-16 cm^2 eV^2
+    I = 15.0    # eV, typical ionization potential
+    N = 2.0     # effective number of outer-shell electrons
+
+    # Compute cross-section only above threshold
+    sigma = np.where(E > I, A * N / (E * I) * np.log(E / I), 0.0)
+
+    return sigma

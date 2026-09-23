@@ -1,0 +1,138 @@
+task_id: plant_competition_reciprocal_yield__mean_plant_mass
+domain: biology / plant_ecology
+license: CC0-1.0
+
+# Type II — cluster = species x nutrient level. Each cluster has 5-9 rows
+# spanning three nominal planting densities (1, 8, 64 per pot). The per-cluster
+# parameters w_m (isolated-plant mass) and a (competitive neighbourhood) vary
+# across species and nutrient environments.
+type: typeII
+has_group_id: true
+
+# Background knowledge — science framing only; no column listing, no formula.
+context: >-
+  When many plants of the same species grow together in a limited area, they
+  compete for light, water and nutrients. A plant sown at higher density
+  ends up smaller, on average, because each individual has fewer resources.
+  Across a wide range of crops and wild species this relationship is
+  surprisingly regular: mean plant mass decreases smoothly as planting
+  density increases, and total stand biomass approaches a ceiling at high
+  densities — a pattern known as Constant Final Yield. The shape of the
+  mass-vs-density curve is governed by the mass a plant reaches in isolation
+  (the competition-free asymptote) and the density at which competition
+  becomes limiting, both of which differ across species and nutrient
+  environments.
+
+target:
+  name: mean_mass_g
+  symbol: w
+  unit: g/plant
+  description: >-
+    Mean oven-dry mass per surviving plant (g/plant), computed as
+    total.drymass / no.plants.surv from a 2021 pot experiment with
+    43 herbaceous plant species. Direct gravimetric measurement.
+  range: [0.017, 28.39]
+
+inputs:
+  - name: density
+    symbol: N
+    unit: plants/pot
+    description: >-
+      Number of surviving plants in the pot at harvest (density.harvest in
+      the raw data). The pot area is fixed throughout the experiment; density
+      in plants/pot is proportional to plants/m² up to a constant scalar
+      that is absorbed into the per-cluster parameter a. Range matches
+      nominal planting densities 1, 8, and 64 plants/pot (with mortality
+      reducing the high-density count at harvest).
+    range: [1.0, 75.0]
+
+# Dataset — three-file v2 Type II layout.
+# Train: 62 clusters (31 species × 2 nutrients), all three density levels.
+# Six species with complete high-density mortality (density 64) are kept in
+# train only; they provide low/mid-density information but no high-density
+# held-out test data.
+# Test split: 12 species (24 clusters = 12 species × 2 nutrients) are
+# held out (every 3rd species in the sorted eligible species list).
+# Within each test cluster: density_start <= 10 rows (nominal 1+8) go to
+# test_fit; density_start > 10 (nominal 64) go to test_test.
+# This is a within-cluster OOD split on the density axis: the model must
+# extrapolate from the low/mid-density fit to the high-density self-thinning
+# regime.
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 522
+n_test_fit: 134
+n_test_test: 69
+n_clusters_train: 62
+n_clusters_test: 24
+
+# === Reference baselines ===
+# Four formulas from the reciprocal-yield / constant-final-yield family.
+references:
+  - id: bleasdale_1960
+    label: Bleasdale & Nelder 1960 — generalised reciprocal yield (single exponent)
+    formula_file: formulas/bleasdale_1960.py
+    reference_pdf: reference/bleasdale_nelder_1960.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3     # A, B, theta
+    measured: {rmse: 0.1664, r2: -0.2033}
+
+  - id: weiner_2010_bleasdale_nelder
+    label: Weiner & Freckleton 2010 — two-exponent Bleasdale-Nelder (Eq. 5)
+    formula_file: formulas/weiner_2010_bleasdale_nelder.py
+    reference_pdf: reference/weiner_2010.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 4     # A, B, phi, theta
+    measured: {rmse: 0.2042, r2: -0.8123}
+
+  - id: weiner_2010_watkinson
+    label: Weiner & Freckleton 2010 / Watkinson 1980 — w = wm*(1+aN)^(-b) (Eq. 7)
+    formula_file: formulas/weiner_2010_watkinson.py
+    reference_pdf: reference/weiner_2010.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3     # w_m, a, b
+    measured: {rmse: 0.1067, r2: 0.5050}
+
+  - id: weiner_2010_vandermeer
+    label: Weiner & Freckleton 2010 / Vandermeer 1984 — w = wm/(1+aN^b) (Eq. 8)
+    formula_file: formulas/weiner_2010_vandermeer.py
+    reference_pdf: reference/weiner_2010.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3     # w_m, a, b
+    measured: {rmse: 0.1421, r2: 0.1220}
+
+# === Baseline notes ===
+# Sanity note: bleasdale_1960 and weiner_2010_bleasdale_nelder show negative
+# pooled R² on test_test. This is expected: the within-cluster OOD split
+# (fit on density 1-13, predict at density 16-75) is a hard extrapolation;
+# with only 3 test rows per cluster the per-cluster R² is highly variable.
+# The best baseline (weiner_2010_watkinson, R²=0.505) confirms the task is
+# valid. The negative-R² baselines are legitimate "harder formula" rungs on
+# the ladder — not implementation bugs. The Watkinson form's physical
+# parameterisation (w_m = isolated-plant mass) allows more reliable
+# high-density extrapolation from low/mid-density fit data.
+
+# === Priors ===
+# Intentionally empty: all four baselines are pure functional FORMS with no
+# published numerical coefficients (LAW_CONSTANTS = {} everywhere) — there is
+# no fundamental/handbook constant the formulas consume, so there is nothing to
+# expose as a candidate, and a fabricated distractor would be noise. Per H1/C12,
+# an empty priors block is correct here (a LAW={} bank cannot leak).
+priors: []
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         4
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 0.1067     # weiner_2010_watkinson RMSE on test_test.csv

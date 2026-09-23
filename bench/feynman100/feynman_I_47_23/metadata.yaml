@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Velocity"
+  symbol: "c"
+  unit: ""
+  description: "Velocity"
+inputs:
+  - name: "Dimensionless"
+    symbol: "gamma"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Pressure"
+    symbol: "pr"
+    unit: ""
+    description: "Pressure"
+  - name: "Density"
+    symbol: "rho"
+    unit: ""
+    description: "Density"

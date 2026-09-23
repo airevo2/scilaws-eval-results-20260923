@@ -1,0 +1,108 @@
+import numpy as np
+
+def predict(X):
+    # Radiation model for commuting flows (Simini et al., 2012)
+    #   T_ij = m_i * (m_i * m_j) / [ (m_i + s_ij) * (m_i + m_j + s_ij) ]
+    # then return log10(T_ij + 1)
+    m_i = X[:, 0].astype(float)
+    m_j = X[:, 1].astype(float)
+    s   = X[:, 3].astype(float)
+
+    denom = (m_i + s) * (m_i + m_j + s)
+    denom = np.where(denom <= 0.0, np.nan, denom)
+
+    T = m_i * (m_i * m_j) / denom
+    T = np.nan_to_num(T, nan=0.0, posinf=0.0, neginf=0.0)
+
+    return np.log10(T + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classic gravity model for commuting flows:
+    #   T_ij = K * m_i^a * m_j^b / d_ij^gamma
+    # taken to log10 (with +1 shift applied to the modelled flow).
+    m_i = np.asarray(X[:, 0], dtype=float)
+    m_j = np.asarray(X[:, 1], dtype=float)
+    d   = np.asarray(X[:, 2], dtype=float)
+
+    # Fitted / canonical gravity-model coefficients
+    logK  = -3.0    # normalisation constant (log10 K)
+    a     = 0.90    # origin-mass exponent
+    b     = 0.90    # destination-mass exponent
+    gamma = 2.00    # distance-decay exponent
+
+    log10_T = (logK
+               + a * np.log10(m_i + 1.0)
+               + b * np.log10(m_j + 1.0)
+               - gamma * np.log10(d + 1.0))
+
+    # convert modelled flow to log10(T+1) space, guarding against negatives
+    T = np.power(10.0, log10_T)
+    return np.log10(T + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    s   = X[:, 3]
+
+    # Radiation model (Simini et al. 2012):
+    # T_ij = T_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    # with the number of commuters leaving origin i taken as T_i = m_i.
+    eps = 1e-12
+    T_i = m_i
+    p_ij = (m_i * m_j) / ((m_i + s + eps) * (m_i + m_j + s + eps))
+    T_ij = T_i * p_ij
+
+    return np.log10(T_ij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classic gravity model of spatial interaction:
+    #   T_ij = K * m_i^alpha * m_j^beta / d_ij^gamma
+    # Taken to base-10 logarithm (with the +1 offset on T):
+    #   log10(T_ij + 1) ~ c + alpha*log10(m_i) + beta*log10(m_j) - gamma*log10(d_ij)
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d   = X[:, 2]
+
+    # Typical fitted coefficients for county-level commuting gravity models
+    c     = -1.5      # log10 normalising constant
+    alpha =  0.75     # origin (resident-worker) mass exponent
+    beta  =  0.75     # destination (jobs) mass exponent
+    gamma =  1.2      # distance-decay exponent
+
+    log_Ti = (c
+              + alpha * np.log10(m_i + 1.0)
+              + beta  * np.log10(m_j + 1.0)
+              - gamma * np.log10(d + 1.0))
+
+    # Flows cannot be negative; log10(T+1) >= 0
+    return np.maximum(log_Ti, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+
+    # Radiation model (parameter-free), with T_i ~ m_i (total outflow from origin)
+    # T_ij = m_i * (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    numerator = m_i * (m_i * m_j)
+    denominator = (m_i + s_ij) * (m_i + m_j + s_ij)
+    T_ij = numerator / denominator
+
+    return np.log10(T_ij + 1.0)

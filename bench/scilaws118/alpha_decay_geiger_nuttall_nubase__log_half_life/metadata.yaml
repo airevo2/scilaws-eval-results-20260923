@@ -1,0 +1,108 @@
+task_id: alpha_decay_geiger_nuttall_nubase__log_half_life
+domain: physics / nuclear physics
+license: CC-BY-3.0
+
+# Type II: cluster = isotopic Z-chain. A(Z) and B(Z) are per-chain GN
+# coefficients fitted from experimental data for each isotopic chain.
+type: typeII
+has_group_id: true
+
+# Background — science framing only; no column listing, no constants.
+context: >-
+  Alpha decay is the spontaneous emission of a helium-4 nucleus from a heavy
+  parent nucleus, driven by quantum tunnelling through the Coulomb barrier.
+  The Geiger-Nuttall (GN) law, established empirically in the early twentieth century, describes how
+  the partial alpha-decay half-life depends on the decay Q-value: higher-energy
+  decays are exponentially faster, spanning over thirty orders of magnitude
+  from sub-nanosecond to multi-billion-year half-lives. For a given isotopic
+  chain (fixed proton number), the log of the half-life is approximately
+  linear in the reciprocal square root of the Q-value, but the slope and
+  intercept of this line differ from chain to chain in a manner that reflects
+  both the tunnelling probability and the probability that the four nucleons
+  constituting the alpha particle are spatially clustered near the nuclear
+  surface.
+
+target:
+  name: log10_half_life_s
+  symbol: "log₁₀(T₁₂ / s)"
+  unit: ""
+  description: Base-10 logarithm of the partial alpha-decay half-life in seconds, measured experimentally from NUBASE2020.
+  range: [-7.54, 26.81]
+
+inputs:
+  - name: Q_alpha_MeV
+    symbol: "Qα"
+    unit: MeV
+    description: Experimental alpha-decay Q-value in MeV from AME2020.
+    range: [1.90, 11.78]
+
+# Dataset — Type II three-file layout, whole-cluster holdout.
+# Train/test split: 5 largest Z-chains (Z=84,86,88,90,92 — Po, Rn, Ra, Th, U)
+# are held out entirely. Within each test cluster, rows sorted by mass number A;
+# ceil(60%) lighter-A rows -> test_fit, remaining heavier-A rows -> test_test.
+data_files:
+  train:     data/train.csv       # 47 Z-chains; no group_id column
+  test_fit:  data/test_fit.csv    # 5 Z-chains, lighter isotopes -> submission.fit()
+  test_test: data/test_test.csv   # 5 Z-chains, heavier isotopes -> scored
+
+n_train: 143
+n_test_fit: 46
+n_test_test: 27
+n_clusters_train: 47
+n_clusters_test: 5
+
+# Audit note: The test clusters (Z=84-92) include the Po chain (Z=84) where
+# Qi 2014 shows GN-law breakdown for N<112 isotopes (see paper Fig. 1b, p. 1,3).
+# The per-cluster GN fit (qi_2014.py) handles this correctly since it fits A(Z)
+# and B(Z) to the available fit-window rows within each chain.
+# Single-baseline task (qi_2014 only); data_spec §5.6 / §6.6 apply.
+
+priors:
+  - name: N_magic_126
+    value: 126.0
+    unit: ""
+    description: Magic neutron number at which nuclear shell closure causes anomalies in GN-law coefficients across Z-chains.
+    source: Qi et al. 2014 PDF p. 1-2 — text notes "the coefficients change for each isotopic chain which crosses the magic numbers, e.g. N=126".
+    _role: distractor
+  - name: Z_magic_82
+    value: 82.0
+    unit: ""
+    description: Magic proton number (lead) at which the linear Z-dependence of GN coefficients changes slope.
+    source: Qi et al. 2014 PDF p. 2 — Fig. 2 shows a distinct break in A(Z) and B(Z) at Z=82.
+    _role: distractor
+
+references:
+  - id: qi_2014
+    label: "Qi et al. 2014 — Geiger-Nuttall per-Z-chain OLS fit (A_Z, B_Z LOCAL)"
+    formula_file: formulas/qi_2014.py
+    reference_pdf: reference/qi_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured:
+      rmse: 1.1592
+      r2: 0.9684
+
+# Audit history — 2026-06-01 (逐条审核, Opus 4.8):
+#   Removed two PHANTOM baselines added by the 2026-05-26 MISSING_ALT wave —
+#   they were listed here but NEVER registered in formulas/__init__.py and NEVER
+#   evaluated by the harness (reference_metrics.json only ever held qi_2014):
+#     • royer_2000 — its predict() reduces to qi_2014's exact OLS on Q^(-1/2)
+#       (max|royer−qi| = 0 on every test row); its 9 "LAW_CONSTANTS" are dead
+#       (never referenced by fit()/predict()). FM-C7 byte-identical + C10 dead.
+#     • viola_seaborg_sobiczewski — DOI 10.1016/0370-2693(89)91038-4 unverifiable
+#       in CrossRef/OpenAlex/Semantic Scholar/INSPIRE/Unpaywall; PDF missing;
+#       constants only secondary-cited. Anti-fabrication: not locatable in a source.
+#   The metadata's best_baseline (0.9366) and caps.max_law_constants (9) were
+#   derived from these phantoms; corrected to the real, harness-evaluated qi_2014
+#   (rmse 1.1592, max_law 0). Archived to ../.dropped_baselines/. Single-baseline
+#   Type II is permitted (data_spec §5.6); qi_2014 is the anchor.
+
+caps:
+  max_law_constants: 0
+  max_local_params: 2
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+metric: rmse
+best_baseline: 1.1592

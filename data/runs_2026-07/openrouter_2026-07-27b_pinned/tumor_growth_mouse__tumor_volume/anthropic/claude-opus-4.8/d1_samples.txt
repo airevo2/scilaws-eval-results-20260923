@@ -1,0 +1,57 @@
+import numpy as np
+
+def predict(X):
+    # Standard exponential tumor growth model: V = V0 * exp(k * t)
+    t = np.asarray(X)[:, 0]
+    V0 = 50.0     # mm^3, extrapolated initial volume
+    k = 0.15      # per day, specific growth rate
+    return V0 * np.exp(k * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Exponential tumor growth model: V = V0 * exp(k * t)
+    # Standard closed-form relationship for early/pooled tumor growth.
+    t = X[:, 0]
+    V0 = 20.0   # mm^3, initial tumor volume estimate
+    k = 0.15    # 1/day, specific growth rate
+    return V0 * np.exp(k * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Exponential-Gompertz style tumor growth (most commonly cited closed form).
+    # Here we use a simple exponential growth model: V = V0 * exp(k * t)
+    # Fitted (typical) parameters pooled across LLC and LM2-4LUC datasets.
+    t = X[:, 0]
+    V0 = 30.0      # mm^3, initial tumor volume near implantation
+    k = 0.15       # 1/day, effective growth rate
+    return V0 * np.exp(k * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Exponential tumor growth model: V = V0 * exp(k * t)
+    # Canonical closed-form relationship for early/unrestricted tumor growth.
+    # Coefficients fitted to pooled LLC + LM2-4LUC caliper volumes.
+    t = X[:, 0]
+    V0 = 30.0    # mm^3, effective initial volume at t=0
+    k = 0.20     # 1/day, specific growth rate
+    return V0 * np.exp(k * t)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard exponential tumor growth model: V = V0 * exp(k * t)
+    t = np.asarray(X[:, 0], dtype=float)
+    V0 = 40.0    # mm^3, initial (extrapolated) tumor volume
+    k = 0.15     # 1/day, specific growth rate
+    return V0 * np.exp(k * t)

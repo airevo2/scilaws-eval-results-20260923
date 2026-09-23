@@ -1,0 +1,138 @@
+import numpy as np
+
+def predict(X):
+    T = np.asarray(X, dtype=float)[:, 0]
+
+    # Cardinal Temperature Model with Inflection (Rosso/CTMI)
+    Tmin = 8.0     # minimum temperature for growth
+    Topt = 39.0    # optimal temperature
+    Tmax = 47.5    # maximum temperature for growth
+    ODopt = 1.0    # OD600 at optimal temperature (24 h plateau)
+
+    num = (T - Tmax) * (T - Tmin) ** 2
+    den = (Topt - Tmin) * (
+        (Topt - Tmin) * (T - Topt)
+        - (Topt - Tmax) * (Topt + Tmin - 2.0 * T)
+    )
+
+    # avoid division issues
+    gamma = np.where(den != 0.0, num / den, 0.0)
+    gamma = np.clip(gamma, 0.0, 1.0)
+
+    # Outside [Tmin, Tmax] growth is zero
+    gamma = np.where((T <= Tmin) | (T >= Tmax), 0.0, gamma)
+
+    OD = ODopt * gamma
+    return np.maximum(OD, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = np.asarray(X[:, 0], dtype=float)
+
+    # Cardinal Temperature Model with Inflection (Rosso et al. 1993)
+    # applied to 24 h yield (OD600) of E. coli.
+    Tmin = 5.0     # deg C, minimum growth temperature
+    Topt = 39.0    # deg C, optimal temperature
+    Tmax = 47.5    # deg C, maximum growth temperature
+    OD_opt = 1.0   # OD600 at optimal temperature
+
+    num = (T - Tmax) * (T - Tmin) ** 2
+    den = ((Topt - Tmin) *
+           ((Topt - Tmin) * (T - Topt) -
+            (Topt - Tmax) * (Topt + Tmin - 2.0 * T)))
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        gamma = np.where(den != 0.0, num / den, 0.0)
+
+    OD = OD_opt * gamma
+    # outside [Tmin, Tmax] no growth; enforce non-negativity
+    OD = np.where((T <= Tmin) | (T >= Tmax), 0.0, OD)
+    OD = np.clip(OD, 0.0, None)
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = np.asarray(X, dtype=float)[:, 0]
+
+    # Cardinal temperature model (Rosso) for E. coli growth,
+    # scaled to an approximate maximum OD600 at 24 h.
+    Tmin = 20.0   # below this, no growth
+    Tmax = 47.0   # above this, no growth
+    Topt = 37.0   # optimal growth temperature
+    OD_opt = 1.0  # maximal OD600 at 24 h
+
+    num = (T - Tmax) * (T - Tmin) ** 2
+    den = (Topt - Tmin) * (
+        (Topt - Tmin) * (T - Topt)
+        - (Topt - Tmax) * (Topt + Tmin - 2.0 * T)
+    )
+
+    ratio = np.where(den != 0.0, num / den, 0.0)
+    OD = OD_opt * ratio
+
+    # Non-negative and zero outside the growth range
+    OD = np.where((T <= Tmin) | (T >= Tmax), 0.0, OD)
+    OD = np.clip(OD, 0.0, None)
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = np.asarray(X[:, 0], dtype=float)
+
+    # Cardinal Temperature Model with Inflection (Rosso et al., 1993)
+    # scaled so the response equals OD600 at 24 h (max ~ saturating OD)
+    Tmin = 5.0
+    Topt = 37.0
+    Tmax = 47.0
+    OD_opt = 1.0  # OD600 at optimal temperature
+
+    num = (T - Tmax) * (T - Tmin) ** 2
+    den = ((Topt - Tmin) *
+           ((Topt - Tmin) * (T - Topt)
+            - (Topt - Tmax) * (Topt + Tmin - 2.0 * T)))
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        gamma = np.where(den != 0.0, num / den, 0.0)
+
+    OD = OD_opt * gamma
+
+    # Non-negative by construction; zero outside [Tmin, Tmax]
+    OD = np.where((T <= Tmin) | (T >= Tmax), 0.0, OD)
+    OD = np.clip(OD, 0.0, None)
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = np.asarray(X[:, 0], dtype=float)
+
+    # Cardinal Temperature Model with Inflection (Rosso et al. 1993)
+    Tmin = 8.0    # deg C, below which no growth
+    Topt = 37.0   # deg C, optimal growth temperature for E. coli
+    Tmax = 47.0   # deg C, above which no growth
+    OD_opt = 1.0  # OD600 at optimal temperature after 24 h
+
+    num = (T - Tmax) * (T - Tmin) ** 2
+    den = ((Topt - Tmin) *
+           ((Topt - Tmin) * (T - Topt) -
+            (Topt - Tmax) * (Topt + Tmin - 2.0 * T)))
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        gamma = np.where(den != 0.0, num / den, 0.0)
+
+    OD = OD_opt * gamma
+    # enforce zero outside the viable range and non-negativity
+    OD = np.where((T <= Tmin) | (T >= Tmax), 0.0, OD)
+    OD = np.clip(OD, 0.0, None)
+    return OD

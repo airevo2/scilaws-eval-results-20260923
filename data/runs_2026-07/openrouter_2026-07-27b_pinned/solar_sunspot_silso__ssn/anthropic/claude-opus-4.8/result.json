@@ -1,0 +1,26 @@
+{
+  "task": "solar_sunspot_silso__ssn",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeII",
+  "primary": "astronomy ",
+  "formulas": [
+    {
+      "formula": "hathaway_2015",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "volobuev_2009",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

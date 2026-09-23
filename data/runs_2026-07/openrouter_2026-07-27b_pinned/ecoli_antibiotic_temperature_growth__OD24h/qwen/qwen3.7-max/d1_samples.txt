@@ -1,0 +1,121 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600(24h) for E. coli BW25113 in LB as a function of temperature.
+    Uses the Ratkowsky full square-root model (1983):
+        sqrt(mu) = b * (T - T_min) * (1 - exp(c * (T - T_max)))
+    OD24h is taken proportional to growth rate mu, i.e. OD = a * [sqrt(mu)]^2.
+    """
+    T = X[:, 0]
+
+    # Cardinal temperatures for E. coli (degC)
+    T_min = 8.0       # minimum growth temperature
+    T_max = 46.5      # maximum growth temperature
+
+    # Shape parameter controlling sharpness of decline near T_max
+    c = 0.2
+
+    # Scaling coefficient (absorbs b^2, inoculum size, time, etc.)
+    a = 0.0041        # yields OD ~2.5 at 37 degC
+
+    term = (T - T_min) * (1.0 - np.exp(c * (T - T_max)))
+    od = a * term ** 2
+
+    # Zero outside the permissive growth range
+    od = np.where((T >= T_min) & (T <= T_max), od, 0.0)
+
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Modified Ratkowsky (square-root) model for temperature-dependent growth
+    # Standard cardinal-temperature form: sqrt(r) = b*(T - T_min)*(1 - exp(c*(T - T_max)))
+    T_min = 10.0     # Minimum growth temperature for E. coli (degC)
+    T_max = 47.0     # Maximum growth temperature for E. coli (degC)
+    b = 0.065        # Slope / rate parameter
+    c = 0.174        # Supra-optimal exponential decay parameter
+    # Model peaks near ~37 degC, consistent with E. coli thermal optimum
+    sqrt_OD = b * (T - T_min) * (1.0 - np.exp(c * (T - T_max)))
+    OD = np.maximum(0.0, sqrt_OD) ** 2
+    return OD
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+
+    # Full Ratkowsky (1983) model — standard closed-form for bacterial growth vs. temperature
+    # OD24h = a * [(T - T_min) * (1 - exp(c * (T - T_max)))]^2
+    T_min = 7.0     # minimum growth temperature for E. coli (degC)
+    T_max = 46.5    # maximum growth temperature for E. coli (degC)
+    c = 0.2         # curvature parameter controlling decline near T_max
+    a = 0.003       # scale factor mapping squared rate to OD600 units
+
+    growth_term = (T - T_min) * (1.0 - np.exp(c * (T - T_max)))
+    od = a * growth_term ** 2
+
+    # Enforce biological constraint: no growth outside viable temperature range
+    od = np.where((T < T_min) | (T > T_max), 0.0, od)
+
+    return od
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    
+    # Full Ratkowsky square-root model (Ratkowsky et al., 1983)
+    # sqrt(OD24h) = b * (T - T_min) * (1 - exp(c * (T - T_max)))
+    T_min = 8.0    # Theoretical minimum temperature for E. coli growth (degC)
+    T_max = 46.0   # Maximum temperature for growth (degC)
+    b = 0.063      # Slope parameter
+    c = 0.22       # Supra-optimal curvature parameter
+    
+    sqrt_od = b * (T - T_min) * (1.0 - np.exp(c * (T - T_max)))
+    sqrt_od = np.maximum(sqrt_od, 0.0)
+    od24h = sqrt_od ** 2
+    
+    return od24h
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict OD600 after 24h for E. coli BW25113 as a function of temperature.
+    
+    Uses the extended Ratkowsky (Belehradek-Ratkowsky) square-root model,
+    the standard closed-form relationship for bacterial growth across the
+    full biokinetic temperature range:
+    
+        sqrt(r) = b * (T - T_min) * (1 - exp(c * (T - T_max)))
+    
+    OD600(24h) is taken proportional to the growth rate r(T).
+    """
+    T = X[:, 0]
+
+    # Extended Ratkowsky model parameters for E. coli K-12 (BW25113)
+    T_min = 10.0    # Theoretical minimum growth temperature [degC]
+    T_max = 46.0    # Theoretical maximum growth temperature [degC]
+    b = 0.05        # Rate scaling parameter [OD^0.5 / degC]
+    c = 0.3         # High-temperature decline shape parameter [1/degC]
+
+    # Square-root of OD proxy from the Ratkowsky model
+    sqrt_od = b * (T - T_min) * (1.0 - np.exp(c * (T - T_max)))
+
+    # Growth is physically impossible outside the cardinal range;
+    # clip the square-root term to zero before squaring
+    sqrt_od = np.maximum(sqrt_od, 0.0)
+
+    od24h = sqrt_od ** 2
+    return od24h

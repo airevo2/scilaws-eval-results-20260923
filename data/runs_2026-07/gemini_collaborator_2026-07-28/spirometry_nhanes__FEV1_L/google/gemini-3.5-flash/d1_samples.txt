@@ -1,0 +1,145 @@
+import numpy as np
+
+
+def predict(X):
+    """
+    Predicts Forced Expiratory Volume in 1 second (FEV1) in Liters using the
+    standard ECCS (European Community for Steel and Coal) 1993 reference equations.
+    Since gender is not provided, an average of the male and female reference
+    equations is used to represent a mixed population.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = age (t) [years]
+        - X[:, 1] = height (h) [cm]
+
+    Returns:
+    - 1-D numpy array of predicted FEV1 [L]
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+
+    # Convert height to meters
+    height_m = height_cm / 100.0
+
+    # ECCS 1993 Male: FEV1 = 4.30 * height_m - 0.029 * age - 2.49
+    # ECCS 1993 Female: FEV1 = 3.95 * height_m - 0.025 * age - 2.60
+    # Average of Male and Female coefficients:
+    fev1 = 4.125 * height_m - 0.027 * age - 2.545
+
+    return fev1
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts Forced Expiratory Volume in 1 second (FEV1) in liters.
+
+    Uses a unisex average of the widely cited Hankinson (NHANES III) reference
+    equations for Caucasians, which provides a highly standard closed-form
+    quadratic relationship for adults.
+
+    Parameters:
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] = age [years]
+        - X[:, 1] = height [cm]
+
+    Returns:
+    np.ndarray
+        1-D array of predicted FEV1 [L].
+    """
+    age = X[:, 0]
+    height = X[:, 1]
+
+    # Averaged NHANES III coefficients for males and females:
+    # Male:   FEV1 = -0.8009 + 0.11100 * age - 0.00224 * age^2 + 0.000143 * height^2
+    # Female: FEV1 = -0.9287 + 0.05799 * age - 0.00131 * age^2 + 0.000108 * height^2
+    fev1 = (
+        -0.8648
+        + 0.084495 * age
+        - 0.001775 * (age**2)
+        + 0.0001255 * (height**2)
+    )
+
+    return fev1
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the Forced Expiratory Volume in 1 second (FEV1) in liters.
+
+    Uses the European Community for Steel and Coal (ECSC / Quanjer 1993)
+    reference equations, averaged for a unisex prediction since biological
+    sex is not provided as an input.
+
+    Inputs:
+    - X: 2-D numpy array where:
+        - X[:, 0] = age [years]
+        - X[:, 1] = height [cm]
+
+    Returns:
+    - 1-D numpy array of FEV1 [L]
+    """
+    age = X[:, 0]
+    height_m = X[:, 1] / 100.0
+
+    # Male ECSC: FEV1 = 4.30 * height_m - 0.029 * age - 2.49
+    # Female ECSC: FEV1 = 3.95 * height_m - 0.025 * age - 2.60
+    # Unisex average coefficients:
+    fev1 = 4.125 * height_m - 0.027 * age - 2.545
+
+    return fev1
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = age in years
+    # X[:, 1] = height in cm
+    age = X[:, 0]
+    height_m = X[:, 1] / 100.0
+
+    # European Community for Coal and Steel (ECCS) / Quanjer 1993 reference equation for males
+    fev1 = 4.30 * height_m - 0.029 * age - 2.49
+
+    return fev1
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts Forced Expiratory Volume in 1 second (FEV1) in liters
+
+    using the Hankinson (NHANES III) reference equation for Caucasian males.
+
+    Parameters:
+    X : ndarray of shape (N, 2)
+        X[:, 0] = age (years)
+        X[:, 1] = height (cm)
+
+    Returns:
+    ndarray of shape (N,)
+        Predicted FEV1 in liters.
+    """
+    age = X[:, 0]
+    height_cm = X[:, 1]
+
+    # NHANES III reference equation coefficients for Caucasian Males
+    # FEV1 = b0 + b1*age + b2*age^2 + b3*height^2
+    b0 = -0.9255
+    b1 = 0.02021
+    b2 = -0.00041
+    b3 = 0.0001556
+
+    fev1 = b0 + b1 * age + b2 * (age**2) + b3 * (height_cm**2)
+    return fev1

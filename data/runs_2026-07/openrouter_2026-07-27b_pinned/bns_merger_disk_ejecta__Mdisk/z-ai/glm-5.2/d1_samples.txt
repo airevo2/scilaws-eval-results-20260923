@@ -1,0 +1,84 @@
+
+
+=====
+
+
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    q = X[:, 4]
+    Lambda_tilde = X[:, 5]
+    
+    # Coefficients from Dietrich et al. (2020), Class. Quantum Grav. 37 14LT01
+    # log10(M_disk / M_sun) = a0 + a1 * Lambda_tilde + a2 * Lambda_tilde^2 + a3 * (1 - q) + a4 * Lambda_tilde * (1 - q)
+    a0 = -2.009
+    a1 = 2.282e-2
+    a2 = -6.966e-5
+    a3 = 1.259
+    a4 = -1.316e-2
+    
+    log_Mdisk = a0 + a1 * Lambda_tilde + a2 * Lambda_tilde**2 + a3 * (1.0 - q) + a4 * Lambda_tilde * (1.0 - q)
+    
+    Mdisk = 10.0**log_Mdisk
+    return Mdisk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    M1 = X[:, 0]
+    M2 = X[:, 1]
+    C1 = X[:, 2]
+    C2 = X[:, 3]
+    q = X[:, 4]
+    # Lambda_tilde = X[:, 5] is provided but not required for the canonical Foucart et al. (2018) fit
+    
+    M_tot = M1 + M2
+    
+    # Coefficients from Foucart et al. (2018), Phys. Rev. D 98, 063007
+    a = -0.09
+    b = -0.17
+    c = 0.28
+    d = -0.05
+    
+    term = a + b * (M1 * C1 + M2 * C2) / M_tot + c * (1 - 2 * C1) + d / q
+    M_disk = M_tot * term
+    
+    # Disk mass cannot be negative
+    M_disk = np.where(M_disk > 0, M_disk, 0.0)
+    
+    return M_disk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    M1 = X[:, 0]  # Mass of the lighter neutron star
+    M2 = X[:, 1]  # Mass of the heavier neutron star
+    C2 = X[:, 3]  # Compactness of the heavier neutron star
+    q = X[:, 4]   # Mass ratio (M1 / M2)
+    
+    # Fitted coefficients from Foucart (2012), Phys. Rev. D 86, 124007
+    # Mapping: Foucart's M2 (lighter) -> prompt's M1
+    #          Foucart's C1 (heavier) -> prompt's C2
+    #          Foucart's q = M2/M1 -> prompt's q = M1/M2
+    a = 0.288
+    b = -0.060
+    c = 0.260
+    d = -0.096
+    
+    # Standard closed-form relationship for the bound post-merger disk mass
+    # M_disk = M_lighter * [ a * (1 + b * q) * (1 - c * q * C_heavier) + d * q * C_heavier ]
+    M_disk = M1 * (a * (1.0 + b * q) * (1.0 - c * q * C2) + d * q * C2)
+    
+    # Ensure non-negative disk mass
+    M_disk = np.maximum(M_disk, 0.0)
+    
+    return M_disk

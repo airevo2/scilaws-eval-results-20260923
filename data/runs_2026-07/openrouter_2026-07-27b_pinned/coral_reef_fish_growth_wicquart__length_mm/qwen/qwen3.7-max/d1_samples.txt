@@ -1,0 +1,91 @@
+import numpy as np
+
+def predict(X):
+    Agei = X[:, 0]
+    
+    # Von Bertalanffy Growth Function (VBGF) parameters
+    L_inf = 500.0  # Asymptotic total length (mm)
+    K = 0.20       # Brody growth rate coefficient (1/year)
+    t0 = -0.50     # Theoretical age at zero length (years)
+    
+    # Expected back-calculated length at age
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (Agei - t0)))
+    
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Agei = X[:, 0]
+    
+    # Von Bertalanffy Growth Function (VBGF) parameters
+    # (Generic named constants used as no species-specific data is provided)
+    L_inf = 500.0  # Asymptotic total length (mm)
+    K = 0.2        # Brody growth rate coefficient (1/year)
+    t0 = -0.5      # Theoretical age at zero length (years)
+    
+    # Expected back-calculated length at age is modeled by the VBGF
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (Agei - t0)))
+    
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Agei = X[:, 0]
+    
+    # Expected back-calculated length at age is modeled by the von Bertalanffy Growth Function (VBGF).
+    # Since species is unspecified, typical placeholder parameters are used.
+    L_inf = 500.0  # Asymptotic total length (mm)
+    K = 0.2        # Brody growth rate coefficient (1/years)
+    t0 = 0.0       # Theoretical age at length zero (years)
+    
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (Agei - t0)))
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Agei = X[:, 0]
+    
+    # Von Bertalanffy Growth Function (VBGF) parameters
+    # Representative constants used as species is unspecified
+    L_inf = 800.0  # Asymptotic total length (mm)
+    K = 0.15       # Brody growth rate coefficient (year^-1)
+    t0 = -0.5      # Theoretical age at zero length (years)
+    
+    # Standard VBGF closed-form relationship for length at age
+    Li_sp_m = L_inf * (1.0 - np.exp(-K * (Agei - t0)))
+    
+    return Li_sp_m
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Back-calculated total length (mm) at age using the standard
+    von Bertalanffy Growth Function (VBGF), the canonical closed-form
+    model fit to back-calculated length-at-age data from otolith increments.
+    
+    L(t) = L_inf * (1 - exp(-k * (t - t0)))
+    
+    Parameters chosen as representative generic values for a marine fish species.
+    """
+    Agei = X[:, 0]
+    
+    # VBGF parameters (generic representative values)
+    L_inf = 550.0   # asymptotic total length (mm)
+    k = 0.25        # Brody growth-rate coefficient (yr^-1)
+    t0 = -0.5       # theoretical age at zero length (yr)
+    
+    Li_sp_m = L_inf * (1.0 - np.exp(-k * (Agei - t0)))
+    
+    return Li_sp_m

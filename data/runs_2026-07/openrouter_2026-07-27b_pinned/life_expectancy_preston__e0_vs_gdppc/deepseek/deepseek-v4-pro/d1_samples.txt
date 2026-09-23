@@ -1,0 +1,115 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict sex-averaged life expectancy at birth (e0) from GDP per capita
+    (constant 1963 US dollars) using the classic Preston curve relationship.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1)
+        X[:, 0] = GDP per capita (in 1963 USD).
+
+    Returns
+    -------
+    e0 : np.ndarray, shape (n,)
+        Predicted life expectancy at birth in years.
+    """
+    gdppc = X[:, 0]
+    # Preston (1975) cross-sectional relationship for the 1960s:
+    # e0 = 10.7 * ln(gdppc) - 24.5
+    e0 = 10.7 * np.log(gdppc) - 24.5
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sex-averaged life expectancy at birth (e0) from GDP per capita
+    (1963 US dollars) using the classic Preston curve (1960s cross-section).
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1) or (n,)
+        X[:, 0] = gdppc, national income per head in constant 1963 USD.
+    
+    Returns
+    -------
+    e0 : np.ndarray, shape (n,)
+        Predicted life expectancy at birth in years.
+    """
+    gdppc = X[:, 0] if X.ndim == 2 else X
+    # Canonical Preston curve: e0 = 23.4 + 6.6 * ln(gdppc)
+    e0 = 23.4 + 6.6 * np.log(gdppc)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sex-averaged life expectancy at birth (e0) from GDP per capita in 1963 USD.
+    Uses the classic Preston curve: e0 = a + b * log10(gdppc).
+    """
+    # Extract GDP per capita (column 0)
+    gdppc = X[:, 0]
+    
+    # Preston (1975) coefficients for the cross-sectional relationship
+    a = 34.4
+    b = 7.8
+    
+    # Predicted life expectancy at birth
+    e0 = a + b * np.log10(gdppc)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sex-averaged life expectancy at birth (e0) in years
+    from GDP per capita (gdppc) in 1963 US dollars using the
+    classic Preston (1975) cross-sectional relationship.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 1)
+        X[:, 0] = gdppc, national income per head in constant 1963 USD.
+
+    Returns
+    -------
+    np.ndarray, shape (n_samples,)
+        Predicted life expectancy at birth e0.
+    """
+    gdppc = X[:, 0]
+    # Preston curve (1960s): e0 = 34.0 + 4.0 * ln(gdppc)
+    e0 = 34.0 + 4.0 * np.log(gdppc)
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sex-averaged life expectancy at birth (e0) from GDP per capita
+    using the standard Preston (1975) semi-logarithmic relationship.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 1)
+        X[:, 0] = gdppc, GDP per capita in constant 1963 US dollars.
+
+    Returns
+    -------
+    np.ndarray, shape (n,)
+        Predicted e0 values (years).
+    """
+    gdppc = X[:, 0]
+    # Preston (1975) curve: e0 = 6.6 + 6.0 * ln(GDP per capita)
+    e0 = 6.6 + 6.0 * np.log(gdppc)
+    return e0

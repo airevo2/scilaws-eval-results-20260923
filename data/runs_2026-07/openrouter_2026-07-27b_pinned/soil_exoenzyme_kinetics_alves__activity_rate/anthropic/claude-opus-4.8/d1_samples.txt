@@ -1,0 +1,54 @@
+import numpy as np
+
+def predict(X):
+    # Michaelis-Menten kinetics: v = Vmax * S / (Km + S)
+    S = X[:, 0]
+    Vmax = 100.0   # nmol g^-1 h^-1 (maximum reaction rate)
+    Km = 150.0     # uM (half-saturation constant)
+    v = Vmax * S / (Km + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    # Michaelis-Menten kinetics: v = Vmax * S / (Km + S)
+    Vmax = 100.0  # nmol g^-1 h^-1
+    Km = 100.0    # uM
+    return Vmax * S / (Km + S)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    # Michaelis-Menten kinetics: v = Vmax * S / (Km + S)
+    Vmax = 100.0   # nmol g^-1 h^-1
+    Km = 50.0      # uM
+    v = Vmax * S / (Km + S)
+    return v
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Michaelis-Menten kinetics: v = Vmax * S / (Km + S)
+    S = X[:, 0]
+    Vmax = 100.0  # nmol g^-1 h^-1
+    Km = 100.0    # uM
+    return Vmax * S / (Km + S)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    S = X[:, 0]
+    # Michaelis-Menten kinetics: v = Vmax * S / (Km + S)
+    Vmax = 100.0   # nmol g^-1 h^-1
+    Km = 100.0     # uM
+    return Vmax * S / (Km + S)

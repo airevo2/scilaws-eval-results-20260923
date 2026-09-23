@@ -1,0 +1,157 @@
+import numpy as np
+
+
+def predict(X):
+    # Inputs: Stretch ratios in lateral (11) and cranial-caudal (22) directions
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    # Compute Green-Lagrange strains
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+
+    # Canonical Fung-type orthotropic model parameters for mouse skin (in MPa)
+    c = 0.05  # Scaling parameter
+    a1 = 1.8  # Stiffness parameter in lateral direction
+    a2 = 2.2  # Stiffness parameter in cranial-caudal direction
+    a3 = 0.4  # Shear/coupling interaction parameter
+
+    # Exponent Q in the Fung strain energy density function
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # Compute second principal Cauchy stress sigma22
+    sigma22 = (lambda22**2) * c * np.exp(Q) * (a2 * E22 + a3 * E11)
+
+    return sigma22
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = lambda11 (lateral stretch)
+    # X[:, 1] = lambda22 (cranial-caudal stretch)
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    # Green-Lagrange strain components
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+
+    # Anisotropic Fung-type strain energy density parameters for mouse skin
+    # c0 is the scaling parameter in MPa
+    # c1, c2, c3 are dimensionless anisotropic stiffness parameters
+    c0 = 0.055
+    c1 = 3.2
+    c2 = 4.8
+    c3 = 1.5
+
+    # Exponent Q in the Fung strain energy function: W = (c0 / 2) * (exp(Q) - 1)
+    Q = c1 * E11**2 + c2 * E22**2 + 2.0 * c3 * E11 * E22
+
+    # Second Piola-Kirchhoff stress S22 = dW / dE22
+    S22 = c0 * (c2 * E22 + c3 * E11) * np.exp(Q)
+
+    # Cauchy stress sigma22 assuming incompressibility (J = 1)
+    # sigma22 = (lambda22^2) * S22
+    sigma22 = (lambda22**2) * S22
+
+    return sigma22
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract principal stretch ratios
+    lam11 = X[:, 0]
+    lam22 = X[:, 1]
+
+    # Compute Green-Lagrange strain components
+    E11 = 0.5 * (lam11**2 - 1.0)
+    E22 = 0.5 * (lam22**2 - 1.0)
+
+    # Fung-type orthotropic strain energy function parameters
+    # Calibrated for mouse skin under large biaxial stretches
+    c = 0.10  # Scaling parameter (MPa)
+    a1 = 0.15  # Lateral stiffness coefficient
+    a2 = 0.25  # Cranial-caudal stiffness coefficient (typically stiffer)
+    a3 = 0.10  # Cross-coupling coefficient
+
+    # Exponent of the Fung strain energy density function
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # 2nd principal Cauchy stress (sigma22) under plane stress assumption
+    # sigma22 = lam22^2 * dW/dE22
+    sigma22 = lam22**2 * c * (a2 * E22 + a3 * E11) * np.exp(Q)
+
+    return sigma22
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = lambda11 (lateral stretch)
+    # X[:, 1] = lambda22 (cranial-caudal stretch)
+    l1 = X[:, 0]
+    l2 = X[:, 1]
+
+    # Green-Lagrange strains
+    E11 = 0.5 * (l1**2 - 1.0)
+    E22 = 0.5 * (l2**2 - 1.0)
+
+    # Fung-type strain energy density parameters for mouse skin (stress in MPa)
+    c = 0.022  # Stress scaling parameter (MPa)
+    a1 = 3.5  # Lateral stiffness parameter
+    a2 = 5.1  # Cranial-caudal stiffness parameter
+    a3 = 1.8  # Shear/coupling stiffness parameter
+
+    # Exponent of the Fung elastic potential
+    Q = a1 * E11**2 + a2 * E22**2 + 2.0 * a3 * E11 * E22
+
+    # 2nd Piola-Kirchhoff stress in the second direction (S22)
+    S22 = c * (a2 * E22 + a3 * E11) * np.exp(Q)
+
+    # Cauchy stress in the second direction (sigma22)
+    # Under the membrane assumption for thin biaxial specimens, sigma22 = lambda22^2 * S22
+    sigma22 = l2**2 * S22
+
+    return sigma22
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract principal stretch ratios
+    lambda11 = X[:, 0]
+    lambda22 = X[:, 1]
+
+    # Compute Green-Lagrange strain components
+    E11 = 0.5 * (lambda11**2 - 1.0)
+    E22 = 0.5 * (lambda22**2 - 1.0)
+
+    # Fung-type orthotropic strain energy function parameters for mouse skin
+    # c has units of MPa; A1, A2, A3 are dimensionless anisotropy coefficients
+    c = 0.05
+    A1 = 1.2
+    A2 = 1.8
+    A3 = 0.5
+
+    # Exponent term Q in the Fung strain energy function
+    Q = A1 * E11**2 + A2 * E22**2 + 2.0 * A3 * E11 * E22
+
+    # 2nd Piola-Kirchhoff stress in the second direction: S22 = dW/dE22
+    S22 = c * (A2 * E22 + A3 * E11) * np.exp(Q)
+
+    # Convert to Cauchy stress: sigma22 = (lambda22^2) * S22
+    sigma22 = lambda22**2 * S22
+
+    return sigma22

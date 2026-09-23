@@ -1,0 +1,116 @@
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for the longitudinal energy deposit 
+    profile (dE/dX) in extensive air showers: the Gaisser-Hillas function.
+    
+    Note: While the dataset column may contain raw, unbinned/unsmoothed 
+    telescope measurements, the Gaisser-Hillas parameterization is the 
+    standard theoretical closed-form model for this physical quantity.
+    """
+    x = X[:, 0]
+    
+    # Representative Gaisser-Hillas parameters for an average UHECR shower
+    X_max = 800.0    # Depth of shower maximum [g/cm^2]
+    X_0 = 0.0        # Effective first interaction depth [g/cm^2]
+    lam = 70.0       # Shower attenuation/shape parameter [g/cm^2]
+    dEdX_max = 1.0   # Normalization constant (dE/dX at X_max) [PeV/(g/cm^2)]
+    
+    # Gaisser-Hillas formula
+    shape_exponent = (X_max - X_0) / lam
+    
+    # Calculate the profile (x is guaranteed > X_0 in the specified fitting window)
+    dEdX = dEdX_max * ((x - X_0) / (X_max - X_0))**shape_exponent * np.exp((X_max - x) / lam)
+    
+    return dEdX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    
+    # Gaisser-Hillas parameters (representative values)
+    f_max = 2.0    # Peak energy deposit [PeV / (g/cm^2)]
+    X_max = 800.0  # Depth of shower maximum [g/cm^2]
+    X_0 = 0.0      # Effective first interaction depth [g/cm^2]
+    lam = 70.0     # Shower length scale [g/cm^2]
+    
+    # Gaisser-Hillas parameterization
+    base = np.maximum(x - X_0, 1e-12) / (X_max - X_0)
+    exponent = (X_max - X_0) / lam
+    
+    dE_dX = f_max * (base ** exponent) * np.exp((X_max - x) / lam)
+    
+    return dE_dX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard Gaisser-Hillas parameterization for the longitudinal 
+    energy deposit profile dE/dX of an extensive air shower.
+    
+    While the raw telescope data contains Poisson noise and Cherenkov 
+    contamination, the underlying closed-form physical expectation for 
+    the shower profile is the Gaisser-Hillas function.
+    """
+    # Representative parameters for a ~10 EeV (10 PeV) UHECR shower
+    dEdX_max = 0.12  # Peak energy deposit in PeV / (g/cm^2)
+    X_max = 800.0    # Depth of shower maximum in g/cm^2
+    X_0 = -10.0      # First interaction point proxy in g/cm^2
+    lam = 70.0       # Shower length scale in g/cm^2
+    
+    x = X[:, 0]
+    
+    # Gaisser-Hillas closed-form relationship
+    base = (x - X_0) / (X_max - X_0)
+    power = (X_max - X_0) / lam
+    decay = np.exp((X_max - x) / lam)
+    
+    dE_dX = dEdX_max * (base ** power) * decay
+    
+    return dE_dX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    x = X[:, 0]
+    
+    # Gaisser-Hillas parameters (typical values for a UHECR shower)
+    Xmax = 800.0   # g/cm^2
+    X0 = 0.0       # g/cm^2
+    lam = 60.0     # g/cm^2
+    Nmax = 5.0     # PeV/(g/cm^2)
+    
+    # Ensure base is positive to avoid NaNs for fractional powers
+    base = np.maximum((x - X0) / (Xmax - X0), 1e-12)
+    power = (Xmax - X0) / lam
+    
+    dEdX = Nmax * (base ** power) * np.exp((Xmax - x) / lam)
+    
+    return dEdX
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Typical Gaisser-Hillas parameters for UHECR longitudinal profiles
+    Xmax = 800.0   # Depth of shower maximum [g/cm^2]
+    X0 = 0.0       # Effective starting depth [g/cm^2]
+    lam = 70.0     # Scale parameter [g/cm^2]
+    Nmax = 2.0     # Amplitude / Maximum energy deposit [PeV/(g/cm^2)]
+    
+    x = X[:, 0]
+    
+    # Standard Gaisser-Hillas closed-form relationship
+    dE_dX = Nmax * ((x - X0) / (Xmax - X0)) ** ((Xmax - X0) / lam) * np.exp((Xmax - x) / lam)
+    
+    return dE_dX

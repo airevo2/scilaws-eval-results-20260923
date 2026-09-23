@@ -1,0 +1,133 @@
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]       # DNA strength parameter per base (kcal/mol equivalent)
+    N = X[:, 1]       # sequence length (bp)
+    Na = X[:, 2]      # sodium ion concentration (M)
+    Ct = X[:, 3]      # total strand concentration (M)
+
+    R = 1.987         # gas constant, cal/(mol·K)
+
+    # Enthalpy of duplex formation (cal/mol)
+    # E encodes per-base stacking + H-bond enthalpy; scale to cal/mol
+    dH = -E * N * 1000.0
+
+    # Entropy of duplex formation at 1 M NaCl (cal/(mol·K))
+    # Enthalpy–entropy compensation: <ΔS>/<ΔH> ≈ 2.7 cal/(mol·K) per kcal/mol
+    # (derived from SantaLucia 1998 unified nearest-neighbor parameters)
+    dS = -2.7 * E * N
+
+    # Salt correction to entropy (SantaLucia 1998, counterion condensation)
+    dS = dS + 0.368 * (N - 1.0) * np.log(Na)
+
+    # Strand-concentration term (non-self-complementary duplex, C_T/4)
+    conc = R * np.log(Ct / 4.0)
+
+    # Melting temperature (°C)
+    Tm = dH / (dS + conc) - 273.15
+
+    return Tm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+    N = X[:, 1]
+    salt_M = X[:, 2]
+    dna_conc_M = X[:, 3]
+    
+    # Thermodynamic constants
+    R = 1.987  # Gas constant in cal/(mol*K)
+    
+    # Standard entropy approximations per base pair and initiation (cal/(mol*K))
+    # Using typical unified nearest-neighbor average entropy values
+    S_bp = -22.0   
+    S_init = -5.7  
+    
+    # Total Enthalpy (cal/mol): E is strength (enthalpy) per base in kcal/mol
+    # Sum of overlapping steps gives total enthalpy, scaled by 1000 for cal/mol
+    delta_H = E * N * 1000.0 
+    
+    # Total Entropy (cal/(mol*K)) including concentration and symmetry factor (4 for non-self-complementary)
+    delta_S = (N * S_bp) + S_init + R * np.log(dna_conc_M / 4.0)
+    
+    # Melting temperature in Kelvin, then converted to Celsius
+    Tm_K = delta_H / delta_S
+    
+    # Salt correction (Schildkraut & Lifson / Marmur & Doty empirical correction for Na+)
+    salt_correction = 16.6 * np.log10(salt_M)
+    
+    Tm_C = Tm_K - 273.15 + salt_correction
+    
+    return Tm_C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+    N = X[:, 1]
+    salt_M = X[:, 2]
+    dna_conc_M = X[:, 3]
+    
+    # Empirical linear model for DNA melting temperature
+    # E is scaled by 10 to convert the dimensionless strength parameter to °C
+    # Salt correction follows the standard Schildkraut-Lifson / Marmur-Doty 16.6 * log10([Na+])
+    # Length correction follows the standard -500 / N penalty for finite size
+    # Concentration correction uses a fitted coefficient for log10(C_DNA) in Molar
+    Tm = (10.0 * E) + (16.6 * np.log10(salt_M)) - (500.0 / N) + (1.5 * np.log10(dna_conc_M))
+    
+    return Tm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+    N = X[:, 1]
+    salt_M = X[:, 2]
+    dna_conc_M = X[:, 3]
+    
+    # Standard thermodynamic closed-form relationship for DNA Tm
+    # Tm = (E * N) / (dS + R * ln(C_DNA)) + salt_correction - Kelvin_offset
+    
+    # Named constants for the fitted thermodynamic parameters
+    dS = 20.0          # Effective entropy parameter (intercept)
+    R = 1.987          # Gas constant / concentration scaling factor
+    salt_coeff = 16.6  # Schildkraut-Lifson salt correction coefficient
+    kelvin_offset = 273.15 # Conversion from Kelvin to Celsius
+    
+    Tm = (E * N) / (dS + R * np.log(dna_conc_M)) + salt_coeff * np.log10(salt_M) - kelvin_offset
+    
+    return Tm
+
+=====
+
+import numpy as np
+
+def predict(X):
+    E = X[:, 0]
+    N = X[:, 1]
+    Na = X[:, 2]
+    Ct = X[:, 3]
+
+    R = 1.987       # gas constant in cal/(mol·K)
+    Tc = 373.0      # enthalpy-entropy compensation temperature (K)
+
+    # Total duplex enthalpy magnitude (cal/mol) from per-base strength
+    dH = E * N * 1000.0
+
+    # Total duplex entropy magnitude via compensation: |dS| = |dH| / Tc
+    dS = dH / Tc
+
+    # Standard nearest-neighbor thermodynamic Tm formula:
+    #   Tm = dH / (dS + R * ln(4/Ct)) - 273.15 + 16.6 * log10([Na+])
+    # Factor of 4 assumes non-self-complementary strands at equal concentration
+    # 16.6 * log10([Na+]) is the Schildkraut-Lifson salt correction
+    Tm = dH / (dS + R * np.log(4.0 / Ct)) - 273.15 + 16.6 * np.log10(Na)
+
+    return Tm

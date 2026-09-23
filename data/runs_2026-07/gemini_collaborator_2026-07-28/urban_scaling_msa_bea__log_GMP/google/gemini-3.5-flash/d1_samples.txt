@@ -1,0 +1,143 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of Gross Metropolitan Product (log_GMP)
+
+    based on the natural log of population (log_pop) using the canonical
+    urban scaling relationship (agglomeration economies).
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is log_pop (ln N) in persons.
+
+    Outputs:
+    - 1-D numpy array of predicted log_GMP (ln Y) in millions of chained 2017 USD.
+    """
+    log_pop = X[:, 0]
+
+    # In urban economics, economic output scales superlinearly with population:
+    # Y = Y_0 * N^beta  =>  ln(Y) = ln(Y_0) + beta * ln(N)
+    # For GDP/GMP, the scaling exponent beta is canonically estimated to be ~1.15.
+    # The intercept is calibrated for GMP in millions of 2017 USD.
+    beta = 1.15
+    alpha = -4.89
+
+    log_GMP = alpha + beta * log_pop
+    return log_GMP
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the natural log of Gross Metropolitan Product (log_GMP) in millions of 
+    chained 2017 USD using the natural log of MSA population (log_pop).
+    
+    This uses the classic urban scaling relationship from urban economics:
+    ln(Y) = beta * ln(N) + alpha
+    
+    Where:
+    - beta ≈ 1.15 (the standard superlinear scaling exponent for urban economic output 
+      reflecting agglomeration economies / wealth creation)
+    - alpha ≈ -4.9 (intercept calibrated for population in persons and GMP in millions of USD)
+    
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is log_pop (ln N)
+    
+    Returns:
+    - 1-D numpy array of predicted log_GMP (ln Y)
+    """
+    log_pop = X[:, 0]
+    
+    # Standard empirical scaling parameters for urban GDP/GMP
+    beta = 1.15
+    alpha = -4.90
+    
+    log_GMP = beta * log_pop + alpha
+    return log_GMP
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the natural log of Gross Metropolitan Product (log_GMP) in millions
+
+    of chained 2017 dollars using the natural log of MSA population (log_pop).
+
+    This implements the canonical urban scaling relationship:
+        ln(Y) = beta * ln(N) + c
+    where:
+        - Y is the economic output (GMP)
+        - N is the population
+        - beta is the scaling exponent (typically ~1.12 to 1.15 for economic
+        indicators,
+          representing superlinear scaling/agglomeration economies)
+        - c is the constant intercept adjusted for GMP in millions of USD.
+
+    Parameters:
+    X : ndarray of shape (n_samples, 1)
+        X[:, 0] : log_pop (ln N), natural log of population
+
+    Returns:
+    y_pred : ndarray of shape (n_samples,)
+        Predicted log_GMP (ln Y)
+    """
+    # Extract log of population
+    log_pop = X[:, 0]
+
+    # Canonical urban scaling parameters for US Metropolitan Statistical Areas
+    # beta = 1.13 (superlinear scaling exponent for GDP/GMP)
+    # intercept = -4.50 (accounts for scale of GMP in millions of dollars)
+    beta = 1.13
+    intercept = -4.50
+
+    log_GMP = beta * log_pop + intercept
+
+    return log_GMP
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the natural log of population (ln N)
+    log_pop = X[:, 0]
+
+    # In urban economics and scaling theory (e.g., Bettencourt et al.),
+    # Gross Metropolitan Product (GMP) scales superlinearly with population.
+    # The standard scaling exponent (beta) for economic output is approximately 1.15.
+    beta = 1.15
+
+    # The intercept (alpha) is calibrated for population in persons
+    # and real GMP in millions of chained 2017 USD.
+    alpha = -4.89
+
+    # ln Y = alpha + beta * ln N
+    log_gmp = alpha + beta * log_pop
+
+    return log_gmp
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] represents the natural log of population (ln N)
+    log_pop = X[:, 0]
+
+    # In urban economics and scaling theory (e.g., Bettencourt et al., 2007),
+    # Gross Metropolitan Product (GMP) scales superlinearly with population.
+    # The standard scaling exponent (beta) for socio-economic outputs is ~1.15.
+    # The intercept (alpha) is calibrated for GMP in millions of chained 2017 USD.
+    beta = 1.15
+    alpha = -4.85
+
+    # ln(Y) = alpha + beta * ln(N)
+    log_GMP = alpha + beta * log_pop
+
+    return log_GMP

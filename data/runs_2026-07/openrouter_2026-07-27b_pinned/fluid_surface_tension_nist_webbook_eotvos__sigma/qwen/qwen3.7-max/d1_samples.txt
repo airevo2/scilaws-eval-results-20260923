@@ -1,0 +1,109 @@
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+    
+    # Molar volume in m^3/mol
+    V_m = M_mol / rho_liq
+    
+    # Eötvös constant in SI units (J K^-1 mol^-2/3)
+    k = 2.1e-7 
+    
+    # Eötvös rule for surface tension
+    sigma = k * (T_c - T) / (V_m ** (2.0 / 3.0))
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]          # Temperature [K]
+    rho_liq = X[:, 1]    # Liquid density [kg/m^3]
+    T_c = X[:, 2]        # Critical temperature [K]
+    M_mol = X[:, 3]      # Molar mass [kg/mol]
+
+    # Eötvös constant (SI units)
+    k_E = 2.1e-7  # [J / (K * mol^(2/3))]  ≡  [N m / (K mol^(2/3))]
+
+    # Molar volume [m^3 / mol]
+    V_m = M_mol / rho_liq
+
+    # Eötvös rule:  σ · V_m^(2/3) = k_E · (T_c − T)
+    sigma = k_E * (T_c - T) / (V_m ** (2.0 / 3.0))
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict liquid surface tension along the saturation curve using the Eötvös rule.
+    
+    Eötvös rule:  σ · V_m^(2/3) = k · (T_c - T)
+    
+    where V_m = M_mol / rho_liq is the molar volume and k is the Eötvös constant.
+    """
+    T       = X[:, 0]   # Temperature [K]
+    rho_liq = X[:, 1]   # Liquid density [kg/m³]
+    T_c     = X[:, 2]   # Critical temperature [K]
+    M_mol   = X[:, 3]   # Molar mass [kg/mol]
+
+    # Eötvös constant in SI units  [J / (K · mol^(2/3))]
+    k = 2.1e-7
+
+    # Molar volume [m³/mol]
+    V_m = M_mol / rho_liq
+
+    # Surface tension [N/m]
+    sigma = k * (T_c - T) / (V_m ** (2.0 / 3.0))
+
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    rho_liq = X[:, 1]
+    T_c = X[:, 2]
+    M_mol = X[:, 3]
+    
+    # Molar volume in m^3/mol
+    V_m = M_mol / rho_liq
+    
+    # Eötvös constant in J/(mol^(2/3) K) or N m / (mol^(2/3) K)
+    k = 2.1e-7 
+    
+    # Eötvös rule: sigma * V_m^(2/3) = k * (T_c - T)
+    sigma = k * (T_c - T) / (V_m ** (2.0 / 3.0))
+    
+    return sigma
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]          # Temperature [K]
+    rho_liq = X[:, 1]    # Liquid density [kg/m³]
+    T_c = X[:, 2]        # Critical temperature [K]
+    M_mol = X[:, 3]      # Molar mass [kg/mol]
+
+    # Eötvös constant in SI units [J/(K·mol^(2/3))]
+    k_E = 2.1e-7
+
+    # Molar volume [m³/mol]
+    V_m = M_mol / rho_liq
+
+    # Eötvös rule: σ · V_m^(2/3) = k_E · (T_c - T)
+    sigma = k_E * (T_c - T) / (V_m ** (2.0 / 3.0))
+
+    return sigma

@@ -1,0 +1,183 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict daily mean azimuthal IMF component B_phi [nT] at L1 using the 
+    Parker spiral model.
+
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 3)
+        Columns:
+        X[:,0] = B_r_nT [nT]  : radial IMF component
+        X[:,1] = v_sw_km_s [km/s] : solar wind speed
+        X[:,2] = r_AU [AU]      : heliocentric distance
+
+    Returns
+    -------
+    B_phi : np.ndarray, shape (n_samples,)
+        Azimuthal IMF component [nT], positive in the prograde (rotation) direction.
+    """
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r = X[:, 2]
+
+    # Solar equatorial angular rotation rate [rad/s]
+    # (sidereal period ~ 25.38 days)
+    omega_sun = 2.865e-6  
+
+    # Astronomical Unit in km
+    AU_km = 149_597_870.7  
+
+    # Effective rotational speed at 1 AU [km/s]
+    v_rot_1AU = omega_sun * AU_km  # ≈ 428.6 km/s
+
+    # Parker spiral relationship for the ecliptic plane (sin(colatitude)=1)
+    B_phi = - B_r * (v_rot_1AU * r) / v_sw
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the azimuthal component of the interplanetary magnetic field (B_phi)
+    using the standard Parker spiral formula.
+    
+    Inputs:
+        X : 2-D numpy array
+            X[:, 0] = B_r [nT]  — radial IMF, positive outward
+            X[:, 1] = v_sw [km/s] — solar wind bulk speed
+            X[:, 2] = r_AU [AU] — heliocentric distance
+    
+    Returns:
+        B_phi : 1-D numpy array [nT] — azimuthal IMF, positive in prograde direction
+    """
+    # Physical constants
+    AU_KM = 1.495978707e8      # 1 AU in kilometres
+    OMEGA_SUN = 2.865e-6       # Solar equatorial angular velocity [rad/s]
+    
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Heliocentric distance in kilometres
+    r_km = r_AU * AU_KM
+    
+    # Parker spiral: B_phi = - B_r * (omega * r / v_sw)
+    # (ecliptic plane approximation, sin(colatitude) = 1)
+    B_phi = -B_r * (OMEGA_SUN * r_km / v_sw)
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the azimuthal (tangential) component B_phi [nT] of the IMF at L1
+    using the standard Parker spiral relationship.
+
+    B_phi = - B_r * (r * Omega_sun) / v_sw
+
+    where:
+        B_r   : radial IMF component [nT] (positive outward)
+        v_sw  : solar wind speed [km/s]
+        r     : heliocentric distance [AU]
+        Omega_sun : solar rotation rate [rad/s]
+
+    At 1 AU, r * Omega_sun ≈ 1.496e8 km * 2.865e-6 rad/s = 428.6 km/s.
+    For generality, the formula scales linearly with r_AU.
+    """
+    # Constant: 1 AU * solar rotation rate in km/s
+    R_OMEGA_KM_S = 428.6
+
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+
+    B_phi = -B_r * R_OMEGA_KM_S * r_AU / v_sw
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the azimuthal component of the interplanetary magnetic field (B_phi)
+    using the standard Parker spiral model.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 3)
+        X[:,0] = B_r_nT   : radial magnetic field [nT] (positive outward)
+        X[:,1] = v_sw_km_s: solar wind speed [km/s]
+        X[:,2] = r_AU     : heliocentric distance [AU] (constant 1.0 for L1)
+
+    Returns
+    -------
+    B_phi_nT : ndarray, shape (n_samples,)
+        Azimuthal (tangential) magnetic field component [nT],
+        positive in the prograde (solar rotation) direction.
+    """
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+
+    # Solar equatorial sidereal angular velocity (rad/s)
+    OMEGA_SUN = 2.865e-6
+    # One astronomical unit in km
+    AU_KM = 1.4959787e8
+
+    # Effective corotation speed at distance r (km/s)
+    v_rot = OMEGA_SUN * AU_KM * r_AU
+
+    # Parker spiral relation: B_phi = -B_r * (v_rot / v_sw)
+    B_phi = -B_r * v_rot / v_sw
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the azimuthal component of the interplanetary magnetic field (B_phi)
+    at L1 using the Parker spiral model.
+    
+    Inputs:
+    X[:, 0] = B_r [nT] (radial IMF component, outward positive)
+    X[:, 1] = v_sw [km/s] (solar wind speed)
+    X[:, 2] = r [AU] (heliocentric distance)
+    
+    Returns:
+    B_phi [nT] (azimuthal IMF component, positive in prograde direction)
+    """
+    # Solar rotation rate (Carrington rotation) in rad/s
+    omega_sun = 2.865e-6  # rad/s
+    
+    # Astronomical unit in km
+    AU_km = 1.496e8  # km
+    
+    # Extract inputs
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Convert r from AU to km
+    r_km = r_AU * AU_km
+    
+    # Parker spiral angle formula:
+    # tan(psi) = omega_sun * r * sin(theta) / v_sw
+    # At L1, the heliographic latitude is near the equatorial plane, so sin(theta) ~ 1
+    # B_phi = -B_r * tan(psi)  (with sign convention: B_phi positive prograde)
+    # B_phi = -B_r * (omega_sun * r / v_sw)
+    # The negative sign ensures B_phi is positive in the prograde direction
+    # when B_r is positive (outward), since the spiral is wound opposite to rotation
+    
+    B_phi = -B_r * (omega_sun * r_km / v_sw)
+    
+    return B_phi

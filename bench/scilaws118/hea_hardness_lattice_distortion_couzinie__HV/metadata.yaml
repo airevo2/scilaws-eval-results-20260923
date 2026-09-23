@@ -1,0 +1,137 @@
+task_id: hea_hardness_lattice_distortion_couzinie__HV
+domain: materials_science / physical_metallurgy
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  In materials science, refractory and complex-concentrated high-entropy alloys are single-phase solid solutions of multiple early transition metals whose Vickers hardness is measured by indentation.
+
+target:
+  name: HV
+  symbol: "HV"
+  unit: "kgf/mm²"
+  description: >-
+    Room-temperature Vickers hardness of a refractory or complex-concentrated
+    high-entropy alloy, compiled from peer-reviewed experimental measurements
+    in a curated mechanical-property database.
+    Values are means over repeated measurements of nominally identical compositions.
+  range: [166.0, 857.0]
+
+inputs:
+  - name: delta
+    symbol: "δ"
+    unit: "%"
+    description: >-
+      Yang-Zhang atomic-size mismatch parameter, defined as
+      100 × sqrt(Σ c_i (1 − r_i/r̄)²) with Goldschmidt CN-12 radii.
+      Quantifies the degree of lattice distortion in the solid solution.
+    range: [2.31, 10.78]
+  - name: VEC
+    symbol: "VEC"
+    unit: ""
+    description: >-
+      Valence electron concentration (s + p + d electrons per atom),
+      calculated as Σ c_i VEC_i. Controls the preferred crystal structure
+      (FCC vs BCC) and electronic bonding strength.
+    range: [4.20, 6.50]
+  - name: dHmix
+    symbol: "ΔH_mix"
+    unit: "kJ/mol"
+    description: >-
+      Miedema regular-solution enthalpy of mixing, Σ_{i<j} 4 ΔH_{AB} c_i c_j,
+      computed from a Miedema-type pairwise mixing-enthalpy table. Negative values
+      indicate attractive cross-element interactions that promote solid-solution stability.
+    range: [-39.46, 3.50]
+
+data_files:
+  train: data/train.csv   # ETM-RHEA alloys (VEC<=6.5); representative within-domain subsample
+  test:  data/test.csv    # representative held-out subsample (deterministic VEC-sorted stride)
+
+n_train: 56
+n_test:  14
+
+# Audit history (details in VERDICT.md; not shown to SR systems):
+# - ETM applicability filter (VEC <= 6.5) restricts to the Temesi 2023 Eq. 12
+#   domain; non-ETM FCC alloys (VEC > 6.5) excluded (frozen formula RMSE > 420 there).
+# - 2026-05-26 (C12): removed 3 priors that equalled temesi_2023 regression
+#   coefficients (a, b_VEC, c_dHmix); the 4 retained priors are distractors.
+# - 2026-05-29 (re-split): replaced a degenerate VEC-P80 OOD split (every baseline
+#   below naive) with a deterministic representative split; removed the
+#   toda_caraballo baseline (missing PDF + non-published constants). Temesi 2023
+#   now beats naive (R² ~0.44).
+
+priors:
+  - name: "K_SSH"
+    value: 0.7
+    unit: ""
+    description: >-
+      Proportionality constant in Temesi 2024 Eq. 24 solid-solution hardening
+      formula HV = 60 + K*G*delta^(4/3), fitted empirically over 106 HEAs when
+      G is in GPa and HV in kgf/mm². This is from a DIFFERENT formula (Temesi 2024,
+      not the Temesi 2023 Eq. 12 baseline in this task).
+    source: "Temesi et al. 2024, Materials 17:2728, Eq. 24, PDF p. 12"
+    _role: distractor
+  - name: "HV_base"
+    value: 60.0
+    unit: "kgf/mm²"
+    description: >-
+      Baseline hardness term in Temesi 2024 Eq. 24; represents the rule-of-
+      mixture constituent hardness floor, empirically 60 ± 20 kgf/mm² for the
+      106-alloy dataset. From a DIFFERENT formula than the Temesi 2023 Eq. 12
+      baseline shipped here.
+    source: "Temesi et al. 2024, Materials 17:2728, Eq. 24, PDF p. 12 (text lines 2745-2748)"
+    _role: distractor
+  - name: "VEC_BCC_threshold"
+    value: 6.87
+    unit: ""
+    description: >-
+      Critical VEC below which BCC structure is preferred in high-entropy alloys,
+      empirically established from the Guo et al. (2011) structural-stability
+      criterion for multi-component alloys. VEC < 6.87 favours BCC; VEC > 8 favours
+      FCC. Not used in the Temesi 2023 linear regression baseline.
+    source: "Guo S et al. (2011) J. Appl. Phys. 109:103505, Table 2 — BCC/FCC boundary criterion."
+    _role: distractor
+  - name: "n_SSH_Labusch"
+    value: 0.667
+    unit: ""
+    description: >-
+      Labusch-model solid-solution hardening exponent (2/3) for the concentration
+      dependence of yield stress in dilute alloys: Δσ ∝ c^(2/3). In HEA literature
+      this exponent is sometimes replaced by 0.5 (Fleischer model). Not used in
+      the Temesi 2023 multi-linear regression formula.
+    source: "Labusch R (1970) Phys. Status Solidi 41:659-669; see also Varvenne et al. (2016) Acta Mater. 124:660."
+    _role: distractor
+
+references:
+  - id: temesi_2023_hardness_bonding
+    label: "Temesi 2023 — multi-linear regression HV = a + b*VEC + c*dHmix (Eq. 12)"
+    formula_file: formulas/temesi_2023_hardness_bonding.py
+    reference_pdf: reference/temesi_2023_hardness_bonding.pdf
+    n_law_constants:   3
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 116.131512
+      r2: 0.292055
+
+caps:
+  max_law_constants:       3
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include the effect of average valence-electron concentration on electronic bonding strength"
+  - "include the effect of mixing enthalpy on chemical bonding and solid-solution stability"
+  - "predicted Vickers hardness remains non-negative"
+  - "predicted Vickers hardness is nondecreasing with atomic-size mismatch delta when VEC and dHmix are fixed"
+
+best_baseline: 116.132    # temesi_2023_hardness_bonding — rmse (lower is better); regenerated 2026-05-30

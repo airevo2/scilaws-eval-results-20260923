@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Light intensity"
+  symbol: "Int"
+  unit: ""
+  description: "Light intensity"
+inputs:
+  - name: "Light intensity"
+    symbol: "Int_0"
+    unit: ""
+    description: "Light intensity"
+  - name: "Dimensionless"
+    symbol: "theta"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Dimensionless"
+    symbol: "n"
+    unit: ""
+    description: "Dimensionless"

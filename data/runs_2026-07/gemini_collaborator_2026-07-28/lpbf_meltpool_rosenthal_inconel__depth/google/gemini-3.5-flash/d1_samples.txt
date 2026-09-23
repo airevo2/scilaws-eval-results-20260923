@@ -1,0 +1,199 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the meltpool depth in micrometers using an analytical thermal model
+
+    based on the Rosenthal moving heat source theory with beam size correction.
+
+    Inputs:
+    - X[:, 0] = laser_power_W (P) [W]
+    - X[:, 1] = scan_velocity_mm_per_s (V) [mm/s]
+    - X[:, 2] = beam_diameter_um (D4sigma) [um]
+
+    Output:
+    - 1-D numpy array of meltpool_depth_um [um]
+    """
+    P = X[:, 0]
+    V_m_s = X[:, 1] / 1000.0  # Convert mm/s to m/s
+    D_m = X[:, 2] / 1e6  # Convert um to m
+
+    # Thermophysical properties of a standard alloy (e.g., Ti-6Al-4V)
+    eta = 0.35  # Laser absorptivity
+    rho = 4430.0  # Density [kg/m^3]
+    Cp = 670.0  # Specific heat capacity [J/kg*K]
+    dT = 1620.0  # Temperature rise to melting point (Tm - T0) [K]
+
+    # Analytical Rosenthal solution for maximum depth of the melt pool
+    # modified for finite beam size D
+    thermal_factor = np.pi * np.e * rho * Cp * dT
+    depth_limit = np.sqrt((2.0 * eta * P) / (thermal_factor * V_m_s))
+
+    # Beam size correction (larger beam diameters reduce peak temperature and depth)
+    depth_m = depth_limit - (D_m / 4.0)
+
+    # Ensure physical lower bound (melt pool depth cannot be negative)
+    depth_m = np.maximum(depth_m, 0.0)
+
+    # Convert depth from meters to micrometers
+    return depth_m * 1e6
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the meltpool depth in micrometers (um) using a standard
+
+    dimensionless scaling law (normalized enthalpy model) for laser powder
+    bed fusion (LPBF).
+
+    Inputs:
+    - X[:, 0] = laser_power_W (P) [W]
+    - X[:, 1] = scan_velocity_mm_per_s (V) [mm/s]
+    - X[:, 2] = beam_diameter_um (D4sigma) [um]
+    """
+    P = X[:, 0]
+    V_m_s = X[:, 1] / 1000.0  # Convert mm/s to m/s
+    D_m = X[:, 2] / 1e6  # Convert um to m
+    R_m = D_m / 2.0  # Beam radius in meters
+
+    # Standard thermophysical properties for metallic alloys (e.g., Ti-6Al-4V / SS316L)
+    A = 0.35  # Laser absorptivity
+    alpha = 5.0e-6  # Thermal diffusivity (m^2/s)
+    h_s = 4.5e9  # Volumetric enthalpy of melting (J/m^3)
+
+    # Calculate normalized enthalpy (dimensionless scaling parameter)
+    # representing the ratio of absorbed energy density to the melting enthalpy
+    thermal_diffusion_vol = np.pi * alpha * V_m_s * (R_m**3)
+    normalized_enthalpy = (A * P) / (h_s * np.sqrt(thermal_diffusion_vol))
+
+    # Scaling law for normalized meltpool depth (d / R) as a function of normalized enthalpy
+    # Fit coefficients C and beta represent the transition/keyhole regime scaling
+    C = 0.30
+    beta = 0.85
+    normalized_depth = C * (normalized_enthalpy**beta)
+
+    # Convert normalized depth back to absolute meltpool depth in micrometers
+    meltpool_depth_um = normalized_depth * (X[:, 2] / 2.0)
+
+    return meltpool_depth_um
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Inputs:
+    # X[:, 0] = laser_power_W (P) [W]
+    # X[:, 1] = scan_velocity_mm_per_s (V) [mm/s]
+    # X[:, 2] = beam_diameter_um (D4sigma) [um]
+    
+    P = X[:, 0]
+    V = X[:, 1] / 1000.0  # Convert mm/s to m/s
+    D = X[:, 2] * 1e-6    # Convert um to m
+    
+    # Material properties for a typical alloy (e.g., Ti-6Al-4V)
+    eta = 0.4             # Absorptivity
+    rho = 4430.0          # Density [kg/m^3]
+    Cp = 526.0            # Specific heat capacity [J/(kg*K)]
+    dT = 1625.0           # Temperature difference (T_melt - T_ambient) [K]
+    
+    # Volumetric heat capacity
+    Cv = rho * Cp * dT
+    
+    # Analytical Rosenthal-based model with Gaussian beam correction
+    # d^2 = (2 * eta * P) / (pi * e * Cv * V) - D^2 / 8
+    term1 = (2.0 * eta * P) / (np.pi * np.e * Cv * V)
+    term2 = (D ** 2) / 8.0
+    
+    # Prevent negative values under the square root
+    depth_m = np.sqrt(np.maximum(0.0, term1 - term2))
+    
+    # Convert depth back to micrometers
+    depth_um = depth_m * 1e6
+    
+    return depth_um
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the meltpool depth (d) in micrometers based on the laser power,
+
+    scan velocity, and beam diameter using a canonical scaling law derived
+    from the normalized enthalpy and thermal diffusion length.
+
+    Inputs:
+    - X[:, 0] = laser_power_W (P) [W]
+    - X[:, 1] = scan_velocity_mm_per_s (V) [mm/s]
+    - X[:, 2] = beam_diameter_um (D4sigma) [um]
+
+    Output:
+    - 1-D numpy array of meltpool_depth_um [um]
+    """
+    # Extract inputs
+    P = X[:, 0]  # Power in W
+    V = X[:, 1]  # Velocity in mm/s
+    D = X[:, 2]  # Beam diameter in um
+
+    # Canonical scaling parameter based on normalized enthalpy and thermal scaling:
+    # d proportional to P / sqrt(V * D)
+    # The coefficient is calibrated to typical LPBF materials (e.g., Ti-6Al-4V, 316L)
+    coefficient = 135.0
+    meltpool_depth_um = coefficient * P / np.sqrt(V * D)
+
+    return meltpool_depth_um
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the meltpool depth in micrometers using a physical scaling law
+
+    based on normalized enthalpy.
+
+    Inputs:
+    - X[:, 0]: laser_power_W (P) [W]
+    - X[:, 1]: scan_velocity_mm_per_s (V) [mm/s]
+    - X[:, 2]: beam_diameter_um (D4sigma) [um]
+
+    Output:
+    - 1-D numpy array of meltpool_depth_um [um]
+    """
+    # Extract inputs
+    P = X[:, 0]  # Power in W
+    V_m_s = X[:, 1] / 1000.0  # Convert velocity from mm/s to m/s
+    D_m = X[:, 2] / 1e6  # Convert beam diameter from um to m
+    sigma = D_m / 2.0  # Beam radius in m
+
+    # Thermophysical properties of a representative alloy (e.g., 316L Stainless Steel)
+    A = 0.35  # Laser absorptivity
+    rho = 7900.0  # Density (kg/m^3)
+    Cp = 500.0  # Specific heat capacity (J/kg*K)
+    dT = 1400.0  # Temperature rise to melting point (K)
+    alpha = 4.0e-6  # Thermal diffusivity (m^2/s)
+
+    # Volumetric enthalpy of melting
+    hs = rho * Cp * dT
+
+    # Calculate normalized enthalpy (dimensionless parameter beta)
+    normalized_enthalpy = (A * P) / (
+        hs * np.sqrt(np.pi * alpha * V_m_s * (sigma**3))
+    )
+
+    # Scaling law for melt pool depth: d / sigma = C * (beta ^ n)
+    # C and n are standard fitted coefficients for LPBF melt pool scaling
+    C = 0.35
+    n = 0.75
+    depth_m = sigma * C * (normalized_enthalpy**n)
+
+    # Convert depth back to micrometers
+    meltpool_depth_um = depth_m * 1e6
+
+    return meltpool_depth_um

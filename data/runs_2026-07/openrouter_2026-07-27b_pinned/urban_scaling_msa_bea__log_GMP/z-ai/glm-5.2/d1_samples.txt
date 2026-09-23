@@ -1,0 +1,73 @@
+import numpy as np
+
+def predict(X):
+    log_pop = X[:, 0]
+    # Standard urban scaling law with constant returns to scale:
+    # ln(Y) = alpha + beta * ln(N)
+    # beta ≈ 1.0 (total output proportional to population)
+    # alpha ≈ ln(per-capita GMP) ≈ -3.0 (per-capita output ≈ $50,000 → 0.05 million USD)
+    ALPHA = -3.0
+    BETA = 1.0
+    return ALPHA + BETA * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log_GMP (ln Y) from log_pop (ln N) using a standard linear 
+    urban scaling relationship (constant returns to scale for aggregate output):
+    ln Y = ln(Y_0) + 1.0 * ln N
+    
+    Where Y_0 represents GMP per capita in millions of chained 2017 USD.
+    Assuming an average GMP per capita of approximately $50,000 (0.05 million USD),
+    ln(0.05) ≈ -3.0.
+    """
+    log_pop = X[:, 0]
+    intercept = -3.0
+    beta = 1.0
+    log_GMP = intercept + beta * log_pop
+    return log_GMP
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Urban scaling law (power-law) for metropolitan output:
+        ln Y = alpha + beta * ln N
+    where beta ≈ 1.15 reflects superlinear scaling of GMP with population
+    and alpha ≈ -5.0 calibrates the intercept to BEA chained-2017-dollar levels.
+    """
+    log_pop = X[:, 0]
+    alpha = -5.0
+    beta = 1.15
+    return alpha + beta * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_pop = X[:, 0]
+    # Canonical urban scaling relationship (Bettencourt et al.):
+    # ln Y = alpha + beta * ln N
+    # where beta > 1 reflects superlinear agglomeration economies
+    alpha = -3.0
+    beta = 1.15
+    return alpha + beta * log_pop
+
+=====
+
+import numpy as np
+
+def predict(X):
+    log_pop = X[:, 0]
+    # Urban scaling law (agglomeration economies): Y = A * N^beta
+    # ln Y = alpha + beta * ln N
+    # For total urban output (GMP), beta is typically superlinear (~1.15)
+    alpha = 1.0
+    beta = 1.15
+    return alpha + beta * log_pop

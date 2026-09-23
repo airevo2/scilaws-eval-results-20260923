@@ -1,0 +1,202 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts per-cycle discharge capacity using a standard empirical 
+    power-law capacity fade model based on Equivalent Full Cycles (EFC).
+    
+    The canonical form for Li-ion cycle degradation driven by SEI growth 
+    and loss of lithium inventory is Q(EFC) = Q0 * (1 - alpha * EFC^beta).
+    """
+    # Extract inputs
+    cycle_index = X[:, 0]
+    efc = X[:, 1]
+    Q0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+    group = X[:, 7]
+    
+    # Typical empirical fade coefficients for commercial Li-ion cells 
+    # (approximating ~20% capacity fade at 1000 EFC)
+    alpha = 2.0e-4
+    beta = 0.5
+    
+    # Calculate degraded discharge capacity
+    Q_dis = Q0 * (1.0 - alpha * np.power(efc, beta))
+    
+    # Capacity cannot be negative
+    Q_dis = np.maximum(Q_dis, 0.0)
+    
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict per-cycle discharge capacity Q_dis [mAh].
+    
+    Canonical physics-based model combining:
+      1. sqrt(EFC) fade law  (diffusion-limited SEI growth)
+      2. Voltage-window scaling of accessible capacity
+      3. CV-termination completeness correction
+      4. Group- and rate-dependent degradation kinetics
+    """
+    k      = X[:, 0]   # cycle_index
+    EFC    = X[:, 1]   # equivalent full cycles
+    Q_0    = X[:, 2]   # nominal capacity [mAh]
+    V_low  = X[:, 3]   # lower voltage cutoff [V]
+    V_high = X[:, 4]   # upper voltage cutoff [V]
+    I_CV   = X[:, 5]   # CV termination current (C-rate fraction)
+    I_chg  = X[:, 6]   # max charge C-rate
+    g      = X[:, 7]   # group label (1-4)
+
+    # ---- 1. Capacity fade  (Q/Q0 = 1 - alpha * sqrt(EFC)) ----
+    alpha_0 = 0.006          # base fade rate per sqrt(EFC)
+
+    # Group-dependent kinetic multiplier (different cell designs)
+    g_scale = np.where(g == 1, 0.85,
+              np.where(g == 2, 1.00,
+              np.where(g == 3, 1.10, 1.25)))
+
+    # Higher charge C-rate accelerates SEI growth / Li plating
+    rate_scale = 1.0 + 0.4 * (I_chg - 0.2)
+
+    alpha = alpha_0 * g_scale * rate_scale
+    fade  = np.maximum(1.0 - alpha * np.sqrt(EFC), 0.0)
+
+    # ---- 2. Voltage-window factor ----
+    # Wider window taps more of the OCV curve; nominal window = 1.2 V
+    # Upper-cutoff sensitivity ~ 0.2 / V, lower-cutoff ~ 0.3 / V
+    v_factor = 1.0 + 0.2 * (V_high - 4.2) + 0.3 * (3.0 - V_low)
+
+    # ---- 3. CV-termination factor ----
+    # Lower cut-off current ⇒ more complete constant-voltage top-off
+    cv_factor = 1.0 + 0.5 * (0.05 - I_CV)
+
+    # ---- Discharge capacity ----
+    Q_dis = Q_0 * fade * v_factor * cv_factor
+
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    k = X[:, 0]
+    efc = X[:, 1]
+    Q0 = X[:, 2]
+    V_low = X[:, 3]
+    V_high = X[:, 4]
+    I_CV = X[:, 5]
+    I_chg = X[:, 6]
+    g = X[:, 7]
+    
+    # Canonical diffusion-limited SEI growth model (square-root of time/EFC)
+    # augmented with empirical stress factors for upper voltage and charge C-rate
+    alpha = 0.0008  # Base degradation rate per sqrt(EFC)
+    
+    # Stress factors relative to typical nominal conditions (4.2V, 0.5C)
+    stress_V = np.exp(0.5 * (V_high - 4.2))
+    stress_I = np.exp(0.2 * (I_chg - 0.5))
+    
+    # Calculate capacity fade and resulting discharge capacity
+    fade = alpha * np.sqrt(efc) * stress_V * stress_I
+    Q_dis = Q0 * (1.0 - fade)
+    
+    # Physical bound: capacity cannot be negative
+    Q_dis = np.maximum(Q_dis, 0.0)
+    
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    k      = X[:, 0]   # cycle index
+    EFC    = X[:, 1]   # equivalent full cycle count
+    Q_0    = X[:, 2]   # nominal capacity [mAh]
+    V_low  = X[:, 3]   # lower voltage cutoff [V]
+    V_high = X[:, 4]   # upper voltage cutoff [V]
+    I_CV   = X[:, 5]   # CV termination current [C-rate fraction]
+    I_chg  = X[:, 6]   # max charge C-rate
+    g      = X[:, 7]   # group label (1-4)
+
+    # --- Operating-condition modifiers (reference: 4.2 V / 3.0 V / 0.05 C CV cut) ---
+
+    # Voltage-window effect on accessible capacity
+    # ~5 % per 0.1 V increase in V_high; ~2 % per 0.1 V decrease in V_low
+    f_V = 1.0 + 0.50 * (V_high - 4.2) + 0.20 * (3.0 - V_low)
+
+    # CV-termination effect: lower cut-off current ⇒ slightly fuller charge
+    f_CV = 1.0 + 0.50 * (0.05 - I_CV)
+
+    # --- Group-dependent degradation coefficients ---
+    # alpha  – SEI-growth (√EFC) coefficient
+    # beta   – linear fade (particle cracking / contact loss) coefficient
+    alpha = np.where(g == 1, 0.0040,
+            np.where(g == 2, 0.0050,
+            np.where(g == 3, 0.0035,
+                     0.0055)))
+
+    beta  = np.where(g == 1, 1.0e-4,
+            np.where(g == 2, 1.5e-4,
+            np.where(g == 3, 0.8e-4,
+                     1.8e-4)))
+
+    # Charge-rate acceleration of degradation (reference 0.3 C)
+    gamma = 1.0 + 0.15 * (I_chg - 0.3)
+
+    # --- Canonical capacity-fade law:  Q = Q₀·(1 − α√n − β·n) ---
+    fade = gamma * (alpha * np.sqrt(EFC) + beta * EFC)
+
+    # Discharge capacity for this cycle
+    Q_dis = Q_0 * f_V * f_CV * (1.0 - fade)
+
+    return np.maximum(Q_dis, 0.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Per-cycle discharge capacity via power-law fade (SEI-growth kinetics)
+    with voltage-window, charge-rate, and CV-termination corrections.
+    """
+    EFC    = X[:, 1]   # equivalent full cycle count
+    Q_0    = X[:, 2]   # nominal capacity [mAh]
+    V_low  = X[:, 3]   # lower voltage cutoff [V]
+    V_high = X[:, 4]   # upper voltage cutoff [V]
+    I_CV   = X[:, 5]   # CV termination current (C-rate fraction)
+    I_chg  = X[:, 6]   # max charge C-rate
+
+    # ---- Power-law capacity fade: Q_loss / Q_0 = alpha * EFC^beta ----
+    # SEI growth gives sqrt(time) dependence; charge rate accelerates fade
+    alpha_0 = 4.0e-3      # base fade coefficient
+    beta    = 0.5          # square-root dependence on throughput
+    gamma   = 1.5          # charge-rate acceleration factor
+
+    alpha = alpha_0 * (1.0 + gamma * (I_chg - 0.2))
+
+    # ---- Voltage-window correction ----
+    # Wider window accesses more of the OCV curve
+    c_high = 0.30          # sensitivity to upper cutoff  [per V]
+    c_low  = 0.25          # sensitivity to lower cutoff  [per V]
+    f_V = 1.0 + c_high * (V_high - 4.2) - c_low * (V_low - 2.8)
+
+    # ---- CV-termination correction ----
+    # Higher cutoff current ends CV phase sooner → less complete charge
+    f_CV = 1.0 - 0.8 * (I_CV - 0.02)
+
+    # ---- Discharge capacity ----
+    fade  = 1.0 - alpha * np.power(EFC, beta)
+    Q_dis = Q_0 * f_V * f_CV * np.maximum(fade, 0.0)
+
+    return Q_dis

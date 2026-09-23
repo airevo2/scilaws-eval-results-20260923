@@ -1,0 +1,63 @@
+import numpy as np
+
+def predict(X):
+    # Von Bertalanffy growth function: L(t) = Linf * (1 - exp(-k*(t - t0)))
+    age = X[:, 0]
+    Linf = 500.0   # asymptotic total length (mm)
+    k = 0.20       # growth coefficient (1/year)
+    t0 = -0.5      # theoretical age at zero length (years)
+    return Linf * (1.0 - np.exp(-k * (age - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Von Bertalanffy Growth Function (VBGF): L(t) = Linf * (1 - exp(-k*(t - t0)))
+    age = X[:, 0]
+    Linf = 500.0   # asymptotic total length (mm)
+    k = 0.20       # Brody growth coefficient (per year)
+    t0 = -0.5      # theoretical age at length zero (years)
+    return Linf * (1.0 - np.exp(-k * (age - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Von Bertalanffy Growth Function (VBGF): standard closed-form
+    # L(t) = Linf * (1 - exp(-k * (t - t0)))
+    age = X[:, 0]
+    Linf = 500.0   # asymptotic total length (mm)
+    k = 0.20       # Brody growth coefficient (1/year)
+    t0 = -0.5      # theoretical age at length zero (years)
+    return Linf * (1.0 - np.exp(-k * (age - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Von Bertalanffy Growth Function (VBGF): L(t) = Linf * (1 - exp(-k*(t - t0)))
+    age = X[:, 0]
+    Linf = 500.0   # asymptotic length (mm)
+    k = 0.20       # growth coefficient (per year)
+    t0 = -0.5      # theoretical age at length zero (years)
+    return Linf * (1.0 - np.exp(-k * (age - t0)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Von Bertalanffy Growth Function (VBGF)
+    # L(t) = Linf * (1 - exp(-K * (t - t0)))
+    age = X[:, 0]
+    
+    # Fitted VBGF parameters (typical values for a moderate-sized fish)
+    Linf = 500.0   # asymptotic total length (mm)
+    K = 0.20       # growth coefficient (1/year)
+    t0 = -0.5      # theoretical age at zero length (years)
+    
+    Li = Linf * (1.0 - np.exp(-K * (age - t0)))
+    return Li

@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Current Intensity"
+  symbol: "I"
+  unit: ""
+  description: "Current Intensity"
+inputs:
+  - name: "Charge"
+    symbol: "q"
+    unit: ""
+    description: "Charge"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Length"
+    symbol: "r"
+    unit: ""
+    description: "Length"

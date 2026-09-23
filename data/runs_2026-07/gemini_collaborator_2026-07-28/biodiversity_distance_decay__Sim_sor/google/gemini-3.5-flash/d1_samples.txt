@@ -1,0 +1,105 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract the mean environmental distance (d)
+    d = X[:, 0]
+
+    # Standard exponential distance-decay relationship for ecological similarity:
+    # S(d) = S_0 * exp(-decay_rate * d)
+    # S_0 is the estimated taxonomic similarity at zero environmental distance.
+    # decay_rate determines how fast similarity decreases with environmental distance.
+    S_0 = 0.65
+    decay_rate = 0.25
+
+    Sim_sor = S_0 * np.exp(-decay_rate * d)
+
+    # Ensure the output is strictly bounded between [0, 1]
+    return np.clip(Sim_sor, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the mean environmental distance (d)
+    d = X[:, 0]
+
+    # Standard exponential decay of similarity with environmental distance:
+    # S(d) = S_0 * exp(-beta * d)
+    # where S_0 is the initial similarity at zero environmental distance (intercept)
+    # and beta is the rate of decay.
+    S_0 = 0.8
+    beta = 0.2
+
+    S = S_0 * np.exp(-beta * d)
+
+    # Ensure output is bounded in [0, 1]
+    return np.clip(S, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] represents the mean environmental distance (d)
+    d = X[:, 0]
+
+    # The standard canonical relationship for the distance decay of similarity
+    # is the negative exponential model: S(d) = a * exp(-b * d)
+    # where 'a' is the initial similarity at zero environmental distance (intercept)
+    # and 'b' is the rate of similarity decay.
+    a = 0.6  # typical baseline similarity at zero environmental distance
+    b = 0.2  # typical rate of decay over environmental distance
+
+    S_sor = a * np.exp(-b * d)
+
+    # Ensure the similarity remains bounded within [0, 1]
+    return np.clip(S_sor, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract the mean environmental distance (d)
+    env_dist = X[:, 0]
+
+    # The most commonly cited canonical form for the distance decay of similarity
+    # is the exponential decay model: S(d) = a * exp(-b * d)
+    # where:
+    # - 'a' is the similarity at zero environmental distance (initial similarity)
+    # - 'b' is the rate of similarity decay with environmental distance
+    a = 0.8  # typical maximum similarity at zero environmental distance
+    b = 0.2  # typical decay rate
+
+    # Calculate Sørensen similarity
+    S_sor = a * np.exp(-b * env_dist)
+
+    # Ensure output is bounded between 0 and 1
+    return np.clip(S_sor, 0.0, 1.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract environmental distance (d)
+    d = X[:, 0]
+
+    # Standard exponential distance-decay model parameters:
+    # S(d) = a * exp(-b * d)
+    # where 'a' is the similarity at zero environmental distance (intercept)
+    # and 'b' is the rate of similarity decay with environmental distance.
+    a = 0.65
+    b = 0.25
+
+    # Calculate Sørensen taxonomic similarity
+    S = a * np.exp(-b * d)
+
+    # Ensure output is strictly bounded within [0, 1]
+    return np.clip(S, 0.0, 1.0)

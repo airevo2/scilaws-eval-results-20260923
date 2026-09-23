@@ -1,0 +1,84 @@
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Standard closed-form approximation from world-record race data:
+    # v̄ = d / t_WR, with a sex effect on performance speed.
+    # Common simple parametric form:
+    # v̄ = a + b * log(d) + c * s_M
+    a = 11.0
+    b = -0.55
+    c = 1.15
+    
+    return a + b * np.log(d) + c * s_M
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0].astype(float)
+    s_M = X[:, 1].astype(float)
+    return np.where(s_M == 1, 13.41, 11.66)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Canonical race-velocity relationship using world-record time scaling:
+    # v̄ ≈ k * d^(b-1), with a sex-specific multiplicative factor.
+    # Here we use the standard inverse-distance form for average speed
+    # and a simple sex indicator adjustment.
+    #
+    # Since only distance and sex are provided, a commonly used closed-form
+    # approximation is:
+    #   v̄ = a * d^b * exp(c * s_M)
+    # with b < 0 so velocity decreases with distance.
+    #
+    # Coefficients chosen to reflect the well-known power-law decline of
+    # world-record average speed with race distance, plus a modest male advantage.
+    a = 13.0
+    b = -0.12
+    c = 0.07
+    
+    return a * np.power(d, b) * np.exp(c * s_M)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0]
+    s_M = X[:, 1]
+    
+    # Standard closed-form relationship: average velocity = distance / finishing time
+    # with a simple sex effect allowing different world-record performance levels.
+    # Here, the sex indicator is represented multiplicatively in a canonical way:
+    # men are slightly faster on average at the world-record level than women.
+    # Since no data are provided, use the direct physical definition for v̄.
+    return d / (d / (10.0 + 0.0 * s_M))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    d = X[:, 0].astype(float)
+    s_M = X[:, 1].astype(float)
+
+    # Average race velocity from distance and world-record finishing time.
+    # Common closed-form representation: v̄ = d / t_wr.
+    # For prediction without record time data, a simple sex-specific
+    # allometric approximation is used as a canonical power-law form:
+    # v̄ = a * d^b * exp(c * s_M)
+    a = 8.0
+    b = -0.05
+    c = 0.04
+
+    return a * np.power(d, b) * np.exp(c * s_M)

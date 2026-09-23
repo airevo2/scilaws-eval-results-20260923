@@ -1,0 +1,106 @@
+import numpy as np
+
+def predict(X):
+    theta = X[:, 0]
+    
+    # Canonical Gaussian orientation tuning curve parameters
+    theta_pref = 90.0  # Preferred orientation [deg]
+    sigma = 20.0       # Tuning bandwidth (standard deviation) [deg]
+    R_max = 1.5        # Peak response amplitude [au]
+    R_base = 0.0       # Baseline response [au]
+    
+    # Compute shortest angular distance (180 deg periodicity for orientation)
+    delta = np.abs(theta - theta_pref)
+    delta = np.minimum(delta, 180.0 - delta)
+    
+    # Gaussian tuning function
+    R = R_base + R_max * np.exp(- (delta**2) / (2.0 * sigma**2))
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta_deg = X[:, 0]
+    theta_rad = np.deg2rad(theta_deg)
+    
+    # Canonical von Mises parameters for a typical V1 neuron
+    R_baseline = 0.1       # Spontaneous/baseline fluorescence (au)
+    R_amp = 1.2            # Peak response amplitude above baseline (au)
+    theta_pref = np.deg2rad(45.0)  # Preferred orientation (radians)
+    kappa = 2.5            # Concentration parameter (tuning sharpness)
+    
+    # von Mises function for orientation tuning
+    # A factor of 2 is used because orientation is periodic over 180 degrees (pi radians)
+    # The -1 in the exponent normalizes the peak of the exponential term to 1
+    R = R_baseline + R_amp * np.exp(kappa * (np.cos(2 * (theta_rad - theta_pref)) - 1))
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = X[:, 0]
+    
+    # Canonical von Mises parameters for orientation tuning
+    R0 = 0.5           # Baseline fluorescence (spontaneous activity)
+    A = 3.0            # Peak response amplitude above baseline
+    kappa = 2.5        # Concentration parameter (inverse of tuning width)
+    theta_pref = 45.0  # Preferred orientation in degrees
+    
+    # Convert degrees to radians
+    theta_rad = np.deg2rad(theta)
+    theta_pref_rad = np.deg2rad(theta_pref)
+    
+    # von Mises function with factor of 2 for 180-degree orientation periodicity
+    R = R0 + A * np.exp(kappa * (np.cos(2 * (theta_rad - theta_pref_rad)) - 1))
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = X[:, 0]
+    
+    # Canonical V1 orientation tuning: circular Gaussian
+    # Standard parameters (representative single neuron)
+    R_baseline = 0.3       # Spontaneous / baseline fluorescence [au]
+    R_peak     = 2.5       # Response amplitude above baseline [au]
+    theta_pref = 90.0      # Preferred orientation [deg]
+    sigma      = 25.0      # Tuning bandwidth (half-width) [deg]
+    
+    # Circular angular difference respecting 180-deg orientation periodicity
+    dtheta = ((theta - theta_pref + 90.0) % 180.0) - 90.0
+    
+    # Gaussian orientation tuning curve
+    R = R_baseline + R_peak * np.exp(-(dtheta ** 2) / (2.0 * sigma ** 2))
+    
+    return R
+
+=====
+
+import numpy as np
+
+def predict(X):
+    theta = X[:, 0]
+    
+    # Parameters for a canonical V1 orientation tuning curve (von Mises)
+    R_baseline = 0.1      # Baseline response (au)
+    R_amplitude = 2.0     # Peak response amplitude (au)
+    theta_pref = 90.0     # Preferred orientation (deg)
+    kappa = 3.0           # Concentration parameter (controls tuning width)
+    
+    # Convert to radians
+    theta_rad = np.deg2rad(theta)
+    pref_rad = np.deg2rad(theta_pref)
+    
+    # von Mises function for orientation (180-degree periodicity)
+    R = R_baseline + R_amplitude * np.exp(kappa * (np.cos(2 * (theta_rad - pref_rad)) - 1))
+    
+    return R

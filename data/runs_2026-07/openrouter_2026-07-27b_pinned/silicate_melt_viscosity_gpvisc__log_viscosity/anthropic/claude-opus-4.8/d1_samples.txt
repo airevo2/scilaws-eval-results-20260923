@@ -1,0 +1,397 @@
+import numpy as np
+
+def predict(X):
+    # Giordano, Russell & Dingwell (2008) VFT model for silicate melt viscosity
+    # log10(eta) = A + B / (T - C),  T in K, oxides in mol%
+    X = np.asarray(X, dtype=float)
+    T = X[:, 0]
+
+    sio2  = X[:, 1]
+    tio2  = X[:, 2]
+    al2o3 = X[:, 3]
+    feo   = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno   = X[:, 6]
+    mgo   = X[:, 7]
+    cao   = X[:, 8]
+    na2o  = X[:, 9]
+    k2o   = X[:, 10]
+    p2o5  = X[:, 11]
+    h2o   = X[:, 12]
+
+    # total iron expressed as FeO
+    feot = feo + 2.0 * fe2o3
+    F = np.zeros_like(T)  # no fluorine in inputs (F2O-1 = 0)
+
+    # renormalize oxides to sum to 100 mol%
+    oxsum = (sio2 + tio2 + al2o3 + feot + mno + mgo + cao +
+             na2o + k2o + p2o5 + h2o)
+    oxsum = np.where(oxsum <= 0.0, 1.0, oxsum)
+    s = 100.0 / oxsum
+    sio2  = sio2  * s
+    tio2  = tio2  * s
+    al2o3 = al2o3 * s
+    feot  = feot  * s
+    mno   = mno   * s
+    mgo   = mgo   * s
+    cao   = cao   * s
+    na2o  = na2o  * s
+    k2o   = k2o   * s
+    p2o5  = p2o5  * s
+    h2o   = h2o   * s
+
+    # universal high-T limit
+    A = -4.55
+
+    # ---- B parameter ----
+    b1  = 159.6
+    b2  = -173.3
+    b3  = 72.1
+    b4  = 75.7
+    b5  = -39.0
+    b6  = -84.1
+    b7  = 141.5
+    b11 = -2.43
+    b12 = -0.91
+    b13 = 17.6
+
+    FM = feot + mno + mgo
+    NK = na2o + k2o
+
+    B = (b1 * (sio2 + tio2)
+         + b2 * al2o3
+         + b3 * (feot + mno + p2o5)
+         + b4 * mgo
+         + b5 * cao
+         + b6 * (na2o + h2o + F)
+         + b7 * (h2o + F + np.log(1.0 + h2o))
+         + b11 * (sio2 + tio2) * FM
+         + b12 * (sio2 + tio2 + al2o3 + p2o5) * (NK + h2o)
+         + b13 * al2o3 * NK)
+
+    # ---- C parameter ----
+    c1  = 2.75
+    c2  = 15.7
+    c3  = 8.3
+    c4  = 10.2
+    c5  = -12.3
+    c6  = -99.5
+    c11 = 0.30
+
+    C = (c1 * sio2
+         + c2 * (tio2 + al2o3)
+         + c3 * (feot + mno + mgo)
+         + c4 * cao
+         + c5 * NK
+         + c6 * np.log(1.0 + h2o + F)
+         + c11 * (al2o3 + feot + mno + mgo + cao - p2o5) * (NK + h2o + F))
+
+    denom = T - C
+    denom = np.where(np.abs(denom) < 1e-6, 1e-6, denom)
+
+    return A + B / denom
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Giordano, Russell & Dingwell (2008) multicomponent VFT model
+    # log10(eta) = A + B/(T - C), composition in mol%
+    T = X[:, 0]
+    SiO2  = X[:, 1]
+    TiO2  = X[:, 2]
+    Al2O3 = X[:, 3]
+    FeO   = X[:, 4]
+    Fe2O3 = X[:, 5]
+    MnO   = X[:, 6]
+    MgO   = X[:, 7]
+    CaO   = X[:, 8]
+    Na2O  = X[:, 9]
+    K2O   = X[:, 10]
+    P2O5  = X[:, 11]
+    H2O   = X[:, 12]
+
+    FeOt = FeO + Fe2O3          # total iron as FeO
+    F    = 0.0                  # no fluorine input available
+
+    # universal constant
+    A = -4.55
+
+    # --- B terms ---
+    b1  = 159.56
+    b2  = -173.34
+    b3  = 72.13
+    b4  = 75.69
+    b5  = -38.98
+    b6  = -84.08
+    b7  = 141.54
+    b11 = -2.43
+    b12 = -0.91
+    b13 = 17.62
+
+    FM = FeOt + MnO + MgO
+    B = (b1 * (SiO2 + TiO2)
+         + b2 * Al2O3
+         + b3 * (FeOt + MnO + P2O5)
+         + b4 * MgO
+         + b5 * CaO
+         + b6 * (Na2O + H2O + F)
+         + b7 * (H2O + F + np.log(1.0 + H2O))
+         + b11 * (SiO2 + TiO2) * FM
+         + b12 * (SiO2 + TiO2 + Al2O3 + P2O5) * (Na2O + K2O + H2O + F)
+         + b13 * (Al2O3) * (Na2O + K2O))
+
+    # --- C terms ---
+    c1  = 2.75
+    c2  = 15.72
+    c3  = 8.32
+    c4  = 10.20
+    c5  = -12.29
+    c6  = -99.54
+    c11 = 0.30
+
+    C = (c1 * SiO2
+         + c2 * (TiO2 + Al2O3)
+         + c3 * (FeOt + MnO + MgO)
+         + c4 * CaO
+         + c5 * (Na2O + K2O)
+         + c6 * np.log(1.0 + H2O + F)
+         + c11 * (Al2O3 + FeOt + MnO + MgO + CaO - P2O5)
+                * (Na2O + K2O + H2O + F))
+
+    denom = T - C
+    denom = np.where(np.abs(denom) < 1e-6, 1e-6, denom)
+    return A + B / denom
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Giordano, Russell & Dingwell (2008) multicomponent VFT model
+    # log10(eta) = A + B / (T - C),  eta in Pa s, T in K
+    X = np.asarray(X, dtype=float)
+
+    T     = X[:, 0]
+    SiO2  = X[:, 1]
+    TiO2  = X[:, 2]
+    Al2O3 = X[:, 3]
+    FeO   = X[:, 4]
+    Fe2O3 = X[:, 5]
+    MnO   = X[:, 6]
+    MgO   = X[:, 7]
+    CaO   = X[:, 8]
+    Na2O  = X[:, 9]
+    K2O   = X[:, 10]
+    P2O5  = X[:, 11]
+    H2O   = X[:, 12]
+
+    # Total iron expressed as FeO (FeO_T); Fe2O3 -> 2 FeO equivalents (mol basis approx.)
+    FeO_T = FeO + 2.0 * Fe2O3
+    F2O_1 = 0.0  # fluorine not provided
+
+    # Common intercept
+    A = -4.55
+
+    # Combination terms
+    FM = FeO_T + MnO + MgO
+
+    # B coefficients
+    b1, b2, b3, b4, b5, b6, b7 = 159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54
+    b11, b12, b13 = -2.43, -0.91, 17.62
+
+    B = (b1 * (SiO2 + TiO2)
+         + b2 * (Al2O3)
+         + b3 * (FeO_T + MnO + P2O5)
+         + b4 * (MgO)
+         + b5 * (CaO)
+         + b6 * (Na2O + H2O + F2O_1)
+         + b7 * (H2O + F2O_1 + np.log(1.0 + H2O))
+         + b11 * ((SiO2 + TiO2) * FM)
+         + b12 * ((SiO2 + TiO2 + Al2O3 + P2O5) * (Na2O + K2O + H2O))
+         + b13 * ((Al2O3) * (Na2O + K2O)))
+
+    # C coefficients
+    c1, c2, c3, c4, c5, c6, c11 = 2.75, 15.72, 8.32, 10.20, -12.29, -99.54, 0.30
+
+    C = (c1 * (SiO2)
+         + c2 * (Al2O3)
+         + c3 * (FeO_T + MnO + MgO)
+         + c4 * (CaO + P2O5)
+         + c5 * (Na2O + K2O)
+         + c6 * (np.log(1.0 + H2O + F2O_1))
+         + c11 * ((Al2O3 + FeO_T + MnO + MgO + CaO - P2O5)
+                  * (Na2O + K2O + H2O + F2O_1)))
+
+    denom = T - C
+    denom = np.where(np.abs(denom) < 1e-6, np.sign(denom) * 1e-6 + 1e-6, denom)
+
+    return A + B / denom
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Giordano, Russell & Dingwell (2008) VFT model for silicate melt viscosity
+    # log10(eta) = A + B/(T - C), with B and C functions of composition (mol%)
+    X = np.asarray(X, dtype=float)
+
+    T     = X[:, 0]
+    SiO2  = X[:, 1]
+    TiO2  = X[:, 2]
+    Al2O3 = X[:, 3]
+    FeO   = X[:, 4]
+    Fe2O3 = X[:, 5]
+    MnO   = X[:, 6]
+    MgO   = X[:, 7]
+    CaO   = X[:, 8]
+    Na2O  = X[:, 9]
+    K2O   = X[:, 10]
+    P2O5  = X[:, 11]
+    H2O   = X[:, 12]
+
+    # total iron expressed as FeO (each Fe2O3 -> 2 FeO)
+    FeOt = FeO + 2.0 * Fe2O3
+    F2O1 = 0.0  # no fluorine input
+
+    # convenience groupings
+    FM = FeOt + MnO + MgO
+
+    # Fixed pre-exponential term
+    A = -4.55
+
+    # --- B coefficients ---
+    b1, b2, b3, b4, b5, b6, b7 = 159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54
+    b11, b12, b13 = -2.43, -0.91, 17.62
+
+    B = (b1 * (SiO2 + TiO2)
+         + b2 * (Al2O3)
+         + b3 * (FeOt + MnO + P2O5)
+         + b4 * (MgO)
+         + b5 * (CaO)
+         + b6 * (Na2O + H2O + F2O1)
+         + b7 * (H2O + F2O1 + np.log(1.0 + H2O))
+         + b11 * ((SiO2 + TiO2) * FM)
+         + b12 * ((SiO2 + TiO2 + Al2O3 + P2O5) * (Na2O + K2O + H2O))
+         + b13 * ((Al2O3) * (Na2O + K2O)))
+
+    # --- C coefficients ---
+    c1, c2, c3, c4, c5, c6 = 2.75, 15.72, 8.32, 10.20, -12.29, -99.54
+    c11 = 0.30
+
+    C = (c1 * (SiO2)
+         + c2 * (Al2O3 + TiO2)
+         + c3 * (FeOt + MnO + MgO)
+         + c4 * (CaO)
+         + c5 * (Na2O + K2O)
+         + c6 * (np.log(1.0 + H2O + F2O1))
+         + c11 * ((Al2O3 + FeOt + MnO + MgO + CaO - P2O5)
+                  * (Na2O + K2O + H2O + F2O1)))
+
+    denom = T - C
+    denom = np.where(np.abs(denom) < 1e-6, 1e-6, denom)
+
+    return A + B / denom
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Log10 viscosity of silicate melts using an Arrhenian / VFT-type closed form.
+
+    Standard VFT (Vogel-Fulcher-Tammann) equation:
+        log10(eta) = A + B / (T - C)
+
+    Here A, B, C are made composition-dependent following the common approach
+    (e.g. Giordano, Russell & Dingwell 2008, "A model for silicate melt
+    viscosity"): A is treated as a near-universal constant, while B and C
+    depend on the melt composition.
+    """
+    X = np.asarray(X, dtype=float)
+
+    T     = X[:, 0]
+    sio2  = X[:, 1]
+    tio2  = X[:, 2]
+    al2o3 = X[:, 3]
+    feo   = X[:, 4]
+    fe2o3 = X[:, 5]
+    mno   = X[:, 6]
+    mgo   = X[:, 7]
+    cao   = X[:, 8]
+    na2o  = X[:, 9]
+    k2o   = X[:, 10]
+    p2o5  = X[:, 11]
+    h2o   = X[:, 12]
+
+    # Group oxides following Giordano et al. (2008) scheme
+    # Network formers / modifiers
+    SM  = sio2 + tio2                    # SiO2 + TiO2
+    Al  = al2o3
+    FM  = feo + fe2o3 + mno + mgo        # Fe(T)O + MnO + MgO
+    Ca  = cao
+    NK  = na2o + k2o                     # Na2O + K2O
+    Na  = na2o
+    K   = k2o
+    P   = p2o5
+    W   = h2o + p2o5                     # water (+ P2O5)
+
+    # High-T limit (near-universal Arrhenian pre-exponential), log10 Pa.s
+    A = -4.55
+
+    # Composition-dependent activation term B (units K)
+    b1  = 159.6
+    b2  = -173.3
+    b3  = 72.1
+    b4  = 75.7
+    b5  = -39.0
+    b6  = -84.1
+    b7  = 141.5
+    # cross terms
+    b11 = -2.43
+    b12 = -0.91
+    b13 = 17.6
+
+    B = (b1 * (SM + Al)
+         + b2 * (FM + Ca + P)
+         + b3 * (Na + W)
+         + b4 * (SM + P) * np.log1p(W)
+         + b5 * (SM + Al) * (FM + Ca)
+         + b6 * (SM + FM) * (Na + K)
+         + b7 * (Al) * (Na + K)) / 100.0 * 100.0
+
+    # A more compact, standard multi-oxide B expression:
+    B = (b1 * (SM)
+         + b2 * (Al)
+         + b3 * (FM)
+         + b4 * (Ca)
+         + b5 * (NK)
+         + b11 * (SM * (FM + Ca))
+         + b12 * ((SM + Al + P) * (NK + W))
+         + b13 * (Al * (NK)))
+
+    # Composition-dependent VFT temperature C (units K)
+    c1  = 2.75
+    c2  = 15.7
+    c3  = 8.3
+    c4  = 10.2
+    c5  = -12.3
+    c11 = -99.5
+    c22 = 0.30
+
+    C = (c1 * SM
+         + c2 * (Al + FM)
+         + c3 * (Ca + NK)
+         + c11 * np.log1p(W)
+         + c22 * (Al * (NK + W)))
+
+    # Guard against division issues
+    denom = T - C
+    denom = np.where(np.abs(denom) < 1.0, np.sign(denom + 1e-9) * 1.0, denom)
+
+    log_eta = A + B / denom
+
+    return log_eta

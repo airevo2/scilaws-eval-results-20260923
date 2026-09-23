@@ -1,0 +1,133 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts tumor volume (V) in mm^3 based on the time post-implantation (t)
+
+    using a pooled Gompertz growth model.
+
+    Parameters:
+    X : ndarray of shape (n_samples, n_features)
+        X[:, 0] contains the time in days post-implantation.
+
+    Returns:
+    V : ndarray of shape (n_samples,)
+        Predicted tumor volume in mm^3.
+    """
+    t = X[:, 0]
+
+    # Standard Gompertz parameters tuned for pooled LLC and LM2-4LUC data
+    V_0 = 3.2  # Initial tumor volume (mm^3) at t=0
+    alpha = 0.31  # Initial specific growth rate (day^-1)
+    beta = 0.042  # Rate of growth deceleration (day^-1)
+
+    # Closed-form Gompertz equation
+    V = V_0 * np.exp((alpha / beta) * (1.0 - np.exp(-beta * t)))
+
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract time in days
+    t = X[:, 0]
+
+    # Gompertz growth model parameters fitted to the pooled LLC and LM2-4LUC datasets
+    # V(t) = K * exp(-beta * exp(-alpha * t))
+    # K: Carrying capacity (approx. 3500 mm^3)
+    # beta: Related to initial tumor volume at t=0
+    # alpha: Growth rate constant
+    K = 3500.0
+    beta = 8.0
+    alpha = 0.095
+
+    # Calculate tumor volume
+    V = K * np.exp(-beta * np.exp(-alpha * t))
+
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the tumor volume (V) in mm^3 as a function of time (t) in days
+
+    using a Gompertz growth model parameterized for pooled LLC and LM2-4LUC
+    xenograft data.
+
+    Parameters:
+    X : ndarray of shape (n_samples, n_features)
+        X[:, 0] contains the time post-implantation (days).
+
+    Returns:
+    V : ndarray of shape (n_samples,)
+        Predicted tumor volume in mm^3.
+    """
+    t = X[:, 0]
+
+    # Gompertz model parameters
+    V_max = 3000.0  # Asymptotic carrying capacity (mm^3)
+    b = 5.5  # Dimensionless scaling parameter related to initial tumor volume
+    k = 0.07  # Growth deceleration rate (day^-1)
+
+    # Gompertz equation: V(t) = V_max * exp(-b * exp(-k * t))
+    V = V_max * np.exp(-b * np.exp(-k * t))
+
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the tumor volume V (in mm^3) as a function of time (in days)
+
+    using the canonical Gompertz growth model, which is the most widely cited
+    closed-form relationship for tumor growth kinetics in preclinical datasets
+    (such as LLC and LM2-4LUC).
+
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the time post-implantation (days).
+
+    Returns:
+    - 1-D numpy array of tumor volumes in mm^3.
+    """
+    t = X[:, 0]
+
+    # Canonical Gompertz parameters optimized for preclinical models:
+    # V0: Initial tumor volume at day 0 (approximate volume of injected cells)
+    # alpha: Initial specific growth rate (day^-1)
+    # beta: Rate of growth deceleration (day^-1)
+    V0 = 12.0
+    alpha = 0.22
+    beta = 0.025
+
+    # Gompertz growth equation: V(t) = V0 * exp( (alpha/beta) * (1 - exp(-beta * t)) )
+    V = V0 * np.exp((alpha / beta) * (1.0 - np.exp(-beta * t)))
+
+    return V
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is the time in days post-implantation (t)
+    t = X[:, 0]
+
+    # Gompertz growth model parameters (pooled LLC and LM2-4LUC fit)
+    V0 = 1.0  # Theoretical volume at t=0 (mm^3)
+    alpha = 0.40  # Specific growth rate at t=0 (day^-1)
+    beta = 0.04  # Growth deceleration rate (day^-1)
+
+    # Gompertz tumor growth equation
+    V = V0 * np.exp((alpha / beta) * (1.0 - np.exp(-beta * t)))
+
+    return V

@@ -1,0 +1,62 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict the ratio G_E / G_D for the proton electric Sachs form factor.
+    By the standard dipole approximation, the proton electric form factor
+    is equal to the dipole form factor, so the ratio is unity.
+    """
+    Q2 = X[:, 0]
+    return np.ones_like(Q2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict G_E / G_D for the proton.
+    
+    In the standard dipole model, the proton electric Sachs form factor
+    G_E is identical to the dipole form factor G_D:
+        G_D(Q^2) = (1 + Q^2 / 0.71 GeV^2)^{-2}
+    Therefore the ratio G_E / G_D = 1 for all Q^2.
+    """
+    Q2 = X[:, 0]
+    return np.ones_like(Q2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the ratio G_E / G_D for proton elastic scattering.
+    
+    In the standard dipole model, the proton electric Sachs form factor 
+    G_E is equal to the standard dipole form factor G_D, so the ratio is 1.
+    """
+    return np.ones(X.shape[0])
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for GE_over_GD.
+    In the standard dipole approximation, the proton electric Sachs form factor
+    is equal to the standard dipole form factor, so the ratio is 1.
+    """
+    return np.ones(X.shape[0])
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard dipole form factor model: G_E = G_D.
+    Therefore, GE_over_GD = 1.0 for all Q^2.
+    """
+    return np.ones(X.shape[0])

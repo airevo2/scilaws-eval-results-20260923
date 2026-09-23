@@ -1,0 +1,104 @@
+import numpy as np
+
+def predict(X):
+    mi = X[:, 0]
+    mj = X[:, 1]
+    dij = X[:, 2]
+    sij = X[:, 3]
+
+    # Standard radiation-model style form for commuting flows:
+    # T_ij = T_i * [m_i m_j / ((m_i + s_ij)(m_i + m_j + s_ij))] * (if needed for normalization)
+    # Here, with only the listed inputs, use the canonical common functional form:
+    Tij = (mi * mj) / ((mi + sij) * (mi + mj + sij))
+    
+    return np.log10(Tij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Common radiation-model-style closed form using origin mass, destination mass,
+    # intervening opportunities, and the +1 log shift on the flow.
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+
+    # Radiation model for expected flow:
+    # T_ij = T_i * [m_i m_j] / [(m_i + s_ij)(m_i + m_j + s_ij)]
+    # Here, in the absence of total outbound T_i data, we use the standard
+    # normalized canonical form up to proportionality.
+    Tij = (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+
+    return np.log10(Tij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Common radiation-style closed-form for commuting flow counts, with a +1 shift
+    on the log scale: log10(T_ij + 1).
+    """
+    mi = X[:, 0].astype(float)
+    mj = X[:, 1].astype(float)
+    dij = X[:, 2].astype(float)
+    sij = X[:, 3].astype(float)
+
+    # Standard radiation model:
+    # T_ij = m_i * m_j / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    Tij = (mi * mj) / ((mi + sij) * (mi + mj + sij))
+
+    return np.log10(Tij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Radiation model (commonly cited closed-form commuting-flow model)
+    # T_ij = T_i * [ m_i * m_j / ((m_i + s_ij) (m_i + m_j + s_ij)) ]
+    # Here the target is log10(T_ij + 1)
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    s_ij = X[:, 3]
+
+    T_ij = (m_i * m_j) / ((m_i + s_ij) * (m_i + m_j + s_ij))
+    return np.log10(T_ij + 1.0)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Commonly used gravity-style commuting model:
+        log10(T_ij + 1) = a + b1*log10(m_i) + b2*log10(m_j) + b3*log10(d_ij) + b4*log10(s_ij + 1)
+    using a simple canonical parameterization with positive attraction from masses,
+    negative distance friction, and positive intervening-opportunity effect.
+    """
+    X = np.asarray(X, dtype=float)
+
+    m_i = X[:, 0]
+    m_j = X[:, 1]
+    d_ij = X[:, 2]
+    s_ij = X[:, 3]
+
+    # Canonical closed-form gravity / intervening-opportunities hybrid
+    # (chosen as a standard, commonly cited functional form)
+    a = -1.0
+    b_mi = 0.5
+    b_mj = 0.5
+    b_d = -1.0
+    b_s = 0.25
+
+    y = (
+        a
+        + b_mi * np.log10(m_i)
+        + b_mj * np.log10(m_j)
+        + b_d * np.log10(d_ij)
+        + b_s * np.log10(s_ij + 1.0)
+    )
+    return y

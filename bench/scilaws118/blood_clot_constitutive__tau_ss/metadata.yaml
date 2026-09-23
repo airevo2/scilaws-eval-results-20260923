@@ -1,0 +1,162 @@
+task_id: blood_clot_constitutive__tau_ss
+domain: biology / biomechanics
+license: CC0-1.0
+
+# Type II — cluster = one whole-blood-clot specimen with its own
+# per-specimen Ogden / Fung / Yeoh material parameters.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Whole-blood clots are soft viscoelastic biological solids of a fibrin filament network, whose mechanical response under simple shear is studied in tissue biomechanics.
+
+target:
+  name: tau_ss
+  symbol: "τ_ss"
+  unit: kPa
+  description: >-
+    Measured simple-shear Cauchy stress on the lateral face of a 10x10x10 mm
+    in-vitro whole-blood thrombus specimen. Computed directly from the
+    lateral load-cell force divided by the cross-sectional area, with the
+    sign flipped so the released convention is the standard continuum-
+    mechanics one (positive tau_ss for positive shear amount gamma); see
+    prep_data.py "Sign convention" docstring. Carries genuine experimental
+    scatter and is not a closed-form function of the inputs. (Reference
+    constitutive laws fit this measurement with high but imperfect
+    agreement; the homogeneous-simple-shear closed form is an approximation
+    to the inhomogeneous traction-free-face boundary condition, handled by
+    inverse FEA in Sugerman 2021 §2.3.)
+  range: [-1.237, 1.181]   # released train data after sign flip
+
+inputs:
+  - name: gamma
+    symbol: "γ"
+    unit: dimensionless
+    description: >-
+      Engineering amount of shear, gamma = lateral_displacement / gauge_height
+      (gauge height = 10 mm). Swept cyclically over ~+-0.5 (so |gamma| <= 0.5)
+      during the simple-shear test.
+    range: [-0.52, 0.52]
+  - name: conc_mM
+    symbol: "c_fib"
+    unit: mM
+    description: >-
+      Fibrinogen concentration of the in-vitro clot mimic: 10, 20, or 40 mM.
+      Together with time_min it controls the fiber-network density and so
+      the per-specimen stiffness. Constant within a specimen; varies across
+      specimens. The current reference baselines do not consume it, but it
+      is released so a richer SR formula could discover a global
+      modulus = f(conc_mM, time_min) mapping.
+    range: [10, 40]
+  - name: time_min
+    symbol: "t_mat"
+    unit: min
+    description: >-
+      Clot maturation time before testing: 60, 90, or 120 min. Together
+      with conc_mM it controls the fiber-network density and so the
+      per-specimen stiffness. Constant within a specimen; varies across
+      specimens. The current reference baselines do not consume it, but it
+      is released for the same reason as conc_mM.
+    range: [60, 120]
+
+# Dataset — three-file v2 Type II layout, cluster holdout + within-cluster
+# interleaved-row split. 27 specimens, keyed by (conc_mM, time_min, sample);
+# group_id is the lexicographic index 0..26. TEST clusters are the two stiffness
+# corners of the (conc_mM, time_min) lattice — (10, 60, *) softest +
+# (40, 120, *) stiffest — covering all 3 biological replicates of each
+# (6 test specimens, group_ids 0, 1, 2, 24, 25, 26; 21 train specimens, the
+# other 7 (conc, time) cells x 3 replicates). train.csv holds all rows of the
+# 21 train specimens. For each test specimen the rows (in their stable CSV
+# order, which traces the cyclic-shear sweep through gamma) are split by
+# interleaved row index: even rows -> test_fit, odd rows -> test_test. Both
+# halves span the full gamma range and both shear cycles, so the within-
+# cluster fit/test split is honest interpolation while the cross-cluster
+# holdout is a credible stiffness extrapolation (peak tau_ss varies ~14x
+# from the softest to the stiffest corner). Deterministic, no RNG.
+data_files:
+  train:     data/train.csv        # 21 train specimens, all rows
+  test_fit:  data/test_fit.csv     #  6 test specimens, even-index rows
+  test_test: data/test_test.csv    #  6 test specimens, odd-index rows
+n_train:           82478
+n_test_fit:        11787
+n_test_test:       11786
+n_clusters_train:     21
+n_clusters_test:       6
+
+# Candidate prior constants — the `priors` prompt slot.
+# The three reference constitutive forms fit EVERY material parameter per
+# specimen (Ogden's mu, alpha; the Fung c1, c2; the Yeoh c1, c2, c3). No
+# external numerical constant is load-bearing — there is no constant a solver
+# must be handed to reach a solution. Per CONVERSION_NOTES §5, a purely
+# per-specimen-fit task of this kind does not need a priors block, so none
+# is declared.
+priors: []
+
+# === Reference baselines ===
+# Three published constitutive laws for the simple-shear tau_ss response.
+# Each is a strain-energy form whose per-specimen material parameters are
+# LOCAL_FITTABLE (fitted by the formula's own fit() on test_fit).
+# Empirical strength on test_test is populated by `evaluate.py reference`.
+references:
+  - id: ogden_1972
+    label: Ogden (1972) one-term Ogden simple-shear stress — tau_ss (bounded nonlinear LS)
+    formula_file: formulas/ogden_1972.py
+    reference_pdf: reference/ogden_1972.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # mu, alpha
+    measured: {rmse: 0.048482}
+  - id: sugerman_2021_fung
+    label: Sugerman (2021) isotropic Fung-type simple-shear stress — tau_ss (bounded nonlinear LS)
+    formula_file: formulas/sugerman_2021_fung.py
+    reference_pdf: reference/sugerman_2021.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # c1, c2
+    measured: {rmse: 0.051655}
+  - id: sugerman_2021_yeoh
+    label: Sugerman (2021) Yeoh-3 polynomial simple-shear stress — tau_ss (bounded linear LS)
+    formula_file: formulas/sugerman_2021_yeoh.py
+    reference_pdf: reference/sugerman_2021.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 3          # c1, c2, c3
+    measured: {rmse: 0.045224}
+
+# === v2 anti-dump caps ===
+# Mirror the harness-derived caps: max_law_constants = max len(LAW_CONSTANTS)
+# over the bank (0), max_local_params = max len(LOCAL_FITTABLE) (3, Yeoh),
+# max_init_size_per_param = max init-list length (1; no multi-start is used),
+# fit_timeout_seconds = ceil(slowest reference fit * 10), floored at 10.
+caps:
+  max_law_constants:        0
+  max_local_params:         3
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+# metric: rmse. The target is a Cauchy shear stress in kPa, and the unit is
+# identical across all 27 specimens (in contrast to e.g. the thermal-
+# performance task where cluster targets carry different physical units).
+# A consistent physical unit makes absolute-error metrics meaningful and
+# directly interpretable across clusters; soft-tissue constitutive-model
+# studies (Sugerman 2021, Kakaletsis 2023) report stress-fit error in the
+# same physical units (NMSE / SSE in Pa or kPa). Per CONVERSION_NOTES, rmse
+# is the natural choice here for the same reason it is in the mouse_skin
+# sister task. Type II scores each cluster separately and averages.
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a nonzero small-strain elastic shear resistance of the fibrin network"
+  - "includes nonlinear strain stiffening as fibrin fibers straighten and engage at larger shear"
+  - "represents rate-independent incompressible isotropic hyperelastic shear elasticity"
+  - "predicted shear stress is odd in gamma"
+  - "predicted shear stress has the same sign as gamma for every nonzero gamma"
+  - "predicted stress magnitude increases monotonically with |gamma| over the tested shear range"
+
+best_baseline: 0.045224     # sugerman_2021_yeoh mean per-cluster rmse on data/test_test.csv

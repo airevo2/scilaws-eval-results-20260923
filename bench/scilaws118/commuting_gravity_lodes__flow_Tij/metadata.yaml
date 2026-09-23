@@ -1,0 +1,191 @@
+task_id: commuting_gravity_lodes__flow_Tij
+domain: social_science / mobility
+license: CC0-1.0
+type: typeI
+has_group_id: false
+context: >-
+  This task concerns commuting flows of workers between home and work regions, a topic in spatial demography and human mobility modeling.
+
+target:
+  name: log10_Tij
+  symbol: "log\u2081\u2080(T\u1D62\u2C7C + 1)"
+  unit: log10(workers)
+  description: Base-10 logarithm of the annual commuting-flow count from the home
+    county to the work county, after a +1 shift to avoid log(0) for single-worker
+    pairs.
+  range:
+  - 0.301
+  - 5.508  # rounded up by 0.001 to ensure inclusion of the actual max 5.507104
+inputs:
+- name: m_i
+  symbol: "m\u1D62"
+  unit: workers
+  description: "Total resident workers of the origin county \u2014 the sum of outbound\
+    \ commuting flows from county i across all destinations."
+  range:
+  - 107
+  - 4167638
+- name: m_j
+  symbol: "m\u2C7C"
+  unit: workers
+  description: "Total jobs located in the destination county \u2014 the sum of inbound\
+    \ commuting flows to county j from all origins."
+  range:
+  - 107
+  - 4167638
+- name: d_ij_km
+  symbol: "d\u1D62\u2C7C"
+  unit: km
+  description: Haversine great-circle distance between the representative centroids
+    of the home and work counties.
+  range:
+  - 21.79
+  - 1223.2
+- name: s_ij
+  symbol: "s\u1D62\u2C7C"
+  unit: workers
+  description: "Intervening-opportunity count \u2014 the total resident-worker count\
+    \ summed over all counties whose centroids lie strictly inside the disk of radius\
+    \ d_ij centred on the home county, excluding both home and work counties."
+  range:
+  - 0
+  - 20447583
+data_files:
+  train: data/train.csv
+  test: data/test.csv
+n_train: 30163
+n_test: 5284
+# FM C12 (priors-leakage) fix \u2014 2026-05-26
+# beta_exp_US_counties=0.079, beta_pow_US_counties=3.32, alpha_extrad_US_counties=1.91
+# all matched Lenormand 2016 LAW_CONSTANTS exactly. These are empirically
+# derived scaling-law values at a specific US county mean area (S=2596.8 km^2);
+# not universal physical constants. Removed (strategy B).
+# Two existing clean distractors retained; two more added.
+priors:
+- name: commuter_fraction_US2000
+  value: 0.12
+  unit: dimensionless
+  description: Ratio of total commuters to total population N_c/N for US Census 2000; used in Simini radiation model T_i = m_i * N_c/N. Empirical census figure for US population, not a coefficient in the gravity or extended-radiation models shipped here.
+  source: "Simini et al. 2012, SI Sec. 1.1 (34,116,820 commuters / 281M US 2000 total population \u2248 0.121)."
+  _role: distractor
+- name: zipf_slope_empirical
+  value: 0.8472
+  unit: dimensionless
+  description: Empirical slope b of log-log fit log(T) = a + b*log(P1*P2/D) on Railway Express data (78 city-pairs, May 1939). A historical gravity-model calibration for 1930s rail traffic; not a coefficient in the Lenormand 2016 or Simini 2012 formulas benchmarked here.
+  source: Zipf 1946, PDF p. 680.
+  _role: distractor
+- name: gravity_exponent_classic
+  value: 2.0
+  unit: dimensionless
+  description: Classic gravity model distance exponent (T \u221d 1/d^2 by analogy with Newtonian gravity). A theoretical reference value; the empirically fitted US county exponent (3.32 for power-law) differs substantially from this Newtonian analogy.
+  source: Ravenstein 1885 / Newton analogy cited in Lenormand et al. 2016, PDF p. 2 introduction.
+  _role: distractor
+- name: beta_pow_EU_municipalities
+  value: 1.74
+  unit: dimensionless
+  description: Power-law distance exponent for European municipality-level commuting derived from Lenormand 2016 scaling law at mean area S=71.4 km^2. Contrast to the US county value; not a coefficient in the US-specific formulas benchmarked here.
+  source: Lenormand et al. 2016, Fig. 8b scaling law evaluated at S=71.4 km^2 (European municipality scale), PDF p. 10.
+  _role: distractor
+references:
+- id: simini_2012
+  label: "Simini 2012 \u2014 parameter-free radiation model (Eq. 2)"
+  formula_file: formulas/simini_2012.py
+  reference_pdf: reference/simini2012_radiation.pdf
+  n_law_constants: 1
+  n_other_constants: 0
+  n_local_params: 0
+  measured:
+    rmse: 0.7316
+    r2: 0.1432
+- id: lenormand_2016_extrad
+  label: "Lenormand 2016 \u2014 extended radiation law (Eq. 8)"
+  formula_file: formulas/lenormand_2016_extrad.py
+  reference_pdf: reference/lenormand2016_systematic.pdf
+  n_law_constants: 2
+  n_other_constants: 0
+  n_local_params: 0
+  measured:
+    rmse: 0.9784
+    r2: -0.5323
+- id: lenormand_2016_gravity_exp
+  label: "Lenormand 2016 \u2014 gravity with exponential decay (Eqs. 2+3)"
+  formula_file: formulas/lenormand_2016_gravity_exp.py
+  reference_pdf: reference/lenormand2016_systematic.pdf
+  n_law_constants: 2
+  n_other_constants: 1
+  n_local_params: 0
+  measured:
+    rmse: 1.5886
+    r2: -3.0398
+- id: lenormand_2016_gravity_pow
+  label: "Lenormand 2016 \u2014 gravity with power-law decay (Eqs. 2+4)"
+  formula_file: formulas/lenormand_2016_gravity_pow.py
+  reference_pdf: reference/lenormand2016_systematic.pdf
+  n_law_constants: 2
+  n_other_constants: 0
+  n_local_params: 0
+  measured:
+    rmse: 0.5361
+    r2: 0.5400
+# zipf_1946 REMOVED by the 2026-05-29 audit: with log10_K frozen at 0 it had no
+# normalisation constant, predicting log10(m_i*m_j/d) ~ 8-11 against a target ~0.3-5.5
+# (off by ~5 orders of magnitude; R2=-35 even on the training split -- a 9.18
+# anchor-scale defect, not an OOD effect), and was unfaithful to Zipf's own fitted
+# slope/intercept (0.8472/0.2157). Archived under .before_audit_2026-05-29/. See VERDICT.md.
+caps:
+  max_law_constants: 2
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes destination job opportunities as a positive attractor of commuting flow"
+  - "includes origin resident-worker supply as a positive driver of commuting flow"
+  - "decoded predicted county-pair worker flow stays between 0 and min(m_i, m_j) inclusive"
+  - "decoded predicted flows from each origin summed over all destinations equal that origin's total resident workers m_i"
+  - "decoded predicted flows into each destination summed over all origins equal that destination's total jobs m_j"
+
+best_baseline: 0.536064    # lenormand_2016_gravity_pow — rmse (lower is better); regenerated 2026-05-30
+
+# Auditor note (E6 mixed bank) -- rewritten by the 2026-05-29 audit.
+#
+# The task was RE-SPLIT this audit. The prior d>=600 km Tier-3 OOD split was
+# DEGENERATE: it isolated the long-haul noise tail (super-long "commutes" are
+# largely data artifacts), collapsing test variance so that NO baseline beat the
+# naive test-mean predictor -- a section-9.6 failure. It is now a deterministic
+# REPRESENTATIVE split (md5 hash of the county-pair id, ~15% holdout); Lenormand
+# 2016 and Simini 2012 both validate on the whole dataset (no OOD holdout), so a
+# representative split is the split-priority-faithful choice. zipf_1946 was also
+# removed (un-normalised, log10_K=0 -> R2=-35 even in-sample; see references comment).
+#
+# On the representative split the bank is MIXED:
+#   lenormand_2016_gravity_pow  R2 = +0.540  (RMSE 0.536)  best; BEATS naive
+#   simini_2012                 R2 = +0.143  (RMSE 0.732)  BEATS naive
+#   lenormand_2016_extrad       R2 = -0.532  (RMSE 0.978)  weaker published rung
+#   lenormand_2016_gravity_exp  R2 = -3.040  (RMSE 1.589)  weakest published rung
+# Naive (test-mean of log10(Tij+1)) RMSE = 0.790. Section 9.6 is SATISFIED: two
+# baselines beat naive (the power-law gravity law by a wide margin). The two
+# negative-R2 entries are the genuine published Lenormand exponential and extended-
+# radiation models with their paper-derived scaling-law coefficients, which fit US
+# county commuting poorly -- an honest E6 mixed bank, not a defect.
+#
+# Correction: the pre-audit note claimed "simini beats naive 0.7117". That 0.7117
+# was the RMSE of predicting the TRAIN mean on the OOD test, NOT the section-C9-c
+# naive (test-mean) predictor. Under the correct naive, NO baseline beat naive on
+# the old OOD split -- which is exactly what flagged the degenerate split. See VERDICT.md.
+auditor_notes:
+  mixed_bank_disclosure:
+    severity: ACCEPTABLE_E6_MIXED_BANK
+    split: representative (deterministic md5 hash of county-pair id, ~15% holdout)
+    summary: >-
+      Representative split replacing a degenerate d>=600 km OOD split. Mixed bank:
+      gravity_pow R2=+0.540 and simini R2=+0.143 beat naive (test-mean RMSE 0.790);
+      extrad R2=-0.532 and gravity_exp R2=-3.040 are weaker published Lenormand
+      models with frozen scaling-law coefficients. Section 9.6 satisfied (>=1 beats
+      naive). zipf_1946 removed (un-normalised, R2=-35 in-sample).
+    citation: "AUDIT_CHECKLIST E6 (mixed-bank disclosure) + split-priority rule (representative split when source papers validate on the whole dataset)"

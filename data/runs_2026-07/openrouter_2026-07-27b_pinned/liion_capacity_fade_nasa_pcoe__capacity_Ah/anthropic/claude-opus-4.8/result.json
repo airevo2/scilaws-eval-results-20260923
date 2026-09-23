@@ -1,0 +1,26 @@
+{
+  "task": "liion_capacity_fade_nasa_pcoe__capacity_Ah",
+  "model": "anthropic/claude-opus-4.8",
+  "type": "typeI",
+  "primary": "materials_and_energy ",
+  "formulas": [
+    {
+      "formula": "he_2011",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "pinson_2013",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

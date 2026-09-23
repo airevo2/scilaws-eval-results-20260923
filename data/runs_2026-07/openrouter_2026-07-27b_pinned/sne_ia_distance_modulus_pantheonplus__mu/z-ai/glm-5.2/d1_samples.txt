@@ -1,0 +1,182 @@
+import numpy as np
+
+def predict(X):
+    z = np.atleast_1d(X[:, 0]).astype(float)
+    H0 = 70.0
+    c = 299792.458
+    Om = 0.3
+    Ol = 0.7
+    
+    z_max = np.max(z) if z.size > 0 else 2.3
+    z_grid = np.linspace(0, max(z_max, 2.3), 200000)
+    Ez = np.sqrt(Om * (1.0 + z_grid)**3 + Ol)
+    
+    dz = z_grid[1] - z_grid[0]
+    inv_Ez = 1.0 / Ez
+    cumul = np.concatenate(([0.0], np.cumsum(0.5 * (inv_Ez[:-1] + inv_Ez[1:]) * dz)))
+    
+    integral = np.interp(z, z_grid, cumul)
+    
+    d_L = (c / H0) * (1.0 + z) * integral  # in Mpc
+    mu = 5.0 * np.log10(d_L) + 25.0
+    return mu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    z = np.atleast_1d(X[:, 0])
+    
+    # Standard cosmological parameters (flat LambdaCDM)
+    c = 299792.458  # Speed of light in km/s
+    H0 = 70.0       # Hubble constant in km/s/Mpc
+    Om = 0.3        # Matter density parameter
+    Ol = 0.7        # Dark energy density parameter
+    
+    mu = np.zeros_like(z, dtype=float)
+    
+    for i, zi in enumerate(z):
+        if zi <= 0:
+            mu[i] = -np.inf
+        else:
+            # Numerical integration of the standard cosmological integral
+            dz = np.linspace(0, zi, 1000)
+            E_z = np.sqrt(Om * (1.0 + dz)**3 + Ol)
+            integral = np.trapz(1.0 / E_z, dz)
+            
+            # Luminosity distance in Mpc
+            d_L = (c / H0) * (1.0 + zi) * integral
+            
+            # Distance modulus
+            mu[i] = 5.0 * np.log10(d_L) + 25.0
+            
+    return mu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the standardised Type Ia supernova distance modulus mu(z) 
+    using the standard flat LambdaCDM cosmological model.
+    
+    Parameters:
+    X : numpy.ndarray
+        A 2D array where X[:, 0] contains the CMB-frame redshifts z.
+        
+    Returns:
+    numpy.ndarray
+        A 1D array of distance moduli mu in magnitudes.
+    """
+    z = np.asarray(X[:, 0], dtype=float)
+    
+    # Standard cosmological parameters (Planck 2018 / typical SNIa analysis)
+    H0 = 70.0          # Hubble constant in km/s/Mpc
+    c = 299792.458     # Speed of light in km/s
+    Om = 0.3           # Matter density parameter
+    Ol = 0.7           # Dark energy density parameter
+    
+    # To compute the integral efficiently for an array of redshifts, 
+    # we sort them and use the cumulative trapezoidal rule.
+    sort_idx = np.argsort(z)
+    z_sorted = z[sort_idx]
+    
+    # Include z = 0 as the lower limit of integration
+    z_grid = np.concatenate(([0.0], z_sorted))
+    
+    # Inverse of the Hubble parameter E(z) = sqrt(Om*(1+z)^3 + Ol)
+    E_inv = 1.0 / np.sqrt(Om * (1.0 + z_grid)**3 + Ol)
+    
+    # Trapezoidal integration
+    dz = np.diff(z_grid)
+    integral_parts = (E_inv[:-1] + E_inv[1:]) * dz / 2.0
+    integral = np.cumsum(integral_parts)
+    
+    # Luminosity distance d_L in Mpc
+    d_L = (c / H0) * (1.0 + z_sorted) * integral
+    
+    # Distance modulus mu = 5 * log10(d_L / 10 pc)
+    # Since d_L is in Mpc, d_L / 10 pc = d_L * 1e6 / 10 = d_L * 1e5
+    # Thus, mu = 5 * log10(d_L) + 25
+    mu = 5.0 * np.log10(d_L) + 25.0
+    
+    # Revert to original order
+    mu_out = np.empty_like(mu)
+    mu_out[sort_idx] = mu
+    
+    return mu_out
+
+=====
+
+import numpy as np
+
+def predict(X):
+    z = X[:, 0]
+    
+    # Standard flat LambdaCDM cosmological parameters (e.g., Riess et al. 2022 / SNe Ia standard)
+    H0 = 73.04  # Hubble constant in km/s/Mpc
+    c = 299792.458  # Speed of light in km/s
+    Om = 0.3  # Matter density parameter
+    Ol = 1.0 - Om  # Dark energy density parameter (flat universe)
+    
+    # Compute luminosity distance d_L in Mpc
+    dL = np.empty_like(z)
+    for i, zi in enumerate(z):
+        # Numerical integration of 1/E(z') from 0 to zi
+        zs = np.linspace(0, zi, 1000)
+        E = np.sqrt(Om * (1.0 + zs)**3 + Ol)
+        integral = np.trapz(1.0 / E, zs)
+        dL[i] = (1.0 + zi) * c / H0 * integral
+        
+    # Distance modulus mu = 5 * log10(d_L / 10 pc)
+    # Since d_L is in Mpc, 1 Mpc = 10^6 pc, so 5 * log10(d_L * 10^6 / 10) = 5 * log10(d_L) + 25
+    mu = 5.0 * np.log10(dL) + 25.0
+    
+    return mu
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the standardised Type Ia supernova distance modulus mu
+    as a function of redshift z in a standard flat LambdaCDM cosmology.
+    """
+    z = np.atleast_1d(X[:, 0])
+    
+    # Standard cosmological parameters (Planck/SNe common consensus)
+    H0 = 70.0          # Hubble constant in km/s/Mpc
+    c = 299792.458     # Speed of light in km/s
+    Om = 0.3           # Matter density parameter
+    Ol = 0.7           # Dark energy density parameter
+    
+    # To evaluate the integral for the comoving distance analytically is 
+    # impossible with elementary functions, so we compute it numerically 
+    # on a fine grid and interpolate.
+    z_max = np.max(z) if z.size > 0 else 1.0
+    if z_max == 0:
+        z_max = 1.0
+        
+    # Fine grid for accurate numerical integration
+    z_grid = np.linspace(0, z_max, 10000)
+    integrand = 1.0 / np.sqrt(Om * (1.0 + z_grid)**3 + Ol)
+    
+    # Cumulative trapezoidal integration
+    cumul = np.zeros_like(z_grid)
+    cumul[1:] = np.cumsum(0.5 * (integrand[:-1] + integrand[1:]) * np.diff(z_grid))
+    
+    # Comoving distance
+    comoving_dist = (c / H0) * np.interp(z, z_grid, cumul)
+    
+    # Luminosity distance
+    d_L = comoving_dist * (1.0 + z)
+    
+    # Distance modulus mu = 5 * log10(d_L) + 25
+    # Avoid log10(0) for z=0
+    d_L = np.where(d_L <= 0, 1e-10, d_L)
+    mu = 5.0 * np.log10(d_L) + 25.0
+    
+    return mu

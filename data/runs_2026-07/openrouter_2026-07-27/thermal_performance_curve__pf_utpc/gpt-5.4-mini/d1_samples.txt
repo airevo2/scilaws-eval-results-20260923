@@ -1,0 +1,99 @@
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Sharpe–Schoolfield / thermal performance curve (single-peaked, asymmetric)
+    # Standard closed form with arbitrary scale absorbed by the trait units.
+    T0 = 25.0 + 273.15  # reference temperature in K
+    Tk = T + 273.15      # absolute temperature in K
+
+    B0 = 1.0
+    Ea = 0.65            # eV, activation energy
+    Eh = 2.0             # eV, high-temperature inactivation energy
+    Th = 40.0 + 273.15   # high-temperature inactivation midpoint in K
+
+    kB = 8.617333262145e-5  # eV/K
+
+    num = B0 * np.exp(-Ea / kB * (1.0 / Tk - 1.0 / T0))
+    denom = 1.0 + np.exp(Eh / kB * (1.0 / Th - 1.0 / Tk))
+    return num / denom
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Sharpe-Schoolfield style temperature performance curve
+    # Parameters are generic canonical values to define the functional form:
+    B0 = 1.0
+    E = 0.65          # activation energy (eV, if temperature is in Kelvin internally)
+    Eh = 3.5          # high-temperature inactivation energy
+    Th = 313.15       # high-temperature inactivation midpoint (K)
+    Tk = T + 273.15   # convert °C to K
+
+    return B0 * np.exp(-E * (1.0 / Tk - 1.0 / 283.15)) / (1.0 + np.exp(Eh * (1.0 / Th - 1.0 / Tk)))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Brière-type thermal performance function
+    # P = a * T * (T - T0) * sqrt(Tm - T)
+    # Here a, T0, and Tm are left as generic constants in the standard closed form.
+    a = 1.0
+    T0 = 0.0
+    Tm = 1.0
+    P = a * T * (T - T0) * np.sqrt(np.maximum(Tm - T, 0.0))
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Sharpe-Schoolfield (high-temperature inactivation) form, using a common closed form:
+    # P(T) = P_ref * exp[-Ea/k * (1/Tk - 1/Tref)] / [1 + exp(Eh/k * (1/Th - 1/Tk))]
+    # Here we use a simplified canonical thermal performance curve written with temperature-dependent
+    # activation and deactivation terms, parameterized by standard constants.
+    Tk = T + 273.15
+    
+    # Canonical constants (typical values; unit-specific scale is absorbed in P_ref)
+    P_ref = 1.0
+    T_ref = 293.15  # 20 C
+    Ea = 0.65       # eV
+    Eh = 2.0        # eV
+    Th = 308.15     # 35 C
+    kB = 8.617333262145e-5  # eV/K
+    
+    numerator = np.exp((-Ea / kB) * (1.0 / Tk - 1.0 / T_ref))
+    denominator = 1.0 + np.exp((Eh / kB) * (1.0 / Th - 1.0 / Tk))
+    
+    return P_ref * numerator / denominator
+
+=====
+
+import numpy as np
+
+def predict(X):
+    T = X[:, 0]
+    # Sharpe-Schoolfield / Boltzmann-Arrhenius style thermal performance curve
+    # Canonical closed form with low- and high-temperature inactivation terms.
+    # Parameter values are generic placeholders in the absence of fitted coefficients.
+    B0 = 1.0          # normalization / scale
+    E = 0.65          # activation energy (eV)
+    k = 8.617333262e-5 # Boltzmann constant (eV/K)
+    Tref = 293.15     # reference temperature (K)
+    Th = 318.15       # high-temperature deactivation midpoint (K)
+    Eh = 2.0          # high-temperature deactivation energy (eV)
+    Tl = 273.15       # low-temperature deactivation midpoint (K)
+    El = 2.0          # low-temperature deactivation energy (eV)
+
+    Tk = T + 273.15
+
+    num = B0 * np.exp(-E / k * (1.0 / Tk - 1.0 / Tref))
+    denom = 1.0 + np.exp(Eh / k * (1.0 / Th - 1.0 / Tk)) + np.exp(El / k * (1.0 / Tk - 1.0 / Tl))
+    return num / denom

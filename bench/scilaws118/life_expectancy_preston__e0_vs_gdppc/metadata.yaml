@@ -1,0 +1,162 @@
+task_id: life_expectancy_preston__e0_vs_gdppc
+metric: rmse
+domain: social_science / demography
+type: typeI
+has_group_id: false
+
+license: "CC0-1.0 (per-country life expectancy and income figures are uncopyrightable scientific facts; Feist v. Rural Telephone Service Co., 499 U.S. 340, 1991; original data from UN Demographic Yearbook / UN Statistical Yearbook / Kuznets 1956 as compiled in Preston 1975 Appendix A)"
+
+context: >-
+  This task draws on national-level demographic and development economics data from a mid-twentieth-century cross-section of countries.
+
+target:
+  name: e0_vs_gdppc
+  symbol: e0
+  unit: years
+  description: >-
+    Sex-averaged life expectancy at birth, computed as the unweighted
+    mean of male and female life expectancies at birth. Source: Preston
+    (1975) Appendix A, Tables A-1/A-2/A-3, hand-transcribed from the
+    original UN Demographic Yearbook figures.
+  range:
+    - 31.6
+    - 74.23
+
+inputs:
+  - name: gdppc
+    symbol: Y
+    unit: USD_1963
+    dtype: float
+    description: >-
+      National income per head, expressed in constant 1963 US dollars.
+      Source: Preston (1975) Appendix A (national income figures from
+      UN Statistical Yearbook and Kuznets 1956).
+    range:
+      - 40.0
+      - 2995.0
+
+data_files:
+  train: data/train.csv   # 1960s cross-section, representative income-stratified split: 38 rows
+  test:  data/test.csv    # 1960s cross-section, every-3rd-by-income hold-out: 19 rows
+
+n_train: 38
+n_test: 19
+
+# Audit history:
+#   2026-05-29 (re-split to 1960s cross-section): dropped the two off-decade
+#   1930s priors (kappa_1930s as candidate, r_log_linear_1930s); kept the 1960s
+#   practical asymptote as the candidate and demoted the 1930s asymptote to a
+#   grounded distractor (a real published value, but for the wrong decade).
+#   2026-05-30 (field-classification re-audit): the per-baseline defining
+#   coefficients, previously hidden as _*_FIT module globals with LAW_CONSTANTS={},
+#   were moved into LAW_CONSTANTS (logistic alpha,beta; logistic_kappa alpha,beta,kappa;
+#   loglinear a,b) and the structural ceiling 80 into OTHER_CONSTANTS of the logistic
+#   baseline. No prior numerically matches any LAW or OTHER constant (priors are
+#   kappa_1960s=71.5, kappa_1930s=66.8, r_log_linear_1960s=0.880; the closest LAW value
+#   is the fitted kappa=72.67 != 71.5), so there is no C12/H1 LAW-in-priors leak.
+#   kappa is a globally-fitted defining coefficient (Type I, no per-group fit), not a
+#   LOCAL_FITTABLE parameter.
+priors:
+  - name: kappa_1960s
+    value: 71.5
+    unit: years
+    description: >-
+      Practical upper asymptote of the Preston logistic curve for the 1960s
+      cross-section (the biologically achievable ceiling of e0 through income
+      gains alone in that decade), as reported in the abridged 2007 IJE reprint
+      of Preston (1975), PDF p. 3. Domain hint only — the logistic baseline's
+      asymptote is fitted (kappa ~ 72.7), not fixed to this value.
+    source: Preston 1975, abridged IJE reprint, PDF p. 3
+    _role: candidate
+  - name: kappa_1930s
+    value: 66.8
+    unit: years
+    description: >-
+      Practical upper asymptote of the Preston logistic curve for the 1930s
+      cross-section, PDF p. 3. A real published value but for the wrong decade
+      (this task is the 1960s cross-section) — a plausible-but-incorrect
+      distractor for the 1960s ceiling.
+    source: Preston 1975, abridged IJE reprint, PDF p. 3
+    _role: distractor
+  - name: r_log_linear_1960s
+    value: 0.880
+    unit: ""
+    description: >-
+      Pearson correlation between e0 and log(Y) for the 1960s cross-section.
+      Reported in the abridged 2007 IJE reprint of Preston (1975), PDF p. 2.
+      A goodness-of-fit summary statistic, not a usable formula coefficient.
+    source: Preston 1975, abridged IJE reprint, PDF p. 2
+    _role: distractor
+
+references:
+  - id: preston_1975_logistic
+    label: >-
+      Preston 1975 logistic (fixed ceiling 80) — e0 = 80 / (1 + exp(alpha + beta * log Y));
+      alpha and beta fitted from CC0-1.0 training data (1960s cross-section); structural
+      ceiling 80 from Preston linearisation (abridged IJE reprint PDF p. 5). Strongest baseline.
+    formula_file: formulas/preston_1975_logistic.py
+    reference_pdf: reference/preston_1975.pdf
+    n_law_constants: 2
+    n_other_constants: 1
+    n_local_params: 0
+    measured:
+      rmse: 5.344507344446972
+      mse: 28.563758754847633
+      mae: 4.176941935509435
+      smape: 0.07333843812210127
+      r2: 0.769753011223583
+      n_finite: 19
+
+  - id: preston_1975_logistic_kappa
+    label: >-
+      Preston 1975 logistic (fittable asymptote kappa) — e0 = kappa / (1 + exp(alpha + beta * log Y));
+      all three parameters fitted from CC0-1.0 training data (1960s cross-section; fitted kappa ~ 72.7,
+      recovering Preston's reported 71.5 yr asymptote); form from abridged IJE reprint PDF p. 3
+    formula_file: formulas/preston_1975_logistic_kappa.py
+    reference_pdf: reference/preston_1975.pdf
+    n_law_constants: 3
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 5.364475767519328
+      mse: 28.77760026030208
+      mae: 3.690683882185905
+      smape: 0.07151669015765458
+      r2: 0.7680292758031546
+      n_finite: 19
+
+  - id: preston_1975_loglinear
+    label: >-
+      Preston 1975 log-linear — e0 = a + b * log(Y); a and b fitted from
+      CC0-1.0 training data (1960s cross-section); form from abridged IJE reprint PDF p. 2
+    formula_file: formulas/preston_1975_loglinear.py
+    reference_pdf: reference/preston_1975.pdf
+    n_law_constants: 2
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      rmse: 5.9122830637076875
+      mse: 34.95509102540476
+      mae: 4.855894826246765
+      smape: 0.08498198209626807
+      r2: 0.7182337058620092
+      n_finite: 19
+
+caps:
+  max_law_constants: 3
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+reference_baseline_id: preston_1975_logistic
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "represents higher national income per head as increasing life expectancy with diminishing marginal longevity returns"
+  - "predicted life expectancy at birth is non-negative"
+  - "predicted life expectancy at birth remains bounded above by a finite human or era-specific ceiling"
+
+best_baseline: 5.34451    # preston_1975_logistic — rmse (lower is better); regenerated 2026-05-30

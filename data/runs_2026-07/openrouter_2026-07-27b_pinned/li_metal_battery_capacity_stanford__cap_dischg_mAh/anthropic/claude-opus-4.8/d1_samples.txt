@@ -1,0 +1,122 @@
+import numpy as np
+
+def predict(X):
+    # Battery capacity fade: standard empirical square-root-of-time (cycling) model.
+    # Q_dis(k) = Q_0 * (1 - a * sqrt(EFC))   (SEI-growth square-root aging law)
+    #
+    # The dominant capacity-loss mechanism (SEI growth) scales with the square
+    # root of throughput; EFC is the natural throughput measure here.
+    Q_0 = X[:, 2]        # nominal capacity (mAh)
+    efc = X[:, 1]        # equivalent full cycles
+
+    # Fade coefficient (fraction of capacity lost per sqrt(EFC)).
+    a = 0.02
+
+    Q_dis = Q_0 * (1.0 - a * np.sqrt(np.clip(efc, 0.0, None)))
+
+    # Capacity cannot go negative.
+    return np.clip(Q_dis, 0.0, None)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Battery capacity fade: standard square-root-of-time (EFC) degradation model.
+    # Q_dis(k) = Q_0 * (1 - k_deg * sqrt(EFC))
+    # The sqrt(EFC) law arises from SEI-growth-limited capacity loss
+    # (Q_loss ~ sqrt(charge throughput)), the most commonly cited aging form.
+
+    Q_0 = X[:, 2]      # nominal capacity [mAh]
+    efc = X[:, 1]      # equivalent full cycles
+
+    # Degradation rate coefficient (fraction of capacity lost per sqrt(EFC))
+    k_deg = 0.0025
+
+    Q_dis = Q_0 * (1.0 - k_deg * np.sqrt(np.maximum(efc, 0.0)))
+
+    # Physical bound: capacity cannot go negative
+    Q_dis = np.maximum(Q_dis, 0.0)
+
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Battery capacity fade: standard empirical model with calendar+cycling loss
+    # Q_dis(k) = Q_0 * (1 - SOH_loss), SOH_loss ~ sqrt-of-throughput (SEI growth)
+    k      = X[:, 0]   # cycle index
+    efc    = X[:, 1]   # equivalent full cycles
+    Q_0    = X[:, 2]   # nominal capacity (mAh)
+    # Common closed form: capacity fade dominated by sqrt(EFC) SEI-limited loss
+    # Q_dis = Q_0 * (1 - alpha*sqrt(EFC) - beta*EFC)
+    alpha = 0.0045   # square-root (SEI) fade coefficient
+    beta  = 0.00005  # linear fade coefficient
+
+    soh = 1.0 - alpha * np.sqrt(np.maximum(efc, 0.0)) - beta * np.maximum(efc, 0.0)
+    soh = np.clip(soh, 0.0, 1.0)
+
+    return Q_0 * soh
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard empirical battery capacity-fade model:
+    # Discharge capacity decays from nominal capacity via a square-root-of-throughput
+    # (SEI-growth) term plus a linear-in-cycle term.
+    #
+    #   Q_dis(k) = Q_0 * ( 1 - a*sqrt(EFC) - b*k )
+    #
+    # This is the most commonly cited closed-form aging relationship
+    # (Bloom et al.; Broussely et al.): capacity loss ~ sqrt(Ah-throughput).
+
+    k    = X[:, 0]   # cycle index
+    efc  = X[:, 1]   # equivalent full cycles
+    Q0   = X[:, 2]   # nominal capacity [mAh]
+
+    # Typical fitted coefficients
+    a = 8.0e-3   # sqrt(EFC) fade coefficient (SEI growth)
+    b = 5.0e-5   # per-cycle linear fade coefficient
+
+    soh = 1.0 - a * np.sqrt(np.maximum(efc, 0.0)) - b * k
+    soh = np.clip(soh, 0.0, 1.0)
+
+    Q_dis = Q0 * soh
+    return Q_dis
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard empirical Li-ion capacity fade model:
+    # Discharge capacity decreases from nominal capacity following a
+    # square-root-of-throughput (SEI growth) law plus a small linear term.
+    #
+    #   Q_dis(k) = Q_0 * ( 1 - a*sqrt(EFC) - b*EFC )
+    #
+    # where sqrt(EFC) captures diffusion-limited SEI growth (calendar/cycling
+    # capacity loss) and the linear term captures secondary loss mechanisms.
+
+    k        = X[:, 0]   # cycle index
+    efc      = X[:, 1]   # equivalent full cycles
+    Q0       = X[:, 2]   # nominal capacity (mAh)
+    V_low    = X[:, 3]
+    V_high   = X[:, 4]
+    I_CV     = X[:, 5]
+    I_chg    = X[:, 6]
+    g        = X[:, 7]
+
+    # Fitted degradation coefficients (typical Li-ion values)
+    a = 0.010   # sqrt-throughput (SEI) fade coefficient
+    b = 0.0002  # linear fade coefficient
+
+    fade = 1.0 - a * np.sqrt(np.maximum(efc, 0.0)) - b * efc
+    fade = np.clip(fade, 0.0, 1.0)
+
+    Q_dis = Q0 * fade
+    return Q_dis

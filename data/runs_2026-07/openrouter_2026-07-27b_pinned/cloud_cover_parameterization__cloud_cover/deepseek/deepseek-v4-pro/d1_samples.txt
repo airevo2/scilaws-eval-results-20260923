@@ -1,0 +1,277 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict sub-grid cloud area fraction C using the Xu and Randall (1996) 
+    semi-empirical parameterization, extended to mixed-phase clouds.
+    
+    Inputs:
+        X[:, 0] : q_c [kg/kg]   cloud liquid water mixing ratio
+        X[:, 1] : q_i [kg/kg]   cloud ice mixing ratio
+        X[:, 2] : RH            relative humidity w.r.t. liquid water
+        X[:, 3] : T   [K]       temperature
+        X[:, 4] : p   [Pa]      pressure
+        X[:, 5] : q_v [kg/kg]   specific humidity
+        X[:, 6] : z_g [m]       geometric height
+        X[:, 7] : dz_RH [1/m]   vertical derivative of RH
+    
+    Returns:
+        C : 1-D numpy array of cloud cover fraction (0 to 1)
+    """
+    # Extract necessary columns
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH  = X[:, 2]
+    T   = X[:, 3]
+    p   = X[:, 4]
+    
+    # Constants
+    epsilon = 0.622  # ratio of gas constants for dry air and water vapour
+    
+    # Saturation vapour pressure calculations (in Pa)
+    # Using standard Bolton (1980) / Magnus-type formulas
+    T_c = T - 273.15
+    # Liquid water
+    es_l = 6.112 * np.exp(17.67 * T_c / (T_c + 243.5))  # hPa
+    es_l = es_l * 100.0                                   # Pa
+    # Ice
+    es_i = 6.112 * np.exp(22.46 * T_c / (T_c + 272.62)) # hPa
+    es_i = es_i * 100.0                                   # Pa
+    
+    # Saturation specific humidity over liquid and ice
+    qsat_l = epsilon * es_l / (p - (1.0 - epsilon) * es_l)
+    qsat_i = epsilon * es_i / (p - (1.0 - epsilon) * es_i)
+    
+    # Xu and Randall (1996) coefficients
+    a_liq = 0.25
+    b_liq = 0.71
+    a_ice = 0.11
+    b_ice = 1.10
+    
+    # Initialize output
+    C = np.empty_like(q_c)
+    
+    # Supersaturation (RH >= 1) -> cloud cover = 1
+    supersat = RH >= 1.0
+    C[supersat] = 1.0
+    
+    # Sub-saturated points (RH < 1)
+    subsat = ~supersat
+    if np.any(subsat):
+        # Extract subsets
+        RH_s   = RH[subsat]
+        qc_s   = q_c[subsat]
+        qi_s   = q_i[subsat]
+        qsl_s  = qsat_l[subsat]
+        qsi_s  = qsat_i[subsat]
+        
+        # Denominator: (1 - RH)
+        denom = 1.0 - RH_s
+        
+        # Liquid cloud fraction
+        # (avoid NaN when qc=0, ratio=0 => C_liq=0 is fine)
+        ratio_liq = qc_s / (denom * qsl_s)
+        C_liq = 1.0 - np.exp(-a_liq * np.power(ratio_liq, b_liq))
+        
+        # Ice cloud fraction
+        ratio_ice = qi_s / (denom * qsi_s)
+        C_ice = 1.0 - np.exp(-a_ice * np.power(ratio_ice, b_ice))
+        
+        # Union of liquid and ice clouds (maximum of the two)
+        C_subsat = np.maximum(C_liq, C_ice)
+        C_subsat = np.clip(C_subsat, 0.0, 1.0)
+        C[subsat] = C_subsat
+    
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sub-grid cloud area fraction (cloud cover) using the 
+    Xu–Randall (1996) semi-empirical cloudiness parameterization.
+    
+    Inputs:
+        X[:,0] q_c     [kg/kg]   Cloud liquid water mixing ratio
+        X[:,1] q_i     [kg/kg]   Cloud ice mixing ratio
+        X[:,2] RH      [0–1]     Relative humidity w.r.t. liquid
+        X[:,3] T       [K]       Air temperature
+        X[:,4] p       [Pa]      Atmospheric pressure
+        X[:,5] q_v     [kg/kg]   Specific humidity
+        X[:,6] z_g     [m]       Geometric height
+        X[:,7] dRH_dz  [1/m]     Vertical gradient of RH
+    Returns:
+        C : 1-D array of cloud area fraction [0, 1]
+    """
+    q_c = X[:, 0]
+    q_i = X[:, 1]
+    RH = X[:, 2]
+    
+    # Total grid-mean condensate mixing ratio
+    q_cond = q_c + q_i
+    
+    # Convert from kg/kg to g/kg (original Xu–Randall coefficients use g/kg)
+    q_cond_g = q_cond * 1000.0
+    
+    # Empirical parameters from Xu and Randall (1996), tropical ocean fit
+    p_exp = 0.25         # exponent for RH
+    alpha = 0.49         # scale factor for cloud condensate (g/kg)
+    gamma = 0.49         # exponent for (1 - RH)
+    
+    # Prevent singularities and unphysical values
+    RH_safe = np.clip(RH, 0.01, 0.999)
+    one_minus_RH = 1.0 - RH_safe
+    
+    # Xu–Randall cloud fraction formula
+    term = alpha * q_cond_g / one_minus_RH**gamma
+    C = np.power(RH_safe, p_exp) * (1.0 - np.exp(-term))
+    
+    # Saturation condition
+    C = np.where(RH >= 1.0, 1.0, C)
+    
+    # Ensure physical bounds
+    C = np.clip(C, 0.0, 1.0)
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sub-grid cloud area fraction C using the Xu and Randall (1996) 
+    semi-empirical cloudiness parameterization, a standard closed-form 
+    relationship in atmospheric science.
+    
+    C = 1 - exp( -a0 * q_cond / ( (1 - RH)**a1 * q_sat ) )
+    for RH < 1 and q_cond > 0.
+    """
+    # Extract inputs
+    q_c = X[:, 0]   # cloud liquid water mixing ratio [kg/kg]
+    q_i = X[:, 1]   # cloud ice mixing ratio [kg/kg]
+    RH = X[:, 2]    # relative humidity w.r.t. liquid water [0-1]
+    T = X[:, 3]     # temperature [K]
+    p = X[:, 4]     # pressure [Pa]
+    # q_v = X[:, 5], z_g = X[:, 6], dRH/dz = X[:, 7] not used in this scheme
+
+    # Saturation vapour pressure over liquid water (Magnus formula, in Pa)
+    T_C = T - 273.15
+    e_sat = 611.2 * np.exp(17.67 * T_C / (T_C + 243.5))
+
+    # Saturation specific humidity [kg/kg]
+    epsilon = 0.622  # ratio of gas constants Rd/Rv
+    q_sat = epsilon * e_sat / (p - (1.0 - epsilon) * e_sat)
+
+    # Total cloud condensate mixing ratio
+    q_cond = q_c + q_i
+
+    # Xu and Randall (1996) coefficients for stable conditions
+    # (commonly used defaults when stability is unknown)
+    a0 = 0.49
+    a1 = 0.25
+
+    # Initialize cloud fraction array
+    C = np.zeros_like(RH)
+
+    # Where relative humidity >= 1, cloud fraction is 1
+    supersat = RH >= 1.0
+    C[supersat] = 1.0
+
+    # Where RH < 1 and condensate is positive, apply Xu-Randall formula
+    mask = (~supersat) & (q_cond > 0)
+    C[mask] = 1.0 - np.exp(
+        -a0 * q_cond[mask] / ((1.0 - RH[mask])**a1 * q_sat[mask])
+    )
+
+    # Ensure cloud fraction stays in [0, 1]
+    C = np.clip(C, 0.0, 1.0)
+
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sub-grid cloud area fraction C using the Sundqvist (1978) diagnostic scheme
+    with a pressure-dependent critical relative humidity.
+
+    Parameters:
+    X : 2-D numpy array with columns:
+        X[:, 0] : q_c  - cloud liquid water mixing ratio [kg/kg]
+        X[:, 1] : q_i  - cloud ice mixing ratio [kg/kg]
+        X[:, 2] : RH   - relative humidity w.r.t. liquid water [-]
+        X[:, 3] : T    - temperature [K]
+        X[:, 4] : p    - pressure [Pa]
+        X[:, 5] : q_v  - specific humidity [kg/kg]
+        X[:, 6] : z_g  - geometric height [m]
+        X[:, 7] : dz_RH - vertical derivative of RH [1/m]
+
+    Returns:
+    C : 1-D numpy array of cloud area fraction [0, 1].
+    """
+    # Extract relevant inputs
+    RH = X[:, 2]      # relative humidity
+    p = X[:, 4]       # pressure [Pa]
+
+    # Critical relative humidity as a linear function of pressure
+    # (typical values used in many GCMs: 0.7 at top, 1.0 at surface)
+    p_surface = 101325.0   # standard surface pressure [Pa]
+    RH_crit = 0.7 + 0.3 * (p / p_surface)
+
+    # Sundqvist (1978) cloud fraction formula:
+    # C = 1 - sqrt((1 - RH) / (1 - RH_crit))  for RH > RH_crit
+    # C = 0                                   for RH <= RH_crit
+    # C is clipped to [0, 1]
+    C = np.where(RH <= RH_crit, 0.0,
+                 1.0 - np.sqrt(np.maximum((1.0 - RH) / (1.0 - RH_crit), 0.0)))
+    C = np.clip(C, 0.0, 1.0)
+
+    return C
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict sub-grid cloud cover C (cloud area fraction) using the widely used
+    Sundqvist et al. (1989) diagnostic parameterization based on relative humidity.
+
+    C = 0                           for RH <= RH_crit
+    C = 1 - sqrt((1 - RH)/(1 - RH_crit)) for RH_crit < RH < 1
+    C = 1                           for RH >= 1
+
+    where RH_crit is a critical relative humidity, typically 0.8.
+    Only the relative humidity column (X[:, 2]) is used; remaining inputs
+    are ignored but accepted for compatibility with typical data pipelines.
+    """
+
+    # critical relative humidity (can be tuned but 0.8 is the classic default)
+    RH_crit = 0.8
+
+    RH = X[:, 2]
+
+    # initialize cloud cover
+    C = np.zeros_like(RH)
+
+    # supersaturated (RH >= 1) -> full cloud cover
+    mask_supersat = RH >= 1.0
+
+    # partially saturated
+    mask_partial = (RH > RH_crit) & (RH < 1.0)
+
+    # Sundqvist formula for partial cloudiness
+    C[mask_partial] = 1.0 - np.sqrt(
+        np.maximum(0.0, (1.0 - RH[mask_partial]) / (1.0 - RH_crit))
+    )
+
+    C[mask_supersat] = 1.0
+
+    # ensure range [0, 1] (safe guard against numerical noise)
+    C = np.clip(C, 0.0, 1.0)
+
+    return C

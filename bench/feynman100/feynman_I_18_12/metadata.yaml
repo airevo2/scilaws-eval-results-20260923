@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Torque"
+  symbol: "tau"
+  unit: ""
+  description: "Torque"
+inputs:
+  - name: "Length"
+    symbol: "r"
+    unit: ""
+    description: "Length"
+  - name: "Force"
+    symbol: "F"
+    unit: ""
+    description: "Force"
+  - name: "Dimensionless"
+    symbol: "theta"
+    unit: ""
+    description: "Dimensionless"

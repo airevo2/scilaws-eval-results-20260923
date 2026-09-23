@@ -1,0 +1,158 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mass-averaged terminal velocity of the dynamical ejecta v_ej [c]
+
+    using the canonical fitting formula from Dietrich et al. (2017).
+
+    Inputs:
+    X[:, 0] = q (mass ratio M1/M2 >= 1)
+    X[:, 1] = Lambda_tilde (reduced tidal deformability)
+    X[:, 2] = M1 (mass of the primary NS in solar masses)
+    X[:, 3] = M2 (mass of the secondary NS in solar masses)
+    X[:, 4] = C1 (compactness of the primary NS)
+    X[:, 5] = C2 (compactness of the secondary NS)
+    """
+    M1 = X[:, 2]
+    M2 = X[:, 3]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Canonical fitting coefficients from Dietrich et al. (2017)
+    a = -0.21829
+    b = 1.3129
+    c = -0.41586
+
+    # Symmetric mass-difference ratio
+    mass_diff_ratio = (M1 - M2) / (M1 + M2)
+
+    # Two-body symmetric term
+    term1 = (a * (1.0 + c * mass_diff_ratio) + b * C1) * (M1 / M2)
+    term2 = (a * (1.0 - c * mass_diff_ratio) + b * C2) * (M2 / M1)
+
+    v_ej = term1 + term2
+    return v_ej
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract required inputs:
+    # X[:, 0] = q (mass ratio >= 1)
+    # X[:, 4] = C1 (compactness of the heavier NS)
+    # X[:, 5] = C2 (compactness of the lighter NS)
+    q = X[:, 0]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Coefficients from the canonical Dietrich et al. (2017) fit
+    a = -0.2194
+    b = 0.9416
+    c = -0.05705
+
+    # Calculate mass-averaged terminal velocity of the dynamical ejecta
+    v_ej = (a * q + b) * C1 + (a / q + b) * C2 + c
+
+    return v_ej
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mass-averaged terminal velocity of the dynamical ejecta vej [c]
+
+    using the canonical fitting formula from Dietrich et al. (2017).
+
+    Inputs:
+    - X[:, 0]: q (mass ratio >= 1)
+    - X[:, 4]: C1 (compactness of the heavier NS)
+    - X[:, 5]: C2 (compactness of the lighter NS)
+    """
+    q = X[:, 0]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Canonical fit coefficients from Dietrich et al. (2017)
+    a = -0.211
+    b = 0.449
+    c = 0.079
+
+    v_ej = (a * q + b) * C1 + (a / q + b) * C2 + c
+    return v_ej
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mass-averaged terminal velocity of the dynamical ejecta (v_inf)
+
+    in units of the speed of light (c) using the canonical fitting formula
+    from Dietrich et al. (2017).
+
+    Parameters:
+    -----------
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] = q (mass ratio >= 1)
+        - X[:, 1] = Lambda_tilde (reduced tidal deformability)
+        - X[:, 2] = M1 (gravitational mass of primary)
+        - X[:, 3] = M2 (gravitational mass of secondary)
+        - X[:, 4] = C1 (compactness of primary)
+        - X[:, 5] = C2 (compactness of secondary)
+
+    Returns:
+    --------
+    np.ndarray
+        1-D array containing the predicted terminal velocity of the ejecta.
+    """
+    q = X[:, 0]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Fitting coefficients from Dietrich et al. (2017)
+    a = -0.21942747
+    b = 0.94162002
+    c = -2.42398493
+
+    term1 = q * (1.0 + c * C1)
+    term2 = (1.0 / q) * (1.0 + c * C2)
+    v_ej = a * (term1 + term2) + b
+
+    return v_ej
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the mass-averaged terminal velocity of the dynamical ejecta
+
+    vej (in units of c) using the canonical fitting formula from
+    Dietrich et al. (2017) (arXiv:1611.07367).
+
+    Inputs:
+    X[:, 0] = q (mass ratio >= 1)
+    X[:, 4] = C1 (compactness of the heavier star)
+    X[:, 5] = C2 (compactness of the lighter star)
+    """
+    q = X[:, 0]
+    C1 = X[:, 4]
+    C2 = X[:, 5]
+
+    # Fitting coefficients from Dietrich et al. (2017)
+    a = -0.2115
+    b = 0.3582
+    c = -1.185
+
+    # Symmetric fitting formula
+    v_ej = (a * q + b) * (1.0 + c * C1) + (a / q + b) * (1.0 + c * C2)
+
+    return v_ej

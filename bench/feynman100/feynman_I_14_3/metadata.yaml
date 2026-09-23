@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Energy"
+  symbol: "U"
+  unit: ""
+  description: "Energy"
+inputs:
+  - name: "Mass"
+    symbol: "m"
+    unit: ""
+    description: "Mass"
+  - name: "Acceleration"
+    symbol: "g"
+    unit: ""
+    description: "Acceleration"
+  - name: "Length"
+    symbol: "z"
+    unit: ""
+    description: "Length"

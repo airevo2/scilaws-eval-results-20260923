@@ -1,0 +1,156 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(L / Lsun) from log10(M / Msun) using a standard piecewise
+    mass-luminosity relation for main-sequence stars (solar metallicity).
+    Metallicity input is ignored as a distractor.
+    """
+    logM = X[:, 0]          # base-10 log of mass in solar units
+    M = 10.0 ** logM        # mass in solar masses
+
+    # Initialise luminosity array
+    L = np.empty_like(M)
+
+    # Piecewise mass-luminosity relation (Carroll & Ostlie)
+    # M <= 0.43 Msun
+    mask_low = M <= 0.43
+    L[mask_low] = 0.23 * M[mask_low] ** 2.3
+
+    # 0.43 < M <= 2 Msun
+    mask_mid = (M > 0.43) & (M <= 2.0)
+    L[mask_mid] = M[mask_mid] ** 4.0
+
+    # 2 < M <= 20 Msun
+    mask_high = (M > 2.0) & (M <= 20.0)
+    L[mask_high] = 1.5 * M[mask_high] ** 3.5
+
+    # M > 20 Msun
+    mask_vhigh = M > 20.0
+    L[mask_vhigh] = 3200.0 * M[mask_vhigh]
+
+    return np.log10(L)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts log10(L/Lsun) from log10(M/Msun) using the canonical
+    main-sequence mass-luminosity relation (metallicity is ignored).
+    """
+    logM = X[:, 0]                     # log10(M/Msun)
+    M = 10.0 ** logM                   # mass in solar units
+
+    # Piecewise power-law coefficients (log10(L) = log_a + b * logM)
+    logL = np.empty_like(logM)
+
+    # M < 0.43 Msun: L = 0.23 M^2.3
+    mask_low = M < 0.43
+    logL[mask_low] = np.log10(0.23) + 2.3 * logM[mask_low]
+
+    # 0.43 <= M < 2 Msun: L = M^4
+    mask_mid = (M >= 0.43) & (M < 2.0)
+    logL[mask_mid] = 4.0 * logM[mask_mid]
+
+    # 2 <= M < 55 Msun: L = 1.4 M^3.5
+    mask_high = (M >= 2.0) & (M < 55.0)
+    logL[mask_high] = np.log10(1.4) + 3.5 * logM[mask_high]
+
+    # M >= 55 Msun: L = 32000 M  (only included for completeness)
+    mask_vhigh = M >= 55.0
+    logL[mask_vhigh] = np.log10(32000.0) + 1.0 * logM[mask_vhigh]
+
+    return logL
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard broken power-law mass-luminosity relation for main-sequence stars.
+    Input X: 2D numpy array; column 0 is log10(M/M_sun), column 1 (metallicity) is ignored.
+    Returns: 1D array of log10(L/L_sun).
+    """
+    logM = X[:, 0]
+    M = 10.0 ** logM  # mass in solar units
+
+    # Coefficients for the broken power-law (from Carroll & Ostlie)
+    # Regions:
+    #   M < 0.43:       L = 0.23 * M^2.3
+    #   0.43 <= M < 2:  L = M^4
+    #   2 <= M < 20:    L = 1.5 * M^3.5
+    #   M >= 20:        L = 32000 * M
+    logL = np.empty_like(logM)
+
+    mask1 = M < 0.43
+    mask2 = (M >= 0.43) & (M < 2.0)
+    mask3 = (M >= 2.0) & (M < 20.0)
+    mask4 = (M >= 20.0)
+
+    logL[mask1] = np.log10(0.23) + 2.3 * logM[mask1]
+    logL[mask2] = 4.0 * logM[mask2]
+    logL[mask3] = np.log10(1.5) + 3.5 * logM[mask3]
+    logL[mask4] = np.log10(32000.0) + 1.0 * logM[mask4]
+
+    return logL
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10(L/Lsun) from log10(M/Msun) using the standard
+    mass-luminosity relation for main-sequence stars (piecewise power law).
+    The metallicity column X[:, 1] is ignored as it is a distractor.
+    """
+    logM = X[:, 0]          # log10(M/Msun)
+    M = 10.0 ** logM       # M / Msun
+
+    # Standard piecewise mass-luminosity relation (e.g., Carroll & Ostlie)
+    cond_low = M < 0.43
+    cond_mid_low = (M >= 0.43) & (M < 2.0)
+    cond_high = (M >= 2.0) & (M < 20.0)
+    cond_vhigh = M >= 20.0
+
+    L = np.empty_like(M)
+    L[cond_low]    = 0.23 * M[cond_low] ** 2.3
+    L[cond_mid_low] = M[cond_mid_low] ** 4.0
+    L[cond_high]   = 1.5 * M[cond_high] ** 3.5
+    L[cond_vhigh]  = 3200.0 * M[cond_vhigh]  # linear (Eddington-limited)
+
+    return np.log10(L)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard mass-luminosity relation for main-sequence stars
+    (piecewise power law, ignoring metallicity).
+    Input: X is a 2-D numpy array.
+        X[:, 0] = log10(M/M_sun) [dex]
+        X[:, 1] = metallicity [dex] (distractor, not used)
+    Returns: 1-D array of log10(L/L_sun) [dex].
+    """
+    logM = X[:, 0]
+    # Convert log10(M/M_sun) to M/M_sun
+    M = np.power(10.0, logM)
+    
+    # Canonical broken power-law mass-luminosity relation
+    # (e.g., Wikipedia "Mass–luminosity relation")
+    L = np.where(
+        M < 0.43,
+        0.23 * np.power(M, 2.3),
+        np.where(
+            M <= 2.0,
+            np.power(M, 4.0),
+            1.4 * np.power(M, 3.5)
+        )
+    )
+    
+    return np.log10(L)

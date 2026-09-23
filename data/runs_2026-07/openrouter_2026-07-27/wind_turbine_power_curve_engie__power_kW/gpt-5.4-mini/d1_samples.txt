@@ -1,0 +1,147 @@
+import numpy as np
+
+def predict(X):
+    v = np.asarray(X)[:, 0]
+
+    # Standard wind-turbine power curve shape:
+    # below cut-in -> 0
+    # between cut-in and rated -> cubic rise
+    # above rated -> rated power
+    # Here we use typical generic constants for a utility-scale turbine.
+    v_ci = 3.0    # cut-in wind speed [m/s]
+    v_r = 12.0    # rated wind speed [m/s]
+    P_r = 3000.0  # rated power [kW]
+
+    P = np.zeros_like(v, dtype=float)
+
+    mask1 = (v >= v_ci) & (v < v_r)
+    P[mask1] = P_r * ((v[mask1] - v_ci) / (v_r - v_ci))**3
+
+    mask2 = (v >= v_r)
+    P[mask2] = P_r
+
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+    
+    # Standard idealized wind-turbine power curve:
+    # P = 0 below cut-in, ~ v^3 between cut-in and rated, and constant at rated power above rated.
+    # Since no turbine-specific parameters are given, this uses generic canonical thresholds and scaling.
+    v_ci = 3.0   # cut-in wind speed [m/s]
+    v_r = 12.0   # rated wind speed [m/s]
+    v_co = 25.0  # cut-out wind speed [m/s]
+    P_r = 1.0    # normalized rated power
+    
+    P = np.zeros_like(v, dtype=float)
+    
+    # Cubic region
+    mask1 = (v >= v_ci) & (v < v_r)
+    P[mask1] = P_r * (v[mask1]**3 - v_ci**3) / (v_r**3 - v_ci**3)
+    
+    # Rated region
+    mask2 = (v >= v_r) & (v <= v_co)
+    P[mask2] = P_r
+    
+    # Cut-out region stays at 0
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    v = X[:, 0]
+    # Standard wind turbine power curve: below cut-in, cubic to rated, then capped at rated power.
+    # Canonical closed-form approximation:
+    # P(v) = 0                          for v < v_ci
+    #      = P_r * (v^3 - v_ci^3)/(v_r^3 - v_ci^3)   for v_ci <= v < v_r
+    #      = P_r                        for v_r <= v <= v_co
+    #      = 0                          for v > v_co
+    v_ci = 3.0   # cut-in wind speed [m/s]
+    v_r = 12.0   # rated wind speed [m/s]
+    v_co = 25.0  # cut-out wind speed [m/s]
+    P_r = 2000.0 # rated power [kW]
+
+    P = np.zeros_like(v, dtype=float)
+
+    mask_mid = (v >= v_ci) & (v < v_r)
+    P[mask_mid] = P_r * (v[mask_mid]**3 - v_ci**3) / (v_r**3 - v_ci**3)
+
+    mask_rated = (v >= v_r) & (v <= v_co)
+    P[mask_rated] = P_r
+
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard wind-turbine power curve (idealized):
+    - zero below cut-in
+    - cubic rise between cut-in and rated speed
+    - rated power above rated speed until cut-out
+    - zero above cut-out
+
+    Since no turbine-specific parameters are provided, this returns a generic
+    normalized power curve with a unit-rated power scale of 1.0 kW.
+    """
+    v = np.asarray(X)[:, 0]
+
+    # Typical generic turbine parameters (m/s)
+    v_cutin = 3.0
+    v_rated = 12.0
+    v_cutout = 25.0
+    P_rated = 1.0  # kW, normalized
+
+    P = np.zeros_like(v, dtype=float)
+
+    # Cubic region
+    mask_cubic = (v >= v_cutin) & (v < v_rated)
+    P[mask_cubic] = P_rated * ((v[mask_cubic]**3 - v_cutin**3) /
+                                (v_rated**3 - v_cutin**3))
+
+    # Rated region
+    mask_rated = (v >= v_rated) & (v <= v_cutout)
+    P[mask_rated] = P_rated
+
+    # Above cut-out remains zero
+    return P
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Simple canonical wind-turbine power curve approximation:
+    # P = 0 for cut-in winds, P rises roughly with v^3 up to rated power,
+    # then saturates at rated power.
+    v = X[:, 0]
+
+    # Typical wind turbine parameters (generic, not turbine-specific)
+    cut_in = 3.0       # m/s
+    rated_speed = 12.0  # m/s
+    cut_out = 25.0     # m/s
+    rated_power = 2000.0  # kW
+
+    P = np.zeros_like(v, dtype=float)
+
+    # Cubic region between cut-in and rated speed
+    mask_cubic = (v >= cut_in) & (v < rated_speed)
+    P[mask_cubic] = rated_power * ((v[mask_cubic]**3 - cut_in**3) /
+                                    (rated_speed**3 - cut_in**3))
+
+    # Rated region
+    mask_rated = (v >= rated_speed) & (v < cut_out)
+    P[mask_rated] = rated_power
+
+    # Above cut-out, power stays at 0 for safety in the standard idealized model
+    P[v >= cut_out] = 0.0
+
+    return P

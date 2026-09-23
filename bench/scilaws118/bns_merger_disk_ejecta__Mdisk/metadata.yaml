@@ -1,0 +1,139 @@
+task_id: bns_merger_disk_ejecta__Mdisk
+metric: smape
+domain: astronomy / gravitational-wave astrophysics
+target:
+  name: Mdisk
+  symbol: M_disk
+  unit: M_sun
+  description: Gravitational mass of the bound, post-merger accretion disk surrounding the merger remnant, measured in solar masses.
+  range:
+  - 0.0
+  - 0.31
+inputs:
+- name: M1
+  symbol: M_1
+  unit: M_sun
+  description: Gravitational mass of the lighter pre-merger neutron star, in solar masses, under the convention M_1 <= M_2.
+  range:
+  - 1.0
+  - 1.71
+- name: M2
+  symbol: M_2
+  unit: M_sun
+  description: Gravitational mass of the heavier pre-merger neutron star, in solar masses, under the convention M_1 <= M_2.
+  range:
+  - 1.2
+  - 1.86
+- name: C1
+  symbol: C_1
+  unit: ""
+  description: Dimensionless compactness of the lighter pre-merger neutron star, defined as G M / (R c^2) for that star.
+  range:
+  - 0.11
+  - 0.21
+- name: C2
+  symbol: C_2
+  unit: ""
+  description: Dimensionless compactness of the heavier pre-merger neutron star, defined as G M / (R c^2) for that star.
+  range:
+  - 0.13
+  - 0.24
+- name: q
+  symbol: q
+  unit: ""
+  description: Mass ratio of the binary, defined as the lighter over the heavier neutron-star gravitational mass, so 0 < q <= 1.
+  range:
+  - 0.54
+  - 1.0
+- name: Lambda_tilde
+  symbol: Λ̃
+  unit: ""
+  description: Binary-averaged dimensionless tidal deformability, the mass-weighted combination of the two stars' individual tidal deformabilities that enters the leading finite-size term of the gravitational waveform.
+  range:
+  - 116.0
+  - 1726.28
+
+priors: []
+
+n_train: 52
+n_test: 76
+has_group_id: false
+license: CC-BY-4.0
+type: typeI
+
+# Background knowledge — science framing only; no task instructions or constants.
+context: >-
+  When two neutron stars merge, some coalescing matter settles into an accretion disk around the remnant, a phenomenon studied in relativistic astrophysics.
+
+# Split rationale (Tier-2 cross-publication OOD), sister-task divergence, and the
+# train/test leakage handling (de-leaked primary test) are documented in VERDICT.md.
+
+# Dataset — Type I two-file layout
+data_files:
+  train: data/train.csv    # 52 rows (NR calibration set)
+  test:  data/test.csv     # 93 rows (de-leaked compilation, Mdisk > 0)
+
+# === Reference baselines ===
+references:
+  - id: lund_2025
+    label: "Lund 2025 — log-tanh disk mass fit Eq. 2 (C1 only)"
+    formula_file: formulas/lund_2025.py
+    reference_pdf: reference/lund_2025.pdf
+    n_law_constants: 4
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.4030
+      r2: 0.3712
+
+  - id: kruger_2020
+    label: "Kruger & Foucart 2020 — power-law disk mass fit Eq. 4 (M1, C1)"
+    formula_file: formulas/kruger_2020.py
+    reference_pdf: reference/kruger_2020.pdf
+    n_law_constants: 3
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.4420
+      r2: 0.1768
+
+  - id: darc_2025_pyoperon
+    label: "Darc 2025 — PyOperon SR Eq. 3 (C1 only)"
+    formula_file: formulas/darc_2025_pyoperon.py
+    reference_pdf: reference/darc_2025.pdf
+    n_law_constants: 3
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.4705
+      r2: 0.4043
+
+  - id: nedora_2020
+    label: "Nedora 2020 — 2nd-order polynomial Eq. 6 (q, Lambda_tilde)"
+    formula_file: formulas/nedora_2020.py
+    reference_pdf: reference/nedora_2020.pdf
+    n_law_constants: 6
+    n_other_constants: 0
+    n_local_params: 0
+    measured:
+      smape: 0.5669
+      r2: 0.0880
+
+# Caps — from evaluate.py reference (derived_caps in reference_metrics.json)
+caps:
+  max_law_constants:        6
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:      null
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "predicted disk mass is non-negative"
+  - "predicted disk mass does not exceed the total pre-merger binary mass M1 + M2"
+  - "predicted disk mass does not increase as the lighter star compactness C1 increases, all else held fixed"
+
+best_baseline: 0.4030    # lund_2025 — smape (lower is better); regenerated after exact-row de-leak (test 93→76, no train/test overlap)

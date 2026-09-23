@@ -1,0 +1,26 @@
+{
+  "task": "ground_motion_ita18__log10_pga",
+  "model": "gpt-5.4-mini",
+  "type": "typeI",
+  "primary": "geophysics ",
+  "formulas": [
+    {
+      "formula": "akkar_bommer_2010",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 1,
+      "d2_rate": 0.333,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    },
+    {
+      "formula": "bindi_2011",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "citation",
+      "verdict": "suspect"
+    }
+  ]
+}

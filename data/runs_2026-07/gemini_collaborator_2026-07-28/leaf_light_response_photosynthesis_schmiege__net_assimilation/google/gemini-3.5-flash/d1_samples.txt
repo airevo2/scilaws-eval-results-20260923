@@ -1,0 +1,156 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the net CO2 assimilation rate (A_n, umol CO2 m-2 s-1) as a function of 
+    incident photosynthetically active radiation (Q_in, umol photons m-2 s-1) 
+    using the classic non-rectangular hyperbola light-response model.
+    
+    Parameters:
+    X : 2-D numpy array where X[:, 0] is Q_in.
+    
+    Returns:
+    1-D numpy array of A_n.
+    """
+    Q_in = X[:, 0]
+    
+    # Canonical physiological parameters for a standard C3 leaf light-response curve:
+    alpha = 0.06   # Apparent quantum yield (mol CO2 / mol photon)
+    A_max = 12.0   # Light-saturated gross photosynthetic rate (umol CO2 m-2 s-1)
+    theta = 0.8    # Curvature parameter (dimensionless, typical range 0.7 - 0.9)
+    R_d = 1.0      # Dark respiration rate (umol CO2 m-2 s-1)
+    
+    # Non-rectangular hyperbola equation solving for gross photosynthesis (A_g)
+    # theta * A_g^2 - (alpha * Q_in + A_max) * A_g + alpha * Q_in * A_max = 0
+    b = alpha * Q_in + A_max
+    c = alpha * Q_in * A_max
+    
+    # Calculate gross photosynthesis
+    A_g = (b - np.sqrt(b**2 - 4 * theta * c)) / (2 * theta)
+    
+    # Net photosynthesis is gross photosynthesis minus dark respiration
+    A_n = A_g - R_d
+    
+    return A_n
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract incident PPFD (Qin) from the first column of X
+    Qin = X[:, 0]
+
+    # Standard ecophysiological parameters for a non-rectangular hyperbola light response curve
+    alpha = 0.06  # Apparent quantum yield of photosynthesis (mol CO2 / mol photon)
+    Amax = 10.0  # Light-saturated gross photosynthetic rate (umol CO2 m-2 s-1)
+    theta = 0.8  # Curvature parameter (dimensionless, typical range 0.7 to 0.9)
+    Rd = 1.0  # Dark respiration rate (umol CO2 m-2 s-1)
+
+    # Non-rectangular hyperbola equation representing net CO2 assimilation (An)
+    term1 = alpha * Qin + Amax
+    term2 = np.sqrt(term1**2 - 4 * theta * alpha * Qin * Amax)
+    An = (term1 - term2) / (2 * theta) - Rd
+
+    return An
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts Net CO2 assimilation rate (A_n) as a function of incident PPFD (Q_in)
+
+    using the standard non-rectangular hyperbola light-response model.
+
+    Parameters:
+    X[:, 0] : Q_in (PPFD, umol photons m-2 s-1)
+
+    Returns:
+    A_n : Net CO2 assimilation rate (umol CO2 m-2 s-1)
+    """
+    Q = X[:, 0]
+
+    # Standard ecophysiological parameters for a typical C3 leaf:
+    alpha = 0.06  # Apparent quantum yield (mol CO2 / mol photons)
+    Amax = 11.5  # Maximum light-saturated gross photosynthetic rate (umol CO2 m-2 s-1)
+    theta = 0.75  # Curvature parameter (dimensionless, typically 0.5 to 0.9)
+    Rd = 0.9  # Dark respiration rate (umol CO2 m-2 s-1)
+
+    # Non-rectangular hyperbola equation solving for gross photosynthesis (Ag)
+    # theta * Ag^2 - (alpha * Q + Amax) * Ag + alpha * Q * Amax = 0
+    b = alpha * Q + Amax
+    c = alpha * Q * Amax
+    Ag = (b - np.sqrt(b**2 - 4 * theta * c)) / (2 * theta)
+
+    # Net photosynthesis is gross photosynthesis minus dark respiration
+    An = Ag - Rd
+
+    return An
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the net CO2 assimilation rate (A_n, umol CO2 m-2 s-1) as a
+
+    function of incident photosynthetically active radiation (Q_in, umol photons
+    m-2 s-1)
+    using the canonical non-rectangular hyperbola light response model.
+
+    Parameters:
+    - X: 2D numpy array where X[:, 0] represents Q_in.
+
+    Returns:
+    - 1D numpy array of A_n values.
+    """
+    Q_in = X[:, 0]
+
+    # Standard physiological parameters for a typical leaf light-response curve
+    phi = 0.06  # Apparent quantum yield (umol CO2 / umol photon)
+    A_max = 12.0  # Maximum gross photosynthetic rate (umol CO2 m-2 s-1)
+    theta = 0.8  # Curvature parameter (dimensionless, typical range 0.7 to 0.9)
+    R_d = 1.0  # Dark respiration rate (umol CO2 m-2 s-1)
+
+    # Solve the quadratic equation for gross photosynthesis (A_g)
+    # theta * A_g^2 - (phi * Q_in + A_max) * A_g + phi * Q_in * A_max = 0
+    b = phi * Q_in + A_max
+    c = phi * Q_in * A_max
+
+    # Using the negative root for the physical solution
+    A_g = (b - np.sqrt(b**2 - 4 * theta * c)) / (2 * theta)
+
+    # Net photosynthesis is gross photosynthesis minus dark respiration
+    A_n = A_g - R_d
+
+    return A_n
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract incident photosynthetically active radiation (Qin) from the first column
+    Q = X[:, 0]
+
+    # Standard physiological parameters for a non-rectangular hyperbola light response curve
+    alpha = 0.06  # Apparent quantum yield (mol CO2 / mol photon)
+    Amax = 12.0  # Maximum light-saturated gross photosynthetic rate (umol CO2 m-2 s-1)
+    theta = 0.8  # Curvature factor (dimensionless, typical range 0.7 - 0.9)
+    Rd = 0.9  # Dark respiration rate (umol CO2 m-2 s-1)
+
+    # Non-rectangular hyperbola formulation to calculate gross photosynthesis (Ag)
+    # theta * Ag^2 - (alpha * Q + Amax) * Ag + alpha * Q * Amax = 0
+    b = alpha * Q + Amax
+    c = 4 * theta * alpha * Q * Amax
+    Ag = (b - np.sqrt(np.maximum(b**2 - c, 0))) / (2 * theta)
+
+    # Net photosynthesis (An) is gross photosynthesis minus dark respiration
+    An = Ag - Rd
+
+    return An

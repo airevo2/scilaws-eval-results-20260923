@@ -1,0 +1,117 @@
+task_id: neo_size_frequency_distribution__N_cum_H
+domain: astronomy / planetary_science
+license: LicenseRef-NASA-PublicDomain    # JPL Small-Body Database — NASA, public domain
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Near-Earth objects are asteroids and comets on orbits near Earth's, and their size-frequency distribution is a census of the population studied in planetary science.
+
+target:
+  name: N_cum_H
+  symbol: N(<H)
+  unit: ""
+  description: Cumulative count of near-Earth objects with absolute magnitude at or brighter than the bin's upper edge (count of catalog NEOs with H <= H_upper).  Ranges 2-1097 over the H in [12,18] window; the declared metric is log_mae (the SFD is exponential, spanning ~3 decades in count).
+  range: [2, 1097]
+
+inputs:
+  - name: H_upper
+    symbol: H
+    unit: mag
+    description: Upper edge of the absolute-magnitude bin (mag).  The single SR feature — the cumulative SFD N(<H) is a function of this magnitude threshold alone.  Restricted to the complete regime [12.06, 18.0].
+    range: [12.0625, 18.0]
+
+# NOTE: the target is NOT circular.  N_cum_H is the observed cumulative
+# NEO count (a real population census from the JPL catalog); H_upper is
+# the magnitude threshold.  N(<H) is the size distribution to be
+# discovered, not an arithmetic transform of H.  v2 restricts to the
+# COMPLETE magnitude regime H in [12,18] (the v1 parked diagnosis: the
+# faint H > 18 tail is observationally incomplete — the observed count
+# rolls below the true power law, slope dropping 0.49 -> 0.25, a survey
+# artifact not physics).  In the complete regime observed = true, so the
+# exponential SFD is the genuine debiased law.
+
+# Dataset — Type I, two-file flat layout.  Source: JPL Small-Body
+# Database NEO catalog (data_raw/neo_catalog_raw.csv, 41,583 NEOs with a
+# defined H).  prep_data.py computes the cumulative count
+# N_cum(H_upper) = #{NEOs : H <= H_upper} on a 0.0625-mag grid over
+# [12,18] with flat-step dedupe (re-densified from the v1 sibling's
+# 0.25-mag binning; the cumulative target depends only on the threshold
+# H_upper, so a finer grid samples the same curve at more points) ->
+# 71 SFD points.  Random 80/20 split (np.random.default_rng(0)).
+data_files:
+  train: data/train.csv
+  test:  data/test.csv
+n_train: 57
+n_test:  14
+
+# Candidate prior constants — the `priors` prompt slot.
+priors:
+  - name: dohnanyi_magnitude_slope
+    value: 0.5
+    unit: dimensionless
+    description: Collisional-equilibrium cumulative magnitude slope (dN/dD ∝ D^-3.5 → N(<H) ∝ 10^(0.5 H)); a candidate for the SFD exponent.
+    source: Dohnanyi 1969 JGR 74:2531; O'Brien & Greenberg 2003.  The observed NEO slope ~0.49 in this window is close to this equilibrium value.
+    _role: candidate
+  - name: bottke_2002_break_diameter
+    value: 100.0
+    unit: m
+    description: Approximate diameter (~H 22) where the Bottke 2002 debiased NEO SFD shows a slope change / "bump"; a candidate break location.
+    source: Bottke et al. 2002 Icarus 156:399.  This break is FAINTER than the H<18 window of this task (a distractor here; the window is single-slope).
+    _role: distractor
+  - name: spaceguard_completeness_H
+    value: 17.75
+    unit: mag
+    description: Absolute magnitude corresponding to ~1 km diameter, the Spaceguard survey completeness goal.
+    source: NASA Spaceguard mandate.  Marks the bright end of high completeness; the v2 window H<=18 sits at this boundary.
+    _role: candidate
+
+# === Reference baselines ===
+references:
+  - id: constant_count
+    label: Constant cumulative count N_cum = A0 (Type I, frozen; train mean)
+    formula_file: formulas/constant_count.py
+    reference_pdf: reference/bottke_2002.pdf
+    n_law_constants: 1         # A0
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.4480}
+  - id: free_exponential_sfd
+    label: Free exponential SFD N(<H) = A·10^(alpha·H), amplitude + slope pre-fit on v2 train (Type I, frozen)
+    formula_file: formulas/free_exponential_sfd.py
+    reference_pdf: reference/bottke_2002.pdf
+    n_law_constants: 2         # LOG_A, ALPHA
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.0440}
+  - id: dohnanyi_exponential_sfd
+    label: Dohnanyi collisional-equilibrium SFD N(<H) = A·10^(0.5·H), slope fixed at 1/2, amplitude pre-fit on v2 train (Type I, frozen)
+    formula_file: formulas/dohnanyi_exponential_sfd.py
+    reference_pdf: reference/bottke_2002.pdf
+    n_law_constants: 1         # LOG_A (slope fixed at 0.5)
+    n_other_constants: 0
+    n_local_params: 0
+    measured: {log_mae: 0.0410}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        2
+  max_local_params:         0
+  max_init_size_per_param:  1
+  fit_timeout_seconds:     10
+
+# === Scoring ===
+metric: log_mae           # log10-space MAE on N_cum_H (exponential count, ~3 decades)
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes an exponential growth term in absolute magnitude H (count scaling as 10^(alpha*H), i.e. log10 N rising linearly with H), so the cumulative count increases strictly and convexly with H — the power-law size-frequency distribution"
+  - "predicted cumulative count is non-negative over H in [12.06, 18.0]"
+  - "predicted cumulative count spans multiple orders of magnitude across H in [12.06, 18.0], from a handful of the largest NEOs to of order a thousand"
+
+best_baseline: 0.0410     # dohnanyi_exponential_sfd — best of three rungs on v2 test

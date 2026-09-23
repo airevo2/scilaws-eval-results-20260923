@@ -1,0 +1,123 @@
+import numpy as np
+
+def predict(X):
+    # Krüger & Foucart (2020) closed-form disk-mass fit for BNS mergers.
+    # M_disk = M_b,2 * max[5e-4, (a*C2 + b)^c]
+    M2 = X[:, 1]
+    C2 = X[:, 3]
+
+    # Fitted coefficients (Krüger & Foucart 2020)
+    a = -8.1324
+    b = 1.4820
+    c = 1.7784
+
+    # Baryonic mass of the heavier star (Lattimer & Prakash-type relation)
+    M_b2 = M2 * (1.0 + 0.6 * C2 / (1.0 - 0.5 * C2))
+
+    base = a * C2 + b
+    # guard the power against negative bases
+    powered = np.where(base > 0.0, np.power(np.clip(base, 0.0, None), c), 0.0)
+
+    Mdisk = M_b2 * np.maximum(5.0e-4, powered)
+    return Mdisk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Radice et al. (2018) fitting formula for post-merger disk mass
+    # as a function of the binary-averaged tidal deformability Lambda_tilde.
+    #   M_disk = max[ a + b * tanh((Lambda_tilde - c)/d), M_min ]
+    Lam = X[:, 5]
+
+    a = 0.084
+    b = 0.127
+    c = 567.1
+    d = 405.14
+    M_min = 5.0e-4
+
+    Mdisk = a + b * np.tanh((Lam - c) / d)
+    Mdisk = np.maximum(Mdisk, M_min)
+    return Mdisk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Post-merger accretion disk mass estimate.
+    Uses the Krueger & Foucart (2020), PRD 101, 103002 fitting formula for BNS:
+
+        M_disk = M_b1 * max[ 5e-4 , (a * C1 + c)^d ]
+
+    where M_b1 is the baryonic mass of the (lighter) primary NS, C1 its
+    compactness, and (a, c, d) fitted constants.
+    The baryonic mass is obtained from the gravitational mass with the
+    Lattimer & Yagi (2013) approximation:  M_b = M (1 + 0.6 C / (1 - 0.5 C)).
+    """
+    M1 = X[:, 0]
+    C1 = X[:, 2]
+
+    # Krueger & Foucart (2020) BNS disk-mass coefficients
+    a = -8.1324
+    c = 1.4820
+    d = 1.7784
+
+    # baryonic mass of primary from gravitational mass and compactness
+    Mb1 = M1 * (1.0 + 0.6 * C1 / (1.0 - 0.5 * C1))
+
+    base = a * C1 + c
+    # ensure non-negative base before raising to power d
+    base = np.clip(base, 0.0, None)
+
+    frac = np.maximum(5.0e-4, base**d)
+
+    Mdisk = Mb1 * frac
+    return Mdisk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Radice, Perego, Bernuzzi & Zhang (2018) disk-mass fit
+    # M_disk = max{1e-3, alpha + beta * tanh((Lambda_tilde - gamma)/delta)}  [M_sun]
+    Lam = X[:, 5]
+
+    alpha = 0.084
+    beta  = 0.127
+    gamma = 567.1
+    delta = 405.14
+
+    Mdisk = alpha + beta * np.tanh((Lam - gamma) / delta)
+    Mdisk = np.maximum(1e-3, Mdisk)
+
+    return Mdisk
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Disk mass fit from Radice, Perego, Bernuzzi & Zhang (2018),
+    ApJ 852, L29, based on the binary tidal deformability Lambda_tilde.
+
+        M_disk = max[ 1e-3,  a + b * tanh( (Lambda_tilde - c) / d ) ]   [M_sun]
+    """
+    Lam = X[:, 5]
+
+    # Fitted coefficients (Radice et al. 2018)
+    a = 0.084
+    b = 0.127
+    c = 567.1
+    d = 405.14
+
+    Mdisk = a + b * np.tanh((Lam - c) / d)
+
+    # enforce physical floor
+    Mdisk = np.maximum(Mdisk, 1e-3)
+
+    return Mdisk

@@ -1,0 +1,20 @@
+type: typeI
+domain: physics
+target:
+  name: "Velocity"
+  symbol: "v1"
+  unit: ""
+  description: "Velocity"
+inputs:
+  - name: "Velocity"
+    symbol: "c"
+    unit: ""
+    description: "Velocity"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"
+  - name: "Velocity"
+    symbol: "u"
+    unit: ""
+    description: "Velocity"

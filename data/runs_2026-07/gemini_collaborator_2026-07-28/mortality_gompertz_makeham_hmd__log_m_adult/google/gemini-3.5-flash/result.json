@@ -1,0 +1,44 @@
+{
+  "task": "mortality_gompertz_makeham_hmd__log_m_adult",
+  "model": "google/gemini-3.5-flash",
+  "type": "typeII",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "gompertz_age",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    },
+    {
+      "formula": "gompertz_age_year",
+      "d1_hits": 3,
+      "d1_rate": 0.6,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "gompertz_age_year_interaction",
+      "d1_hits": 4,
+      "d1_rate": 0.8,
+      "d2_hits": 2,
+      "d2_rate": 0.667,
+      "d2_context": "no-cite",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "gompertz_makeham",
+      "d1_hits": 0,
+      "d1_rate": 0.0,
+      "d2_hits": 0,
+      "d2_rate": 0.0,
+      "d2_context": "no-cite",
+      "verdict": "clean"
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean annual E/P ratio using the standard Budyko (1974) curve.
+    
+    X[:, 0] : phi, climate aridity index (PET / P)
+    Other columns are ignored in this closed-form relationship.
+    """
+    phi = X[:, 0]
+    # Budyko (1974) formula: E/P = sqrt( phi * tanh(1/phi) * (1 - exp(-phi)) )
+    # This is the geometric mean of the Schreiber (1904) and Ol'dekop (1911) curves.
+    ep = phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi))
+    return np.sqrt(ep)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict E/P (long-term mean annual evapotranspiration ratio) using the 
+    classic Budyko (1974) curve, which is the geometric mean of the Schreiber 
+    and Ol'dekop equations.
+
+    Parameters
+    ----------
+    X : np.ndarray of shape (n_samples, 9)
+        X[:,0] = pet_over_p (φ)  — aridity index
+        (Other columns are not used by this standard relationship.)
+
+    Returns
+    -------
+    et_over_p : np.ndarray of shape (n_samples,)
+        Dimensionless evaporative fraction E/P ∈ [0,1].
+    """
+    phi = X[:, 0]                     # aridity index PET/P
+    # Budyko curve: E/P = sqrt( φ * tanh(1/φ) * (1 - exp(-φ)) )
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    return et_over_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean annual E/P using the classic Budyko (1974) curve.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n_samples, 9)
+        X[:, 0] = pet_over_p (φ) — aridity index (PET / P)
+        X[:, 1] = ppt_mm_yr (P)
+        X[:, 2] = pet_mm_yr (Ep)
+        X[:, 3] = tav_C (T)
+        X[:, 4] = area_sqkm (A)
+        X[:, 5] = basin_slope (S)
+        X[:, 6] = elev_mean_m (Z)
+        X[:, 7] = clay_pct (c)
+        X[:, 8] = bfi (BFI)
+
+    Returns
+    -------
+    et_over_p : np.ndarray, shape (n_samples,)
+        Dimensionless evaporative fraction E/P.
+    """
+    phi = X[:, 0]  # aridity index φ = Ep/P
+    # Budyko (1974) geometric mean of Schreiber and Ol'dekop curves
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    return et_over_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean annual E/P ratio using the classic Budyko (1974) equation.
+    
+    Parameters
+    ----------
+    X : np.ndarray, shape (n, 9)
+        Input features. X[:, 0] is the climate aridity index φ = Ep/P.
+
+    Returns
+    -------
+    et_over_p : np.ndarray, shape (n,)
+        Predicted E/P ratio, dimensionless, in [0, 1].
+    """
+    phi = X[:, 0]  # pet_over_p, aridity index
+    # Budyko (1974): E/P = sqrt[ φ * tanh(1/φ) * (1 - exp(-φ)) ]
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    return et_over_p
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict long-term mean annual evaporative fraction E/P using the classic Budyko (1974) curve.
+    
+    The Budyko equation relates E/P to the aridity index φ = Ep/P:
+        E/P = sqrt( φ * tanh(1/φ) * (1 - exp(-φ)) )
+    
+    Parameters
+    ----------
+    X : 2-D numpy array
+        Feature matrix. Only column 0 (pet_over_p, aridity index) is used.
+    
+    Returns
+    -------
+    et_over_p : 1-D numpy array
+        Predicted E/P values, bounded between 0 and 1.
+    """
+    phi = X[:, 0]  # aridity index φ = Ep/P
+    # Avoid division by zero (φ > 0 in the given typical range)
+    et_over_p = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    return et_over_p

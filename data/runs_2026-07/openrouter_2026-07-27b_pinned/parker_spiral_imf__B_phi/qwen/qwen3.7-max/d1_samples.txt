@@ -1,0 +1,109 @@
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]       # Radial IMF component [nT]
+    v_sw = X[:, 1]      # Solar wind speed [km/s]
+    r = X[:, 2]         # Heliocentric distance [AU]
+
+    # --- Parker spiral (1958) ---
+    # B_phi = -B_r * (Omega * r * cos(latitude)) / v_sw
+    # For near-ecliptic L1 observations, cos(latitude) ~ 1.
+    #
+    # Omega  : solar sidereal rotation rate (Carrington period 27.2753 d synodic
+    #          -> 25.38 d sidereal)
+    # AU_km  : 1 AU expressed in km so that (Omega * r_AU * AU_km) has units km/s
+
+    Omega  = 2.0 * np.pi / (25.38 * 86400.0)   # ~2.865e-6 rad/s
+    AU_km  = 1.495978707e8                       # km per AU
+
+    B_phi = -B_r * (Omega * r * AU_km) / v_sw   # [nT]
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]       # Radial IMF component [nT]
+    v_sw = X[:, 1]      # Solar wind speed [km/s]
+    r = X[:, 2]         # Heliocentric distance [AU]
+
+    # --- Physical constants ---
+    # Carrington sidereal rotation period (days)
+    T_sid = 25.38
+    # Solar angular rotation rate (rad/s)
+    Omega = 2.0 * np.pi / (T_sid * 86400.0)
+    # 1 AU in km
+    AU_km = 149597870.7
+
+    # Parker spiral model (equatorial approximation: sin(colatitude) ≈ 1)
+    # B_phi = -B_r * (Omega * r * sin(theta)) / v_sw
+    # The factor Omega * r_AU * AU_km / v_sw is dimensionless (km/s ÷ km/s).
+    B_phi = -B_r * (Omega * r * AU_km) / v_sw
+
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r = X[:, 2]
+    
+    # Constants
+    Omega = 2.865e-6  # Sidereal solar rotation rate [rad/s]
+    AU_km = 1.496e8   # 1 Astronomical Unit [km]
+    
+    # Parker spiral relationship for the azimuthal component
+    # Assuming observation near the ecliptic plane (sin(theta) ~ 1)
+    B_phi = -B_r * (Omega * r * AU_km) / v_sw
+    
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r = X[:, 2]
+    
+    # Solar sidereal rotation rate (rad/s) based on Carrington rotation (~25.38 days)
+    Omega = 2.865e-6
+    
+    # 1 Astronomical Unit in km
+    AU_km = 1.496e8
+    
+    # Parker spiral model for the azimuthal (tangential) magnetic field component
+    # The negative sign accounts for the trailing (anti-prograde) nature of the spiral
+    # for an outward-pointing radial field.
+    B_phi = -B_r * (Omega * r * AU_km) / v_sw
+    
+    return B_phi
+
+=====
+
+import numpy as np
+
+def predict(X):
+    B_r = X[:, 0]
+    v_sw = X[:, 1]
+    r_AU = X[:, 2]
+    
+    # Solar angular rotation rate (rad/s)
+    # 2.7e-6 is the standard textbook approximation (yielding ~400 km/s at 1 AU)
+    Omega = 2.7e-6
+    
+    # Astronomical Unit in km
+    AU_km = 1.496e8
+    
+    # Parker spiral magnetic field model at the ecliptic plane (sin(theta) = 1)
+    # The negative sign accounts for the field trailing behind the radial direction
+    # (retrograde azimuthal component for an outward radial field).
+    B_phi = -B_r * (Omega * r_AU * AU_km) / v_sw
+    
+    return B_phi

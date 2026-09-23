@@ -1,0 +1,221 @@
+import numpy as np
+
+def predict(X):
+    """
+    Penman-Monteith / FAO-56 style closed-form latent heat flux estimate.
+    Returns LE [W m^-2].
+    """
+    Sdown = X[:, 0]
+    VPD   = X[:, 1]   # kPa
+    Tair  = X[:, 2]   # K
+    RH    = X[:, 3]
+    Wind  = X[:, 4]   # m s^-1
+    Rnet  = X[:, 5]   # W m^-2
+    Qg    = X[:, 6]   # W m^-2
+    LAI   = X[:, 7]
+    LWdown = X[:, 8]
+    Ga    = X[:, 9]   # m s^-1
+    Delta = X[:, 10]  # kPa K^-1
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+
+    # Constants
+    cp = 1004.67          # J kg^-1 K^-1
+    eps = 0.622
+    P = 101.325           # kPa, assume standard atmospheric pressure
+    lambda_v = 2.45e6     # J kg^-1, latent heat of vaporization
+    gamma = cp * P / (eps * lambda_v)  # kPa K^-1, psychrometric constant
+
+    # Convert aerodynamic conductance [m s^-1] to aerodynamic resistance [s m^-1]
+    # Use a small floor to avoid division by zero
+    ra = 1.0 / np.maximum(Ga, 1e-6)
+
+    # Simple canopy resistance surrogate using VPD and soil moisture stress
+    # (common in bulk surface resistance formulations)
+    # Soil moisture stress factor in [0,1]
+    f_sw = np.clip((theta_FC - theta_WP), 1e-6, None)
+    # Relative extractable water proxy (not data-driven; generic closed form)
+    beta = np.clip((theta_FC - theta_WP) / f_sw, 0.0, 1.0)
+
+    # Light availability / canopy development proxy
+    f_lai = 1.0 - np.exp(-0.5 * np.maximum(LAI, 0.0))
+
+    # Vapour pressure deficit stress
+    f_vpd = 1.0 / (1.0 + VPD)
+
+    # Bulk surface resistance (s m^-1), heuristic canonical form
+    rs_min = 100.0
+    rs = rs_min / np.maximum(f_lai * np.maximum(beta, 1e-6) * np.maximum(f_vpd, 1e-6), 1e-6)
+
+    # Available energy
+    A = Rnet - Qg
+
+    # Penman-Monteith latent heat flux [W m^-2]
+    LE = (Delta * A + (cp * VPD / ra)) / (Delta + gamma * (1.0 + rs / ra))
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Penman–Monteith / Priestley–Taylor style closed-form latent heat flux estimate
+    Sdown = X[:, 0]
+    VPD = X[:, 1]
+    Tair = X[:, 2]
+    RH = X[:, 3]
+    Wind = X[:, 4]
+    Rnet = X[:, 5]
+    Qg = X[:, 6]
+    LAI = X[:, 7]
+    LWdown = X[:, 8]
+    Ga = X[:, 9]
+    delta = X[:, 10]
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+
+    # Physical constants
+    cp = 1004.67        # J kg^-1 K^-1
+    rho = 1.225         # kg m^-3
+    lv = 2.45e6         # J kg^-1
+    gamma = 0.066       # kPa K^-1, psychrometric constant (typical near sea level)
+    
+    # Simple canopy/soil moisture limitation based on PFT-typical field capacity and wilting point
+    theta_avail = np.clip((theta_FC - theta_WP), 1e-6, None)
+    soil_moisture_stress = np.clip((theta_FC - theta_WP) / theta_avail, 0.0, 1.0)
+
+    # Canopy resistance / surface conductance proxy using LAI, wind and humidity deficit
+    rs = 1.0 / np.clip((0.01 + 0.15 * LAI) * (1.0 + 0.3 * Wind) * (0.5 + 0.5 * soil_moisture_stress), 1e-6, None)
+
+    # Available energy
+    A = Rnet - Qg
+
+    # Aerodynamic resistance from aerodynamic conductance
+    ra = 1.0 / np.clip(Ga, 1e-6, None)
+
+    # Penman–Monteith equation
+    num = delta * A + rho * cp * (VPD / np.clip(ra, 1e-6, None))
+    den = delta + gamma * (1.0 + rs / np.clip(ra, 1e-6, None))
+
+    LE = num / np.clip(den, 1e-6, None)
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Priestly-Taylor / surface energy-balance style closed-form latent heat flux
+    # λE = α * Δ/(Δ + γ) * (R_n - G)
+    # using a canonical constant Priestley-Taylor coefficient α = 1.26
+    # and a typical psychrometric constant γ ≈ 0.066 kPa K^-1 for standard conditions.
+    
+    alpha = 1.26
+    gamma = 0.066  # kPa K^-1, approximate psychrometric constant
+    
+    Rn = X[:, 5]
+    G = X[:, 6]
+    delta = X[:, 10]
+    
+    LE = alpha * (delta / (delta + gamma)) * (Rn - G)
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Priestley-Taylor / energy-balance style latent heat flux estimate
+    # Inputs:
+    # X[:,0]  SWdown
+    # X[:,1]  VPD
+    # X[:,2]  Tair
+    # X[:,3]  RH
+    # X[:,4]  Wind
+    # X[:,5]  Rnet
+    # X[:,6]  Qg
+    # X[:,7]  LAI
+    # X[:,8]  LWdown
+    # X[:,9]  Ga
+    # X[:,10] delta
+    # X[:,11] theta_FC
+    # X[:,12] theta_WP
+
+    Rn = X[:, 5]
+    G = X[:, 6]
+    delta = X[:, 10]
+
+    # Psychrometric constant (kPa K^-1), using standard atmospheric pressure
+    gamma = 0.066
+
+    # Priestley-Taylor coefficient for wet/reference vegetated surfaces
+    alpha_PT = 1.26
+
+    # Available energy
+    A = Rn - G
+
+    # Latent heat flux (W m^-2) proxy
+    LE = alpha_PT * (delta / (delta + gamma)) * A
+
+    return LE
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard FAO-56 style Penman-Monteith latent heat flux form, adapted to use
+    available meteorological inputs and a simple soil-moisture stress factor.
+
+    Returns
+    -------
+    LE : 1-D numpy array
+        Latent heat flux [W m^-2]
+    """
+    X = np.asarray(X)
+
+    SWdown = X[:, 0]
+    VPD = X[:, 1]          # kPa
+    Tair = X[:, 2]         # K
+    RH = X[:, 3]
+    Wind = X[:, 4]         # m s-1
+    Rnet = X[:, 5]         # W m-2
+    Qg = X[:, 6]           # W m-2
+    LAI = X[:, 7]
+    LWdown = X[:, 8]       # W m-2
+    Ga = X[:, 9]           # m s-1
+    delta = X[:, 10]       # kPa K-1
+    theta_FC = X[:, 11]
+    theta_WP = X[:, 12]
+
+    # Physical constants
+    rho_air = 1.225        # kg m-3
+    cp = 1004.0            # J kg-1 K-1
+    lambda_v = 2.45e6      # J kg-1
+    gamma = 0.066          # kPa K-1, psychrometric constant (approx.)
+    eps = 1e-6
+
+    # Soil moisture stress factor based on available water fraction
+    f_sm = np.clip((theta_FC - theta_WP) / (theta_FC + eps), 0.0, 1.0)
+
+    # Canopy scaling: common exponential saturation with LAI
+    f_canopy = 1.0 - np.exp(-0.5 * np.maximum(LAI, 0.0))
+
+    # Aerodynamic resistance from conductance
+    ra = 1.0 / (np.maximum(Ga, eps))
+
+    # Surface resistance proxy: higher when dry / low canopy
+    rs_min = 70.0  # s m-1, representative bulk canopy minimum
+    rs = rs_min / (f_canopy * f_sm + eps)
+
+    # Penman-Monteith latent heat flux
+    numerator = delta * (Rnet - Qg) + rho_air * cp * VPD * (1.0 / ra)
+    denominator = delta + gamma * (1.0 + rs / ra)
+    LE = numerator / (lambda_v * denominator)
+
+    # Convert from m s-1 * J kg-1 style scaling to W m-2
+    # The above expression already yields W m-2 when using consistent units.
+    return LE

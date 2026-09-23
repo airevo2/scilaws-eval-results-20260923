@@ -1,0 +1,118 @@
+task_id: ghg_emission_drivers__EC
+domain: earth_science / energy
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+context: >-
+  This task concerns national annual primary energy consumption across countries and years, studied within energy and climate policy science.
+
+target:
+  name: EC
+  symbol: "I_E"
+  unit: TJ
+  description: Annual national primary energy consumption from all sources.
+  range: [271.74, 137592706.0]
+
+inputs:
+  - name: GDP
+    symbol: "A"
+    unit: USD per capita (constant 2015 USD (World Bank WDI base year))
+    description: Per-capita gross domestic product, constant 2015 USD (World Bank WDI base year).
+    range: [166.71, 112417.88]
+  - name: TP
+    symbol: "P"
+    unit: persons
+    description: Total resident population.
+    range: [48232.0, 1379860000.0]
+  - name: AP
+    symbol: "f_{active}"
+    unit: "%"
+    description: Share of population aged 15 to 64 (working-age fraction).
+    range: [45.77, 85.25]
+  - name: DP
+    symbol: "\\rho"
+    unit: persons per km2
+    description: Population density in persons per square kilometre of land area.
+    range: [0.13, 6944.10]
+  - name: UR
+    symbol: "f_{urban}"
+    unit: "%"
+    description: Share of population living in urban areas.
+    range: [5.27, 100.00]
+  - name: AT
+    symbol: "T"
+    unit: "degrees C"
+    description: Mean annual surface air temperature at the country level.
+    range: [-20.45, 29.78]
+
+priors: []
+
+data_files:
+  train: data/train.csv  # rows with GDP <= 75th percentile (lower 75% of income distribution)
+  test:  data/test.csv   # rows with GDP > 75th percentile (high-income OOD holdout)
+# Note: this task uses GDP 75th-percentile split. Sister tasks (CDE/ME/NOE) use a $20,000 hard threshold instead — see audit/triages/ghg_emission_drivers__EC_REAUDIT_2026-05-25.md for the discussion.
+
+n_train: 3372
+n_test:  1124
+
+# Note for auditor: test set is the top GDP quartile across the full panel.
+# This OOD axis probes whether the baselines extrapolate to wealthy OECD nations
+# and recent high-income country-years.
+
+references:
+  - id: vazquez_2022_stirpat
+    label: STIRPAT-extended log-linear model for log(EC), Vazquez 2022 Table 2
+    formula_file: formulas/vazquez_2022_stirpat.py
+    reference_pdf: reference/vazquez_2022.pdf
+    n_law_constants: 7
+    n_other_constants: 1
+    n_local_params: 0
+    measured:
+      rmse: 6823023.853269
+      r2: 0.883284
+  - id: vazquez_2022_bms
+    label: BMS symbolic regression expression for log(EC), Vazquez 2022 Table 3
+    formula_file: formulas/vazquez_2022_bms.py
+    reference_pdf: reference/vazquez_2022.pdf
+    n_law_constants: 7
+    n_other_constants: 1   # AT_K_OFFSET = 273.15 (Celsius → Kelvin for AT)
+    n_local_params: 0
+    measured:
+      rmse: 3699955.079356
+      r2: 0.965678
+    # 2026-05-25 structural fix (relay-A gen 9 wave 81): predict() and docstring
+    # repaired after opus PDF audit found that the outer-exponent denominator
+    # was a3 (wrong; should be AT in Kelvin) and the inner-base leading
+    # constant was a2² (wrong; should be a7²). See
+    # audit/triages/vazquez_2022_bms_EC_PDF_AUDIT_2026-05-25.md for evidence
+    # and audit/proposed_GM/vazquez_2022_bms_structural_fix_2026-05-25.md
+    # for the cascaded-metric / best_baseline update.
+# york_2003 baseline removed 2026-05-29 (audit): cross-target graft — York 2003 publishes
+# CO2 / energy-footprint coefficients, NOT EC — applied to uncentered log-inputs (FM-C11),
+# giving R²≈-1.4e10 (predictions ~10¹² TJ). The bank retains the two PDF-verified Vazquez
+# 2022 baselines (both beat naive). See VERDICT.md for the full rationale.
+
+caps:
+  max_law_constants: 7
+  max_local_params: 0
+  max_init_size_per_param: 1
+  fit_timeout_seconds: null
+
+metric: smape    # EC spans ~5.7 decades (271 .. 1.4e8); relative error, consistent
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "include ambient-temperature or climate effects on national primary energy consumption"
+  - "include per-capita GDP or affluence effects on national primary energy consumption"
+  - "include population-density or settlement-compactness effects on national primary energy consumption"
+  - "include population-size scaling of national primary energy consumption"
+  - "include urbanisation effects on national primary energy consumption"
+  - "include working-age demographic share effects on national primary energy consumption"
+  - "predicted national primary energy consumption is strictly positive"
+
+best_baseline: 0.472866    # vazquez_2022_stirpat — smape; regenerated after de-dup (no within-file duplicate rows / no leak)

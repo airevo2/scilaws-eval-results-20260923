@@ -1,0 +1,24 @@
+type: typeI
+domain: physics
+target:
+  name: "Thermal conductivity"
+  symbol: "kappa"
+  unit: ""
+  description: "Thermal conductivity"
+inputs:
+  - name: "Dimensionless"
+    symbol: "gamma"
+    unit: ""
+    description: "Dimensionless"
+  - name: "Boltzmann constant"
+    symbol: "kb"
+    unit: ""
+    description: "Boltzmann constant"
+  - name: "Area"
+    symbol: "A"
+    unit: ""
+    description: "Area"
+  - name: "Velocity"
+    symbol: "v"
+    unit: ""
+    description: "Velocity"

@@ -1,0 +1,128 @@
+import numpy as np
+
+def predict(X):
+    A = X[:, 2]
+    asym = X[:, 4]
+    coul_proxy = X[:, 5]
+    pair = X[:, 6]
+    
+    # Standard semi-empirical mass formula (Weizsäcker) coefficients
+    a_v = 15.75
+    a_s = 17.8
+    a_c = 0.711
+    a_a = 23.7
+    a_p = 11.18
+    
+    BE_per_A = (a_v 
+                - a_s * np.power(A, -1.0/3.0) 
+                - a_c * coul_proxy / A 
+                - a_a * np.square(asym) 
+                + a_p * pair / np.sqrt(A))
+                
+    return BE_per_A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract inputs
+    A = X[:, 2]
+    asym = X[:, 4]
+    coul_proxy = X[:, 5]
+    pair = X[:, 6]
+    
+    # Standard coefficients for the semi-empirical mass formula (Weizsäcker formula)
+    a_v = 15.75  # Volume term coefficient [MeV]
+    a_s = 17.8   # Surface term coefficient [MeV]
+    a_c = 0.711  # Coulomb term coefficient [MeV]
+    a_a = 23.7   # Asymmetry term coefficient [MeV]
+    a_p = 11.2   # Pairing term coefficient [MeV]
+    
+    # Total Binding Energy B = a_v*A - a_s*A^(2/3) - a_c*(Z(Z-1)/A^(1/3)) - a_a*(N-Z)^2/A + pair*a_p/A^(1/2)
+    # Binding energy per nucleon B/A:
+    BE_per_A = (a_v 
+                - a_s * np.power(A, -1.0/3.0) 
+                - a_c * (coul_proxy / A) 
+                - a_a * np.power(asym, 2) 
+                + pair * a_p * np.power(A, -3.0/2.0))
+                
+    return BE_per_A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 2]
+    asym = X[:, 4]
+    coul_proxy = X[:, 5]
+    pair = X[:, 6]
+    
+    # Standard Bethe-Weizsäcker coefficients (in MeV)
+    a_v = 15.75   # Volume
+    a_s = 17.8    # Surface
+    a_c = 0.711   # Coulomb
+    a_a = 23.7    # Asymmetry
+    a_p = 11.18   # Pairing
+    
+    # Binding energy per nucleon: B/A
+    be_per_a = (a_v 
+                - a_s * (A ** (-1.0 / 3.0)) 
+                - a_c * (coul_proxy / A) 
+                - a_a * (asym ** 2) 
+                + a_p * pair * (A ** (-1.5)))
+                
+    return be_per_a
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extracting relevant columns
+    A = X[:, 2]
+    asym = X[:, 4]
+    coul_proxy = X[:, 5]
+    pair = X[:, 6]
+    
+    # Standard Weizsäcker semi-empirical mass formula coefficients (in MeV)
+    a_v = 15.75   # Volume term
+    a_s = 17.8    # Surface term
+    a_c = 0.711   # Coulomb term
+    a_a = 23.7    # Asymmetry term
+    a_p = 11.18   # Pairing term
+    
+    # BE/A = a_v - a_s * A^(-1/3) - a_c * [Z(Z-1)/A^(1/3)] / A - a_a * [(N-Z)/A]^2 + a_p * pair / A^(3/2)
+    BE_per_A = (a_v 
+                - a_s * np.power(A, -1.0/3.0) 
+                - a_c * coul_proxy / A 
+                - a_a * np.power(asym, 2) 
+                + a_p * pair / np.power(A, 1.5))
+                
+    return BE_per_A
+
+=====
+
+import numpy as np
+
+def predict(X):
+    A = X[:, 2]
+    asym = X[:, 4]
+    coul_proxy = X[:, 5]
+    pair = X[:, 6]
+    
+    # Standard coefficients for the Bethe-Weizsäcker semi-empirical mass formula
+    a_v = 15.75  # Volume term
+    a_s = 17.8   # Surface term
+    a_c = 0.711  # Coulomb term
+    a_a = 23.7   # Asymmetry term
+    a_p = 11.18  # Pairing term
+    
+    BE_per_A = (a_v 
+                - a_s * A**(-1.0/3.0) 
+                - a_c * coul_proxy / A 
+                - a_a * asym**2 
+                + a_p * pair / A**1.5)
+                
+    return BE_per_A

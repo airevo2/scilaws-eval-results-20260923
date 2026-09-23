@@ -1,0 +1,131 @@
+task_id: mouse_skin_biaxial_constitutive__sigma11
+domain: biology / biomechanics
+license: CC0-1.0
+
+# Type II — cluster = one mouse-skin specimen with its own material parameters.
+type: typeII
+has_group_id: true
+
+# Background knowledge — the `context` prompt slot.
+context: >-
+  Skin is a soft, fibrous, anisotropic biological tissue whose mechanical response under biaxial stretching is studied in tissue biomechanics.
+
+target:
+  name: sigma11
+  symbol: "σ₁₁"
+  unit: MPa
+  description: >-
+    Measured Cauchy stress in the first principal (lateral) direction of a
+    planar mouse-skin specimen under biaxial loading. Computed from the biaxial
+    tester's load cells and the specimen geometry; carries genuine experimental
+    scatter and is not a closed-form function of the stretch inputs.
+  range: [-0.0013, 0.3365]   # released train+test data
+
+inputs:
+  - name: lambda11
+    symbol: "λ₁₁"
+    unit: dimensionless
+    description: >-
+      Principal stretch ratio in the first (lateral) direction, measured by
+      digital image correlation during biaxial testing. 1.0 = undeformed.
+    range: [1.0, 2.2519]
+  - name: lambda22
+    symbol: "λ₂₂"
+    unit: dimensionless
+    description: >-
+      Principal stretch ratio in the second (cranial-caudal) direction,
+      measured by digital image correlation during biaxial testing.
+      1.0 = undeformed.
+    range: [1.0, 2.5048]
+
+# Dataset — three-file v2 Type II layout, cluster holdout + within-cluster
+# protocol split. 37 specimens, keyed by (subject, sample); group_id is the
+# lexicographic index 0..36. A specimen is a TEST cluster iff group_id % 4 == 0
+# -> 10 test specimens (group_ids 0,4,8,...,36), 27 train specimens. train.csv
+# holds all rows (all 3 loading protocols) of the 27 train specimens. For each
+# test specimen the harness fits its per-specimen material parameters on
+# test_fit (its OffbiaxialX + OffbiaxialY rows) and is scored on test_test (its
+# Equibiaxial rows) — cross-specimen and cross-loading-state generalisation at
+# once. Deterministic, no RNG.
+data_files:
+  train:     data/train.csv        # 27 train specimens, all 3 loading protocols
+  test_fit:  data/test_fit.csv     # 10 test specimens, OffbiaxialX + OffbiaxialY rows
+  test_test: data/test_test.csv    # 10 test specimens, Equibiaxial rows
+n_train:           11745
+n_test_fit:         2674
+n_test_test:        1338
+n_clusters_train:     27
+n_clusters_test:      10
+
+# Candidate prior constants — the `priors` prompt slot.
+# The reference constitutive forms fit EVERY material parameter per specimen
+# (Demiray's alpha, beta; the GOH set mu, k1, k2, kappa, theta; the Linka set
+# a1, b1, a4, b4, alpha_fiber). No external numerical constant is load-bearing:
+# there is no constant a solver must be handed to reach a solution. Per
+# CONVERSION_NOTES section 5, a purely per-specimen-fit task of this kind does
+# not need a priors block, so none is declared.
+priors: []
+
+# === Reference baselines ===
+# Three published constitutive laws for the biaxial sigma11 response. Each is a
+# strain-energy form whose per-specimen material parameters are LOCAL_FITTABLE
+# (fitted by the formula's own fit() on test_fit). The empirically strongest on
+# test_test is demiray_1972 — the isotropic exponential form generalises across
+# the off-biaxial -> equibiaxial loading change better than the anisotropic
+# forms, whose fiber terms, calibrated on asymmetric off-biaxial loading,
+# overshoot in the symmetric equibiaxial state.
+references:
+  - id: demiray_1972
+    label: Demiray (1972) isotropic exponential strain energy — biaxial sigma11 (bounded nonlinear LS)
+    formula_file: formulas/demiray_1972.py
+    reference_pdf: reference/demiray_1972.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2          # alpha, beta
+    measured: {rmse: 0.009938}
+  - id: tac_2022
+    label: Gasser-Ogden-Holzapfel anisotropic fiber-dispersion model — biaxial sigma11 (multi-start nonlinear LS)
+    formula_file: formulas/tac_2022.py
+    reference_pdf: reference/tac_2022.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 5          # mu, k1, k2, kappa, theta
+    measured: {rmse: 0.014716}
+  - id: linka_2023
+    label: Linka (2023) CANN-discovered two-term quadratic-exponential model — biaxial sigma11 (multi-start nonlinear LS)
+    formula_file: formulas/linka_2023.py
+    reference_pdf: reference/linka_2023.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 5          # a1, b1, a4, b4, alpha_fiber
+    measured: {rmse: 0.020204}
+
+# === v2 anti-dump caps ===
+caps:
+  max_law_constants:        0
+  max_local_params:         5
+  max_init_size_per_param:  4
+  fit_timeout_seconds:     14
+
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes an isotropic ground-matrix stress contribution driven by the overall biaxial deformation"
+  - "includes incompressible volume-preserving biaxial kinematics through an out-of-plane stretch fixed by lambda11 and lambda22"
+  - "includes progressive nonlinear strain-stiffening at larger stretches"
+  - "predicted sigma11 equals zero at lambda11 = lambda22 = 1"
+  - "predicted sigma11 is non-negative for lambda11 >= 1 and lambda22 >= 1"
+
+# === Scoring ===
+# metric: rmse. The target is a Cauchy stress in MPa, and the unit is identical
+# across all 37 specimens (unlike the thermal-performance task, whose clusters
+# carry 159 different trait units). A consistent physical unit makes an
+# absolute-error metric meaningful and directly interpretable, so rmse is the
+# natural choice; soft-tissue constitutive-model studies report stress-fit
+# error in the same physical units. Type II scores each cluster separately and
+# averages.
+metric: rmse
+best_baseline: 0.009938     # demiray_1972 mean per-cluster rmse on data/test_test.csv

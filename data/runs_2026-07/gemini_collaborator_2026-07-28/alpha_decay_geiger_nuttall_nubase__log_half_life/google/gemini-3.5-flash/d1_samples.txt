@@ -1,0 +1,109 @@
+import numpy as np
+
+
+def predict(X):
+    """Predicts the log10 of the alpha-decay half-life in seconds
+
+    using the Geiger-Nuttall relationship.
+
+    Parameters:
+    X : 2-D numpy array
+        X[:, 0] contains the alpha-decay Q-value (Q_alpha) in MeV.
+
+    Returns:
+    1-D numpy array of log10(T1/2 / s).
+    """
+    Q_alpha = X[:, 0]
+
+    # Standard Geiger-Nuttall parameters optimized for heavy alpha-emitters
+    A = 161.4
+    B = -61.2
+
+    log10_half_life = A / np.sqrt(Q_alpha) + B
+    return log10_half_life
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the base-10 logarithm of the alpha-decay half-life in seconds
+
+    using the simplified Geiger-Nuttall relation.
+
+    Parameters:
+    X : ndarray of shape (n_samples, 1)
+        X[:, 0] = Q_alpha [MeV]
+
+    Returns:
+    ndarray of shape (n_samples,)
+        log10(T_1/2 / s)
+    """
+    Q_alpha = X[:, 0]
+    # Standard Geiger-Nuttall coefficients optimized for alpha-decaying heavy nuclei
+    A = 151.0
+    B = -57.0
+    return A / np.sqrt(Q_alpha) + B
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Q-value in MeV
+    Q = X[:, 0]
+
+    # Estimate the typical atomic number Z of alpha emitters as a function of Q.
+    # Alpha decay occurs in two main islands: rare earths (Z ~ 60-70) at low Q,
+    # and heavy/superheavy nuclei (Z >= 82) at higher Q.
+    Z = (
+        62.0
+        + 28.0 / (1.0 + np.exp(-5.0 * (Q - 3.8)))
+        + 2.5 * np.maximum(0.0, Q - 5.0)
+    )
+
+    # Viola-Seaborg semi-empirical relationship coefficients
+    a = 1.66175
+    b = -2.361
+    c = -0.23844
+    d = -34.1375
+
+    # Calculate log10 of half-life in seconds
+    log10_half_life = (a * Z + b) / np.sqrt(Q) + c * Z + d
+
+    return log10_half_life
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] is Q_alpha in MeV
+    Q_alpha = X[:, 0]
+
+    # Standard Geiger-Nuttall law parameters for heavy alpha-emitters
+    # log10(T12) = A / sqrt(Q_alpha) + B
+    A = 161.4
+    B = -61.5
+
+    return A / np.sqrt(Q_alpha) + B
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract Q-value in MeV
+    Q = X[:, 0]
+
+    # Geiger-Nuttall relation using representative coefficients
+    # derived from the Viola-Seaborg formula for typical heavy alpha-emitters (Z ~ 84)
+    # log10(T_1/2) = A / sqrt(Q) + B
+    A = 131.07
+    B = -50.90
+
+    return A / np.sqrt(Q) + B

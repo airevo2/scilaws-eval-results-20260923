@@ -1,0 +1,213 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the monthly mean total International Sunspot Number (ISN v2.0 scale)
+    using a canonical multi-harmonic model representing the primary solar cycles:
+    the ~11.06-year Schwabe cycle and the ~88-year Gleissberg cycle.
+    
+    Parameters:
+    X : np.ndarray
+        2-D array where:
+        - X[:, 0] = t_year (decimal year, e.g., 1818.542)
+        - X[:, 1] = year (integer calendar year)
+        - X[:, 2] = month (calendar month, 1 to 12)
+        
+    Returns:
+    np.ndarray
+        1-D array containing the predicted International Sunspot Number (R_I).
+    """
+    # Extract decimal year
+    t = X[:, 0]
+    
+    # Define parameters based on the historical ISN v2.0 scale
+    # Mean sunspot number in v2.0 is higher than v1.0 (by a factor of ~1.4)
+    mean_ssn = 82.0
+    
+    # Schwabe Cycle (primary ~11-year solar cycle)
+    amp_schwabe = 68.0
+    period_schwabe = 11.06
+    phase_schwabe = 2014.3  # Approximate peak of Solar Cycle 24
+    
+    # Gleissberg Cycle (~88-year modulation envelope)
+    amp_gleissberg = 18.0
+    period_gleissberg = 88.0
+    phase_gleissberg = 1980.0
+    
+    # Calculate the cyclic components
+    theta_schwabe = 2 * np.pi * (t - phase_schwabe) / period_schwabe
+    theta_gleissberg = 2 * np.pi * (t - phase_gleissberg) / period_gleissberg
+    
+    schwabe = amp_schwabe * np.cos(theta_schwabe)
+    gleissberg = amp_gleissberg * np.cos(theta_gleissberg)
+    
+    # Combine components and enforce non-negativity
+    r_i = np.maximum(0.0, mean_ssn + schwabe + gleissberg)
+    
+    return r_i
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the monthly mean total International Sunspot Number (ISN v2.0 scale)
+    using the Hathaway-Stewart-Osterbrock solar cycle model.
+    
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is the decimal year (t_year).
+    
+    Returns:
+    - 1-D numpy array of predicted sunspot numbers (R_I).
+    """
+    # Extract decimal year
+    t = X[:, 0][:, np.newaxis]
+    
+    # Hathaway parameters for Cycles 0 to 25 calibrated to the ISN v2.0 scale.
+    # Columns: [t_start (minimum), R_max (peak amplitude), t_rise (rise time in years)]
+    params = np.array([
+        [1744.2, 150.0, 6.1], # Cycle 0
+        [1755.2, 144.0, 6.3], # Cycle 1
+        [1766.2, 193.0, 3.5], # Cycle 2
+        [1775.5, 264.0, 2.9], # Cycle 3
+        [1784.7, 230.0, 3.4], # Cycle 4
+        [1798.3, 82.0,  6.9], # Cycle 5
+        [1810.6, 81.0,  5.8], # Cycle 6
+        [1823.3, 119.0, 6.6], # Cycle 7
+        [1833.9, 244.0, 3.3], # Cycle 8
+        [1843.5, 220.0, 4.6], # Cycle 9
+        [1856.0, 186.0, 4.1], # Cycle 10
+        [1867.2, 234.0, 3.4], # Cycle 11
+        [1878.9, 124.0, 5.0], # Cycle 12
+        [1890.1, 146.0, 4.0], # Cycle 13
+        [1902.1, 107.0, 4.3], # Cycle 14
+        [1913.6, 175.0, 4.0], # Cycle 15
+        [1923.6, 130.0, 4.8], # Cycle 16
+        [1933.8, 212.0, 3.6], # Cycle 17
+        [1944.2, 219.0, 3.3], # Cycle 18
+        [1954.3, 285.0, 3.6], # Cycle 19
+        [1964.9, 157.0, 4.0], # Cycle 20
+        [1976.5, 233.0, 3.4], # Cycle 21
+        [1986.8, 213.0, 2.8], # Cycle 22
+        [1996.3, 180.0, 5.6], # Cycle 23
+        [2008.9, 116.0, 5.4], # Cycle 24
+        [2019.8, 160.0, 4.7]  # Cycle 25
+    ])
+    
+    t_start = params[:, 0]
+    R_max = params[:, 1]
+    t_rise = params[:, 2]
+    
+    # Calculate phase/age of each cycle
+    tau = t - t_start
+    mask = tau > 0
+    tau_clipped = np.where(mask, tau, 0.0)
+    
+    # Apply Hathaway's closed-form formulation for solar cycle shape:
+    # R(t) = R_max * (tau / t_rise)^3 * exp(3 * (1 - tau / t_rise))
+    contrib = R_max * (tau_clipped / t_rise)**3 * np.exp(3.0 * (1.0 - tau_clipped / t_rise))
+    contrib = np.where(mask, contrib, 0.0)
+    
+    # Sum overlapping active cycles to model smooth transitions at minima
+    ssn = np.sum(contrib, axis=1)
+    
+    return ssn
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract decimal year t from the first column
+    t = X[:, 0]
+
+    # Reference peak (Cycle 19, one of the strongest recorded peaks in the modern era)
+    t_max = 1957.9
+
+    # Canonical solar cycle periodicities:
+    # - Schwabe cycle (approx. 11.0 years)
+    # - Gleissberg cycle (approx. 88.0 years) modulating the amplitude
+    period_schwabe = 11.03
+    period_gleissberg = 88.0
+
+    # Calculate phases
+    phase_schwabe = 2.0 * np.pi * (t - t_max) / period_schwabe
+    phase_gleissberg = 2.0 * np.pi * (t - t_max) / period_gleissberg
+
+    # Amplitude modulation representing long-term solar activity variation (ISN v2.0 scale)
+    amplitude = 95.0 + 35.0 * np.cos(phase_gleissberg)
+
+    # Combined analytical model for the sunspot cycle
+    ssn = amplitude * (1.0 + np.cos(phase_schwabe)) + 8.0
+
+    # Sunspot numbers cannot be negative
+    return np.maximum(ssn, 0.0)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract decimal year
+    t = X[:, 0]
+
+    # Fundamental frequency of the Schwabe cycle (~11.04 year period)
+    omega_s = 2 * np.pi / 11.04
+
+    # Frequency of the Gleissberg cycle (~85.0 year period)
+    omega_g = 2 * np.pi / 85.0
+
+    # Model the asymmetric solar cycle (rapid rise, slower decay) using the first harmonic
+    schwabe_fundamental = 48.5 * np.cos(omega_s * (t - 2000.3))
+    schwabe_harmonic = 15.2 * np.cos(2 * omega_s * (t - 2000.3) - 0.8)
+
+    # Gleissberg cycle amplitude modulation
+    gleissberg_modulation = 1.0 + 0.25 * np.cos(omega_g * (t - 1980.0))
+
+    # Combine into the International Sunspot Number (ISN v2.0 scale)
+    ssn = 55.0 + (schwabe_fundamental + schwabe_harmonic) * gleissberg_modulation
+
+    # Sunspot numbers must be non-negative
+    return np.clip(ssn, 0, None)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    """Predicts the Monthly mean total International Sunspot Number (ISN v2.0 scale)
+
+    using Hathaway's canonical solar cycle formula for an average 11-year cycle.
+
+    Parameters:
+    - X: 2-D numpy array where:
+        - X[:, 0] = t_year (decimal year)
+        - X[:, 1] = year (integer year)
+        - X[:, 2] = month (1 to 12)
+
+    Returns:
+    - 1-D numpy array of predicted sunspot numbers (R_I)
+    """
+    t = X[:, 0]
+
+    # Parameters for the average solar cycle (Schwabe cycle)
+    t_start = 1755.2  # Start of Solar Cycle 1 (reference epoch)
+    period = 11.04  # Average cycle duration in years
+
+    # Compute phase time (years since start of the current cycle)
+    tau = np.mod(t - t_start, period)
+
+    # Hathaway's simplified solar cycle shape parameters (scaled for ISN v2.0)
+    a = 3.5
+    b = 4.0
+    c = 0.7
+
+    # Hathaway's formula: R(t) = a * tau^3 / [exp((tau/b)^2) - c]
+    # Written as exp(2 * tau / b) for numerical stability and standard scaling
+    ssn = a * (tau**3) / (np.exp(2 * tau / b) - c)
+
+    return ssn

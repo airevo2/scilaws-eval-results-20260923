@@ -1,0 +1,128 @@
+import numpy as np
+
+
+def predict(X):
+    # Extract precipitation (P) and potential evapotranspiration (PET)
+    P = X[:, 0]
+    Ep = X[:, 1]
+
+    # Avoid division by zero when P is zero
+    safe_P = np.where(P > 1e-8, P, 1e-8)
+    phi = Ep / safe_P
+
+    # Budyko (1974) formulation:
+    # E/P = [ phi * tanh(1/phi) * (1 - exp(-phi)) ]^0.5
+    safe_phi = np.where(phi > 1e-8, phi, 1e-8)
+    inv_phi = 1.0 / safe_phi
+
+    ep_p = np.sqrt(safe_phi * np.tanh(inv_phi) * (1.0 - np.exp(-safe_phi)))
+
+    # Compute actual evapotranspiration (E) and runoff (Q)
+    E = P * ep_p
+    Q = P - E
+
+    # Runoff is bounded below by 0 and above by P
+    Q = np.clip(Q, 0.0, P)
+
+    # If P is essentially 0, runoff must be 0
+    Q = np.where(P > 1e-8, Q, 0.0)
+
+    return Q
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract primary inputs
+    P = X[:, 0]    # Mean daily precipitation [mm/day]
+    Ep = X[:, 1]   # Mean daily potential evapotranspiration [mm/day]
+    
+    # Classical Budyko (1974) formulation for actual evapotranspiration (E)
+    # E = sqrt( P * Ep * tanh(P/Ep) * (1 - exp(-Ep/P)) )
+    # This formulation is numerically stable for the typical ranges of P and Ep.
+    E = np.sqrt(P * Ep * np.tanh(P / Ep) * (1.0 - np.exp(-Ep / P)))
+    
+    # Long-term mean daily runoff (Q) from water balance: Q = P - E
+    Q = P - E
+    
+    # Enforce physical boundaries: 0 <= Q <= P
+    return np.clip(Q, 0.0, P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract primary inputs: precipitation (P) and potential evapotranspiration (Ep)
+    P = X[:, 0]
+    Ep = X[:, 1]
+    
+    # Calculate aridity index (phi = Ep / P), avoiding division by zero
+    phi = np.where(P > 0, Ep / P, 0.0)
+    
+    # Avoid division by zero inside the tanh(1/phi) term for extremely arid/wet cases
+    phi_safe = np.where(phi > 0, phi, 1e-10)
+    
+    # Classic Budyko (1974) water-balance relationship:
+    # E/P = [ phi * tanh(1/phi) * (1 - exp(-phi)) ]^0.5
+    budyko_factor = np.sqrt(phi_safe * np.tanh(1.0 / phi_safe) * (1.0 - np.exp(-phi_safe)))
+    E = P * budyko_factor
+    
+    # Long-term runoff Q = P - E
+    Q = P - E
+    
+    # Enforce physical water-balance constraints: 0 <= Q <= P
+    return np.clip(Q, 0.0, P)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Extract precipitation (P) and potential evapotranspiration (Ep)
+    P = X[:, 0]
+    Ep = X[:, 1]
+    
+    # Calculate the aridity index (phi = Ep / P), handling division by zero safely
+    phi = np.zeros_like(P)
+    valid_P = P > 0
+    phi[valid_P] = Ep[valid_P] / P[valid_P]
+    
+    # Calculate the inverse of aridity safely for the tanh term
+    inv_phi = np.zeros_like(phi)
+    valid_phi = phi > 0
+    inv_phi[valid_phi] = 1.0 / phi[valid_phi]
+    
+    # Classic Budyko (1974) formulation for actual evapotranspiration ratio (E/P)
+    # E/P = [phi * tanh(1/phi) * (1 - exp(-phi))]^0.5
+    budyko_ratio = np.sqrt(phi * np.tanh(inv_phi) * (1.0 - np.exp(-phi)))
+    
+    # Actual evapotranspiration (E)
+    E = P * budyko_ratio
+    
+    # Long-term water balance: Runoff (Q) = P - E
+    Q = P - E
+    
+    # Apply physical constraints: Q is bounded below by 0 and above by P
+    return np.clip(Q, 0.0, P)
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Inputs
+    P = X[:, 0]  # Mean daily precipitation [mm/day]
+    phi = X[:, 2]  # Aridity index (PET/P)
+
+    # Budyko (1974) curve:
+    # E/P = sqrt( phi * tanh(1/phi) * (1 - exp(-phi)) )
+    # Q = P - E = P * (1 - E/P)
+    # Safe evaluation since phi > 0
+    evap_ratio = np.sqrt(phi * np.tanh(1.0 / phi) * (1.0 - np.exp(-phi)))
+    Q = P * (1.0 - evap_ratio)
+
+    # Bounded below by zero and above by mean precipitation
+    return np.clip(Q, 0.0, P)

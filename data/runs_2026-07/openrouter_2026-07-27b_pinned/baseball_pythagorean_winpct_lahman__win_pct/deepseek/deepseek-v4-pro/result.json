@@ -1,0 +1,26 @@
+{
+  "task": "baseball_pythagorean_winpct_lahman__win_pct",
+  "model": "deepseek/deepseek-v4-pro",
+  "type": "typeI",
+  "primary": "social_science ",
+  "formulas": [
+    {
+      "formula": "james_1980",
+      "d1_hits": 5,
+      "d1_rate": 1.0,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    },
+    {
+      "formula": "miller_2007",
+      "d1_hits": 1,
+      "d1_rate": 0.2,
+      "d2_hits": 3,
+      "d2_rate": 1.0,
+      "d2_context": "citation",
+      "verdict": "memorized"
+    }
+  ]
+}

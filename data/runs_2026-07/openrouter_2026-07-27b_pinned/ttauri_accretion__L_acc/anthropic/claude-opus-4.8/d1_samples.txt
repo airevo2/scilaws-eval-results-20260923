@@ -1,0 +1,78 @@
+import numpy as np
+
+def predict(X):
+    """
+    Empirical accretion-luminosity relation for pre-main-sequence
+    (T Tauri) stars from UV-excess / Balmer-continuum slab modelling.
+
+    The most commonly cited closed form (e.g. Alcala et al. 2017, Lupus
+    X-shooter survey) is a linear correlation in log-log space between the
+    accretion luminosity and the stellar bolometric luminosity:
+
+        log(L_acc/L_sun) = a * log(L_star/L_sun) + b
+
+    with slope a ~ 1.9 and intercept b ~ -0.5.
+    """
+    logL_star = X[:, 0]          # log(L_star/L_sun)
+    # M_star = X[:, 1]           # not used in canonical L_acc-L_star relation
+    # R_star = X[:, 2]           # not used
+    # Teff   = X[:, 3]           # not used
+
+    a = 1.9    # slope
+    b = -0.5   # intercept
+
+    logL_acc = a * logL_star + b
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical L_acc - L_star relation for T Tauri stars
+    # (Alcala et al. 2017, Lupus survey, X-shooter):
+    #   log(L_acc/Lsun) = a * log(L_star/Lsun) + b
+    a = 1.68
+    b = -1.50
+    logL_star = X[:, 0]
+    return a * logL_star + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Standard Lacc-Lstar relation for T Tauri stars from
+    # UV-excess/Balmer-continuum slab modelling (Alcala et al. 2017, Lupus survey):
+    #   log(Lacc/Lsun) = a * log(Lstar/Lsun) + b
+    a = 1.90
+    b = -0.44
+    logL_star = X[:, 0]
+    logL_acc = a * logL_star + b
+    return logL_acc
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical Lacc-Lstar relation for T Tauri stars (Alcala et al. 2017, Lupus)
+    # log(Lacc/Lsun) = a * log(Lstar/Lsun) + b
+    a = 1.74
+    b = -1.99
+    logL_star = X[:, 0]
+    return a * logL_star + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Canonical L_acc - L_star relation for T Tauri stars
+    # (Alcala et al. 2017, A&A 600, A20 - Lupus X-shooter survey):
+    #   log(L_acc/L_sun) = a * log(L_star/L_sun) + b
+    a = 1.9
+    b = -1.03
+    logL_star = X[:, 0]
+    logL_acc = a * logL_star + b
+    return logL_acc

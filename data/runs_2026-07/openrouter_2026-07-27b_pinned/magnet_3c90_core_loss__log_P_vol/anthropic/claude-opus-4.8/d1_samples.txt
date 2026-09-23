@@ -1,0 +1,113 @@
+import numpy as np
+
+def predict(X):
+    # Steinmetz equation: P_vol [W/m^3] = k * f^alpha * B^beta
+    # log10(P_vol[kW/m^3]) = log10(k/1000) + alpha*log10(f) + beta*log10(B)
+    f = X[:, 0]
+    B = X[:, 1]
+
+    # Typical MnZn power-ferrite Steinmetz parameters (SI units, f in Hz, B in T)
+    k = 0.5          # Steinmetz coefficient [W/m^3]
+    alpha = 1.5      # frequency exponent
+    beta = 2.6       # flux-density exponent
+
+    P_vol_W = k * np.power(f, alpha) * np.power(B, beta)   # W/m^3
+    P_vol_kW = P_vol_W / 1000.0                            # kW/m^3
+
+    return np.log10(P_vol_kW)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Steinmetz equation for volumetric core loss:
+    #   P_vol [W/m^3] = k * f^alpha * B^beta
+    # Fitted (typical ferrite, e.g. MnZn) Steinmetz parameters:
+    k = 0.5          # Steinmetz coefficient (W/m^3 units)
+    alpha = 1.5      # frequency exponent
+    beta = 2.5       # flux-density exponent
+
+    f = X[:, 0]      # Hz
+    B = X[:, 1]      # T
+
+    # volumetric loss in W/m^3
+    P_vol_W = k * np.power(f, alpha) * np.power(B, beta)
+
+    # convert to kW/m^3
+    P_vol_kW = P_vol_W / 1000.0
+
+    return np.log10(P_vol_kW)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    f = X[:, 0]          # Hz
+    B = X[:, 1]          # T
+    T = X[:, 2]          # degC
+    w = X[:, 3]          # waveform id
+
+    # ---- Steinmetz (SE) parameters, typical MnZn power ferrite ----
+    k     = 0.5          # Steinmetz coefficient (W/m^3 units, f in Hz, B in T)
+    alpha = 1.5          # frequency exponent
+    beta  = 2.6          # flux-density exponent
+
+    # ---- Steinmetz core loss in W/m^3 ----
+    P_wm3 = k * np.power(f, alpha) * np.power(B, beta)
+
+    # ---- quadratic temperature correction about ~25 degC minimum ----
+    ct  = -3.0e-3
+    ct2 =  3.0e-5
+    T_ref = 25.0
+    temp_factor = 1.0 + ct * (T - T_ref) + ct2 * (T - T_ref) ** 2
+    P_wm3 = P_wm3 * temp_factor
+
+    # ---- waveform correction (non-sinusoidal add harmonic loss) ----
+    wf = np.where(w == 0, 1.0, np.where(w == 1, 1.15, 1.10))
+    P_wm3 = P_wm3 * wf
+
+    # ---- convert to kW/m^3 and take log10 ----
+    P_kwm3 = P_wm3 / 1000.0
+    return np.log10(P_kwm3)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Steinmetz equation: P_vol [W/m^3] = k * f^alpha * B^beta
+    # Classic ferrite (e.g. 3F3-like) coefficients
+    k = 0.5          # Steinmetz coefficient (SI, W/m^3 per (Hz^a * T^b))
+    alpha = 1.5      # frequency exponent
+    beta = 2.6       # flux density exponent
+
+    f = X[:, 0]
+    B = np.maximum(X[:, 1], 1e-9)
+
+    P_vol_W = k * np.power(f, alpha) * np.power(B, beta)  # W/m^3
+    P_vol_kW = P_vol_W / 1000.0                            # kW/m^3
+
+    return np.log10(P_vol_kW)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    # Classic Steinmetz equation: P_vol [W/m^3] = k * f^alpha * B^beta
+    # Fitted (typical MnZn power-ferrite) coefficients:
+    k = 1.0        # Steinmetz coefficient (SI, f in Hz, B in T -> W/m^3)
+    alpha = 1.5    # frequency exponent
+    beta = 2.5     # flux-density exponent
+
+    f = X[:, 0]
+    B = X[:, 1]
+
+    # Volumetric loss in W/m^3
+    P_vol_W = k * np.power(f, alpha) * np.power(B, beta)
+
+    # Convert to kW/m^3 and take log10
+    log_P_vol = np.log10(P_vol_W) - 3.0
+    return log_P_vol

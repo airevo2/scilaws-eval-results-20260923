@@ -1,0 +1,81 @@
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] = gdppc (Y) [USD_1963]
+    Y = X[:, 0]
+
+    # Preston (1975) estimated the 1960s relationship using a logistic function:
+    # e0 = 80 / (1 + exp(a) * Y**(-b))
+    # where a = 2.654 and b = 0.575
+    # Mathematically equivalent to: 80 / (1 + exp(2.654 - 0.575 * ln(Y)))
+    e0 = 80.0 / (1.0 + np.exp(2.654 - 0.575 * np.log(Y)))
+
+    return e0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # Extract GDP per capita (constant 1963 USD)
+    Y = X[:, 0]
+
+    # Preston's (1975) canonical logistic relation for the 1960s:
+    # e0 = 73.85 / (1 + 1.107 * 10^2 * Y^(-0.996))
+    e0 = 73.85 / (1.0 + 110.7 * np.power(Y, -0.996))
+
+    return e0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # National income per head in constant 1963 USD
+    Y = X[:, 0]
+
+    # Preston's (1975) standard logistic equation for the 1960s relationship
+    # between life expectancy at birth (e0) and national income per capita.
+    # The upper limit of life expectancy is set to 80 years.
+    e0 = 80.0 / (1.0 + np.exp(1.884 - 0.518 * np.log(Y)))
+
+    return e0
+
+=====
+
+import numpy as np
+
+
+def predict(X):
+    # X[:, 0] represents GDP per capita in 1963 USD (gdppc)
+    gdppc = X[:, 0]
+
+    # Preston's (1975) classic logistic relationship for the 1960s decade:
+    # e0 = 80 / (1 + exp(1.704 - 0.501 * ln(Y)))
+    e0 = 80.0 / (1.0 + np.exp(1.704 - 0.501 * np.log(gdppc)))
+
+    return e0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predicts the sex-averaged life expectancy at birth (e0) from GDP per capita
+    expressed in constant 1963 US dollars, using the standard logistic Preston Curve
+    relationship estimated for the 1960s (Preston, 1975).
+    
+    Inputs:
+    - X: 2-D numpy array where X[:, 0] is gdppc (Y) in USD_1963.
+    
+    Returns:
+    - 1-D numpy array of predicted e0 in years.
+    """
+    Y = X[:, 0]
+    # Standard Preston (1975) logistic formulation for the 1960s
+    e0 = 80.0 / (1.0 + np.exp(0.6125 - 0.00127 * Y))
+    return e0

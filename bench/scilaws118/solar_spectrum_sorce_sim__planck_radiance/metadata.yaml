@@ -1,0 +1,112 @@
+task_id: solar_spectrum_sorce_sim__planck_radiance
+domain: astronomy / solar physics
+license: CC0-1.0
+
+type: typeII
+has_group_id: true
+
+context: >-
+  The Sun radiates as an approximate blackbody with a spectrum well described
+  by the Planck function over the 310–2400 nm wavelength range accessible to
+  space-based spectrometers. The Spectral Irradiance Monitor (SIM) aboard the
+  SORCE satellite measured daily-mean solar spectral irradiance from 2003 to
+  2020, spanning two complete solar cycles. The solar effective brightness
+  temperature — the temperature of an ideal blackbody that would produce the
+  observed spectral radiance at each wavelength — is not fixed: it varies
+  slowly over the 11-year solar cycle by roughly 10–15 K at visible wavelengths
+  as magnetic activity alters the photospheric emission. A formula that
+  correctly captures this wavelength-dependent radiance must encode both the
+  steep rise from the ultraviolet toward the visible-peak and the gradual
+  rolloff into the near-infrared where the Rayleigh-Jeans approximation becomes
+  increasingly accurate.
+
+target:
+  name: planck_radiance
+  symbol: L(λ, T)
+  unit: W m⁻² nm⁻¹ sr⁻¹
+  description: Planck spectral radiance derived from SORCE SIM daily-mean solar
+    spectral irradiance via L = SSI / Ω, where Ω ≈ 6.80 × 10⁻⁵ sr is the solid
+    angle of the solar disk at 1 AU (solar radius 959.75 arcsec).
+  range: [919.0, 31000.0]
+
+inputs:
+  - name: wavelength_nm
+    symbol: λ
+    unit: nm
+    description: Wavelength at the centre of the SIM spectroradiometer bin,
+      spanning the UV through near-IR range of the SIM instrument.
+    range: [310.25, 2390.42]
+
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+
+n_train: 13314
+n_test_fit: 4399
+n_test_test: 2943
+n_clusters_train: 18
+n_clusters_test: 10
+# Split updated 2026-05-28: HOLDOUT_STEP changed from 4 to 3 to satisfy FM-T7 K_test>=9 floor.
+
+# Audit note: FM-A1 checked. SORCE SIM L3 ssi_W_m2_nm is instrument-measured
+# spectral irradiance (not computed via Planck fit). The target planck_radiance
+# is L = SSI/Omega (fixed geometric factor), not a model output. Task is valid.
+# Within-cluster split is wavelength-based (fit: UV-VIS 310-~900 nm, test: NIR
+# ~900-2390 nm), so predict() is scored on wavelength bins not seen during fit().
+
+priors:
+  - name: h
+    value: 6.62607015e-34
+    unit: J s
+    description: Planck constant — quantum of action.
+    source: Thuillier et al. 2022, Light Sci. Appl. 11:79, p. 12 (cited as "h = Planck's constant"; exact 2019 SI definition value).
+    _role: candidate
+  - name: c
+    value: 2.99792458e8
+    unit: m s⁻¹
+    description: Speed of light in vacuum.
+    source: Thuillier et al. 2022, p. 12 (cited as "c = velocity of light"; exact SI value).
+    _role: candidate
+  - name: k_B
+    value: 1.380649e-23
+    unit: J K⁻¹
+    description: Boltzmann constant — thermal energy scale.
+    source: Thuillier et al. 2022, p. 12 (cited as "k = Boltzman constant"; exact 2019 SI value).
+    _role: candidate
+  - name: Wien_displacement
+    value: 2.898e6
+    unit: nm K
+    description: Wien displacement constant — product of peak-emission wavelength and
+      blackbody temperature. For the quiet Sun (T ≈ 5772 K) predicts peak at ~502 nm.
+    source: Standard CODATA value b = 2.897771955e-3 m K (≡ 2.898e6 nm K); appears
+      implicitly in discussions of the solar spectrum peak; not directly cited in Thuillier 2022 but follows from h, c, k_B.
+    _role: distractor
+  - name: solar_radius_arcsec
+    value: 959.75
+    unit: arcsec
+    description: Angular radius of the Sun as seen from 1 AU, used to compute the
+      solid angle Omega = pi*(R_sun_rad)^2 ~ 6.80e-5 sr for SSI-to-radiance conversion.
+    source: Thuillier et al. 2022, p. 12 ("we have adopted 959.75 arcseconds as the mean value for the solar radius").
+    _role: distractor
+
+references:
+  - id: thuillier_2022
+    label: Thuillier et al. 2022 — exact Planck function with universal constants h, c, k_B; per-day T_eff fitted
+    formula_file: formulas/thuillier_2022.py
+    reference_pdf: reference/thuillier_2022.pdf
+    n_law_constants: 0
+    n_other_constants: 3
+    n_local_params: 1
+    measured:
+      rmse: 1477.4530
+      r2: 0.9653
+
+caps:
+  max_law_constants:       0
+  max_local_params:        1
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     10
+
+metric: rmse
+best_baseline: 1477.4530

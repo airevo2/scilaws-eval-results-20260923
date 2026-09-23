@@ -1,0 +1,183 @@
+task_id: pfas_soil_sorption__log_kd
+domain: earth_science / environmental_chemistry
+license: CC-BY-4.0
+
+type: typeI
+has_group_id: false
+
+# Background knowledge — science framing only; no column listing, no constants.
+context: >-
+  Per- and polyfluoroalkyl substances (PFAS) are persistent organic contaminants whose distribution between water and the solid matrix governs their mobility, a topic in environmental chemistry.
+
+target:
+  name: log_kd
+  symbol: log Kd
+  unit: log10(L/kg)
+  description: Log10 of the solid-liquid distribution coefficient, the ratio of PFAS concentration in soil to PFAS concentration in water at equilibrium.
+  range: [-1.40, 3.96]
+
+inputs:
+  - name: MW
+    symbol: MW
+    unit: g/mol
+    description: Molecular weight of the PFAS compound.
+    range: [113.99, 770.08]
+  - name: pKa1
+    symbol: pKa1
+    unit: ""
+    description: First acid dissociation constant; controls PFAS ionization at environmental pH.
+    range: [-0.20, 14.20]
+  # Wave-16 fix (2026-05-27): pKa2 dropped from input schema.
+  # Was 92.5% NaN (FM-G3) — "monoprotic PFAS lack a second protonation site".
+  # No shipped baseline uses pKa2 (fabregat_2025 uses log_Kow+foc;
+  # chain_length_lfer uses C_num+foc), so dropping has zero baseline impact.
+  - name: C_num
+    symbol: C
+    unit: count
+    description: Total number of carbon atoms in the PFAS molecule; proxy for chain length.
+    range: [2.0, 19.0]
+  - name: F_num
+    symbol: F
+    unit: count
+    description: Number of fluorine atoms; reflects degree of fluorination.
+    range: [3.0, 27.0]
+  - name: F_pct
+    symbol: F%
+    unit: "%"
+    description: Fluorine mass percentage of the PFAS molecule.
+    range: [43.32, 71.86]
+  - name: log_S
+    symbol: log S
+    unit: log10(mg/L)
+    description: Log10 aqueous solubility of the PFAS compound.
+    range: [-2.70, 7.99]
+  - name: log_Kow
+    symbol: log Kow
+    unit: ""
+    description: Log10 octanol-water partition coefficient; primary hydrophobicity descriptor for PFAS sorption.
+    range: [0.90, 9.00]
+  - name: pH
+    symbol: pH
+    unit: ""
+    description: Soil solution pH; controls PFAS speciation and surface charge on soil particles.
+    range: [2.76, 8.96]
+  - name: CEC
+    symbol: CEC
+    unit: cmol+/kg
+    description: Cation exchange capacity of the soil; governs electrostatic sorption of cationic PFAS.
+    range: [0.05, 140.00]
+  - name: Sand
+    symbol: Sand
+    unit: "%"
+    description: Sand mass fraction in soil texture.
+    range: [0.00, 100.00]
+  - name: Silt
+    symbol: Silt
+    unit: "%"
+    description: Silt mass fraction in soil texture.
+    range: [0.00, 100.00]
+  - name: Clay
+    symbol: Clay
+    unit: "%"
+    description: Clay mass fraction in soil texture.
+    range: [0.00, 69.30]
+  - name: Corg
+    symbol: Corg
+    unit: "%"
+    description: Organic carbon content of the soil; primary driver of hydrophobic PFAS sorption.
+    range: [0.03, 53.60]
+  - name: foc
+    symbol: foc
+    unit: ""
+    description: Fraction of organic carbon (= Corg / 100); dimensionless organic carbon fraction used directly in partitioning relationships.
+    range: [0.0003, 0.5360]
+
+# Type I two-file layout. OOD split axis: log_Kow (hydrophobicity).
+# Train: log_Kow < 5.0 (short- to medium-chain PFAS, 686 rows).
+# Test:  log_Kow >= 5.0 (long-chain, high-hydrophobicity PFAS, 541 rows).
+data_files:
+  train: data/train.csv   # log_Kow < 5.0 (short- to medium-chain PFAS)
+  test:  data/test.csv    # log_Kow >= 5.0 (long-chain PFAS OOD extrapolation)
+
+n_train: 685
+n_test:  540
+
+# Audit note: The Fabregat 2025 Koc-Kow regression (slope=0.58) was fitted on
+# 47 PFAS species' average log KOC values; applying it row-by-row to
+# individual measurements introduces scatter beyond the 2-parameter model's
+# resolution. Expected RMSE ~ 0.58 on the OOD test set (positive R2 = 0.27).
+
+# FM C12 (priors-leakage) fix — 2026-05-26
+# koc_kow_slope=0.58 and koc_kow_intercept=0.06 matched fabregat_2025.py::
+# LAW_CONSTANTS exactly — empirical linear regression coefficients (n=47 PFAS).
+# Removed (strategy B). Two existing distractors retained; two more added to
+# reach the target 4 distractors.
+#
+# === FM H1 (priors-leakage, semantic) — wave-11 fix, 2026-05-26 ===
+# Deleted: koc_kow_slope_PAH=0.97, koc_kow_slope_HOC=1.10
+# Rationale: both priors are KOC-KOW regression slopes from the same Fabregat-Palau
+# 2025 paper as the baseline (LAW slope=0.58), differing only in compound class
+# (PAH/HOC vs PFAS). Cross-class same-paper leakage: brackets the LAW slope into
+# [0.5, 1.2] and reveals the log_KOC = slope * log_KOW concept.
+# Ref: audit/AUDIT_CHECKLIST.md FM-H1 + proposed_FMs/2026-05-26_wave10_v1.0_systematic_sweep.md HIGH-2
+priors:
+  - name: CEC_clay_smectite
+    value: 100.0
+    unit: cmol+/kg
+    description: Typical cation exchange capacity of smectite clay minerals; indicates upper bound of CEC for high-clay soils. Relevant to soil characterization but not a coefficient in the Fabregat log-Kd formula.
+    source: Sparks 2003, Environmental Soil Chemistry (2nd ed.), Table 2.1.
+    _role: distractor
+  - name: pKa_PFOA
+    value: -0.5
+    unit: ""
+    description: Approximate pKa of perfluorooctanoic acid (PFOA); negative value indicates full ionization at environmental pH. A molecular property relevant to PFAS speciation but not a coefficient in the Koc-Kow regression.
+    source: Goss 2008, Environmental Science and Technology 42, 456-458, Table 1.
+    _role: distractor
+
+references:
+  - id: fabregat_2025
+    label: "Fabregat-Palau 2025 — empirical log KOC = 0.58 log KOW + 0.06 regression (PDF p. 6, Fig. 2 caption)"
+    formula_file: formulas/fabregat_2025.py
+    reference_pdf: reference/fabregat_2025.pdf
+    n_law_constants:   2     # slope=0.58, intercept=0.06
+    n_other_constants: 0
+    n_local_params:    0
+    measured:
+      rmse: 0.5821
+      r2: 0.2680
+
+  # chain_length_lfer (Higgins & Luthy 2006) REMOVED by the 2026-05-29 audit.
+  # It was a phantom second baseline added 2026-05-26 (MISSING_ALT wave7_F4-B):
+  #   - D3: its a=0.5/b=0.4 cite Higgins & Luthy 2006 Table 3, but that PDF is
+  #     unobtainable (reference/MISSING_PDF_higgins_luthy_2006.md) AND the values
+  #     are not verifiable from any on-disk source (fabregat_2025.txt only cites
+  #     H&L in its reference list, never quotes a per-CF2 increment). The
+  #     reference_pdf had been pointed at the .md affidavit so verify_task would
+  #     pass — gaming the structural check.
+  #   - Anti-fabrication: the docstring hedged ("typical/representative values",
+  #     "cf. log Koc = 0.5 + 0.4*n_CF2"); literature per-CF2 increments are ~0.5-0.6,
+  #     so b=0.4 likely underestimates — i.e. inferred, not paper-verbatim.
+  #   - It scored R²=-1.257 (worse than naive) — not a useful baseline.
+  # Removed per anti-fabrication; .py archived under .before_audit_2026-05-29/.
+  # The task ships single-baseline fabregat_2025 (valid, PDF-verbatim, beats naive).
+
+caps:
+  max_law_constants:       2
+  max_local_params:        0
+  max_init_size_per_param: 1
+  fit_timeout_seconds:     null
+
+metric: rmse
+# === Validity rubric ===
+# Frozen list — the scoring-time judge (eval_consistency.py) scores a
+# submission by how many of THESE criteria it satisfies:
+# validity_score = (criteria satisfied) / len(validity_rubrics).
+# De-leaked context + comprehensive multi-baseline extraction, 2026-06-01.
+validity_rubrics:
+  - "includes a hydrophobic organic-carbon partitioning contribution that increases log_Kd with PFAS hydrophobicity (e.g. via log_Kow)"
+  - "scales the organic-carbon partitioning with the soil organic carbon fraction foc, such that log_Kd increases monotonically with foc and the organic-carbon contribution vanishes (-> -inf in log space) as foc -> 0"
+  - "includes a chain-length / molecular-size term (e.g. C_num, MW, F_num, or CF2 count) that increases sorption for longer fluorinated PFAS"
+  - "includes a pH- and pKa-dependent speciation/ionization effect (e.g. via Henderson-Hasselbalch) that modulates PFAS sorption"
+  - "includes an electrostatic mineral-surface sorption term (e.g. via CEC or clay fraction) for ionized PFAS, beyond organic-carbon partitioning"
+
+best_baseline: 0.582475    # fabregat_2025 — rmse; regenerated after de-dup (no within-file duplicate rows / no leak)

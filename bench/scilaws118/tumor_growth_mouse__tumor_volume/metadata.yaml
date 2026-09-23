@@ -1,0 +1,206 @@
+task_id: tumor_growth_mouse__tumor_volume
+domain: biology / oncology
+license: CC-BY-4.0
+
+# Type II — cluster = individual animal (one mouse = one cluster). Each of the
+# nine Benzekry (2014) growth laws shares a UNIVERSAL functional form V(t) whose
+# per-animal parameters (a, beta, K, n, gamma, ...) are LOCAL_FITTABLE, re-fit
+# per cluster by each baseline's fit(). The only cross-cluster-invariant constant
+# is the assumed initial condition V0 = 1 mm^3; per the 2026-06-02 owner ruling
+# (invariant-but-GIVEN ⇒ OTHER, not LAW) V0 is filed under OTHER_CONSTANTS and
+# read from that dict at eval. With V0 in OTHER, every baseline now has an empty
+# LAW_CONSTANTS — the form itself is the whole claim (LAW = {} is legitimate for
+# this Type II task). Pooled across 86 animals / 2 cell lines there is NO single
+# global V(t) — a global fit scores negative R^2 — so this is intrinsically a
+# per-cluster task.
+type: typeII
+has_group_id: true
+
+# Setting 1 (real-data discovery). No hidden ground-truth formula; no
+# evaluation/rubric.yaml / invariant_constants block. Absence of rubric.yaml
+# marks this as Setting 1 per release-format v2 §6.
+
+# === FM-A1 CLEARANCE ===
+# Volume provenance: caliper-measured via V = (pi/6)*w^2*L (Benzekry 2014
+# PDF p. 3). The growth-model formulas are FITTED to these caliper readings —
+# they are descriptive models, NOT the source of the volume values. No FM-A1
+# tautology: the caliper formula uses w and L; the growth models use only t.
+
+context: >-
+  Mouse tumor xenograft models track how implanted cancer cells grow over time
+  after subcutaneous or orthotopic injection into immunocompromised rodent
+  hosts. The volume of the growing tumor, measured with calipers at regular
+  intervals, follows a characteristic sigmoidal or near-exponential trajectory:
+  rapid early proliferation that slows as the tumor approaches a carrying
+  capacity set by nutrient supply and host vasculature. Quantitative models of
+  this growth kinetics — Gompertz, logistic, exponential-linear, power law,
+  and related ODE-based forms — are fundamental tools in cancer biology for
+  comparing treatment arms, forecasting tumor burden, and testing hypotheses
+  about proliferative dynamics. The canonical reference for systematic
+  comparison of these models (Benzekry 2014) evaluated nine ODE-based
+  families on two mouse xenograft datasets: Lewis Lung Carcinoma (LLC) in
+  C57BL/6 mice and LM2-4LUC triple-negative breast carcinoma in SCID mice.
+  Volume is measured by caliper and spans roughly 14 to 2350 mm^3 across both
+  datasets. Time post-implantation ranges from 4 to 38 days. The dataset pools
+  754 observations from 86 individual animals across the two cell lines, with
+  each animal's growth curve forming one cluster.
+
+target:
+  name: tumor_volume_mm3
+  symbol: "V"
+  unit: "mm^3"
+  description: >-
+    Caliper-measured tumor volume in mm^3. Derived from perpendicular diameter
+    measurements as V = (pi/6) * w^2 * L (L = longest axis, w = perpendicular
+    width). A direct geometric measurement — NOT the output of a growth-model
+    fit. Pooled from LLC (Lewis Lung Carcinoma, 173 observations, 20 animals)
+    and LM2-4LUC (human MDA-MB-231-derived breast carcinoma, 581 observations,
+    66 animals; 2 zero-volume below-detection rows excluded).
+  range: [13.99, 2352.58]
+
+inputs:
+  - name: time_day
+    symbol: "t"
+    unit: "days"
+    description: >-
+      Days post-implantation of tumor cells. The temporal input for all
+      ODE-based growth models. LLC range: 4-22 days; LM2-4LUC range: 7-38 days.
+    range: [4.0, 38.0]
+
+# Dataset — three-file v2 Type II layout, cluster (animal) holdout.
+# 86 animals: 20 LLC (group_id 1-20) + 66 LM2-4LUC (group_id 100-165).
+# Cluster holdout: an animal is test-eligible if it has >= 8 observations
+# (so its interleaved fit-half has >= 4 >= the 3 LOCAL params of the largest
+# baseline); among the eligible animals sorted by group_id, every 3rd one
+# becomes a test cluster. Within each test animal, rows are sorted by time and
+# time-INTERLEAVED (even local index -> test_fit, odd -> test_test) so both
+# halves span the full growth curve (interpolation, not late-time extrapolation).
+# Train animals contribute all their rows to train.csv.
+#
+# v2 Type II schema rule (data_spec §4.1):
+#   train.csv:     tumor_volume_mm3, time_day              (NO group_id)
+#   test_fit.csv:  tumor_volume_mm3, time_day, group_id    (group_id LAST)
+#   test_test.csv: tumor_volume_mm3, time_day, group_id    (group_id LAST)
+data_files:
+  train:     data/train.csv
+  test_fit:  data/test_fit.csv
+  test_test: data/test_test.csv
+n_train: 571
+n_test_fit: 93
+n_test_test: 90
+n_clusters_train: 68
+n_clusters_test: 18
+n_rows_per_cluster_min: 8
+n_rows_per_cluster_median: 10
+n_rows_per_cluster_max: 15
+
+# Forward-compat per proposals/20260506_1015_rfs_unseen_group_strategy_patch.md §2.1.
+# cluster-holdout discipline guarantees
+# set(test_fit.group_id) == set(test_test.group_id) with no unseen groups.
+unseen_group_strategy: error
+
+# Candidate prior constants — none.
+# V0 = 1 mm^3 is the cross-cluster-invariant assumed initial condition of eight
+# of the nine baselines; per the 2026-06-02 owner ruling it is an OTHER_CONSTANT
+# (invariant-but-GIVEN), and OTHER/LAW structural values are NEVER exposed in
+# priors. The remaining per-animal parameters are LOCAL_FITTABLE. priors: [] is
+# the correct and honest entry.
+priors: []
+
+# === Reference baselines ===
+# The nine classical tumor-growth models compared in Benzekry (2014),
+# all sharing the universal assumed initial condition V0 = 1 mm^3 (OTHER per
+# the 2026-06-02 owner ruling: invariant-but-GIVEN ⇒ OTHER, not LAW; except
+# exponential_v0 where V0 is freely fitted per animal as a LOCAL param).
+# Per-animal parameters are LOCAL_FITTABLE, re-fit per cluster on test_fit.
+# `measured` = harness pooled rmse/r2 over all test_test rows (see
+# formulas/reference_metrics.json; the harness selects best by MEAN per-cluster
+# rmse).
+references:
+  - id: benzekry_2014_gompertz
+    label: "Benzekry 2014 — Gompertz: V(t) = V0*exp((a/beta)*(1 - exp(-beta*t)))"
+    formula_file: formulas/benzekry_2014_gompertz.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 2
+    measured: {rmse: 114.2640, r2: 0.9506}
+  - id: benzekry_2014_logistic
+    label: "Benzekry 2014 — Logistic: V(t) = K / [1 + (K-1)*exp(-a*t)]"
+    formula_file: formulas/benzekry_2014_logistic.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 2
+    measured: {rmse: 161.2759, r2: 0.9016}
+  - id: benzekry_2014_exponential1
+    label: "Benzekry 2014 — Exponential-1: V(t) = V0*exp(a0*t)"
+    formula_file: formulas/benzekry_2014_exponential1.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 1
+    measured: {rmse: 514.1286, r2: -0.0000}
+  - id: benzekry_2014_exponential_v0
+    label: "Benzekry 2014 — Exponential-V0: V(t) = V0*exp(a0*t), V0 free"
+    formula_file: formulas/benzekry_2014_exponential_v0.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 0
+    n_local_params: 2
+    measured: {rmse: 146.7503, r2: 0.9185}
+  - id: benzekry_2014_exponential_linear
+    label: "Benzekry 2014 — Exponential-linear: biphasic exp then linear; V0 fixed"
+    formula_file: formulas/benzekry_2014_exponential_linear.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 2
+    measured: {rmse: 126.2390, r2: 0.9397}
+  - id: benzekry_2014_power_law
+    label: "Benzekry 2014 — Power law: V(t) = [1 + a*(1-gamma)*t]^(1/(1-gamma))"
+    formula_file: formulas/benzekry_2014_power_law.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 2
+    measured: {rmse: 119.1875, r2: 0.9463}
+  - id: benzekry_2014_von_bertalanffy
+    label: "Benzekry 2014 — Von Bertalanffy: V(t)=[a/b+(V0^(1-g)-a/b)*exp(-b(1-g)t)]^(1/(1-g))"
+    formula_file: formulas/benzekry_2014_von_bertalanffy.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 3
+    measured: {rmse: 116.8264, r2: 0.9484}
+  - id: benzekry_2014_generalized_logistic
+    label: "Benzekry 2014 — Generalized logistic: V(t)=V0*K/[V0^n+(K^n-V0^n)*exp(-a*n*t)]^(1/n)"
+    formula_file: formulas/benzekry_2014_generalized_logistic.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 1
+    n_local_params: 3
+    measured: {rmse: 117.2312, r2: 0.9480}
+  - id: benzekry_2014_dynamic_cc
+    label: "Benzekry 2014 — Dynamic carrying capacity: dV/dt=a*V*log(K/V), dK/dt=b*V^(2/3)"
+    formula_file: formulas/benzekry_2014_dynamic_cc.py
+    reference_pdf: reference/benzekry_2014.pdf
+    n_law_constants: 0
+    n_other_constants: 2
+    n_local_params: 3
+    measured: {rmse: 119.1184, r2: 0.9463}
+
+# === v2 anti-dump caps (derived from reference bank) ===
+# max_law_constants recomputed to 0 after the 2026-06-02 owner ruling moved the
+# only LAW constant (V0 = 1 mm^3) to OTHER_CONSTANTS in all eight baselines that
+# fixed it; no baseline now declares any LAW constant. This mirror tracks
+# formulas/reference_metrics.json derived_caps exactly (verify_task §8.11).
+caps:
+  max_law_constants: 0
+  max_local_params: 3
+  max_init_size_per_param: 1
+  fit_timeout_seconds: 10
+
+# === Scoring ===
+metric: rmse
+best_baseline: 114.2640

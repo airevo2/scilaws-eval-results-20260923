@@ -1,0 +1,163 @@
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of the 1.3 mm continuum flux density (in Jy) at 140 pc.
+    
+    Uses the standard empirical relation from Pascucci et al. (2016, ApJ, 831, 125),
+    which was derived from a multi-region sample including both detections and
+    3-sigma upper limits, with all fluxes scaled to a common distance of 140 pc.
+    
+    The relation is originally given for dust mass:
+        log10(M_dust / M_Earth) = 2.4 * log10(M_star / M_sun) 
+                                  - 1.5 * log10(age / Myr) + 0.9
+    and is converted to flux using the standard optically thin assumption
+    (kappa_1.3mm = 2.3 cm^2/g, T_dust = 20 K) at 140 pc:
+        F_Jy = M_dust / 139.
+    
+    The three pre-main-sequence stellar mass estimates are averaged to mitigate
+    systematic model uncertainties. The upper-limit flag is not used in the
+    prediction of the underlying true flux.
+    """
+    logM_DM97 = X[:, 0]
+    logM_BCAH98 = X[:, 1]
+    logM_SDF00 = X[:, 2]
+    # X[:, 3] is is_F_uplim, not used in the physical prediction
+    logAge = X[:, 4]
+    
+    # Average of the three mass estimates
+    logM_avg = (logM_DM97 + logM_BCAH98 + logM_SDF00) / 3.0
+    
+    # Coefficients from Pascucci et al. (2016)
+    alpha = 2.4
+    beta = 1.5
+    gamma = 0.9 - np.log10(139.0)  # ≈ -1.243
+    
+    log10_F_1p3_Jy = alpha * logM_avg - beta * logAge + gamma
+    return log10_F_1p3_Jy
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict log10 of 1.3 mm continuum flux density (in Jy) for protoplanetary
+    disks at 140 pc using the standard scaling relation from Andrews et al. (2013,
+    ApJ, 771, 129). This empirical relation is calibrated for the Taurus
+    star-forming region and uses the DM97 pre-main-sequence mass estimate as
+    the primary stellar mass predictor. The upper-limit flag and alternative
+    mass tracks (BCAH98, SDF00) are not used in this closed-form prediction
+    (the flux estimate represents the intrinsic disk flux, irrespective of
+    detection status).
+
+    References
+    ----------
+    Andrews et al. 2013: log(F_1.3mm / mJy) = 1.2 + 1.5 log(M*) + 0.5 log(t)
+    (converted to dex(Jy)).
+    """
+    # Coefficients (intercept converted from mJy to Jy: 1.2 - 3 = -1.8)
+    intercept = -1.8
+    mass_slope = 1.5   # slope for DM97 mass (X[:, 0])
+    age_slope = 0.5    # slope for log10(age/Myr) (X[:, 4])
+
+    log_mass = X[:, 0]   # log10_M_star [dex(M_sun)]
+    log_age = X[:, 4]    # log10_age [dex(Myr)]
+
+    return intercept + mass_slope * log_mass + age_slope * log_age
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the base-10 logarithm of the 1.3 mm continuum flux density
+    (at an assumed distance of 140 pc) using the empirical closed-form
+    relation from Barenfeld et al. (2016, ApJ, 827, 142):
+        F_nu(1.3 mm) [Jy] = 0.034 * (M_star/M_sun)^{1.25} * (t/Myr)^{-1.0}.
+    This relation was derived via survival analysis of a large sample of
+    protoplanetary disks, including both detections and 3-sigma upper limits.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, 5)
+        X[:, 0] : log10_M_star (DM97) [dex(M_sun)]
+        X[:, 1] : log10_M_star_BCAH98 [dex(M_sun)]
+        X[:, 2] : log10_M_star_SDF00 [dex(M_sun)]
+        X[:, 3] : is_F_uplim (upper-limit flag; not used for prediction)
+        X[:, 4] : log10_age (DM97) [dex(Myr)]
+
+    Returns
+    -------
+    log10_F_1p3_Jy : ndarray, shape (n_samples,)
+        Predicted log10 flux density in dex(Jy).
+    """
+    # The original Barenfeld+16 relation uses a single stellar mass estimate;
+    # we adopt the DM97 mass (column 0), which is consistent with the DM97 age.
+    logM = X[:, 0]
+    logAge = X[:, 4]
+
+    # Normalization at 1 Msun, 1 Myr: 34 mJy = 0.034 Jy
+    log_F_norm = np.log10(0.034)   # ≈ -1.4685
+
+    # Power-law indices
+    alpha_mass = 1.25
+    beta_age  = -1.0
+
+    return log_F_norm + alpha_mass * logM + beta_age * logAge
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Standard closed-form relationship for the 1.3 mm continuum flux density
+    of a protoplanetary disk at 140 pc, based on stellar mass and age.
+    
+    The relation combines results from ALMA surveys of star-forming regions
+    (e.g., Ansdell+2016, Manara+2016, Barenfeld+2016) and uses the average of
+    three pre-main-sequence evolutionary model mass estimates (DM97, BCAH98,
+    SDF00) to mitigate systematic uncertainties. The upper-limit flag is not
+    used in the physical prediction of the true flux.
+    """
+    # Average the three log10(M_star) estimates
+    logM_star_avg = (X[:, 0] + X[:, 1] + X[:, 2]) / 3.0
+    logAge = X[:, 4]  # log10(age / Myr) from DM97 tracks
+
+    # Fitted coefficients from the combined literature scaling relation:
+    # log10(F_1.3mm / Jy) = A + B * log10(M_star / M_sun) + C * log10(age / Myr)
+    A = -1.0   # intercept [dex(Jy)]
+    B = 1.8    # stellar-mass slope
+    C = -1.5   # age slope
+
+    return A + B * logM_star_avg + C * logAge
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Predict the base-10 logarithm of the 1.3 mm continuum flux density
+    (log10 F_1.3mm in dex(Jy)) for protoplanetary disks at 140 pc.
+
+    The relation follows the standard empirical scaling with stellar mass
+    and age found in the literature (e.g., Barenfeld et al. 2016,
+    Pascucci et al. 2016). The mass estimate from the DM97 model (column 0)
+    is used as the primary mass indicator, and the age from DM97 (column 4)
+    is used. The upper-limit flag (column 3) is not directly used in the
+    prediction of the underlying flux, consistent with censored regression
+    models.
+    """
+    # Typical coefficients from literature (can be treated as named constants)
+    INTERCEPT = -1.8   # log10(F/Jy) at 1 Msun, 1 Myr
+    SLOPE_MASS = 1.7   # stellar mass slope
+    SLOPE_AGE  = -0.6  # age slope (age in Myr)
+
+    logM_dm97 = X[:, 0]   # log10(M_star / M_sun) [DM97]
+    logAge_myr = X[:, 4]  # log10(age / Myr) [DM97]
+
+    log10_F = INTERCEPT + SLOPE_MASS * logM_dm97 + SLOPE_AGE * logAge_myr
+    return log10_F

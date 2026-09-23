@@ -1,0 +1,80 @@
+import numpy as np
+
+def predict(X):
+    """
+    Geiger-Nuttall law for alpha-decay half-life.
+    
+    log10(T_1/2 / s) = a / sqrt(Q_alpha) + b
+    
+    This is the canonical empirical relationship between the alpha-decay
+    partial half-life and the Q-value, originally observed by Geiger and
+    Nuttall (1911) and later explained by Gamow's quantum tunneling theory.
+    
+    Coefficients are chosen as a universal average over heavy alpha-emitting
+    nuclei (Z ~ 84-100), consistent with the Viola-Seaborg systematics
+    evaluated at a representative atomic number.
+    """
+    Q = X[:, 0]  # Q_alpha in MeV
+    a = 145.0
+    b = -53.0
+    return a / np.sqrt(Q) + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    return 73.0 / np.sqrt(Q) - 23.0
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q = X[:, 0]
+    # Geiger-Nuttall law: log10(T_1/2 / s) = a / sqrt(Q_alpha) + b
+    # Coefficients represent an effective global fit (average Z_d ~ 88-90)
+    # consistent with the Viola-Seaborg formula evaluated at typical Z ~ 90-92
+    a = 145.0
+    b = -53.0
+    return a / np.sqrt(Q) + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    """
+    Geiger-Nuttall law for alpha-decay half-life.
+    
+    log10(T_1/2 / s) = a / sqrt(Q_alpha) + b
+    
+    This is the canonical two-parameter empirical relationship between
+    the base-10 logarithm of the alpha-decay partial half-life (in seconds)
+    and the inverse square root of the alpha-decay Q-value (in MeV).
+    
+    Coefficients fitted to well-known even-even alpha emitters spanning
+    Z ~ 84-98 (Po through Cf), covering ~24 orders of magnitude in half-life.
+    """
+    Q = X[:, 0]  # Q_alpha in MeV
+    
+    # Geiger-Nuttall coefficients
+    a = 148.0
+    b = -54.5
+    
+    return a / np.sqrt(Q) + b
+
+=====
+
+import numpy as np
+
+def predict(X):
+    Q_alpha = X[:, 0]
+    
+    # Geiger-Nuttall law: log10(T_1/2) = A + B / sqrt(Q_alpha)
+    # Using approximate global fit coefficients for alpha emitters
+    A = -54.0
+    B = 145.0
+    
+    return A + B / np.sqrt(Q_alpha)

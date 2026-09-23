@@ -1,0 +1,42 @@
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    return (R ** 2) / ((R ** 2) + (RA ** 2))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    return (R ** 2) / ((R ** 2) + (RA ** 2))
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    return R**2 / (R**2 + RA**2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    R = X[:, 0]
+    RA = X[:, 1]
+    return (R ** 2) / (R ** 2 + RA ** 2)
+
+=====
+
+import numpy as np
+
+def predict(X):
+    RS = X[:, 0]
+    RA = X[:, 1]
+    return (RS ** 2) / (RS ** 2 + RA ** 2)
