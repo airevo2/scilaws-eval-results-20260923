@@ -97,13 +97,21 @@ def _complete_custom(model, prompt, temperature, n, max_tokens, log_dir, cfg) ->
     out = custom_client.complete(model=model, prompt=prompt, temperature=temperature, n=n,
                                  max_tokens=max_tokens, kind=cfg.get("kind", "chat"))
     if not isinstance(out, list):
-        raise TypeError("custom_client.complete must return a list of strings")
-    out = [(s or "") for s in out][:n] + [""] * max(0, n - len(out))
+        raise TypeError("custom_client.complete must return a list of strings (or dicts with a 'content' key)")
+    texts, extras = [], []
+    for s in out[:n]:
+        if isinstance(s, dict):               # optional richer return: {"content": str, ...anything else is logged}
+            texts.append(s.get("content") or ""); extras.append({k: v for k, v in s.items() if k != "content"})
+        else:
+            texts.append(s or ""); extras.append({})
+    texts += [""] * (n - len(texts)); extras += [{}] * (n - len(extras))
+    out = texts
+    billed = sum(float(e.get("billed_usd") or 0) for e in extras)
     _write_log(log_dir, {
         "backend": "custom", "model_requested": model, "kind": cfg.get("kind"),
         "prompt": prompt, "temperature": temperature, "max_tokens": max_tokens, "n": n,
-        "completions": out, "finish_reasons": ["custom"] * n,
-        "latency_sec": round(time.time() - t0, 3),
+        "completions": out, "finish_reasons": ["custom"] * n, "per_sample": extras,
+        "billed_usd": round(billed, 6), "latency_sec": round(time.time() - t0, 3),
     })
     return out
 

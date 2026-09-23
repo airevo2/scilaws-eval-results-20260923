@@ -23,8 +23,11 @@
   "gpt-5.5":                    {"backend": "openai",     "kind": "reasoning"},
 
   "anthropic/claude-opus-4.8":  {"backend": "openrouter", "kind": "reasoning", "reasoning": {"effort": "medium"}, "provider": "Anthropic"},
+  "anthropic/claude-opus-5.5":  {"backend": "openrouter", "kind": "reasoning", "reasoning": {"effort": "medium"}, "provider": "Anthropic"},
   "deepseek/deepseek-v4-pro":   {"backend": "openrouter", "kind": "reasoning", "reasoning": {"effort": "medium"}, "provider": "DeepSeek"},
   "google/gemini-3.5-flash":    {"backend": "openrouter", "kind": "reasoning", "reasoning": {"effort": "medium"}, "provider": "Google"},
   "qwen/qwen3.7-max":           {"backend": "openrouter", "kind": "reasoning", "reasoning": {"effort": "medium"}, "provider": "Alibaba"},
-  "z-ai/glm-5.2":               {"backend": "openrouter", "kind": "reasoning", "reasoning": {"effort": "medium"}, "provider": "Z.AI"}
+  "z-ai/glm-5.2":               {"backend": "openrouter", "kind": "reasoning", "reasoning": {"effort": "medium"}, "provider": "Z.AI"},
+
+  "cc-opus-5-5":                {"backend": "custom",     "kind": "reasoning", "role": "example custom-backend id: claude -p alias of call_llm_api.py (examples/)"}
 }

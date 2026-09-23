@@ -20,7 +20,7 @@ pip install -r requirements.txt          # 只需要 openai + PyYAML，Python 3.
 |---|---|
 | **A. OpenAI 官方，或任何 OpenAI 兼容网关** | `export OPENAI_API_KEY=...`；如果是网关再 `export OPENAI_BASE_URL=https://.../v1`。不改代码。 |
 | **B. OpenRouter**（非 OpenAI 厂商模型） | `export OPENROUTER_API_KEY=...`，并在 `models.json` 里给该模型写上 `provider`（第一方托管），见文件里的示例。 |
-| **C. 你们自己的 llm_api** | 把 `custom_client.py` 里的一个函数填上（把 `prompt` 原样发出去，返回 n 条字符串），然后 `export MEM_FORCE_BACKEND=custom`。 |
+| **C. 你们自己的 llm_api** | 把 `custom_client.py` 里的一个函数填上（把 `prompt` 原样发出去，返回 n 条字符串），然后 `export MEM_FORCE_BACKEND=custom`。**如果就是 agent baseline 那套 `call_llm_api.py`（`cc-opus-5-5`、`gpt55` 这类 alias），不用写：`cp examples/custom_client_call_llm_api.py custom_client.py`，按文件头设两个环境变量即可，已用 `cc-opus-5-5` 实测跑通。** |
 
 **硬性要求：判分模型是 `gpt-4.1`，冻结，你们的 API 必须能调到它**（走 A 就是 `OPENAI_API_KEY`；走 C 就是你的 custom_client 也要能调 gpt-4.1）。判不了 gpt-4.1 的结果没法和论文里已有的 9 个模型放在一起，请先确认。
 
@@ -57,7 +57,7 @@ python3 run_mem.py --pack                                   # 生成 mem_runs.zi
 ```
 
 要点：
-- **中断了不用重来**：每题跑完立即落盘，重跑同一命令会覆盖已完成的题；只补缺题的话看 `check_run.py` 打印的 missing 列表。
+- **中断了不用重来**：每题跑完立即落盘，重跑同一命令会覆盖已完成的题；只补缺题：`--tasks 题目1,题目2`（题目名看 `check_run.py` 打印的 missing 列表）。
 - **不要改任何参数**：温度 0.8、每题 5 次、判分 gpt-4.1 温度 0、≥3/5 阈值、输出上限 28,800 token、推理档位 medium，全是冻结设定。`kind: reasoning` 的模型不发温度（API 会拒绝），这是预期行为。
 - **OpenRouter 余额要留 1.3 倍以上**：它按 `max_tokens` 预授权，余额接近见底时整批 402。
 - `runs/` 里的 `*_raw/` 是原始记录（请求、回复、用量、计费、provider），**不要删**，判分可以据此复核或重算。

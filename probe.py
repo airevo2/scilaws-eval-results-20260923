@@ -278,11 +278,18 @@ def main(argv=None):
     p.add_argument("--judge", default="gpt-4.1")
     p.add_argument("--probes", default="d1")
     p.add_argument("--limit", type=int, default=0)
+    p.add_argument("--only", default="", help="comma-separated subset of task ids")
     p.add_argument("--workers", type=int, default=12)
     p.add_argument("--out-root", required=True)
     a = p.parse_args(argv)
 
     tasks = load_tasks(Path(a.tasks))
+    if a.only:
+        want = [t.strip() for t in a.only.split(",") if t.strip()]
+        unknown = [t for t in want if t not in tasks]
+        if unknown:
+            raise SystemExit("unknown task id(s): " + ", ".join(unknown))
+        tasks = [t for t in tasks if t in want]
     if a.limit:
         tasks = tasks[:a.limit]
     models = [m.strip() for m in a.models.split(",") if m.strip()]

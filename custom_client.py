@@ -10,6 +10,12 @@ Contract — return exactly `n` completions (strings) for ONE user message `prom
   * kind        : "chat" or "reasoning" (from models.json) — tells you which of the above applies.
   * Do NOT add a system prompt, few-shot examples, or any extra text. Send `prompt` verbatim.
   * If a call fails after your own retries, return "" for that sample (scored as no answer).
+  * Optional: return dicts {"content": str, "usage": {...}, "billed_usd": float, ...} instead of plain
+    strings; every extra field is written to the raw log as-is (nice to have, not required).
+
+If your access layer is the SciLaws agent baseline's `call_llm_api.py` (api_source_mapping aliases such as
+cc-opus-5-5 / gpt55), do not write anything: `cp examples/custom_client_call_llm_api.py custom_client.py`
+and follow its header (tested with cc-opus-5-5).
 """
 from __future__ import annotations
 

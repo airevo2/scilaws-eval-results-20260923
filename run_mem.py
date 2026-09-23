@@ -6,6 +6,7 @@
     python3 run_mem.py --bench scilaws --models gpt-6           # full leg: 118 tasks x 5 samples + judge
     python3 run_mem.py --bench feynman --models gpt-6           # AI-Feynman leg: 100 tasks (OpenAI models)
     python3 run_mem.py --models a,b,c ...                       # several models in one go
+    python3 run_mem.py --bench scilaws --models gpt-6 --tasks t1,t2   # only these task ids (e.g. fill in missing ones)
     python3 run_mem.py --pack                                   # zip runs/ to send back
 
 Output: runs/<bench>/<task>/<model>/{result.json, d1_samples.txt, d1_raw/, judge_raw/}
@@ -95,6 +96,7 @@ def main(argv=None):
     ap.add_argument("--bench", choices=list(BENCHES), default="scilaws")
     ap.add_argument("--models", help="comma-separated model ids (see --list / models.json)")
     ap.add_argument("--limit", type=int, default=0, help="only the first N tasks (smoke test)")
+    ap.add_argument("--tasks", default="", help="comma-separated task ids: run only these (subset / fill in missing tasks)")
     ap.add_argument("--workers", type=int, default=12)
     ap.add_argument("--probes", default="d1", help="d1 (paper) or d1,d2")
     ap.add_argument("--pack", action="store_true", help="zip runs/ (can be used alone)")
@@ -114,7 +116,8 @@ def main(argv=None):
         model_cfg(m)                              # fails early for unknown vendor/model ids
     check_keys(models)
     b = BENCHES[a.bench]
-    n = a.limit or b["n"]
+    only = [t.strip() for t in a.tasks.split(",") if t.strip()]
+    n = len(only) if only else (a.limit or b["n"])
     out_root = HERE / "runs" / a.bench
     print(f"bench: {a.bench} ({n} tasks)   models: {', '.join(models)}   judge: {JUDGE}   probes: {a.probes}   workers: {a.workers}")
     if dry_run(a.bench):
@@ -122,7 +125,8 @@ def main(argv=None):
 
     probe.main(["--tasks", str(b["tasks"]), "--bench", str(b["dir"]), "--models", ",".join(models),
                 "--judge", JUDGE, "--probes", a.probes, "--workers", str(a.workers),
-                "--out-root", str(out_root)] + (["--limit", str(a.limit)] if a.limit else []))
+                "--out-root", str(out_root)] + (["--limit", str(a.limit)] if a.limit else [])
+               + (["--only", ",".join(only)] if only else []))
     coverage(out_root, models, n)
     if a.pack:
         pack()

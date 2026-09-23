@@ -39,6 +39,20 @@ assert (res[0].parent/"d1_samples.txt").exists() and list((res[0].parent/"judge_
 frozen = json.load(open(K/"prompts_frozen.json"))["scilaws"]
 assert all(json.loads(p.read_text())["d1_prompt_sha256_16"] == frozen[json.loads(p.read_text())["task"]] for p in res), "prompt hash mismatch"
 run_mem.coverage(RUNS/"scilaws", ["mock-model"], 2)
+# --only subset + dict-style custom returns (usage / billed_usd logged per sample)
+fake.complete = lambda model, prompt, temperature, n, max_tokens, kind: (
+    [json.dumps({"equivalent": False, "reason": "mock"})] if prompt.startswith("You compare two Python functions")
+    else [{"content": "```python\nimport numpy as np\ndef predict(X):\n    return X[:, 0]\n```", "usage": {"output_tokens": 7}, "billed_usd": 0.001} for _ in range(n)])
+probe.main(["--tasks", str(K/"tasks/scilaws118.json"), "--bench", str(K/"bench/scilaws118"), "--models", "mock2", "--judge", "gpt-4.1",
+            "--workers", "2", "--out-root", str(RUNS/"scilaws"), "--only", "gravity_wgs84_somigliana__g0,spirometry_nhanes__FVC_L"])
+assert len(list((RUNS/"scilaws").glob("*/mock2/result.json"))) == 2
+raw = json.loads(next((RUNS/"scilaws").glob("gravity_wgs84_somigliana__g0/mock2/d1_raw/*.json")).read_text())
+assert raw["per_sample"][0]["usage"]["output_tokens"] == 7 and abs(raw["billed_usd"] - 0.005) < 1e-9, raw
+try:
+    probe.main(["--tasks", str(K/"tasks/scilaws118.json"), "--bench", str(K/"bench/scilaws118"), "--models", "mock2", "--out-root", str(RUNS/"x"), "--only", "no_such_task"])
+    raise AssertionError("unknown --only task was not rejected")
+except SystemExit:
+    pass
 # check_run on the mock tree (expects PARTIAL because only 2/118) and dry-run / list as subprocesses
 p = subprocess.run([sys.executable, str(K/"check_run.py"), str(RUNS)], capture_output=True, text=True); print(p.stdout[-600:]); assert "PARTIAL (116 missing)" in p.stdout and p.returncode == 1
 p = subprocess.run([sys.executable, str(K/"run_mem.py"), "--dry-run", "--bench", "feynman"], capture_output=True, text=True); assert "mismatches = 0" in p.stdout and p.returncode == 0, p.stdout[-300:]+p.stderr[-300:]

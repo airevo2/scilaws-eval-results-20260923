@@ -22,5 +22,6 @@
   "gemini-3.5-flash":  {"vendor": "Google",    "short": "Gem-3.5",   "paper": "Gemini 3.5 Flash",  "main_exp_id": "gemini-3.5-flash-fg", "openai_ladder_pos": null, "aliases": ["google/gemini-3.5-flash"]},
   "deepseek-v4-pro":   {"vendor": "DeepSeek",  "short": "DS-V4",     "paper": "DeepSeek-V4 Pro",   "main_exp_id": "deepseek-v4-pro",     "openai_ladder_pos": null, "aliases": ["deepseek/deepseek-v4-pro"]},
   "glm-5.2":           {"vendor": "Z.ai",      "short": "GLM-5.2",   "paper": "GLM-5.2",           "main_exp_id": "glm-5.2",             "openai_ladder_pos": null, "aliases": ["z-ai/glm-5.2"]},
-  "qwen3.7-max":       {"vendor": "Alibaba",   "short": "Qwen3.7",   "paper": "Qwen3.7-Max",       "main_exp_id": "qwen3.7-max",         "openai_ladder_pos": null, "aliases": ["qwen/qwen3.7-max"]}
+  "qwen3.7-max":       {"vendor": "Alibaba",   "short": "Qwen3.7",   "paper": "Qwen3.7-Max",       "main_exp_id": "qwen3.7-max",         "openai_ladder_pos": null, "aliases": ["qwen/qwen3.7-max"]},
+  "claude-opus-5.5":   {"vendor": "Anthropic", "short": "Opus-5.5",  "paper": "Claude Opus 5.5",   "main_exp_id": "claude-opus-5-5-cc",  "openai_ladder_pos": null, "aliases": ["cc-opus-5-5", "claude-opus-5-5", "anthropic/claude-opus-5.5"]}
 }
