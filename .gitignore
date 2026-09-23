@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 .env
 analysis/out/
+
+# Local operation metadata and mock outputs
+.aris/
+runs_mocktest/
