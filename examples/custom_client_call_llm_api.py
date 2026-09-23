@@ -23,6 +23,7 @@ list-price equivalent and ~7 s per call, hits in line with the paper's panel.
 from __future__ import annotations
 import os
 import sys
+import time
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 os.environ.setdefault("CC_EFFORT", "medium")                                       # read by call_llm_api at import
@@ -37,17 +38,31 @@ from call_llm_api import call_llm_api  # noqa: E402
 ALIAS = {"gpt-4.1": "gpt41", "gpt-4.1-mini": "gpt41mini"}     # kit model id -> api_source_mapping alias
 
 
+def _call(alias: str, prompt: str, temperature: float, trial_id: str, attempts: int = 3):
+    """call_llm_api with a small retry on errors (rate limits, CLI hiccups); 5 s then 15 s back-off."""
+    delay = 5.0
+    for attempt in range(attempts):
+        try:
+            return call_llm_api([{"role": "user", "content": prompt}], alias, temperature=temperature,
+                                trial_info={"trial_id": trial_id})
+        except Exception as e:
+            if attempt == attempts - 1:
+                raise
+            print(f"[custom_client] {alias} attempt {attempt + 1} failed: {str(e)[:200]} -> retry in {delay:.0f}s",
+                  file=sys.stderr, flush=True)
+            time.sleep(delay)
+            delay *= 3
+
+
 def complete(model: str, prompt: str, temperature: float, n: int, max_tokens: int, kind: str) -> list:
     alias = ALIAS.get(model, model)
     outs = []
     for i in range(n):
         try:
-            content, _reasoning, info = call_llm_api(
-                [{"role": "user", "content": prompt}], alias, temperature=temperature,
-                trial_info={"trial_id": f"mem-{alias}-{i}"})
+            content, _reasoning, info = _call(alias, prompt, temperature, f"mem-{alias}-{i}")
             outs.append({"content": content or "", "usage": info,
                          "cost_usd_equiv": (info or {}).get("cost_usd_equiv")})
-        except Exception as e:                    # call_llm_api already retried; an empty sample = no answer
+        except Exception as e:                    # gave up after the retries: empty sample = no answer (see check_run.py)
             print(f"[custom_client] {alias}: {e}", file=sys.stderr, flush=True)
             outs.append({"content": "", "error": str(e)[:300]})
     return outs

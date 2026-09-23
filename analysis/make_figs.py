@@ -55,7 +55,12 @@ def clean(ax):
 
 # ---- Fig 5 ------------------------------------------------------------------------------
 def fig5():
-    M = ORDER; LADL = [short(m).replace("-", "-\n", 1) if len(short(m)) > 6 else short(m) for m in M]
+    M = ORDER
+    def lab(m):                      # two-line tick labels so 10+ bars per tier never collide
+        s = short(m)
+        if "-" in s: return s.replace("-", "-\n", 1)
+        return s[:4] + "\n" + s[4:] if len(s) > 5 else s
+    LADL = [lab(m) for m in M]
     def bands(m, z):
         v = [real[m][t] for t in tasks if tier(t) == z and t in real[m]]; n = len(v) or 1
         return (100*sum(s < 0.5-T for s in v)/n, 100*sum(0.5-T <= s <= 0.5+T for s in v)/n, 100*sum(s > 0.5+T for s in v)/n)
@@ -70,7 +75,7 @@ def fig5():
     NC = {z: sum(1 for t in tasks if tier(t) == z) for z in TIERS}
     plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans"], "font.size": 13.5,
                          "axes.labelsize": 13.5, "xtick.labelsize": 11.5, "ytick.labelsize": 11.5, "legend.fontsize": 11.5, "axes.linewidth": 0.9})
-    fig = plt.figure(figsize=(12, 8.6))
+    fig = plt.figure(figsize=(12 + 0.9 * max(0, len(M) - 9), 8.6))   # widen for panels beyond 9 models
     gs = fig.add_gridspec(2, 2, height_ratios=[1.12, 1.0], width_ratios=[0.9, 1.05], hspace=0.52, wspace=0.30,
                           left=0.06, right=0.985, top=0.905, bottom=0.075)
     ax = fig.add_subplot(gs[0, :]); W, GAP, pos, xs, centers, spans = 0.86, 0.7, 0, [], [], []
