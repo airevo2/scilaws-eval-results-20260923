@@ -1,6 +1,6 @@
 # SciLaws-Bench 记忆探针（cold-recall audit）跑测包
 
-> **给跑模型的同学：只需要看这一页。** 这个仓库自包含：题库、冻结的 prompt、判分逻辑、一键脚本都在里面，不依赖 SciLaws-Bench 主仓库。你要做的就是把它接到你们的 API 上，按下面的清单跑完，把 `runs/` 打包发回来。分析、画图、写论文都由我们做，你不用碰。
+> **给跑模型的同学：只需要看这一页。** 这个仓库自包含：题库、冻结的 prompt、判分逻辑、一键脚本都在里面，不依赖 SciLaws-Bench 主仓库。你要做的就是把它接到你们的 API 上，按下面的清单跑完，把 `runs/` 打包发回来。分析、画图、写论文都交给我就OK。
 >
 > *For non-Chinese readers: `python3 run_mem.py --list`, then `--dry-run`, then `--bench scilaws --models <id> --limit 2`, then the full leg, then `python3 check_run.py` and `python3 run_mem.py --pack`; send back `mem_runs.zip`. Details below (Chinese).*
 
