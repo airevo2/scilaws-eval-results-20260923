@@ -1,0 +1,19 @@
+{
+  "status": "PASS_FOR_GENERATION_AND_NUMERIC_ONLY",
+  "cells_checked": 472,
+  "numeric_cells_checked": 236,
+  "checks": [
+    "exact roster",
+    "original trajectory identity",
+    "terminal successful process return",
+    "original submission exists",
+    "numeric JSON matches table",
+    "seed aggregation",
+    "archive member hashes"
+  ],
+  "not_yet_checked": [
+    "validity judge S_V",
+    "parallel structure judge S_S",
+    "final whole-campaign audit"
+  ]
+}

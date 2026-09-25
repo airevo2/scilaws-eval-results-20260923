@@ -1,0 +1,14 @@
+{
+  "reason": "Observed HTTP 503/504 and API read timeouts during smoke",
+  "changed_source": [
+    "baseline_agent/call_llm_api.py"
+  ],
+  "before_sha256": "29224b9c2e701df7d668b1e7460e33c7436fb531c2d98c3a608342066fad44ea",
+  "after_sha256": "f29c0f4856faff7152c7f3e7144984d83aa5b61c93d8fd84c40450d419a862bf",
+  "generation_parameters": "unchanged",
+  "stream": true,
+  "native_api_concurrency_per_model": 2,
+  "native_transport_attempts": 5,
+  "sdk_read_timeout_seconds": 120,
+  "existing_scientific_results": "retained; only transport-failed cells eligible for recovery"
+}

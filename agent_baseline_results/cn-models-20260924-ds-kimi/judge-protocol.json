@@ -1,0 +1,11 @@
+{
+  "model": "gpt-5.4-mini",
+  "reasoning_effort": "xhigh",
+  "runtime": "/data/delta-bank/.aris/codex-runtime/bin/codex.js",
+  "runtime_version": "codex-cli 0.153.4",
+  "sandbox": "workspace-write",
+  "chunk_size": 3,
+  "max_workers": 3,
+  "max_concurrent_campaigns": 4,
+  "note": "Same judge recipe as prior GPT campaign; original scoring entrypoints/prompts."
+}

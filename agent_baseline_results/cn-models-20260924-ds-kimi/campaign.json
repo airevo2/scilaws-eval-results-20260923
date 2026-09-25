@@ -1,0 +1,72 @@
+{
+  "run_id": "cn-models-20260924",
+  "requested_models": [
+    "glm-5.3",
+    "kimi-k3",
+    "deepseek-v4.1-flash",
+    "step-5-preview"
+  ],
+  "active_models": [
+    "glm-5.3",
+    "kimi-k3",
+    "deepseek-v4.1-flash"
+  ],
+  "blocked_models": {
+    "step-5-preview": {
+      "status": "permission_denied",
+      "http_status": 403
+    }
+  },
+  "bench": {
+    "tasks": 118,
+    "modes": [
+      "real",
+      "parallel"
+    ],
+    "max_turns": 30,
+    "max_tokens": 65536,
+    "reasoning_effort": "provider_default",
+    "timeout_seconds": 120,
+    "workers": 48,
+    "expected_active_cells": 708,
+    "judge": "gpt-5.4-mini",
+    "judge_effort": "xhigh",
+    "api_concurrency_per_model_initial": 2,
+    "api_concurrency_per_model_new_processes": 8,
+    "concurrency_migration": {
+      "deployed_at": "2026-09-24T09:22:23.002123+00:00",
+      "reason": "User explicitly requested higher concurrency",
+      "initial_api_limit_per_model": 2,
+      "new_api_limit_per_model": 8,
+      "new_total_api_ceiling": 24,
+      "task_workers": 48,
+      "source_before_sha256": "f29c0f4856faff7152c7f3e7144984d83aa5b61c93d8fd84c40450d419a862bf",
+      "source_after_sha256": "eb737a29cba17febf313ef4daf9436a700100de4c05376581adc65c6ecfc158c",
+      "generation_parameters": "unchanged",
+      "transition": "New child processes load limit8; already-running legacy processes continue using shared slots0/1 until exit. Shared files cap aggregate model concurrency at8.",
+      "successful_cells_preserved": 97,
+      "full_shared_worker_pool_restructure": false,
+      "mem_formal_concurrency_changed": false
+    }
+  },
+  "mem": {
+    "benches": {
+      "scilaws": 118,
+      "feynman": 100
+    },
+    "samples": 5,
+    "max_tokens": 28800,
+    "judge": "gpt-4.1",
+    "judge_temperature": 0,
+    "judge_max_tokens": 400,
+    "task_workers": 8,
+    "api_concurrency_per_bench": 12,
+    "expected_active_cells": 654,
+    "effort_requests": {
+      "glm-5.3": "max",
+      "kimi-k3": "medium",
+      "deepseek-v4.1-flash": "medium"
+    },
+    "protocol_note": "GLM-5.3 rejects medium and uses its documented native default max; this leg is an explicitly labeled effort variant and cannot be pooled as a uniform-medium replication."
+  }
+}

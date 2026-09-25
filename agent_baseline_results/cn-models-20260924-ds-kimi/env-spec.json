@@ -1,0 +1,38 @@
+{
+  "provider": "RJob via rlaunch",
+  "cpu": 24,
+  "memory_mib": 131072,
+  "gpu": 0,
+  "python": "/data/SciLaws-Bench/.venv/bin/python",
+  "dependencies": "Reuse the 2026-09-23 validated environment; no install or upgrade",
+  "models": [
+    "glm-5.3",
+    "kimi-k3",
+    "deepseek-v4.1-flash"
+  ],
+  "blocked_model": "step-5-preview (MP HTTP 403)",
+  "source_commit": "9239f66b921cb89c7a9d14061f782fdce49dcfb5",
+  "client_sha256": "eb737a29cba17febf313ef4daf9436a700100de4c05376581adc65c6ecfc158c",
+  "bench": {
+    "tasks": 118,
+    "modes": [
+      "real",
+      "parallel"
+    ],
+    "max_turns": 30,
+    "max_tokens": 65536,
+    "reasoning_effort": "provider_default",
+    "timeout_seconds": 120,
+    "workers": 48,
+    "expected_active_cells": 708,
+    "judge": "gpt-5.4-mini",
+    "judge_effort": "xhigh"
+  },
+  "transport": {
+    "stream": true,
+    "max_api_calls_per_model": 8,
+    "max_attempts": 5,
+    "read_timeout_seconds": 120,
+    "migration": "New child processes use eight shared slots; already-running legacy clients continue using shared slots0/1 until exit. Per-attempt configuration reload applies to new clients."
+  }
+}

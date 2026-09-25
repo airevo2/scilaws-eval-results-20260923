@@ -21,3 +21,13 @@ Mem 逐任务结果、四个原始记录压缩包、审计结果及校验清单�
 上游检测程序来自 `tREeFrOGcoder/scilaw_mem_pack_20260922`，固定提交 `f036d101a08b4554dc2f99e7e7da7c5d4b2be6d9`。原始 README 保留在 `docs/MEMORIZATION_KIT_README.md`；固定检测协议见 `PROTOCOL.md`，本次运行方法及 MP 接口适配见 `docs/MEMORIZATION_RUN.md`。复核工具 `tools/audit_mem_results.py` 可从解压后的原始记录重新验证全部命中数，不调用模型 API。
 
 该冷回忆检测衡量模型在无数据条件下恢复已知公式的能力，不能单独证明训练数据污染，也不能以未召回作为无污染证明。
+
+
+2026-09-25：DeepSeek V4.1 Flash 与 Kimi K3 的 Bench 运行、Real 数值结果已发布至 [agent_baseline_results/cn-models-20260924-ds-kimi/](agent_baseline_results/cn-models-20260924-ds-kimi/)。两模型各完成 Real118题、Parallel118题；有效性S_V与结构分S_S尚待判分。
+
+| 模型 | Real S_N | Real S_V | Parallel S_S |
+|---|---:|---|---|
+| DeepSeek V4.1 Flash | 0.405915 | 待判分 | 待判分 |
+| Kimi K3 | 0.473568 | 待判分 | 待判分 |
+
+该批Bench没有显式传reasoning_effort，记录的是接口默认配置；不能标为统一medium。完整轨迹、提交、逐题数值分和失败恢复记录均包含在结果目录中。

@@ -1,0 +1,67 @@
+{
+  "published_at": "2026-09-25T03:58:39.914344+00:00",
+  "models": [
+    "deepseek-v4.1-flash",
+    "kimi-k3"
+  ],
+  "generation_complete": true,
+  "generation_cells": 472,
+  "numeric_complete": true,
+  "numeric_cells": 236,
+  "judge_complete": false,
+  "S_V_status": "pending",
+  "S_S_status": "pending",
+  "requested_bench_reasoning_effort": null,
+  "bench_effort_note": "Provider defaults: reasoning_effort was omitted. This is NOT an explicitly uniform-medium run.",
+  "metrics": [
+    {
+      "model": "deepseek-v4.1-flash",
+      "type": "ALL",
+      "tasks": 118,
+      "S_N": 0.40591535826159886,
+      "S_V": null,
+      "S_S": null
+    },
+    {
+      "model": "deepseek-v4.1-flash",
+      "type": "typeI",
+      "tasks": 66,
+      "S_N": 0.42825168251876855,
+      "S_V": null,
+      "S_S": null
+    },
+    {
+      "model": "deepseek-v4.1-flash",
+      "type": "typeII",
+      "tasks": 52,
+      "S_N": 0.37756540824288337,
+      "S_V": null,
+      "S_S": null
+    },
+    {
+      "model": "kimi-k3",
+      "type": "ALL",
+      "tasks": 118,
+      "S_N": 0.473567926076761,
+      "S_V": null,
+      "S_S": null
+    },
+    {
+      "model": "kimi-k3",
+      "type": "typeI",
+      "tasks": 66,
+      "S_N": 0.4811019145984807,
+      "S_V": null,
+      "S_S": null
+    },
+    {
+      "model": "kimi-k3",
+      "type": "typeII",
+      "tasks": 52,
+      "S_N": 0.46400555602996285,
+      "S_V": null,
+      "S_S": null
+    }
+  ],
+  "snapshot_scope": "Metric tables, trajectories and submissions cover only DeepSeek V4.1 Flash and Kimi K3. Shared original campaign configuration/bookkeeping may mention other models for provenance; these are not part of the published metric table."
+}
