@@ -1,0 +1,35 @@
+{
+  "python": "/data/SciLaws-Bench/.venv/bin/python",
+  "packages": {
+    "openai": "3.14.1",
+    "PyYAML": "6.0.3"
+  },
+  "gpu": 0,
+  "source_commit": "f036d101a08b4554dc2f99e7e7da7c5d4b2be6d9",
+  "active_models": [
+    "glm-5.3",
+    "kimi-k3",
+    "deepseek-v4.1-flash"
+  ],
+  "adapter_sha256": "43fbb505ee3154be6e72cefedba0625c0036cb1ee458b62f1832f683ca4c9d16",
+  "settings": {
+    "benches": {
+      "scilaws": 118,
+      "feynman": 100
+    },
+    "samples": 5,
+    "max_tokens": 28800,
+    "judge": "gpt-4.1",
+    "judge_temperature": 0,
+    "judge_max_tokens": 400,
+    "task_workers": 8,
+    "api_concurrency_per_bench": 12,
+    "expected_active_cells": 654,
+    "effort_requests": {
+      "glm-5.3": "max",
+      "kimi-k3": "medium",
+      "deepseek-v4.1-flash": "medium"
+    },
+    "protocol_note": "GLM-5.3 rejects medium and uses its documented native default max; this leg is an explicitly labeled effort variant and cannot be pooled as a uniform-medium replication."
+  }
+}

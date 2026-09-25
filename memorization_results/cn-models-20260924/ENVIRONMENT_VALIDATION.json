@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "mock_e2e": "passed",
+  "native_transport_tests": 2,
+  "scilaws_prompt_count": 118,
+  "feynman_prompt_count": 100,
+  "prompt_hash_mismatches": 0,
+  "fresh_agent_validation": "passed; no doc/runtime divergence"
+}

@@ -1,0 +1,19 @@
+{
+  "updated_at": "2026-09-24T07:03:11.136626+00:00",
+  "initial_recovery": "Original non-streaming adapter; existing process retained until terminal",
+  "subsequent_recovery": "streaming-recovery-v1: only exhausted API slots",
+  "scope": "Unchanged prompt, effort, output cap, temperature, n=1, read timeout600; requests include stream=true/include_usage",
+  "original_successful_samples": "Preserved regardless of answer, length limit or score",
+  "files": {
+    "repair_cn_mem_results.py": "abc7b5d54ded811490fa776908a3f4bda1e4bef88c7d231505a9b17590860966",
+    "audit_cn_mem_results.py": "7f66fba2f53b16354910e09d2af7c492ba8f2fa168f567ca5e008f40f84dd8b9",
+    "streaming_mem_recovery.py": "9c3135cfaecfc199be5ec2cecdf65b8d766d7c53114f85ff7cfd85e14aa7354b"
+  },
+  "validation": {
+    "model_calls": 0,
+    "mock_streaming_test": "PASS",
+    "immutable_slot_and_judge_replay_test": "PASS"
+  },
+  "initial_recovery_source_sha256": "746bfdfea4fd70d81c41910bb43100541a9d962ccce9452dd69608e5dc364333",
+  "streaming_live_validation": "PASS: stream-recovery-live-validation.json"
+}

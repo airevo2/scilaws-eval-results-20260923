@@ -1,0 +1,55 @@
+{
+  "run_id": "cn-models-20260924",
+  "requested_models": [
+    "glm-5.3",
+    "kimi-k3",
+    "deepseek-v4.1-flash",
+    "step-5-preview"
+  ],
+  "active_models": [
+    "glm-5.3",
+    "kimi-k3",
+    "deepseek-v4.1-flash"
+  ],
+  "blocked_models": {
+    "step-5-preview": {
+      "status": "permission_denied",
+      "http_status": 403
+    }
+  },
+  "bench": {
+    "tasks": 118,
+    "modes": [
+      "real",
+      "parallel"
+    ],
+    "max_turns": 30,
+    "max_tokens": 65536,
+    "reasoning_effort": "provider_default",
+    "timeout_seconds": 120,
+    "workers": 48,
+    "expected_active_cells": 708,
+    "judge": "gpt-5.4-mini",
+    "judge_effort": "xhigh"
+  },
+  "mem": {
+    "benches": {
+      "scilaws": 118,
+      "feynman": 100
+    },
+    "samples": 5,
+    "max_tokens": 28800,
+    "judge": "gpt-4.1",
+    "judge_temperature": 0,
+    "judge_max_tokens": 400,
+    "task_workers": 8,
+    "api_concurrency_per_bench": 12,
+    "expected_active_cells": 654,
+    "effort_requests": {
+      "glm-5.3": "max",
+      "kimi-k3": "medium",
+      "deepseek-v4.1-flash": "medium"
+    },
+    "protocol_note": "GLM-5.3 rejects medium and uses its documented native default max; this leg is an explicitly labeled effort variant and cannot be pooled as a uniform-medium replication."
+  }
+}

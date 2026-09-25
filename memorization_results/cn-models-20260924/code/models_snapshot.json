@@ -1,0 +1,115 @@
+{
+  "_readme": [
+    "One entry per model id. Fields:",
+    "  backend : openai | openrouter | custom   (which code path in client.py)",
+    "  kind    : chat | reasoning               (reasoning => no temperature, large output cap)",
+    "  reasoning / provider : OpenRouter only   (explicit effort=medium; first-party host pinned)",
+    "",
+    "TO ADD A NEW MODEL, append one line, e.g.",
+    "  OpenAI, native or OpenAI-compatible gateway :  \"gpt-6\": {\"backend\": \"openai\", \"kind\": \"reasoning\"}",
+    "  non-OpenAI via OpenRouter                    :  \"vendor/model\": {\"backend\": \"openrouter\", \"kind\": \"reasoning\", \"reasoning\": {\"effort\": \"medium\"}, \"provider\": \"<FirstPartyHost>\"}",
+    "  anything via your own API (custom_client.py) :  \"my-model\": {\"backend\": \"custom\", \"kind\": \"reasoning\"}",
+    "An OpenAI-style name that is missing here still works on the openai backend (kind inferred from the name).",
+    "",
+    "The judge is gpt-4.1 and is frozen. It must be reachable through whichever backend you use."
+  ],
+  "gpt-4.1": {
+    "backend": "openai",
+    "kind": "chat",
+    "role": "judge (frozen; never a subject)"
+  },
+  "gpt-4.1-mini": {
+    "backend": "openai",
+    "kind": "chat",
+    "role": "judge fallback if the subject is gpt-4.1"
+  },
+  "gpt-4o-mini": {
+    "backend": "openai",
+    "kind": "chat"
+  },
+  "gpt-5-mini": {
+    "backend": "openai",
+    "kind": "reasoning"
+  },
+  "gpt-5.4-mini": {
+    "backend": "openai",
+    "kind": "reasoning"
+  },
+  "gpt-5.5": {
+    "backend": "openai",
+    "kind": "reasoning"
+  },
+  "anthropic/claude-opus-4.8": {
+    "backend": "openrouter",
+    "kind": "reasoning",
+    "reasoning": {
+      "effort": "medium"
+    },
+    "provider": "Anthropic"
+  },
+  "anthropic/claude-opus-5.5": {
+    "backend": "openrouter",
+    "kind": "reasoning",
+    "reasoning": {
+      "effort": "medium"
+    },
+    "provider": "Anthropic"
+  },
+  "deepseek/deepseek-v4-pro": {
+    "backend": "openrouter",
+    "kind": "reasoning",
+    "reasoning": {
+      "effort": "medium"
+    },
+    "provider": "DeepSeek"
+  },
+  "google/gemini-3.5-flash": {
+    "backend": "openrouter",
+    "kind": "reasoning",
+    "reasoning": {
+      "effort": "medium"
+    },
+    "provider": "Google"
+  },
+  "qwen/qwen3.7-max": {
+    "backend": "openrouter",
+    "kind": "reasoning",
+    "reasoning": {
+      "effort": "medium"
+    },
+    "provider": "Alibaba"
+  },
+  "z-ai/glm-5.2": {
+    "backend": "openrouter",
+    "kind": "reasoning",
+    "reasoning": {
+      "effort": "medium"
+    },
+    "provider": "Z.AI"
+  },
+  "cc-opus-5-5": {
+    "backend": "custom",
+    "kind": "reasoning",
+    "role": "example custom-backend id: claude -p alias of call_llm_api.py (examples/)"
+  },
+  "glm-5.3": {
+    "backend": "custom",
+    "kind": "reasoning",
+    "role": "2026-09-24 requested model; see campaign configuration"
+  },
+  "kimi-k3": {
+    "backend": "custom",
+    "kind": "reasoning",
+    "role": "2026-09-24 requested model; see campaign configuration"
+  },
+  "deepseek-v4.1-flash": {
+    "backend": "custom",
+    "kind": "reasoning",
+    "role": "2026-09-24 requested model; see campaign configuration"
+  },
+  "step-5-preview": {
+    "backend": "custom",
+    "kind": "reasoning",
+    "role": "2026-09-24 requested model; see campaign configuration"
+  }
+}

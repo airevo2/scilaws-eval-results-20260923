@@ -1,0 +1,15 @@
+{
+  "checked_at": "2026-09-24T06:50:25.248380+00:00",
+  "test": "test_mem_recovery.py",
+  "status": "PASS",
+  "live_model_calls_in_test": 0,
+  "immutable_subject_slots_tested": 4,
+  "immutable_valid_judges_tested": 2,
+  "same_candidate_position_alignment": "PASS",
+  "second_invocation_reuses_valid_result": "PASS",
+  "recovery_script_sha256": "abc7b5d54ded811490fa776908a3f4bda1e4bef88c7d231505a9b17590860966",
+  "repair_supervisor_pid": 2860442,
+  "auditor_sha256": "7f66fba2f53b16354910e09d2af7c492ba8f2fa168f567ca5e008f40f84dd8b9",
+  "streaming_recovery_sha256": "9c3135cfaecfc199be5ec2cecdf65b8d766d7c53114f85ff7cfd85e14aa7354b",
+  "mixed_transport_replay_test": "PASS"
+}

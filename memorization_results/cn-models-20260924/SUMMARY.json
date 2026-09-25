@@ -1,0 +1,100 @@
+{
+  "run_id": "cn-models-20260924",
+  "complete_active_models": true,
+  "complete_requested_models": false,
+  "active_models": [
+    "glm-5.3",
+    "kimi-k3",
+    "deepseek-v4.1-flash"
+  ],
+  "blocked_models": {
+    "step-5-preview": {
+      "status": "permission_denied",
+      "http_status": 403
+    }
+  },
+  "scientific_cells": 654,
+  "subject_completions": 3270,
+  "judge_calls": 4704,
+  "empty_subject_samples": 474,
+  "transport_retry_errors": 1181,
+  "provider_reported_cap_overruns": 3,
+  "strict_reported_token_cap_compliant": false,
+  "source_commit": "f036d101a08b4554dc2f99e7e7da7c5d4b2be6d9",
+  "completed_at": "2026-09-25T02:11:37.879722+00:00",
+  "protocol_note": "GLM-5.3 rejects medium and uses its documented native default max; this leg is an explicitly labeled effort variant and cannot be pooled as a uniform-medium replication.",
+  "results": [
+    {
+      "bench": "scilaws",
+      "model": "glm-5.3",
+      "tasks": 118,
+      "cold_recalled": 24,
+      "cold_recall_rate": 0.2033898305084746,
+      "samples": 590,
+      "empty_samples": 261,
+      "length_limited_samples": 263,
+      "requested_reasoning_effort": "max",
+      "provider_reported_cap_overruns": 0
+    },
+    {
+      "bench": "scilaws",
+      "model": "kimi-k3",
+      "tasks": 118,
+      "cold_recalled": 34,
+      "cold_recall_rate": 0.288135593220339,
+      "samples": 590,
+      "empty_samples": 0,
+      "length_limited_samples": 0,
+      "requested_reasoning_effort": "medium",
+      "provider_reported_cap_overruns": 0
+    },
+    {
+      "bench": "scilaws",
+      "model": "deepseek-v4.1-flash",
+      "tasks": 118,
+      "cold_recalled": 31,
+      "cold_recall_rate": 0.2627118644067797,
+      "samples": 590,
+      "empty_samples": 98,
+      "length_limited_samples": 98,
+      "requested_reasoning_effort": "medium",
+      "provider_reported_cap_overruns": 1
+    },
+    {
+      "bench": "feynman",
+      "model": "glm-5.3",
+      "tasks": 100,
+      "cold_recalled": 61,
+      "cold_recall_rate": 0.61,
+      "samples": 500,
+      "empty_samples": 94,
+      "length_limited_samples": 94,
+      "requested_reasoning_effort": "max",
+      "provider_reported_cap_overruns": 0
+    },
+    {
+      "bench": "feynman",
+      "model": "kimi-k3",
+      "tasks": 100,
+      "cold_recalled": 62,
+      "cold_recall_rate": 0.62,
+      "samples": 500,
+      "empty_samples": 0,
+      "length_limited_samples": 0,
+      "requested_reasoning_effort": "medium",
+      "provider_reported_cap_overruns": 0
+    },
+    {
+      "bench": "feynman",
+      "model": "deepseek-v4.1-flash",
+      "tasks": 100,
+      "cold_recalled": 70,
+      "cold_recall_rate": 0.7,
+      "samples": 500,
+      "empty_samples": 21,
+      "length_limited_samples": 21,
+      "requested_reasoning_effort": "medium",
+      "provider_reported_cap_overruns": 2
+    }
+  ]
+}

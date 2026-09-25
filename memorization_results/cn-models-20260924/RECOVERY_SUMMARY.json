@@ -1,0 +1,160 @@
+{
+  "recovered_cells": 18,
+  "recovered_subject_slots": 28,
+  "cells": [
+    {
+      "replaced_subject_slots": [
+        4
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/scilaws/bns_postmerger_waveform_core__f2/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        0
+      ],
+      "preserved_judges": 3,
+      "history": "recovery/cn-models-20260924/scilaws/cloud_cover_parameterization__cloud_cover/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        0,
+        2,
+        4
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/scilaws/dna_melting_temperature_khandelwal__Tm/glm-5.3",
+      "discarded_transport_errors": 15
+    },
+    {
+      "replaced_subject_slots": [
+        2,
+        3
+      ],
+      "preserved_judges": 3,
+      "history": "recovery/cn-models-20260924/scilaws/geomagnetic_storm_dst__dDst_dt/glm-5.3",
+      "discarded_transport_errors": 10
+    },
+    {
+      "replaced_subject_slots": [
+        4
+      ],
+      "preserved_judges": 6,
+      "history": "recovery/cn-models-20260924/scilaws/hacks_law_river_length_hydrosheds__main_length_km/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        1,
+        4
+      ],
+      "preserved_judges": 4,
+      "history": "recovery/cn-models-20260924/scilaws/her_hor_pt_acid_kucernak__current_density/glm-5.3",
+      "discarded_transport_errors": 10
+    },
+    {
+      "replaced_subject_slots": [
+        0
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/scilaws/life_expectancy_preston__e0_vs_gdppc/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        3
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/scilaws/lpbf_meltpool_rosenthal_inconel__depth/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        0,
+        2
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/scilaws/mars_crater_size_frequency__N_cum/glm-5.3",
+      "discarded_transport_errors": 10
+    },
+    {
+      "replaced_subject_slots": [
+        3
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/scilaws/neo_size_frequency_distribution__N_cum_H/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        0
+      ],
+      "preserved_judges": 2,
+      "history": "recovery/cn-models-20260924/feynman/feynman_III_15_27/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        1
+      ],
+      "preserved_judges": 3,
+      "history": "recovery/cn-models-20260924/feynman/feynman_II_35_18/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        2,
+        3
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/feynman/feynman_II_36_38/glm-5.3",
+      "discarded_transport_errors": 10
+    },
+    {
+      "replaced_subject_slots": [
+        2
+      ],
+      "preserved_judges": 2,
+      "history": "recovery/cn-models-20260924/feynman/feynman_II_6_15a/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        1,
+        2,
+        3
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/feynman/feynman_I_24_6/glm-5.3",
+      "discarded_transport_errors": 15
+    },
+    {
+      "replaced_subject_slots": [
+        3
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/feynman/feynman_I_32_17/glm-5.3",
+      "discarded_transport_errors": 5
+    },
+    {
+      "replaced_subject_slots": [
+        0,
+        2
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/feynman/feynman_I_6_2a/glm-5.3",
+      "discarded_transport_errors": 10
+    },
+    {
+      "replaced_subject_slots": [
+        2,
+        4
+      ],
+      "preserved_judges": 0,
+      "history": "recovery/cn-models-20260924/feynman/feynman_I_6_2b/glm-5.3",
+      "discarded_transport_errors": 10
+    }
+  ]
+}

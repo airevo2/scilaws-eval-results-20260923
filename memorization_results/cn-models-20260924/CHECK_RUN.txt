@@ -1,0 +1,14 @@
+
+[feynman]  expected 100 tasks per model
+model                           done empty-d1 judge-fail hash-bad  billed $  status
+deepseek-v4.1-flash              100       21          0        0      0.00  COMPLETE
+glm-5.3                          100       94          0        0      0.00  COMPLETE
+kimi-k3                          100        0          0        0      0.00  COMPLETE
+
+[scilaws]  expected 118 tasks per model
+model                           done empty-d1 judge-fail hash-bad  billed $  status
+deepseek-v4.1-flash              118       98          0        0      0.00  COMPLETE
+glm-5.3                          118      261          0        0      0.00  COMPLETE
+kimi-k3                          118        0          0        0      0.00  COMPLETE
+
+RESULT: all legs complete, prompts verified
